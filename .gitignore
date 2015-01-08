@@ -1,0 +1,8 @@
+F2806x_RAM/
+FLASH/
+*.graphProp
+Headers/describe.h
+*.ini_initial
+project.log
+Headers/version.h
+.launches/

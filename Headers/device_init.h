@@ -1,0 +1,18 @@
+/*
+ * device_init.h
+ *
+ *  Created on: Dec 9, 2014
+ *      Author: abamberger
+ */
+
+#ifndef DEVICE_INIT_H_
+#define DEVICE_INIT_H_
+
+#include "PeripheralHeaderIncludes.h"
+
+void DeviceInit(void);
+void InitInterrupts();
+Uint8 GetBoardHWID();
+void ISR_ILLEGAL(void);
+
+#endif /* DEVICE_INIT_H_ */
