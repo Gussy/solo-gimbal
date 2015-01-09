@@ -38,6 +38,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "flash_params.h"
 #include "motor_drive_state_machine.h"
 #include "rate_loops.h"
+#include "gopro_interface.h"
 
 #include <math.h>
 #include <string.h>
@@ -285,6 +286,9 @@ void init_param_set(void)
 	param_set[CAND_PID_TORQUE].sema = &current_flag;
 }
 
+// TODO: For testing gopro stuff
+Uint16 gp_cmd_sent = 0;
+
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
@@ -353,9 +357,11 @@ void main(void)
 
     // If we're the AZ board, initialize UART for MAVLink communication
     // Also initialize the MAVLink subsystem
+    // Also initialize the GoPro interface
     if (board_hw_id == AZ) {
         init_uart();
         init_mavlink();
+        init_gp_interface();
     }
 
     // If we're using the system analyzer, initialize it here
@@ -431,10 +437,11 @@ void main(void)
 
 	axis_parms.enable_flag = FALSE;
 
+	gp_request_power_on();
+
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
 	{
-
 		// State machine entry & exit point
 		//===========================================================
 		(*Alpha_State_Ptr)();	// jump to an Alpha state (A0,B0,...)
@@ -464,6 +471,12 @@ void main(void)
 		    mavlink_state_machine();
 		}
 
+		if (gp_get_power_status() == GP_POWER_ON) {
+		    if (!gp_cmd_sent) {
+		        gp_send_command('C', 'M', 0x01);
+		        gp_cmd_sent = 1;
+		    }
+		}
 	}
 } //END MAIN CODE
 
@@ -651,6 +664,9 @@ int enable_counts_max = 1667;
 void A3(void) // SPARE (not used)
 //-----------------------------------------
 {
+    // Need to call the gopro interface state machine periodically
+    gp_interface_state_machine();
+
     /*
 	if (board_hw_id == EL) {
 		// Wait 1s before enabling the gimbal

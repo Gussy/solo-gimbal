@@ -12,16 +12,16 @@
 #include <stdarg.h>
 #include <string.h>
 
-RingBuf rx_ringbuf;
-RingBuf tx_ringbuf;
-unsigned char rx_buffer[BUFFER_SIZE];
-unsigned char tx_buffer[BUFFER_SIZE];
+RingBuf uart_rx_ringbuf;
+RingBuf uart_tx_ringbuf;
+unsigned char uart_rx_buffer[UART_BUFFER_SIZE];
+unsigned char uart_tx_buffer[UART_BUFFER_SIZE];
 
 void init_uart()
 {
     // Initialize the rx and tx ring buffers
-    InitRingBuf(&rx_ringbuf, rx_buffer, BUFFER_SIZE);
-    InitRingBuf(&tx_ringbuf, tx_buffer, BUFFER_SIZE);
+    InitRingBuf(&uart_rx_ringbuf, uart_rx_buffer, UART_BUFFER_SIZE);
+    InitRingBuf(&uart_tx_ringbuf, uart_tx_buffer, UART_BUFFER_SIZE);
 
     // Configure the character format, protocol, and communications mode
     UART_SCI_PORT.SCICCR.bit.STOPBITS = 0; // One stop bit
@@ -59,7 +59,7 @@ void init_uart()
     UART_SCI_PORT.SCIFFRX.bit.RXFFINTCLR = 1; // Clear the receive FIFO int flag if it is set
     UART_SCI_PORT.SCIFFRX.bit.RXFFIL = 0x1; // Configure rx FIFO to generate interrupts when it is has 1 character in it
                                             // This doesn't really use the FIFO as a FIFO, but if we use more than 1 level
-                                            // of the receive FIFO, there needs to be some kind of periodic background task
+                                            // of the receive FIFO, there needs to be some kind of background task
                                             // running that periodically flushes the FIFO, so that characters don't get stuck
                                             // in it.  For now, I mostly want to use the TX FIFO to lower the number of TX interrupts
                                             // generated, so I'm just bypassing the functionality of the RX FIFO for now
@@ -76,19 +76,19 @@ void init_uart()
 
 int uart_chars_available()
 {
-    return rx_ringbuf.size(&rx_ringbuf);
+    return uart_rx_ringbuf.size(&uart_rx_ringbuf);
 }
 
 unsigned char uart_get_char()
 {
-    return rx_ringbuf.pop(&rx_ringbuf);
+    return uart_rx_ringbuf.pop(&uart_rx_ringbuf);
 }
 
 int uart_read_available_chars(char* buffer, int buffer_size)
 {
     int chars_read = 0;
-    while (rx_ringbuf.size(&rx_ringbuf) > 0) {
-        buffer[chars_read++] = rx_ringbuf.pop(&rx_ringbuf);
+    while (uart_rx_ringbuf.size(&uart_rx_ringbuf) > 0) {
+        buffer[chars_read++] = uart_rx_ringbuf.pop(&uart_rx_ringbuf);
 
         // Don't overflow the buffer the caller has provided to us
         if (chars_read >= buffer_size) {
@@ -112,29 +112,15 @@ void uart_printf(const char* format, ...)
     int string_len = strlen(buffer);
     uart_send_data((Uint8*)buffer, string_len);
 
-    /*
-    int txbuf_start_size = tx_ringbuf.size(&tx_ringbuf);
-    int i;
-    for (i = 0; i < string_len; ++i) {
-        tx_ringbuf.push(&tx_ringbuf, buffer[i]);
-    }
-
-    // If the transmit ring buffer was empty to begin with, enable the transmit interrupt
-    // (this will start copying the contents of the transmit ring buffer into the transmit FIFO)
-    if (txbuf_start_size == 0) {
-        UART_SCI_PORT.SCIFFTX.bit.TXFFIENA = 1;
-    }
-    */
-
     return;
 }
 
 void uart_send_data(Uint8* data, int length)
 {
-    int txbuf_start_size = tx_ringbuf.size(&tx_ringbuf);
+    int txbuf_start_size = uart_tx_ringbuf.size(&uart_tx_ringbuf);
     int i;
     for (i = 0; i < length; i++) {
-        tx_ringbuf.push(&tx_ringbuf, data[i]);
+        uart_tx_ringbuf.push(&uart_tx_ringbuf, data[i]);
     }
 
     // If the transmit ring buffer was empty to begin with, enable the transmit interrupt
@@ -149,8 +135,8 @@ interrupt void uart_tx_isr(void)
     // Attempt to load up to 4 bytes into the TX FIFO
     int i;
     for (i = 0; i < 4; i++) {
-        if (tx_ringbuf.size(&tx_ringbuf) > 0) {
-            UART_SCI_PORT.SCITXBUF = tx_ringbuf.pop(&tx_ringbuf);
+        if (uart_tx_ringbuf.size(&uart_tx_ringbuf) > 0) {
+            UART_SCI_PORT.SCITXBUF = uart_tx_ringbuf.pop(&uart_tx_ringbuf);
             while (!UART_SCI_PORT.SCICTL2.bit.TXRDY)
             {}
         }
@@ -158,7 +144,7 @@ interrupt void uart_tx_isr(void)
 
     // If we've emptied the transmit ring buffer, turn off the transmit interrupt (it will be re-enabled when there is more data to send)
     // otherwise, leave it on so we're interrupted when the current transmission has finished and can continue emptying the transmit ring buffer
-    if (tx_ringbuf.size(&tx_ringbuf) == 0) {
+    if (uart_tx_ringbuf.size(&uart_tx_ringbuf) == 0) {
         UART_SCI_PORT.SCIFFTX.bit.TXFFIENA = 0;
     }
 
@@ -173,7 +159,7 @@ interrupt void uart_rx_isr(void)
 {
     // Empty the FIFO into the receive ring buffer
     while (UART_SCI_PORT.SCIFFRX.bit.RXFFST > 0) {
-        rx_ringbuf.push(&rx_ringbuf, UART_SCI_PORT.SCIRXBUF.bit.RXDT);
+        uart_rx_ringbuf.push(&uart_rx_ringbuf, UART_SCI_PORT.SCIRXBUF.bit.RXDT);
     }
 
     // Clear the overflow flag if it is set

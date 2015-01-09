@@ -16,6 +16,7 @@
 #include "PM_Sensorless.h"
 #include "HWSpecific.h"
 #include "uart.h"
+#include "i2c.h"
 
 // Functions that will be run from RAM need to be assigned to
 // a different section.  This section will then be mapped to a load and
@@ -101,8 +102,9 @@ void DeviceInit(void)
 
    // Need ADC for reading phase currents, rotor position from analog pot, die temp
    SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 1;    // ADC
-      //------------------------------------------------
-   SysCtrlRegs.PCLKCR0.bit.I2CAENCLK = 0;   // I2C
+   //------------------------------------------------
+   // I2C is used for GoPro HeroBus communication
+   SysCtrlRegs.PCLKCR0.bit.I2CAENCLK = 1;   // I2C
    //------------------------------------------------
    // SPI-A reads from the gyro
    // SPI-B is for debug use, and may be disabled for production
@@ -226,7 +228,7 @@ void DeviceInit(void)
 	GpioDataRegs.GPACLEAR.bit.GPIO5 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO5 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-06 - PIN FUNCTION = Spare GPIO
+//  GPIO-06 - PIN FUNCTION = GoPro on flag
 	GpioCtrlRegs.GPAMUX1.bit.GPIO6 = 0;		// 0=GPIO, 1=EPWM4A, 2=EPWMSYNCI, 3=EPWMSYNCO
 	GpioCtrlRegs.GPADIR.bit.GPIO6 = 0;		// 1=OUTput,  0=INput 
 //	GpioDataRegs.GPACLEAR.bit.GPIO6 = 1;	// uncomment if --> Set Low initially
@@ -259,7 +261,7 @@ void DeviceInit(void)
 	GpioDataRegs.GPACLEAR.bit.GPIO10 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO10 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-11 - PIN FUNCTION = Spare GPIO
+//  GPIO-11 - PIN FUNCTION = Overcurrent flag from current limited on 5v power to camera
 	GpioCtrlRegs.GPAMUX1.bit.GPIO11 = 0;	// 0=GPIO,  1=EPWM6B,  2=SCIRXDB,  3=ECAP1
 	GpioCtrlRegs.GPADIR.bit.GPIO11 = 0;		// 1=OUTput,  0=INput
 //	GpioDataRegs.GPACLEAR.bit.GPIO11 = 1;	// uncomment if --> Set Low initially
@@ -354,16 +356,20 @@ void DeviceInit(void)
 	    break;
 	}
 //--------------------------------------------------------------------------------------
-//  GPIO-22 - PIN FUNCTION = Spare GPIO
+//  GPIO-22 - PIN FUNCTION = Power on control to camera, Active Low
 	GpioCtrlRegs.GPAMUX2.bit.GPIO22 = 0;	// 0=GPIO,  1=EQEP1S,  2=MCLKXA,  3=SCITXDB
+	// Set as an input initially, set the initial state, and then set as an output.
+	// This is because the act of configuring the GPIO while it's already an output is
+	// enough to turn the camera on, so we want to make sure the output is configured high
+	// before it's configured as an output
 	GpioCtrlRegs.GPADIR.bit.GPIO22 = 0;		// 1=OUTput,  0=INput
-//	GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;	// uncomment if --> Set Low initially
-//	GpioDataRegs.GPASET.bit.GPIO22 = 1;		// uncomment if --> Set High initially
+	GpioDataRegs.GPASET.bit.GPIO22 = 1;		// uncomment if --> Set High initially
+	GpioCtrlRegs.GPADIR.bit.GPIO22 = 1;
 //--------------------------------------------------------------------------------------
-//  GPIO-23 - PIN FUNCTION = Spare GPIO
+//  GPIO-23 - PIN FUNCTION = Enable charging power to camera
 	GpioCtrlRegs.GPAMUX2.bit.GPIO23 = 0;	// 0=GPIO,  1=EQEP1I,  2=MFSXA,  3=SCIRXDB
-	GpioCtrlRegs.GPADIR.bit.GPIO23 = 0;		// 1=OUTput,  0=INput
-//	GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;	// uncomment if --> Set Low initially
+	GpioCtrlRegs.GPADIR.bit.GPIO23 = 1;		// 1=OUTput,  0=INput
+	GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO23 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
 //  GPIO-24 - PIN FUNCTION = Debug SPI port MOSI
@@ -378,17 +384,20 @@ void DeviceInit(void)
 //	GpioDataRegs.GPACLEAR.bit.GPIO25 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO25 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-26 - PIN FUNCTION = Spare GPIO
+//  GPIO-26 - PIN FUNCTION = GoPro I2C request line, Active Low
 	GpioCtrlRegs.GPAMUX2.bit.GPIO26 = 0;	// 0=GPIO,  1=ECAP3,  2=EQEP2I,  3=SPICLKB
-	GpioCtrlRegs.GPADIR.bit.GPIO26 = 0;		// 1=OUTput,  0=INput 
-//	GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;	// uncomment if --> Set Low initially
-//	GpioDataRegs.GPASET.bit.GPIO26 = 1;		// uncomment if --> Set High initially
+	// Set as an input initially, set the initial state, and then set as an output.
+	// This is to make sure we don't accidentally output any active low glitches to the
+	// camera while we're configuring the GPIO
+	GpioCtrlRegs.GPADIR.bit.GPIO26 = 0;		// 1=OUTput,  0=INput
+	GpioDataRegs.GPASET.bit.GPIO26 = 1;		// uncomment if --> Set High initially
+	GpioCtrlRegs.GPADIR.bit.GPIO26 = 1;
 //--------------------------------------------------------------------------------------
-//  GPIO-27 - PIN FUNCTION = Spare GPIO
+//  GPIO-27 - PIN FUNCTION = PWM Reset, Active Low
 	GpioCtrlRegs.GPAMUX2.bit.GPIO27 = 0;	// 0=GPIO,  1=HRCAP2,  2=EQEP2S,  3=SPISTEB
-	GpioCtrlRegs.GPADIR.bit.GPIO27 = 0;		// 1=OUTput,  0=INput 
+	GpioCtrlRegs.GPADIR.bit.GPIO27 = 1;		// 1=OUTput,  0=INput
 //	GpioDataRegs.GPACLEAR.bit.GPIO27 = 1;	// uncomment if --> Set Low initially
-//	GpioDataRegs.GPASET.bit.GPIO27 = 1;		// uncomment if --> Set High initially
+	GpioDataRegs.GPASET.bit.GPIO27 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
 //  GPIO-28 - PIN FUNCTION = UART RX, non-isolated NOTE: Temporary GPIO for debugging
 	GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;	// 0=GPIO,  1=SCIRXDA,  2=SDAA,  3=TZ2
@@ -415,17 +424,17 @@ void DeviceInit(void)
 //	GpioDataRegs.GPASET.bit.GPIO31 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
-//  GPIO-32 - PIN FUNCTION = Spare GPIO
-	GpioCtrlRegs.GPBMUX1.bit.GPIO32 = 0;	// 0=GPIO,  1=SDAA,  2=EPWMSYNCI,  3=ADCSOCA
-	GpioCtrlRegs.GPBDIR.bit.GPIO32 = 0;		// 1=OUTput,  0=INput
+//  GPIO-32 - PIN FUNCTION = GoPro I2C SDA
+	GpioCtrlRegs.GPBMUX1.bit.GPIO32 = 1;	// 0=GPIO,  1=SDAA,  2=EPWMSYNCI,  3=ADCSOCA
+//	GpioCtrlRegs.GPBDIR.bit.GPIO32 = 0;		// 1=OUTput,  0=INput
 //	GpioDataRegs.GPBCLEAR.bit.GPIO32 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPBSET.bit.GPIO32 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-33 - PIN FUNCTION = PWM Reset, Active Low
-	GpioCtrlRegs.GPBMUX1.bit.GPIO33 = 0;	// 0=GPIO,  1=SCLA,  2=EPWMSYNCO,  3=ADCSOCB
-	GpioCtrlRegs.GPBDIR.bit.GPIO33 = 1;		// 1=OUTput,  0=INput
+//  GPIO-33 - PIN FUNCTION = GoPro I2C SCL
+	GpioCtrlRegs.GPBMUX1.bit.GPIO33 = 1;	// 0=GPIO,  1=SCLA,  2=EPWMSYNCO,  3=ADCSOCB
+//	GpioCtrlRegs.GPBDIR.bit.GPIO33 = 0;		// 1=OUTput,  0=INput
 //	GpioDataRegs.GPBCLEAR.bit.GPIO33 = 1;	// uncomment if --> Set Low initially
-	GpioDataRegs.GPBSET.bit.GPIO33 = 1;		// uncomment if --> Set High initially
+//	GpioDataRegs.GPBSET.bit.GPIO33 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
 //  GPIO-34 - PIN FUNCTION = Tied to +3.3v
 	GpioCtrlRegs.GPBMUX1.bit.GPIO34 = 0;	// 0=GPIO,  1=COMP2OUT,  2=Resv,  3=COMP3OUT
@@ -552,6 +561,7 @@ void InitInterrupts()
     PieVectTable.XINT1 = &GyroIntISR; // Gyro ISR is driven from external interrupt 1
     PieVectTable.SCIRXINTB = &uart_rx_isr; // Uart RX ISR is driven from SCI-B receive
     PieVectTable.SCITXINTB = &uart_tx_isr; // Uart TX ISR is driven from SCI-B transmit
+    PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx interrupts are handled by the same ISR
     EDIS;
 
     // Enable PIE group 4 interrupt 1 for ECAP1_INT (for main 10kHz loop)
@@ -562,6 +572,8 @@ void InitInterrupts()
     PieCtrlRegs.PIEIER9.bit.INTx3 = 1;
     // Enable PIE group 9 interrupt 4 for SCI-B tx
     PieCtrlRegs.PIEIER9.bit.INTx4 = 1;
+    // Enable PIE group 8 interrupt 2 for I2C FIFO interrupts
+    PieCtrlRegs.PIEIER8.bit.INTx2 = 1;
 
     // Configure and enable ECAP1 (for main 10KHz loop)
     ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = 0x1;  //Enable ECAP1 Period Match interrupt
@@ -577,9 +589,12 @@ void InitInterrupts()
     // Enable CPU INT4 for ECAP1_INT:
     IER |= M_INT4;
     // Only enable gyro interrupt for the EL board
+    // Only enable I2C interrupt for the EL board
     if (GetBoardHWID() == EL) {
         // Enable CPU INT1 for XINT1
         IER |= M_INT1;
+        // Enable CPU INT8 for I2C FIFO
+        IER |= M_INT8;
     }
     // Only enable UART interrupt for the AZ board
     if (GetBoardHWID() == AZ) {
