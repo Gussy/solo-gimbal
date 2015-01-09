@@ -313,9 +313,16 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             //cb_parms->motor_torques[EL] = UpdatePID(EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
             //cb_parms->motor_torques[ROLL] = UpdatePID(ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
             // Floating point PID code
+            // Run the rate loop PID unless we're in balance procedure mode, then run the position loop PID
+#ifndef ENABLE_BALANCE_PROCEDURE
             cb_parms->motor_torques[AZ] = UpdatePID_Float(PID_DATA_RATE_LOOP, AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
             cb_parms->motor_torques[EL] = UpdatePID_Float(PID_DATA_RATE_LOOP, EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
             cb_parms->motor_torques[ROLL] = UpdatePID_Float(PID_DATA_RATE_LOOP, ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
+#else
+            cb_parms->motor_torques[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
+            cb_parms->motor_torques[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
+            cb_parms->motor_torques[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
+#endif
 #ifdef TEST_MAX_TORQUE
             // Torque command with DIGBY STEPS
             DigbyCount++;

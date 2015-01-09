@@ -15,8 +15,8 @@
 //#include "cand_BitFields.h"
 
 enum gimbal_targets {
-	GIMBAL_G1 = 0,  // Gimbal with 1st (3DR supplied) metal carriage
-	GIMBAL_G2,      // Gimbal with 2nd (AES supplied) metal carriage
+	GIMBAL_G1 = 0,  // Gimbal SN 102
+	GIMBAL_G2,      // Gimbal SN 103
 	GIMBAL_G3,      // SATB
 	GIMBAL_CNT
 };
@@ -36,8 +36,7 @@ typedef enum {
 
 #define ENCODER_COUNTS_PER_REV 10000
 
-#define GIMBAL_TARGET GIMBAL_G2
-//#define BOARD_HW_ID		(GpioDataRegs.GPADAT.bit.GPIO20 | (GpioDataRegs.GPADAT.bit.GPIO21<<1));
+#define GIMBAL_TARGET GIMBAL_G1
 
 // Map gyro axes to gimbal axes
 static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
@@ -67,9 +66,9 @@ static const int EncoderSignMap[AXIS_CNT] = {
 static const int AxisHomePositions[GIMBAL_CNT][AXIS_CNT] = {
     // Gimbal G1
     {
-        5135,   // EL
-        5683,   // AZ
-        5116    // ROLL
+        5372,   // EL
+        5595,   // AZ
+        4806    // ROLL
     },
     // Gimbal G2
     {
@@ -88,10 +87,9 @@ static const int AxisHomePositions[GIMBAL_CNT][AXIS_CNT] = {
 static float AxisCalibrationSlopes[GIMBAL_CNT][AXIS_CNT] = {
     // Gimbal G1
     {
-        0.1333,     // EL
-        //0.13195,    // AZ
-        0.1158,     // AZ, after rebuilding
-        0.13105     // ROLL
+        0.1245,     // EL
+        0.1231,     // AZ
+        0.1324      // ROLL
     },
     // Gimbal G2
     {
@@ -110,10 +108,9 @@ static float AxisCalibrationSlopes[GIMBAL_CNT][AXIS_CNT] = {
 static float AxisCalibrationIntercepts[GIMBAL_CNT][AXIS_CNT] = {
     // Gimbal G1
     {
-        0.298,  // EL
-        //0.3338, // AZ
-        0.3527,   // AZ, after rebuilding
-        0.34875 // ROLL
+        0.3408,  // EL
+        0.3659,  // AZ
+        0.3635   // ROLL
     },
     // Gimbal G2
     {
