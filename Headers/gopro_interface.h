@@ -42,5 +42,6 @@ void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
 int gp_request_power_on();
 int gp_send_command(char cmd_name_1, char cmd_name_2, Uint8 cmd_parameter);
+Uint16 gp_ready_for_cmd();
 
 #endif /* GOPRO_INTERFACE_H_ */

@@ -15,6 +15,7 @@
 void init_i2c();
 Uint16 i2c_get_sdir();
 Uint16 i2c_get_aas();
+Uint16 i2c_get_bb();
 interrupt void i2c_fifo_isr(void);
 void i2c_send_data(Uint8* data, int length);
 

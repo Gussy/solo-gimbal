@@ -18,6 +18,11 @@ void init_gp_interface()
     init_i2c();
 }
 
+Uint16 gp_ready_for_cmd()
+{
+    return !i2c_get_bb();
+}
+
 int gp_send_command(char cmd_name_1, char cmd_name_2, Uint8 cmd_parameter)
 {
     if (gp_control_state == GP_CONTROL_STATE_IDLE) {

@@ -75,6 +75,11 @@ Uint16 i2c_get_sdir()
     return I2caRegs.I2CSTR.bit.SDIR;
 }
 
+Uint16 i2c_get_bb()
+{
+    return I2caRegs.I2CSTR.bit.BB;
+}
+
 void i2c_send_data(Uint8* data, int length)
 {
     int txbuf_start_size = i2c_tx_ringbuf.size(&i2c_tx_ringbuf);

@@ -288,6 +288,7 @@ void init_param_set(void)
 
 // TODO: For testing gopro stuff
 Uint16 gp_cmd_sent = 0;
+Uint16 gp_cmd_wait = 0;
 
 void main(void)
 {
@@ -471,11 +472,15 @@ void main(void)
 		    mavlink_state_machine();
 		}
 
-		if (gp_get_power_status() == GP_POWER_ON) {
-		    if (!gp_cmd_sent) {
-		        gp_send_command('C', 'M', 0x01);
-		        gp_cmd_sent = 1;
-		    }
+		if (gp_cmd_wait >= 35) {
+            if (gp_get_power_status() == GP_POWER_ON) {
+                if (gp_ready_for_cmd()) {
+                    if (!gp_cmd_sent) {
+                        gp_send_command('C', 'M', 0x01);
+                        gp_cmd_sent = 1;
+                    }
+                }
+            }
 		}
 	}
 } //END MAIN CODE
@@ -828,6 +833,9 @@ void C1(void) // Update Status LEDs
 void C2(void) // Send periodic BIT message and send fault messages if necessary
 //----------------------------------------
 {
+    //TODO: For delaying gp test command
+    gp_cmd_wait++;
+
 	// Send the BIT message once every ~1sec
 	if (axis_parms.BIT_heartbeat_enable && (axis_parms.BIT_heartbeat_decimate-- <= 0)) {
 		CBSendStatus();
