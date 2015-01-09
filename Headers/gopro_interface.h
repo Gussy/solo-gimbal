@@ -37,11 +37,19 @@ typedef enum {
     GP_POWER_WAIT
 } GPPowerStatus;
 
+typedef enum {
+    GP_CMD_UNKNOWN,
+    GP_CMD_SUCCESSFUL,
+    GP_CMD_INVALID,
+    GP_CMD_TIMEOUT
+} GPCmdResult;
+
 void init_gp_interface();
 void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
 int gp_request_power_on();
 int gp_send_command(char cmd_name_1, char cmd_name_2, Uint8 cmd_parameter);
 Uint16 gp_ready_for_cmd();
+GPCmdResult gp_get_last_cmd_result();
 
 #endif /* GOPRO_INTERFACE_H_ */

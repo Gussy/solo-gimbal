@@ -10,8 +10,10 @@
 #include "i2c.h"
 
 GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
+GPCmdResult last_cmd_result = GP_CMD_UNKNOWN;
 Uint32 gp_power_on_counter = 0;
 Uint8 request_cmd_buffer[GP_COMMAND_REQUEST_SIZE];
+Uint32 wait_for_cmd_request_timeout = 0;
 
 void init_gp_interface()
 {
@@ -20,7 +22,7 @@ void init_gp_interface()
 
 Uint16 gp_ready_for_cmd()
 {
-    return !i2c_get_bb();
+    return (gp_control_state == GP_CONTROL_STATE_IDLE) && !i2c_get_bb();
 }
 
 int gp_send_command(char cmd_name_1, char cmd_name_2, Uint8 cmd_parameter)
@@ -68,6 +70,11 @@ GPPowerStatus gp_get_power_status()
     }
 }
 
+GPCmdResult gp_get_last_cmd_result()
+{
+    return last_cmd_result;
+}
+
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
 // for proper gopro interface operation
 void gp_interface_state_machine()
@@ -92,6 +99,13 @@ void gp_interface_state_machine()
     case GP_CONTROL_STATE_REQUEST_CMD_SEND:
         // We wait here until we've been addressed by the GoPro, which means it's ready to read the command from us
         // TODO: Timeout back to idle if we haven't been addressed for 2 seconds
+        if (wait_for_cmd_request_timeout++ > 667) { // Timeout is 2 seconds per HeroBus spec
+            wait_for_cmd_request_timeout = 0;
+            GP_DEASSERT_INTR();
+            last_cmd_result = GP_CMD_TIMEOUT;
+            gp_control_state = GP_CONTROL_STATE_IDLE;
+        }
+
         if (i2c_get_aas()) {
             // Make sure we've been addressed as a slave transmitter.
             // If we've been addressed as a slave receiver, that means the GoPro is trying to send us a command,
@@ -109,6 +123,7 @@ void gp_interface_state_machine()
         break;
 
     case GP_CONTROL_STATE_RECV_CMD_RESPONSE:
+        last_cmd_result = GP_CMD_SUCCESSFUL;
         // TODO: Validate that the command was successful
         break;
     }

@@ -474,11 +474,8 @@ void main(void)
 
 		if (gp_cmd_wait >= 35) {
             if (gp_get_power_status() == GP_POWER_ON) {
-                if (gp_ready_for_cmd()) {
-                    if (!gp_cmd_sent) {
-                        gp_send_command('C', 'M', 0x01);
-                        gp_cmd_sent = 1;
-                    }
+                if ((gp_get_last_cmd_result() != GP_CMD_SUCCESSFUL) && gp_ready_for_cmd()) {
+                    gp_send_command('C', 'M', 0x01);
                 }
             }
 		}
