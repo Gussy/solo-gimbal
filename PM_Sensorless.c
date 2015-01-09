@@ -147,7 +147,7 @@ BalanceProcedureParms balance_proc_parms = {
     0,      // Current balance angle index
     0,      // Current balance angle counter
     133,    // Balance angle counter max
-    EL      // Balance axis
+    AZ      // Balance axis
 };
 
 EncoderParms encoder_parms = {
@@ -185,7 +185,7 @@ ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Axis errors
     {0, 0, 0},                                              // Angle targets,
     {CAND_FAULT_NONE, CAND_FAULT_NONE, CAND_FAULT_NONE},    // Last axis faults
-    {3, 3, 3},                                              // Pointing loop gains
+    {10, 10, 10},                                              // Pointing loop gains
     {FALSE, FALSE, FALSE},									// Encoder values received
     {FALSE, FALSE, FALSE},                                  // Axes homed
     0,                                                      // 2nd stage position loop decimation counter
