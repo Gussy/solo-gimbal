@@ -146,7 +146,7 @@ BalanceProcedureParms balance_proc_parms = {
     0,      // Current balance angle index
     0,      // Current balance angle counter
     133,    // Balance angle counter max
-    AZ      // Balance axis
+    EL      // Balance axis
 };
 
 EncoderParms encoder_parms = {
