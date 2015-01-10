@@ -31,7 +31,9 @@ void HomingCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* enco
 
             //TODO: Short circuit the rest of homing, since we're hardcoding these values for now
             cb_parms->axes_homed[GetBoardHWID()] = TRUE;
-            if (GetBoardHWID() == EL) { // EL axis is control board
+            if (GetBoardHWID() == EL) {
+                // If we're the EL board, we need to wait for the other axes to indicate that they've finished homing before
+                // we enable the rate loops.  Otherwise, we can just start running our own torque loop
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
             } else {
                 md_parms->motor_drive_state = STATE_RUNNING;

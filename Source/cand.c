@@ -33,6 +33,15 @@ typedef enum { FALSE = 0, TRUE } BOOL;
 
 #define CAN_TX_MBOX_CNT 16
 
+CAND_ParameterID immediate_pid_lookup_buffer[6] = {
+    CAND_PID_TORQUE,
+    CAND_PID_POSITION,
+    CAND_PID_INVALID,
+    CAND_PID_INVALID,
+    CAND_PID_INVALID,
+    CAND_PID_INVALID
+};
+
 void ECanInit( void )        // Initialize eCAN-A module
 {
 	volatile union CANLAM_REG* lam;
@@ -332,7 +341,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 				}
 
 				// Addressing mode sets whether to interpret the parameter
-				// ID as a register with up to 5 parameter flags set, or just a
+				// ID as a register with up to 6 parameter flags set, or just a
 				// single parameter ID.
 				if (sid.param_set.all.addr_mode == CAND_ADDR_MODE_IMMEDIATE) {
 
@@ -340,7 +349,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 					// then our data is packed in with the others and we have to get it out:
 					if (sid.param_set.all.d_id == CAND_ID_ALL_AXES) {
 						// Extract out our parameter
-						msg->param_id[0] = (CAND_ParameterID) sid.param_set.immediate.param_reg;
+						msg->param_id[0] = (CAND_ParameterID)sid.param_set.immediate.param_reg;
 						msg->param_cnt = 1;							// there can only be 1 param in multicast of this type
 
 						switch (CAND_GetSenderID()) {
@@ -358,12 +367,12 @@ CAND_Result cand_rx( struct cand_message * msg )
 					} else {
 						// Must just be a parameter for us (don't need to check broadcast, immediate
 						// parameters for broadcast aren't a thing)
-						uint8_t p_flag, p_cnt;
+						uint8_t p_flag, p_cnt, shift_cnt;
 
-						for (p_flag = 1, p_cnt = 0; p_flag <= 0x10 && p_cnt < 4; p_flag <<= 1 ) {
+						for (p_flag = 1, p_cnt = 0, shift_cnt = 0; p_flag <= 0x20 && p_cnt < 4; p_flag <<= 1, shift_cnt++ ) {
 
 							if (p_flag & sid.param_set.immediate.param_reg) {
-								msg->param_id[p_cnt] = (CAND_ParameterID)(sid.param_set.immediate.param_reg & p_flag);
+								msg->param_id[p_cnt] = (CAND_ParameterID)immediate_pid_lookup_buffer[shift_cnt];
 
 								switch (p_cnt) {
 									case 0:
@@ -475,7 +484,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 
 					// similar deal as set parameter in extended mode, except all
 					// ID/value pairs are in the payload
-					while( mbox.MSGCTRL.bit.DLC > byte_in_payload && p_cnt < 4) {
+					while( mbox.MSGCTRL.bit.DLC > byte_in_payload) {
 
 						msg->param_response_id[p_cnt] = (CAND_ParameterID)CANMD8(mbox, byte_in_payload);
 						byte_in_payload++;
@@ -565,7 +574,16 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
         if ((pid[0] < CAND_PID_2_BYTE_CUTOFF) && (pid[0] > CAND_PID_4_BYTE_CUTOFF)) {
             // only 1 param of 2 byte to this destination
 
-            sid.param_set.all.param = pid[0];
+            Uint8 one_hot_id = 0;
+            int i;
+            for (i = 0; i < 6; i++) {
+                if (immediate_pid_lookup_buffer[i] == pid[0]) {
+                    one_hot_id = 1 << i;
+                    break;
+                }
+            }
+
+            sid.param_set.all.param = one_hot_id;
 
             payload[0] = (param[0] >> 8) & 0xff;
             payload[1] = param[0] & 0xff;

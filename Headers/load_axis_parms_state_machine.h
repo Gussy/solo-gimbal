@@ -17,18 +17,18 @@ typedef union {
 } IntOrFloat;
 
 typedef enum {
-    INIT_AXIS_PARMS_STATE_LOAD_RATE_P,
-    INIT_AXIS_PARMS_STATE_LOAD_RATE_I,
-    INIT_AXIS_PARMS_STATE_LOAD_RATE_D,
-    INIT_AXIS_PARMS_STATE_LOAD_RATE_WINDUP
+    LOAD_AXIS_PARMS_STATE_LOAD_RATE_P,
+    LOAD_AXIS_PARMS_STATE_LOAD_RATE_I,
+    LOAD_AXIS_PARMS_STATE_LOAD_RATE_D,
+    LOAD_AXIS_PARMS_STATE_LOAD_RATE_WINDUP
 } InitAxisParmsState;
 
 typedef struct {
-    InitAxisParmsState init_axis_parms_state;
+    InitAxisParmsState load_axis_parms_state;
     GimbalAxis current_load_axis;
     Uint16 axis_parms_load_complete;
-} InitAxisParmsStateInfo;
+} LoadAxisParmsStateInfo;
 
-void InitAxisParmsStateMachine(InitAxisParmsStateInfo* init_parms_state_info);
+void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* init_parms_state_info);
 
 #endif /* INIT_AXIS_PARMS_STATE_MACHINE_H_ */

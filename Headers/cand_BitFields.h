@@ -12,8 +12,7 @@ typedef enum {
     CAND_MID_FAULT =            0,
     CAND_MID_COMMAND,
     CAND_MID_PARAMETER_SET,
-    CAND_MID_PARAMETER_QUERY,
-    CAND_MID_DEBUG =            3
+    CAND_MID_PARAMETER_QUERY
 } CAND_MessageID;
 
 /**
@@ -34,6 +33,7 @@ typedef CAND_DestinationID CAND_SenderID;
  * Parameter IDs
  */
 typedef enum  {
+    CAND_PID_INVALID =                                  0,
     // Four Byte Parameters
     CAND_PID_RATE_EL_P =                                1,
     CAND_PID_RATE_EL_I,
@@ -138,14 +138,14 @@ typedef enum {
  */
 typedef enum {
     CAND_BIT_GOOD,
-    CAND_BIT_CH1_FAULT 	 =       0x01,
-    CAND_BIT_OTW	     =       0x02,
-    CAND_BIT_IDEXTMOUT   =       0x04,
-    CAND_BIT_INDEXNF     =       0x08,
-    CAND_BIT_NOT_ENABLED =       0x10,
-    CAND_BIT_AXIS_HOMED  =       0x20,
-    CAND_BIT_F7          =       0x40,
-    CAND_BIT_F8          =       0x80
+    CAND_BIT_CH1_FAULT 	        = 0x01,
+    CAND_BIT_OTW	            = 0x02,
+    CAND_BIT_IDEXTMOUT          = 0x04,
+    CAND_BIT_INDEXNF            = 0x08,
+    CAND_BIT_NOT_ENABLED        = 0x10,
+    CAND_BIT_AXIS_HOMED         = 0x20,
+    CAND_BIT_AXIS_PARMS_RECVD   = 0x40,
+    CAND_BIT_F8                 = 0x80
 } CAND_BITReg;
 
 typedef enum {

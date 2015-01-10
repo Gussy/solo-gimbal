@@ -13,6 +13,8 @@
 #include "device_init.h"
 #include "commutation_calibration_state_machine.h"
 #include "homing_calibration_state_machine.h"
+#include "load_axis_parms_state_machine.h"
+#include "PID.h"
 #include "PeripheralHeaderIncludes.h"
 
 #include <string.h>
@@ -41,6 +43,12 @@ HomingCalibrationParms hc_parms = {
     0.0,                        // Last mechanical theta,
     0.0000001,                  // EPSILON
     RMPCNTL_DEFAULTS            // Ramp control parameters
+};
+
+LoadAxisParmsStateInfo load_ap_state_info = {
+    LOAD_AXIS_PARMS_STATE_LOAD_RATE_P,      // Load axis parms state
+    EL,                                     // Current load axis
+    FALSE,                                  // Axis parms load complete
 };
 
 void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set, RunningAvgFilterParms* pos_loop_stage_1, RunningAvgFilterParms* pos_loop_stage_2, AveragePowerFilterParms* pf_parms)
@@ -76,8 +84,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, 
             // Enable periodic transmission of the BIT CAN message
             axis_parms->BIT_heartbeat_enable = TRUE;
 
-            // If we're the control board, transmit an enable message to the other boards
-            if (GetBoardHWID() == EL) { // EL axis is control board
+            // If we're the EL board, transmit an enable message to the other boards
+            if (GetBoardHWID() == EL) {
 #ifndef ENABLE_AXIS_CALIBRATION_PROCEDURE
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
 #endif
@@ -96,10 +104,212 @@ void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, 
 
             md_parms->rg1.Freq = 10;
 
-            md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
-
             // Set our own blink state to init
             axis_parms->blink_state = BLINK_INIT;
+
+            if (GetBoardHWID() == AZ) {
+                // If we're the AZ board, we first have to load our own parameters from flash, then transmit parameters
+                // to the other axes.
+                md_parms->motor_drive_state = STATE_LOAD_OWN_INIT_PARAMS;
+            } else {
+                // If we're EL or ROLL, we have to receive our parameters from the AZ board
+                md_parms->motor_drive_state = STATE_WAIT_FOR_OWN_AXIS_INIT_PARAMS;
+            }
+            break;
+
+        case STATE_LOAD_OWN_INIT_PARAMS:
+            // This state is only run on the AZ board to load commutation calibration parameters and torque loop PID gains
+            // The rate loop PID gains are only needed on the EL board, so these are loaded over CAN
+            // TODO: Load our own commutation calibration parameters and torque loop PID gains.  Just testing with rate loop PID gains for now
+
+            // After we've loaded our own init parameters, make a note of it, so we can continue later when we're waiting for
+            // all axes to have received their init parameters
+            axis_parms->other_axis_init_params_recvd[AZ] = TRUE;
+
+            // Fake that we got a heartbeat from ourself, because if we're here CAN is initialized and ready to go
+            axis_parms->other_axis_hb_recvd[AZ] = TRUE;
+
+            // Once we're done loading our own parameters, we need to wait to hear a heartbeat from the other axes,
+            // and we can then start transmitting parameters to them
+            md_parms->motor_drive_state = STATE_WAIT_FOR_OTHER_AXIS_HEARTBEATS;
+            break;
+
+        case STATE_WAIT_FOR_OTHER_AXIS_HEARTBEATS:
+            // Once we've received one BIT heartbeat from each axis, we're ok to start transmitting parameters
+            if (axis_parms->other_axis_hb_recvd[EL] && axis_parms->other_axis_hb_recvd[AZ] && axis_parms->other_axis_hb_recvd[ROLL]) {
+                md_parms->motor_drive_state = STATE_TRANSMIT_INIT_PARAMS;
+            }
+            break;
+
+        case STATE_TRANSMIT_INIT_PARAMS:
+            // Run the load init parms state machine to sequence through loading the axis parms
+            LoadAxisParmsStateMachine(&load_ap_state_info);
+
+            // If we've completed transmitting the params to the other axes,
+            // we need to wait to receive confirmation from the axes that they've
+            // received all of their parameters before we continue
+            if (load_ap_state_info.axis_parms_load_complete) {
+                md_parms->motor_drive_state = STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED;
+            }
+            break;
+
+        case STATE_WAIT_FOR_OWN_AXIS_INIT_PARAMS:
+        {
+            // Set park transformation angle to 0
+            md_parms->park_xform_parms.Angle = 0;
+
+            // Drive id and iq to 0 (not driving the motor)
+            md_parms->pid_id.term.Ref = 0;
+            md_parms->pid_iq.term.Ref = 0;
+
+            // Check the received params to see if we got any of the parameters we're waiting for
+            IntOrFloat float_converter;
+            // Rate loop EL PID parameters
+            if (*(param_set[CAND_PID_RATE_EL_P].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_EL_P].param;
+                *(param_set[CAND_PID_RATE_EL_P].sema) = FALSE;
+                rate_pid_loop_float[EL].gainP = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_EL_P_RECVD;
+            }
+            if (*(param_set[CAND_PID_RATE_EL_I].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_EL_I].param;
+                *(param_set[CAND_PID_RATE_EL_I].sema) = FALSE;
+                rate_pid_loop_float[EL].gainI = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_EL_I_RECVD;
+            }
+            if (*(param_set[CAND_PID_RATE_EL_D].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_EL_D].param;
+                *(param_set[CAND_PID_RATE_EL_D].sema) = FALSE;
+                rate_pid_loop_float[EL].gainD = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_EL_D_RECVD;
+            }
+            if (*(param_set[CAND_PID_RATE_EL_WINDUP].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_EL_WINDUP].param;
+                *(param_set[CAND_PID_RATE_EL_WINDUP].sema) = FALSE;
+                rate_pid_loop_float[EL].integralMax = float_converter.float_val;
+                rate_pid_loop_float[EL].integralMin = -float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_EL_WINDUP_RECVD;
+            }
+            // Rate loop AZ PID Parameters
+            if (*(param_set[CAND_PID_RATE_AZ_P].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_P].param;
+                *(param_set[CAND_PID_RATE_AZ_P].sema) = FALSE;
+                rate_pid_loop_float[AZ].gainP = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_AZ_P_RECVD;
+            }
+            if (*(param_set[CAND_PID_RATE_AZ_I].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_I].param;
+                *(param_set[CAND_PID_RATE_AZ_I].sema) = FALSE;
+                rate_pid_loop_float[AZ].gainI = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_AZ_I_RECVD;
+            }
+            if (*(param_set[CAND_PID_RATE_AZ_D].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_D].param;
+                *(param_set[CAND_PID_RATE_AZ_D].sema) = FALSE;
+                rate_pid_loop_float[AZ].gainD = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_AZ_D_RECVD;
+            }
+            if (*(param_set[CAND_PID_RATE_AZ_WINDUP].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_WINDUP].param;
+                *(param_set[CAND_PID_RATE_AZ_WINDUP].sema) = FALSE;
+                rate_pid_loop_float[AZ].integralMax = float_converter.float_val;
+                rate_pid_loop_float[AZ].integralMin = -float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_AZ_WINDUP_RECVD;
+            }
+            // Rate loop ROLL PID Parameters
+            if (*(param_set[CAND_PID_RATE_RL_P].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_RL_P].param;
+                *(param_set[CAND_PID_RATE_RL_P].sema) = FALSE;
+                rate_pid_loop_float[ROLL].gainP = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_RL_P_RECVD;
+            }
+            if (*(param_set[CAND_PID_RATE_RL_I].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_RL_I].param;
+                *(param_set[CAND_PID_RATE_RL_I].sema) = FALSE;
+                rate_pid_loop_float[ROLL].gainI = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_RL_I_RECVD;
+            }
+            if (*(param_set[CAND_PID_RATE_RL_D].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_RL_D].param;
+                *(param_set[CAND_PID_RATE_RL_D].sema) = FALSE;
+                rate_pid_loop_float[ROLL].gainD = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_RL_D_RECVD;
+            }
+            if (*(param_set[CAND_PID_RATE_RL_WINDUP].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_RATE_RL_WINDUP].param;
+                *(param_set[CAND_PID_RATE_RL_WINDUP].sema) = FALSE;
+                rate_pid_loop_float[ROLL].integralMax = float_converter.float_val;
+                rate_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
+                axis_parms->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_RL_WINDUP_RECVD;
+            }
+            // Commutation calibration parameters
+            if (*(param_set[CAND_PID_COMMUTATION_CALIBRATION_SLOPE].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_COMMUTATION_CALIBRATION_SLOPE].param;
+                *(param_set[CAND_PID_COMMUTATION_CALIBRATION_SLOPE].sema) = FALSE;
+                AxisCalibrationSlopes[GIMBAL_TARGET][GetBoardHWID()] = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD;
+            }
+            if (*(param_set[CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT].param;
+                *(param_set[CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT].sema) = FALSE;
+                AxisCalibrationIntercepts[GIMBAL_TARGET][GetBoardHWID()] = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD;
+            }
+            if (*(param_set[CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET].sema)) {
+                AxisHomePositions[GIMBAL_TARGET][GetBoardHWID()] = param_set[CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET].param;
+                *(param_set[CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET].sema) = FALSE;
+                axis_parms->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD;
+            }
+            // Torque loop PID parameters
+            if (*(param_set[CAND_PID_TORQUE_KP].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_TORQUE_KP].param;
+                *(param_set[CAND_PID_TORQUE_KP].sema) = FALSE;
+                md_parms->pid_id.param.Kp = float_converter.float_val;
+                md_parms->pid_iq.param.Kp = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_2 |= INIT_PARAM_TORQUE_PID_KP_RECVD;
+            }
+            if (*(param_set[CAND_PID_TORQUE_KI].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_TORQUE_KI].param;
+                *(param_set[CAND_PID_TORQUE_KI].sema) = FALSE;
+                md_parms->pid_id.param.Ki = float_converter.float_val;
+                md_parms->pid_iq.param.Ki = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_2 |= INIT_PARAM_TORQUE_PID_KI_RECVD;
+            }
+            if (*(param_set[CAND_PID_TORQUE_KD].sema)) {
+                float_converter.uint32_val = param_set[CAND_PID_TORQUE_KD].param;
+                *(param_set[CAND_PID_TORQUE_KD].sema) = FALSE;
+                md_parms->pid_id.param.Kd = float_converter.float_val;
+                md_parms->pid_iq.param.Kd = float_converter.float_val;
+                axis_parms->init_param_recvd_flags_2 |= INIT_PARAM_TORQUE_PID_KD_RECVD;
+            }
+
+            // Wait for all of the init parameters we need to be received
+            if (GetBoardHWID() == EL) {
+                // If we're the EL axis, we receive commutation calibration parameters, torque loop PID gains, and rate loop PID gains
+                // TODO: Check for receipt of all parameters here, only testing with rate loop PID gains for now
+                if (axis_parms->init_param_recvd_flags_1 == ALL_INIT_PARAMS_RECVD_1) {
+                    axis_parms->all_init_params_recvd = TRUE;
+                    // We've received all of our parameters, so we can continue our init sequence
+                    md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
+                }
+            } else {
+                // If we're the ROLL axis, we receive only commutation calibration parameters and torque loop PID gains
+                // The AZ axis loads its parameters itself, and never runs this state, so we don't need to worry about it here
+                // TODO: Check for receipt of parameters here, only testing with rate loop PID gains for now
+                axis_parms->all_init_params_recvd = TRUE;
+                // We've received all of our parameters, so we can continue our init sequence
+                md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
+            }
+        }
+        break;
+
+        case STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED:
+            // Wait for all of the axes to have received their init parameters.  These flags are updated in response to a bit set in the periodic BIT
+            // messages that all axes send
+            if (axis_parms->other_axis_init_params_recvd[EL] && axis_parms->other_axis_init_params_recvd[AZ] && axis_parms->other_axis_init_params_recvd[ROLL]) {
+                // If all axes have received their init parameters, we can continue our init sequence
+                md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
+            }
             break;
 
         case STATE_COMMAND_AZ_INIT:

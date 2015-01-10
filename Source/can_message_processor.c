@@ -122,8 +122,17 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 case CAND_PID_BIT:
                 {
                     Uint8 bit_value = msg.param_response[msg.param_response_cnt - 1];
+
+                    if (!axis_parms->other_axis_hb_recvd[msg.sender_id]) {
+                        axis_parms->other_axis_hb_recvd[msg.sender_id] = TRUE;
+                    }
+
                     if (bit_value & CAND_BIT_AXIS_HOMED) {
                         cb_parms->axes_homed[msg.sender_id] = TRUE;
+                    }
+
+                    if (bit_value & CAND_BIT_AXIS_PARMS_RECVD) {
+                        axis_parms->other_axis_init_params_recvd[msg.sender_id] = TRUE;
                     }
                 }
                 break;

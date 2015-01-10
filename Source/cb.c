@@ -22,6 +22,7 @@ void CBSendStatus( void )
 	//vals[0] |= (GetIndexSyncFlag() > 0)?0:CAND_BIT_INDEXNF; // No index flag in this hw, figure out if we need something else
 	vals[0] |= (GetEnableFlag()) ? 0 : CAND_BIT_NOT_ENABLED;
 	vals[0] |= (GetAxisHomed() > 0) ? CAND_BIT_AXIS_HOMED : 0;
+	vals[0] |= (GetAxisParmsLoaded()) ? CAND_BIT_AXIS_PARMS_RECVD : 0;
 
 	pids[1] = CAND_PID_CORETEMP;
 	vals[1] = DegreesC;

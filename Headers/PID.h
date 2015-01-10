@@ -59,6 +59,8 @@ typedef struct {
     float   errorPrevious;
 } PIDData_Float;
 
+extern PIDData_Float rate_pid_loop_float[AXIS_CNT];
+
 int16 UpdatePID(GimbalAxis axis, int16 sError);
 
 float UpdatePID_Float(PIDDataType data_type, GimbalAxis axis, float error);
