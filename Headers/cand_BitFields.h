@@ -24,8 +24,7 @@ typedef enum  {
     CAND_ID_EL = EL,
     CAND_ID_AZ = AZ,
     CAND_ID_ROLL = ROLL,
-    CAND_ID_ALL_AXES,
-    CAND_ID_INVALID = 0x7
+    CAND_ID_ALL_AXES
 } CAND_DestinationID;
 
 typedef CAND_DestinationID CAND_SenderID;
@@ -35,30 +34,44 @@ typedef CAND_DestinationID CAND_SenderID;
  * Parameter IDs
  */
 typedef enum  {
+    // Four Byte Parameters
+    CAND_PID_RATE_EL_P =                                1,
+    CAND_PID_RATE_EL_I,
+    CAND_PID_RATE_EL_D,
+    CAND_PID_RATE_EL_WINDUP,
+    CAND_PID_RATE_AZ_P,
+    CAND_PID_RATE_AZ_I,
+    CAND_PID_RATE_AZ_D,
+    CAND_PID_RATE_AZ_WINDUP,
+    CAND_PID_RATE_RL_P,
+    CAND_PID_RATE_RL_I,
+    CAND_PID_RATE_RL_D,
+    CAND_PID_RATE_RL_WINDUP,
+    CAND_PID_COMMUTATION_CALIBRATION_SLOPE,
+    CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT,
+    CAND_PID_TORQUE_KP,
+    CAND_PID_TORQUE_KI,
+    CAND_PID_TORQUE_KD,
+
     // Two Byte Parameters
-    CAND_PID_TBD =              1,
-    CAND_PID_RATE,
+    CAND_PID_4_BYTE_CUTOFF =                            31,
+    CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET,
     CAND_PID_CORETEMP,
-    CAND_PID_VELOCITY,
-//    CAND_PID_AZ_JOYSTICK,
-//    CAND_PID_EL_JOYSTICK,
-//    CAND_PID_ROLL_JOYSTICK,
-    CAND_PID_TORQUE = 8,
-    CAND_PID_CAL_ANGLE,
+    CAND_PID_TORQUE,
     CAND_PID_POSITION,
-    // 6 byte parameters
     CAND_PID_TARGET_ANGLES_AZ,
     CAND_PID_TARGET_ANGLES_EL,
     CAND_PID_TARGET_ANGLES_ROLL,
+
     // One Byte Parameters
-    CAND_PID_WORD_CUTOFF = 17,
+    CAND_PID_2_BYTE_CUTOFF =                            47,
     CAND_PID_BIT,
     CAND_PID_VOLTAGE,
     CAND_PID_USER_CONTROL_FLAGS,
     CAND_PID_BEACON_MODE,
     CAND_PID_BEACON_BRIGHTNESS,
     CAND_PID_VERSION,
-    CAND_PID_LAST
+    CAND_PID_LAST =                                     63
 } CAND_ParameterID;
 
 #define CAND_DIR_RESPONSE   0
@@ -175,6 +188,7 @@ typedef enum {
     CAND_RX_FAULT,
     CAND_RX_TIMEOUT,
     CAND_TX_COMPLETE,
+    CAND_TX_UNSUPPORTED_PARAM,
     CAND_INIT_NO_FIFO
 } CAND_Result;
 

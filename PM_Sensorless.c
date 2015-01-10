@@ -267,7 +267,7 @@ MotorDriveParms motor_drive_parms = {
     0                               // Fault revive counter
 };
 
-Uint8 unused, current_flag=FALSE, cal_flag=FALSE;
+Uint8 unused, current_flag=FALSE;
 
 ParamSet param_set[CAND_PID_LAST];
 
@@ -281,7 +281,6 @@ void init_param_set(void)
 		param_set[i].param = 0;
 		param_set[i].sema = &unused;
 	}
-	param_set[CAND_PID_CAL_ANGLE].sema = &cal_flag;
 	param_set[CAND_PID_TORQUE].sema = &current_flag;
 }
 
@@ -292,7 +291,6 @@ void main(void)
 	// initialize flash
 	init_flash();
 #if 0
-	flash_params.AxisCalibrationIntercepts[0] = 0x123;
 	write_flash();
 #endif
 	// Initialize CAN peripheral, and CAND backend
@@ -434,7 +432,6 @@ void main(void)
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
 	{
-
 		// State machine entry & exit point
 		//===========================================================
 		(*Alpha_State_Ptr)();	// jump to an Alpha state (A0,B0,...)

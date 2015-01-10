@@ -92,25 +92,51 @@ extern Uint16 PRG_key7;
 
 struct flash_param_struct_0000 flash_params =
 {
-		0x0000,
-		0,
-		0,
-	    // Gimbal G2
-	    {
-	        0.127,      // EL
-	        0.1267,     // AZ
-	        0.1274,     // ROLL
-	    },
-	    // Gimbal G2
-	    {
-	        0.3801,     // EL
-	        0.4128,     // AZ
-	        0.43,       // ROLL
-	    },
-        { 5135,   // EL
-          4696,   // AZ
-          4319   // ROLL
-        }
+    0x0000,                     // Flash Struct ID
+    0,                          // Board ID
+    0,                          // Other ID
+    // Axis calibration slopes
+    {
+        0.127,  // EL
+        0.1267, // AZ
+        0.1274, // ROLL
+    },
+    // Axis calibration intercepts
+    {
+        0.3801, // EL
+        0.4128, // AZ
+        0.43,   // ROLL
+    },
+    // Axis home positions
+    {
+        5135,   // EL
+        4696,   // AZ
+        4319    // ROLL
+    },
+    // Rate PID P gains
+    {
+        2.5,    // EL
+        2.0,    // AZ
+        5.0     // ROLL
+    },
+    // Rate PID I gains
+    {
+        0.25,   // EL
+        0.5,    // AZ
+        0.5     // ROLL
+    },
+    // Rate PID D gains
+    {
+        0.0,    // EL
+        1.0,    // AZ
+        0.0     // ROLL
+    },
+    // Rate PID windup limits
+    {
+        32768.0,// EL
+        32768.0,// AZ
+        32768.0 // ROLL
+    }
 };
 
 

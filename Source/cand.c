@@ -236,10 +236,12 @@ CAND_Result cand_init( void )
 	//GpioCtrlRegs.GPBMUX1.bit.GPIO34 = 0;		//TODO: lookup
 #endif
 
-	// Be sure that the switches have been moved from their factory positions,
-	// if not, send out a fault message with the errant SenderID
-	if (CAND_GetSenderID() == CAND_ID_INVALID)
+    // Make sure that the board hw id pins are pulled correctly.  The ID all axes isn't a valid
+    // id for a single axis to have (it's used for broadcast to all axes).  If this is the board hw id,
+    // send out a fault message to indicate the bad board ID
+	if (CAND_GetSenderID() == CAND_ID_ALL_AXES) {
 		cand_tx_fault(CAND_FAULT_UNKNOWN_AXIS_ID);
+	}
 
 	return CAND_SUCCESS;
 }
@@ -260,21 +262,24 @@ CAND_SenderID CAND_GetSenderID( void )
 #endif
 
     switch (sw) {
-    	case 0:		return CAND_ID_EL;
-    	case 1:		return CAND_ID_AZ;
-    	case 2:		return CAND_ID_ROLL;
+    	case 0:
+    	    return CAND_ID_EL;
+
+    	case 1:
+    	    return CAND_ID_AZ;
+
+    	case 2:
+    	    return CAND_ID_ROLL;
+
     	case 3:
-    	default:	return CAND_ID_INVALID;
+    	default:
+    	    return CAND_ID_ALL_AXES;
     }
 }
 
 BOOL CAND_InDestinationList( CAND_DestinationID did )
 {
     CAND_SenderID me = CAND_GetSenderID();
-
-    if (me == CAND_ID_INVALID) {
-        return FALSE;
-    }
 
     if (did == CAND_ID_ALL_AXES) {
         return TRUE;
@@ -309,19 +314,20 @@ CAND_Result cand_rx( struct cand_message * msg )
 
 				ret = CAND_RX_FAULT;
 			}
-				break;
+			break;
+
 			case CAND_MID_COMMAND:
 				// Check if we are on the recipient list
-				if ( CAND_InDestinationList( (CAND_DestinationID) sid.directive.d_id) == FALSE ) {
+				if (CAND_InDestinationList((CAND_DestinationID)sid.directive.d_id) == FALSE) {
 					break;
 				}
-				msg->command = (CAND_Command) sid.directive.command;
+				msg->command = (CAND_Command)sid.directive.command;
 				ret = CAND_RX_COMMAND;
 				break;
-			case CAND_MID_PARAMETER_SET:
 
+			case CAND_MID_PARAMETER_SET:
 				// Check if we are on the recipient list
-				if ( CAND_InDestinationList( (CAND_DestinationID) sid.param_set.all.d_id) == FALSE ) {
+				if (CAND_InDestinationList((CAND_DestinationID)sid.param_set.all.d_id) == FALSE) {
 					break;
 				}
 
@@ -332,67 +338,107 @@ CAND_Result cand_rx( struct cand_message * msg )
 
 					// If there are multiple destinations for a single immediate parameter
 					// then our data is packed in with the others and we have to get it out:
-					if ( sid.param_set.all.d_id == CAND_ID_ALL_AXES ) {
+					if (sid.param_set.all.d_id == CAND_ID_ALL_AXES) {
 						// Extract out our parameter
 						msg->param_id[0] = (CAND_ParameterID) sid.param_set.immediate.param_reg;
 						msg->param_cnt = 1;							// there can only be 1 param in multicast of this type
 
 						switch (CAND_GetSenderID()) {
-							case CAND_ID_AZ:	msg->param[0] = mbox.MDL.word.HI_WORD;		break;
-							case CAND_ID_ROLL:	msg->param[0] = mbox.MDL.word.LOW_WORD;		break;
-							default:			break;
+							case CAND_ID_AZ:
+							    msg->param[0] = mbox.MDL.word.HI_WORD;
+							    break;
+
+							case CAND_ID_ROLL:
+							    msg->param[0] = mbox.MDL.word.LOW_WORD;
+							    break;
+
+							default:
+							    break;
 						}
-
-
 					} else {
 						// Must just be a parameter for us (don't need to check broadcast, immediate
 						// parameters for broadcast aren't a thing)
 						uint8_t p_flag, p_cnt;
 
-						for( p_flag=1, p_cnt=0; p_flag<=0x10 && p_cnt<4; p_flag<<=1 ) {
+						for (p_flag = 1, p_cnt = 0; p_flag <= 0x10 && p_cnt < 4; p_flag <<= 1 ) {
 
-							if ( p_flag&sid.param_set.immediate.param_reg ) {
-								msg->param_id[p_cnt] = (CAND_ParameterID) (sid.param_set.immediate.param_reg&p_flag);
+							if (p_flag & sid.param_set.immediate.param_reg) {
+								msg->param_id[p_cnt] = (CAND_ParameterID)(sid.param_set.immediate.param_reg & p_flag);
 
 								switch (p_cnt) {
-									case 0: 	msg->param[p_cnt] = mbox.MDL.word.HI_WORD;		break;
-									case 1:		msg->param[p_cnt] = mbox.MDL.word.LOW_WORD;		break;
-									case 2:		msg->param[p_cnt] = mbox.MDH.word.HI_WORD;		break;
-									case 3:		msg->param[p_cnt] = mbox.MDH.word.LOW_WORD;		break;
-									default: 													break;
+									case 0:
+									    msg->param[p_cnt] = mbox.MDL.word.HI_WORD;
+									    break;
+
+									case 1:
+									    msg->param[p_cnt] = mbox.MDL.word.LOW_WORD;
+									    break;
+
+									case 2:
+									    msg->param[p_cnt] = mbox.MDH.word.HI_WORD;
+									    break;
+
+									case 3:
+									    msg->param[p_cnt] = mbox.MDH.word.LOW_WORD;
+									    break;
+
+									default:
+									    break;
 								}
 								p_cnt++;
 							}
 						}
 						msg->param_cnt = p_cnt;
 					}
-
-
 				} else {
 					// Extended mode, rather than having a register with flags for parameters, we
-					// get a list of ID/params to set, first ID is in the last 5 bits of the arbitration
+					// get a list of ID/params to set, first ID is in the last 6 bits of the arbitration
 					// field
-					int byte_in_payload=0, p_cnt=0;
+					int byte_in_payload = 0, p_cnt = 0;
 
-					while( mbox.MSGCTRL.bit.DLC > byte_in_payload && p_cnt < 3) {
+					while ((mbox.MSGCTRL.bit.DLC > byte_in_payload)) {
 
 						// Get the special case ID0 out of the arbitration field, else
 						// the next byte in the payload is the next ID
 						if (p_cnt == 0) {
-							msg->param_id[p_cnt] = (CAND_ParameterID) sid.param_set.extended.param_id;
+							msg->param_id[p_cnt] = (CAND_ParameterID)sid.param_set.extended.param_id;
 						} else {
-							msg->param_id[p_cnt] = (CAND_ParameterID) CANMD8(mbox, byte_in_payload);
+							msg->param_id[p_cnt] = (CAND_ParameterID)CANMD8(mbox, byte_in_payload);
 							byte_in_payload++;
 						}
 
-						// param IDs of <= 16 are 2 bytes, else just 1, list is
-						// packed, so we'll have to count our way through
-						if (msg->param_id[p_cnt] < CAND_PID_WORD_CUTOFF) {
-							msg->param[p_cnt] = CANMD8(mbox, byte_in_payload)<<8 | CANMD8(mbox, byte_in_payload+1);
-							byte_in_payload += 2;
+						// Params can be either 4, 2, or 1 byte.  We can determine which size each param is by
+						// its parameter ID.  List is packed, so we'll have to count our way through
+						if (msg->param_id[p_cnt] < CAND_PID_4_BYTE_CUTOFF) {
+						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
+						    // If we would, this is an ill formed message, so we just give up here and return the parameters that
+						    // have already been parsed
+						    if (byte_in_payload + 4 >= 8) {
+						        break;
+						    }
+
+						    msg->param[p_cnt] = (CANMD16(mbox, byte_in_payload) << 16) | CANMD16(mbox, byte_in_payload + 2);
+						    byte_in_payload += 4;
+						} else if (msg->param_id[p_cnt] < CAND_PID_2_BYTE_CUTOFF) {
+						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
+                            // If we would, this is an ill formed message, so we just give up here and return the parameters that
+                            // have already been parsed
+                            if (byte_in_payload + 2 >= 8) {
+                                break;
+                            }
+
+                            msg->param[p_cnt] = ((CANMD8(mbox, byte_in_payload) << 8) | CANMD8(mbox, byte_in_payload + 1)) & 0x0000FFFF;
+                            byte_in_payload += 2;
 						} else {
-							msg->param[p_cnt] = CANMD8(mbox, byte_in_payload);
-							byte_in_payload += 1;
+						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
+                            // If we would, this is an ill formed message, so we just give up here and return the parameters that
+                            // have already been parsed
+                            if (byte_in_payload + 1 >= 8) {
+                                break;
+                            }
+
+						    msg->param[p_cnt] = CANMD8(mbox, byte_in_payload) & 0x000000FF;
+						    byte_in_payload += 1;
 						}
 
 						p_cnt++;
@@ -401,14 +447,14 @@ CAND_Result cand_rx( struct cand_message * msg )
 				}
 				ret = CAND_RX_PARAM_SET;
 				break;
-			case CAND_MID_PARAMETER_QUERY:
 
+			case CAND_MID_PARAMETER_QUERY:
 				// Check if we are on the recipient list
-				if ( CAND_InDestinationList( (CAND_DestinationID) sid.param_query.d_id) == FALSE ) {
+				if (CAND_InDestinationList((CAND_DestinationID)sid.param_query.d_id) == FALSE) {
 					break;
 				}
 
-				msg->sender_id = (CAND_SenderID) sid.param_query.s_id;
+				msg->sender_id = (CAND_SenderID)sid.param_query.s_id;
 
 				// This is either a new query or a response to a query that we sent out
 				if (sid.param_query.dir == CAND_DIR_QUERY) {
@@ -416,10 +462,11 @@ CAND_Result cand_rx( struct cand_message * msg )
 					int p_cnt=0;
 					msg->param_repeat = sid.param_query.repeat;
 
-					while( p_cnt < mbox.MSGCTRL.bit.DLC ) {
-						msg->param_request_id[p_cnt] = (CAND_ParameterID) CANMD8(mbox, p_cnt);
+					while (p_cnt < mbox.MSGCTRL.bit.DLC) {
+						msg->param_request_id[p_cnt] = (CAND_ParameterID)CANMD8(mbox, p_cnt);
 						p_cnt++;
 					}
+
 					msg->param_request_cnt = p_cnt;
 					ret = CAND_RX_PARAM_QUERY;
 				} else {
@@ -430,16 +477,42 @@ CAND_Result cand_rx( struct cand_message * msg )
 					// ID/value pairs are in the payload
 					while( mbox.MSGCTRL.bit.DLC > byte_in_payload && p_cnt < 4) {
 
-						msg->param_response_id[p_cnt] = (CAND_ParameterID) CANMD8(mbox, byte_in_payload);
+						msg->param_response_id[p_cnt] = (CAND_ParameterID)CANMD8(mbox, byte_in_payload);
 						byte_in_payload++;
 
-						if (msg->param_response_id[p_cnt] < CAND_PID_WORD_CUTOFF) {
-							msg->param_response[p_cnt] = CANMD8(mbox, byte_in_payload)<<8 | CANMD8(mbox, byte_in_payload+1);
-							byte_in_payload += 2;
-						} else {
-							msg->param_response[p_cnt] = CANMD8(mbox, byte_in_payload);
-							byte_in_payload += 1;
-						}
+						// Params can be either 4, 2, or 1 byte.  We can determine which size each param is by
+                        // its parameter ID.  List is packed, so we'll have to count our way through
+                        if (msg->param_response_id[p_cnt] < CAND_PID_4_BYTE_CUTOFF) {
+                            // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
+                            // If we would, this is an ill formed message, so we just give up here and return the parameters that
+                            // have already been parsed
+                            if (byte_in_payload + 4 >= 8) {
+                                break;
+                            }
+
+                            msg->param_response[p_cnt] = (CANMD16(mbox, byte_in_payload) << 16) | CANMD16(mbox, byte_in_payload + 2);
+                            byte_in_payload += 4;
+                        } else if (msg->param_response_id[p_cnt] < CAND_PID_2_BYTE_CUTOFF) {
+                            // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
+                            // If we would, this is an ill formed message, so we just give up here and return the parameters that
+                            // have already been parsed
+                            if (byte_in_payload + 2 >= 8) {
+                                break;
+                            }
+
+                            msg->param_response[p_cnt] = ((CANMD8(mbox, byte_in_payload) << 8) | CANMD8(mbox, byte_in_payload + 1)) & 0x0000FFFF;
+                            byte_in_payload += 2;
+                        } else {
+                            // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
+                            // If we would, this is an ill formed message, so we just give up here and return the parameters that
+                            // have already been parsed
+                            if (byte_in_payload + 1 >= 8) {
+                                break;
+                            }
+
+                            msg->param_response[p_cnt] = CANMD8(mbox, byte_in_payload) & 0x000000FF;
+                            byte_in_payload += 1;
+                        }
 
 						p_cnt++;
 					}
@@ -448,10 +521,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 				}
 
 				break;
-			//case CAND_MID_DEBUG:
-				//note that debug data will actually get caught by CAND_MID_PARAMETER_QUERY,
-				// then get rejected because it's an invalid destination ID, leaving as known
-				// issue for now, hence TODO: fixme
+
 			default:
 				ret = CAND_RX_PARSE_ERROR;
 				break;
@@ -460,7 +530,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 	return ret;
 }
 
-CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, Uint16* param, Uint8 param_cnt)
+CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, Uint32* param, Uint8 param_cnt)
 {
     CAND_SID sid;
     Uint8 payload[8], payload_cnt = 0;
@@ -475,13 +545,13 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
     sid.param_set.extended.addr_mode = CAND_ADDR_MODE_EXTENDED;
 
     //need to handle a few different things here:
-    // 1: that mdb is a multi-endpoint desitination, and we're sending a single pid
-    // 2: that mdb is a multi-endpoint desitination, and we're sending multiple pids
-    // 3: that mdb is a single endpoint and we're sending multiple pids
-    // 4: that mdb is a single endpoint and we're sending 1 pid (then you should be using SetParam...)
+    // 1: that the destination id is a multi-endpoint desitination, and we're sending a single pid
+    // 2: that the destination id is a multi-endpoint desitination, and we're sending multiple pids
+    // 3: that the destination id is a single endpoint and we're sending multiple pids
+    // 4: that the destination id is a single endpoint and we're sending 1 pid (then you should be using cand_tx_param...)
 
     // This is nearly done, but TODO: add logic to detect when Immediate mode
-    // could be used, current implementation isnt quite as efficient as it could
+    // could be used, current implementation isn't quite as efficient as it could
     // be
 
     if (did == CAND_ID_ALL_AXES) {
@@ -490,43 +560,42 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
         //  are loaded into the payload as an ordered list, MSParam is the
         //  lowest destination id in the destination list
 
-        // when sending to the two axes, it could be an 1x1 byte, 2x1 byte or
+        // when sending to the two axes, it could be a 1x1 byte, 2x1 byte or
         // 1x2 byte params
-        if ( pid[0] < CAND_PID_WORD_CUTOFF) {
+        if ((pid[0] < CAND_PID_2_BYTE_CUTOFF) && (pid[0] > CAND_PID_4_BYTE_CUTOFF)) {
             // only 1 param of 2 byte to this destination
 
-            sid.param_set.all.param    = pid[0];
+            sid.param_set.all.param = pid[0];
 
-            payload[0] = (param[0]>>8)&0xff;
-            payload[1] = param[0]&0xff;
-            payload[2] = (param[1]>>8)&0xff;
-            payload[3] = param[1]&0xff;
+            payload[0] = (param[0] >> 8) & 0xff;
+            payload[1] = param[0] & 0xff;
+            payload[2] = (param[1] >> 8) & 0xff;
+            payload[3] = param[1] & 0xff;
             payload_cnt = 4;
-            sid.param_set.extended.addr_mode    = CAND_ADDR_MODE_IMMEDIATE;
+            sid.param_set.extended.addr_mode = CAND_ADDR_MODE_IMMEDIATE;
 
-        } else if ( param_cnt == 1) {
-            // 1x 1byte param
-            sid.param_set.all.param    = pid[0];
+        } else if (param_cnt == 1) {
+            // 1x 1 byte param
+            sid.param_set.all.param = pid[0];
 
-            payload[0] = param[0]&0xff;
-            payload[1] = param[1]&0xff;
+            payload[0] = param[0] & 0xff;
+            payload[1] = param[1] & 0xff;
             payload_cnt = 2;
 
-        } else if ( param_cnt == 2 ) {
-            // 2x 1byte param, this is the only case '2' from above
-            sid.param_set.all.param    = pid[0];
+        } else if (param_cnt == 2) {
+            // 2x 1 byte param, this is the only case '2' from above
+            sid.param_set.all.param = pid[0];
 
-            payload[0] = param[0]&0xff;
-            payload[1] = param[1]&0xff;
+            payload[0] = param[0] & 0xff;
+            payload[1] = param[1] & 0xff;
             payload[2] = pid[1];
-            payload[3] = param[2]&0xff;
-            payload[4] = param[3]&0xff;
+            payload[3] = param[2] & 0xff;
+            payload[4] = param[3] & 0xff;
             payload_cnt = 5;
-
         }
     } else {
         // Now we must be sending multiple parameters to a single endpoint
-        if ( param_cnt == 1 ) {
+        if (param_cnt == 1) {
             // you should call the right function:
             return cand_tx_param(did, pid[0], param[0]);
         }
@@ -534,10 +603,10 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
         // this is where we need to check whether all pids are <CAND_PID_WORD_CUTOFF,
         // so we know we can send in immediate mode
 
-        int param_in_cnt=0, pid_cnt=0;
-        payload_cnt=0;
+        int param_in_cnt = 0, pid_cnt = 0;
+        payload_cnt = 0;
 
-        for ( param_in_cnt=0; param_in_cnt<param_cnt && payload_cnt<8; param_in_cnt++, pid_cnt++ ) {
+        for (param_in_cnt = 0; (param_in_cnt < param_cnt) && (payload_cnt < 8); param_in_cnt++, pid_cnt++) {
 
             if (pid_cnt == 0) {
                 // first id is stuffed into arbitration field
@@ -546,14 +615,18 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
                 payload[payload_cnt++] = pid[pid_cnt];
             }
 
-            if (pid[pid_cnt] < CAND_PID_WORD_CUTOFF) {
-                //16 bit param:
-                payload[payload_cnt] = (param[param_in_cnt]>>8)&0xff;
-                payload[payload_cnt+1] = param[param_in_cnt]&0xff;
+            if ((pid[pid_cnt] < CAND_PID_2_BYTE_CUTOFF) && (pid[pid_cnt] > CAND_PID_4_BYTE_CUTOFF)) {
+                // 16-bit param
+                payload[payload_cnt] = (param[param_in_cnt] >> 8) & 0xff;
+                payload[payload_cnt + 1] = param[param_in_cnt] & 0xff;
                 payload_cnt += 2;
-            } else {
-                payload[payload_cnt] = param[param_in_cnt]&0xff;
+            } else if (pid[pid_cnt] > CAND_PID_2_BYTE_CUTOFF) {
+                // 8-bit param
+                payload[payload_cnt] = param[param_in_cnt] & 0xff;
                 payload_cnt += 1;
+            } else {
+                // 32-bit param.  We don't support multi-param tramsmits with 4-byte parameters, so return an error code
+                return CAND_TX_UNSUPPORTED_PARAM;
             }
         }
     }
@@ -561,31 +634,43 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
     return cand_tx(sid, payload, payload_cnt);
 }
 
-CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint16 param)
+CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 param)
 {
     // assemble packet
     CAND_SID sid;
-    Uint8 payload[2];
+    Uint8 payload[4];
 
-    sid.sidWord                 = 0;
-    sid.all.m_id                = CAND_MID_PARAMETER_SET;
+    sid.sidWord               = 0;
+    sid.all.m_id              = CAND_MID_PARAMETER_SET;
     sid.param_set.all.d_id    = did;
     sid.param_set.all.param   = pid;
     sid.param_set.extended.addr_mode = CAND_ADDR_MODE_EXTENDED;
 
-    if (pid < CAND_PID_WORD_CUTOFF) {
-        //16 bit param:
-        payload[0] = (param>>8)&0xff;
-        payload[1] = param&0xff;
+    uint8_t payload_size = 0;
+
+    if (pid < CAND_PID_4_BYTE_CUTOFF) {
+        // 32-bit param
+        payload[0] = (param >> 24) & 0x000000FF;
+        payload[1] = (param >> 16) & 0x000000FF;
+        payload[2] = (param >> 8) & 0x000000FF;
+        payload[3] = param & 0x000000FF;
+        payload_size = 4;
+    } else if (pid < CAND_PID_2_BYTE_CUTOFF) {
+        // 16-bit param
+        payload[0] = (param >> 8) & 0x000000FF;
+        payload[1] = param & 0x000000FF;
+        payload_size = 2;
     } else {
-        payload[0] = param&0xff;
+        // 8-bit param
+        payload[0] = param & 0x000000FF;
+        payload_size = 1;
     }
 
     // send message to destinations provided
-    return cand_tx(sid, payload, (pid < CAND_PID_WORD_CUTOFF) ? 2 : 1);
+    return cand_tx(sid, payload, payload_size);
 }
 
-CAND_Result cand_tx_multi_response( CAND_ParameterID *pid, Uint16 *val, uint8_t resp_cnt )
+CAND_Result cand_tx_multi_response(CAND_ParameterID *pid, Uint32 *val, uint8_t resp_cnt)
 {
 	CAND_SID sid;
 	uint8_t payload[10], pcnt=0;
@@ -596,19 +681,49 @@ CAND_Result cand_tx_multi_response( CAND_ParameterID *pid, Uint16 *val, uint8_t 
 	sid.param_query.s_id = CAND_GetSenderID();
 	sid.param_query.dir = CAND_DIR_RESPONSE;
 
-	while(resp_cnt) {
-		payload[pcnt++] = pid[resp_cnt-1];
-		if (pid[resp_cnt-1] < CAND_PID_WORD_CUTOFF) {
-			payload[pcnt++] = (val[resp_cnt-1]>>8)&0xff;
+	while (resp_cnt && (pcnt < 8)) {
+		payload[pcnt++] = pid[resp_cnt - 1];
+
+		if (pid[resp_cnt - 1] < CAND_PID_4_BYTE_CUTOFF) {
+		    // 4 byte param response
+
+		    // Make sure we won't overflow the payload by adding this parameter.  If we would,
+		    // give up and transmit the param responses that have already been inserted into the payload
+		    if (pcnt + 4 >= 8) {
+		        break;
+		    }
+		    payload[pcnt++] = (val[resp_cnt - 1] >> 24) & 0x000000FF;
+		    payload[pcnt++] = (val[resp_cnt - 1] >> 16) & 0x000000FF;
+		    payload[pcnt++] = (val[resp_cnt - 1] >> 8) & 0x000000FF;
+		    payload[pcnt++] = val[resp_cnt - 1] & 0x000000FF;
+		} else if (pid[resp_cnt - 1] < CAND_PID_2_BYTE_CUTOFF) {
+		    // 2 byte param response
+
+		    // Make sure we won't overflow the payload by adding this parameter.  If we would,
+            // give up and transmit the param responses that have already been inserted into the payload
+            if (pcnt + 2 >= 8) {
+                break;
+            }
+            payload[pcnt++] = (val[resp_cnt - 1] >> 8) & 0x000000FF;
+            payload[pcnt++] = val[resp_cnt - 1] & 0x000000FF;
+		} else {
+		    // 1 byte param response
+
+            // Make sure we won't overflow the payload by adding this parameter.  If we would,
+            // give up and transmit the param responses that have already been inserted into the payload
+            if (pcnt + 1 >= 8) {
+                break;
+            }
+            payload[pcnt++] = val[resp_cnt - 1] & 0x000000FF;
 		}
-		payload[pcnt++] = val[resp_cnt-1]&0xff;
+
 		resp_cnt--;
 	}
 
 	return cand_tx(sid, payload, pcnt);
 }
 
-CAND_Result cand_tx_response( CAND_DestinationID did, CAND_ParameterID pid, Uint16 val )
+CAND_Result cand_tx_response(CAND_DestinationID did, CAND_ParameterID pid, Uint32 val)
 {
 	CAND_SID sid;
 	uint8_t payload[10], pcnt=0;
@@ -620,11 +735,22 @@ CAND_Result cand_tx_response( CAND_DestinationID did, CAND_ParameterID pid, Uint
 	sid.param_query.dir = CAND_DIR_RESPONSE;
 
 	payload[pcnt++] = pid;
-	if (pid < CAND_PID_WORD_CUTOFF) {
-		payload[pcnt++] = (val>>8)&0xff;
+
+	if (pid < CAND_PID_4_BYTE_CUTOFF) {
+	    // 4 byte param response
+	    payload[pcnt++] = (val >> 24) & 0x000000FF;
+        payload[pcnt++] = (val >> 16) & 0x000000FF;
+        payload[pcnt++] = (val >> 8) & 0x000000FF;
+        payload[pcnt++] = val & 0x000000FF;
+	} else if (pid < CAND_PID_2_BYTE_CUTOFF) {
+	    // 2 byte param response
+	    payload[pcnt++] = (val >> 8) & 0x000000FF;
+        payload[pcnt++] = val & 0x000000FF;
+	} else {
+	    // 1 byte param response
+	    payload[pcnt++] = val & 0x000000FF;
 	}
 
-	payload[pcnt++] = val&0xff;
 	return cand_tx(sid, payload, pcnt);
 }
 

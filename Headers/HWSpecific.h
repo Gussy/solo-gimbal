@@ -36,7 +36,7 @@ typedef enum {
 
 #define ENCODER_COUNTS_PER_REV 10000
 
-#define GIMBAL_TARGET GIMBAL_G1
+#define GIMBAL_TARGET GIMBAL_G2
 
 // Map gyro axes to gimbal axes
 static const GimbalAxis GyroAxisMap[AXIS_CNT] = {

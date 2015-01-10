@@ -18,6 +18,10 @@ struct flash_param_struct_0000 {
 	float AxisCalibrationSlopes[AXIS_CNT];
 	float AxisCalibrationIntercepts[AXIS_CNT];
 	int AxisHomePositions[AXIS_CNT];
+	float rate_pid_p[AXIS_CNT];
+	float rate_pid_i[AXIS_CNT];
+	float rate_pid_d[AXIS_CNT];
+	float rate_pid_windup[AXIS_CNT];
 };
 
 extern struct flash_param_struct_0000 flash_params;

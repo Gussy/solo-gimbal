@@ -12,7 +12,7 @@ extern Uint16 DegreesC;	//in PM_Sensorless.c
 void CBSendStatus( void )
 {
 	CAND_ParameterID pids[2];
-	Uint16 vals[2];
+	Uint32 vals[2];
 
 	pids[0] = CAND_PID_BIT;
 	vals[0] = 0;
@@ -41,7 +41,7 @@ void CBSendVoltage( float v )
 
 void MDBSendTorques(int16 az, int16 roll)
 {
-    Uint16 combined[2];
+    Uint32 combined[2];
     int id, packed_id;
 
     for (id = 0, packed_id = 0; packed_id < (AXIS_CNT - 1); id++) {

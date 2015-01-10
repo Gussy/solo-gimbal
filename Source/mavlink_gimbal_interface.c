@@ -75,7 +75,11 @@ void mavlink_state_machine()
     	// Inhibit transmission of new target angles if we're running the balance procedure,
     	// so we don't overwrite the balance angles
 #ifndef ENABLE_BALANCE_PROCEDURE
-    	cand_tx_multi_param(CAND_ID_EL,pids,(Uint16 *)pos,3);
+    	Uint32 pos_payload[3];
+    	pos_payload[0] = pos[0];
+    	pos_payload[1] = pos[1];
+    	pos_payload[2] = pos[2];
+    	cand_tx_multi_param(CAND_ID_EL, pids, pos_payload, 3);
 #endif
     	attitude_received = 0;
     }
