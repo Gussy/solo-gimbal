@@ -688,14 +688,14 @@ CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 p
     return cand_tx(sid, payload, payload_size);
 }
 
-CAND_Result cand_tx_multi_response(CAND_ParameterID *pid, Uint32 *val, uint8_t resp_cnt)
+CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid, Uint32 *val, uint8_t resp_cnt)
 {
 	CAND_SID sid;
 	uint8_t payload[10], pcnt=0;
 
 	sid.sidWord = 0;
 	sid.param_query.m_id = CAND_MID_PARAMETER_QUERY;
-	sid.param_query.d_id = CAND_ID_EL; // EL axis is control board
+	sid.param_query.d_id = did;
 	sid.param_query.s_id = CAND_GetSenderID();
 	sid.param_query.dir = CAND_DIR_RESPONSE;
 

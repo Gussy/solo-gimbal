@@ -27,7 +27,7 @@ void CBSendStatus( void )
 	pids[1] = CAND_PID_CORETEMP;
 	vals[1] = DegreesC;
 
-	cand_tx_multi_response(pids, vals, 2);
+	cand_tx_multi_response(CAND_ID_ALL_AXES, pids, vals, 2);
 }
 
 void CBSendEncoder( Uint16 enc )
