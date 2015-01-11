@@ -349,7 +349,14 @@ CAND_Result cand_rx( struct cand_message * msg )
 					// then our data is packed in with the others and we have to get it out:
 					if (sid.param_set.all.d_id == CAND_ID_ALL_AXES) {
 						// Extract out our parameter
-						msg->param_id[0] = (CAND_ParameterID)sid.param_set.immediate.param_reg;
+					    // Convert the 1 hot parameter ID back to a normal parameter ID
+					    uint8_t p_flag, shift_cnt;
+					    for (p_flag = 1, shift_cnt = 0; p_flag <= 0x20; p_flag <<= 1, shift_cnt++) {
+					        if (p_flag & sid.param_set.immediate.param_reg) {
+					            msg->param_id[0] = immediate_pid_lookup_buffer[shift_cnt];
+					            break;
+					        }
+					    }
 						msg->param_cnt = 1;							// there can only be 1 param in multicast of this type
 
 						switch (CAND_GetSenderID()) {
@@ -372,6 +379,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 						for (p_flag = 1, p_cnt = 0, shift_cnt = 0; p_flag <= 0x20 && p_cnt < 4; p_flag <<= 1, shift_cnt++ ) {
 
 							if (p_flag & sid.param_set.immediate.param_reg) {
+							    // Convert the 1 hot parameter ID back to a normal parameter ID
 								msg->param_id[p_cnt] = (CAND_ParameterID)immediate_pid_lookup_buffer[shift_cnt];
 
 								switch (p_cnt) {
