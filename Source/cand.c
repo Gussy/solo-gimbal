@@ -434,7 +434,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 						        break;
 						    }
 
-						    msg->param[p_cnt] = (CANMD16(mbox, byte_in_payload) << 16) | CANMD16(mbox, byte_in_payload + 2);
+						    msg->param[p_cnt] = (CANMD8(mbox, byte_in_payload) << 24) | (CANMD8(mbox, byte_in_payload + 1) << 16) | (CANMD8(mbox, byte_in_payload + 2) << 8) | CANMD8(mbox, byte_in_payload + 3);
 						    byte_in_payload += 4;
 						} else if (msg->param_id[p_cnt] < CAND_PID_2_BYTE_CUTOFF) {
 						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
@@ -507,7 +507,7 @@ CAND_Result cand_rx( struct cand_message * msg )
                                 break;
                             }
 
-                            msg->param_response[p_cnt] = (CANMD16(mbox, byte_in_payload) << 16) | CANMD16(mbox, byte_in_payload + 2);
+                            msg->param_response[p_cnt] = (CANMD8(mbox, byte_in_payload) << 24) | (CANMD8(mbox, byte_in_payload + 1) << 16) | (CANMD8(mbox, byte_in_payload + 2) << 8) | CANMD8(mbox, byte_in_payload + 3);
                             byte_in_payload += 4;
                         } else if (msg->param_response_id[p_cnt] < CAND_PID_2_BYTE_CUTOFF) {
                             // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.

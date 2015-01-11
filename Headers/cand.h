@@ -21,8 +21,7 @@ typedef char int8_t;
 #endif
 
 
-#define CANMD8(box, n)	(((n)>3)?((box.MDH.all>>(8*(3-((n)-4))))&0xff):(((box.MDL.all>>(8*(3-(n))))&0xff)))
-#define CANMD16(box, n)	(((n)>1)?((box.MDH.all>>(16*(3-((n)-2))))&0xffff):(((box.MDL.all>>(16*(3-(n))))&0xffff)))
+#define CANMD8(box, byte_offset)	(((byte_offset)>3)?((box.MDH.all>>(8*(3-((byte_offset)-4))))&0xff):(((box.MDL.all>>(8*(3-(byte_offset))))&0xff)))
 
 /**
  * CANDavinci API

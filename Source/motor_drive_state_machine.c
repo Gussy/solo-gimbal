@@ -84,8 +84,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, 
             // Enable periodic transmission of the BIT CAN message
             axis_parms->BIT_heartbeat_enable = TRUE;
 
-            // If we're the AZ board, transmit an enable message to the other boards
-            if (GetBoardHWID() == AZ) {
+            // If we're the EL board, transmit an enable message to the other boards
+            if (GetBoardHWID() == EL) {
 #ifndef ENABLE_AXIS_CALIBRATION_PROCEDURE
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
 #endif
