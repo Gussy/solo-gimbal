@@ -17,13 +17,100 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 {
     switch(load_parms_state_info->load_axis_parms_state) {
         case LOAD_AXIS_PARMS_STATE_LOAD_TORQUE_KP:
+            switch (load_parms_state_info->current_load_axis) {
+                case EL:
 
+                    break;
+
+                case AZ:
+
+                    break;
+
+                case ROLL:
+
+                    break;
+            }
             break;
 
         case LOAD_AXIS_PARMS_STATE_LOAD_TORQUE_KI:
+            switch (load_parms_state_info->current_load_axis) {
+                case EL:
 
+                    break;
+
+                case AZ:
+
+                    break;
+
+                case ROLL:
+
+                    break;
+            }
             break;
 
+        case LOAD_AXIS_PARMS_STATE_LOAD_TORQUE_KD:
+            switch (load_parms_state_info->current_load_axis) {
+                case EL:
+
+                    break;
+
+                case AZ:
+
+                    break;
+
+                case ROLL:
+
+                    break;
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_LOAD_COMMUTATION_CALIBRATION_SLOPE:
+            switch (load_parms_state_info->current_load_axis) {
+                case EL:
+
+                    break;
+
+                case AZ:
+
+                    break;
+
+                case ROLL:
+
+                    break;
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_LOAD_COMMUTATION_CALIBRATION_INTERCEPT:
+            switch (load_parms_state_info->current_load_axis) {
+                case EL:
+
+                    break;
+
+                case AZ:
+
+                    break;
+
+                case ROLL:
+
+                    break;
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_LOAD_COMMUTATION_CALIBRATION_HOME_OFFSET:
+            switch (load_parms_state_info->current_load_axis) {
+                case EL:
+
+                    break;
+
+                case AZ:
+
+                    break;
+
+                case ROLL:
+
+                    break;
+            }
+            break;
 
         // All rate params are sent to the EL axis, since this is where the rate loops run
         case LOAD_AXIS_PARMS_STATE_LOAD_RATE_P:
