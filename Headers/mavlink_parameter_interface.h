@@ -8,6 +8,8 @@
 #ifndef MAVLINK_PARAMETER_INTERFACE_H_
 #define MAVLINK_PARAMETER_INTERFACE_H_
 
+#include "cand_BitFields.h"
+
 #ifndef uint8_t
 #define uint8_t Uint8
 #endif
@@ -18,7 +20,23 @@
 
 #include "ardupilotmega/mavlink.h"
 
-#define NUM_MAVLINK_PARAMS 14
+typedef enum {
+    MAVLINK_GIMBAL_PARAM_PID_YAW_P = 0,
+    MAVLINK_GIMBAL_PARAM_PID_YAW_I,
+    MAVLINK_GIMBAL_PARAM_PID_YAW_D,
+    MAVLINK_GIMBAL_PARAM_PID_YAW_I_MAX,
+    MAVLINK_GIMBAL_PARAM_PID_PITCH_P,
+    MAVLINK_GIMBAL_PARAM_PID_PITCH_I,
+    MAVLINK_GIMBAL_PARAM_PID_PITCH_D,
+    MAVLINK_GIMBAL_PARAM_PID_PITCH_I_MAX,
+    MAVLINK_GIMBAL_PARAM_PID_ROLL_P,
+    MAVLINK_GIMBAL_PARAM_PID_ROLL_I,
+    MAVLINK_GIMBAL_PARAM_PID_ROLL_D,
+    MAVLINK_GIMBAL_PARAM_PID_ROLL_I_MAX,
+    MAVLINK_GIMBAL_PARAM_SYSID_SWVER,
+    MAVLINK_GIMBAL_PARAM_SERIAL_BAUD,
+    MAVLINK_GIMBAL_PARAM_MAX
+} GimbalMavlinkParameterID;
 
 //NOTE: I'm not using the MAVLink library's mavlink_param_union_t, because the C2000 compiler does not support anonymous unions
 //It was easier just to add this custom version here than to modify the MAVLink library
@@ -30,6 +48,7 @@ typedef union {
 typedef struct {
     mavlink_param_union_c2000_t param;
     uint8_t param_type;
+    CAND_ParameterID can_parameter_id;
     char param_id[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1];
 } GimbalMavlinkParameter;
 

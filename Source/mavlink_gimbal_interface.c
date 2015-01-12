@@ -53,7 +53,7 @@ void mavlink_state_machine()
 
     case MAVLINK_STATE_SEND_PARAM_LIST:
         send_gimbal_param(last_parameter_sent++);
-        if (last_parameter_sent > NUM_MAVLINK_PARAMS) {
+        if (last_parameter_sent >= MAVLINK_GIMBAL_PARAM_MAX) {
             mavlink_state = MAVLINK_STATE_PARSE_INPUT;
         }
         break;
