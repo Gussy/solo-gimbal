@@ -16,6 +16,15 @@ IntOrFloat int_converter;
 void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 {
     switch(load_parms_state_info->load_axis_parms_state) {
+        case LOAD_AXIS_PARMS_STATE_LOAD_TORQUE_KP:
+
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_LOAD_TORQUE_KI:
+
+            break;
+
+
         // All rate params are sent to the EL axis, since this is where the rate loops run
         case LOAD_AXIS_PARMS_STATE_LOAD_RATE_P:
             switch (load_parms_state_info->current_load_axis) {
