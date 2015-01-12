@@ -696,6 +696,48 @@ CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 p
     return cand_tx(sid, payload, payload_size);
 }
 
+CAND_Result cand_tx_request(CAND_DestinationID did, CAND_ParameterID pid)
+{
+    CAND_SID sid;
+    uint8_t payload;
+
+    sid.sidWord = 0;
+    sid.param_query.m_id = CAND_MID_PARAMETER_QUERY;
+    sid.param_query.d_id = did;
+    sid.param_query.s_id = CAND_GetSenderID();
+    sid.param_query.dir = CAND_DIR_QUERY;
+    sid.param_query.repeat = 0;
+
+    payload = pid;
+
+    return cand_tx(sid, &payload, 1);
+}
+
+CAND_Result cand_tx_multi_request(CAND_DestinationID did, CAND_ParameterID* pids, uint8_t request_cnt)
+{
+    CAND_SID sid;
+    uint8_t payload[8];
+
+    // We only support requesting up to 8 parameters at a time
+    if (request_cnt > 8) {
+        return CAND_TX_TOO_MANY_PARAM_REQUEST_PIDS;
+    }
+
+    sid.sidWord = 0;
+    sid.param_query.m_id = CAND_MID_PARAMETER_QUERY;
+    sid.param_query.d_id = did;
+    sid.param_query.s_id = CAND_GetSenderID();
+    sid.param_query.dir = CAND_DIR_QUERY;
+    sid.param_query.repeat = 0;
+
+    int i;
+    for (i = 0; i < request_cnt; i++) {
+        payload[i] = pids[i];
+    }
+
+    return cand_tx(sid, payload, request_cnt);
+}
+
 CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid, Uint32 *val, uint8_t resp_cnt)
 {
 	CAND_SID sid;
@@ -752,7 +794,7 @@ CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid
 CAND_Result cand_tx_response(CAND_DestinationID did, CAND_ParameterID pid, Uint32 val)
 {
 	CAND_SID sid;
-	uint8_t payload[10], pcnt=0;
+	uint8_t payload[8], pcnt=0;
 
 	sid.sidWord = 0;
 	sid.param_query.m_id = CAND_MID_PARAMETER_QUERY;

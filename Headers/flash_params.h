@@ -22,6 +22,9 @@ struct flash_param_struct_0000 {
 	float rate_pid_i[AXIS_CNT];
 	float rate_pid_d[AXIS_CNT];
 	float rate_pid_windup[AXIS_CNT];
+	float torque_pid_kp[AXIS_CNT];
+	float torque_pid_ki[AXIS_CNT];
+	float torque_pid_kd[AXIS_CNT];
 };
 
 extern struct flash_param_struct_0000 flash_params;

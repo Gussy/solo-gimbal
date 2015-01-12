@@ -11,6 +11,7 @@
 #include "PM_Sensorless.h"
 #include "running_average_filter.h"
 #include "average_power_filter.h"
+#include "load_axis_parms_state_machine.h"
 
 #define PRE_INIT_TIME_MS 2000
 #define FAULT_REVIVE_TIME_MS 1000
@@ -19,9 +20,7 @@ typedef enum {
     STATE_PRE_INIT,
     STATE_INIT,
     STATE_LOAD_OWN_INIT_PARAMS,
-    STATE_WAIT_FOR_OTHER_AXIS_HEARTBEATS,
-    STATE_TRANSMIT_INIT_PARAMS,
-    STATE_WAIT_FOR_OWN_AXIS_INIT_PARAMS,
+    STATE_REQUEST_AXIS_INIT_PARAMS,
     STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED,
     STATE_COMMAND_AZ_INIT,
     STATE_WAIT_FOR_AZ_INIT,
@@ -57,6 +56,6 @@ typedef struct {
     Uint32 fault_revive_counter;
 } MotorDriveParms;
 
-void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set, RunningAvgFilterParms* pos_loop_stage_1, RunningAvgFilterParms* pos_loop_stage_2, AveragePowerFilterParms* pf_parms);
+void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set, RunningAvgFilterParms* pos_loop_stage_1, RunningAvgFilterParms* pos_loop_stage_2, AveragePowerFilterParms* pf_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 
 #endif /* MOTOR_DRIVE_STATE_MACHINE_H_ */

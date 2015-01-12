@@ -38,6 +38,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "flash_params.h"
 #include "motor_drive_state_machine.h"
 #include "rate_loops.h"
+#include "load_axis_parms_state_machine.h"
 
 #include <math.h>
 #include <string.h>
@@ -168,8 +169,6 @@ AxisParms axis_parms = {
     FALSE,                  // Run motor flag
     FALSE,                  // BIT Heartbeat enable
     0,                      // BIT Heartbeat decimate
-    0x0000,                 // Init param received flags 1
-    0x0000,                 // Init param received flags 2
     FALSE,                  // All init params received
     {FALSE, FALSE, FALSE},  // Other axis heartbeats received
     {FALSE, FALSE, FALSE}   // Other axis init params received
@@ -197,6 +196,13 @@ ControlBoardParms control_board_parms = {
     READ_GYRO_PASS_1,                                       // Rate loop pass
     FALSE,                                                  // Initialized
     FALSE                                                   // Enabled
+};
+
+LoadAxisParmsStateInfo load_ap_state_info = {
+    LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KP,    // Load axis parms state
+    0x0000,                                     // Init param received flags 1
+    0x0000,                                     // Init param received flags 2
+    FALSE,                                      // Axis parms load complete
 };
 
 MavlinkGimbalInfo mavlink_gimbal_info = {
@@ -498,7 +504,7 @@ void main(void)
 
 		// Process and respond to any waiting CAN messages
 		if (EnableCAN) {
-		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, param_set);
+		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, param_set, &load_ap_state_info);
 		}
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
@@ -1068,7 +1074,15 @@ interrupt void MainISR(void)
         UpdateEncoderReadings(&encoder_parms, &control_board_parms);
 
         // Run the motor drive state machine to compute the correct inputs to the Park transform and Id and Iq PID controllers
-        MotorDriveStateMachine(&axis_parms, &control_board_parms, &motor_drive_parms, &encoder_parms, param_set, &pos_loop_filter_parms_stage_1, &pos_loop_filter_parms_stage_2, &power_filter_parms);
+        MotorDriveStateMachine(&axis_parms,
+                &control_board_parms,
+                &motor_drive_parms,
+                &encoder_parms,
+                param_set,
+                &pos_loop_filter_parms_stage_1,
+                &pos_loop_filter_parms_stage_2,
+                &power_filter_parms,
+                &load_ap_state_info);
 
         // ------------------------------------------------------------------------------
         //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).

@@ -76,33 +76,6 @@ typedef enum {
     TORQUE_OUT_PASS
 } RateLoopPass;
 
-#define ALL_INIT_PARAMS_RECVD_1 0x0FFF
-#define ALL_INIT_PARAMS_RECVD_2 0x003F
-
-typedef enum {
-    INIT_PARAM_RATE_PID_EL_P_RECVD = 0x0001,
-    INIT_PARAM_RATE_PID_EL_I_RECVD = 0x0002,
-    INIT_PARAM_RATE_PID_EL_D_RECVD = 0x0004,
-    INIT_PARAM_RATE_PID_EL_WINDUP_RECVD = 0x0008,
-    INIT_PARAM_RATE_PID_AZ_P_RECVD = 0x0010,
-    INIT_PARAM_RATE_PID_AZ_I_RECVD = 0x0020,
-    INIT_PARAM_RATE_PID_AZ_D_RECVD = 0x0040,
-    INIT_PARAM_RATE_PID_AZ_WINDUP_RECVD = 0x0080,
-    INIT_PARAM_RATE_PID_RL_P_RECVD = 0x0100,
-    INIT_PARAM_RATE_PID_RL_I_RECVD = 0x0200,
-    INIT_PARAM_RATE_PID_RL_D_RECVD = 0x0400,
-    INIT_PARAM_RATE_PID_RL_WINDUP_RECVD = 0x0800
-} InitParamRecvdFlags1;
-
-typedef enum {
-    INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD = 0x0001,
-    INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD = 0x0002,
-    INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD = 0x0004,
-    INIT_PARAM_TORQUE_PID_KP_RECVD = 0x0008,
-    INIT_PARAM_TORQUE_PID_KI_RECVD = 0x0010,
-    INIT_PARAM_TORQUE_PID_KD_RECVD = 0x0020
-} InitParamRecvdFlags2;
-
 typedef struct {
     Uint32 param;
     Uint8 *sema;
@@ -137,8 +110,6 @@ typedef struct {
     Uint16 run_motor;
     Uint8 BIT_heartbeat_enable;
     int BIT_heartbeat_decimate;
-    Uint16 init_param_recvd_flags_1;
-    Uint16 init_param_recvd_flags_2;
     Uint16 all_init_params_recvd;
     Uint16 other_axis_hb_recvd[AXIS_CNT];
     Uint16 other_axis_init_params_recvd[AXIS_CNT];
@@ -167,6 +138,11 @@ typedef struct {
     Uint8 initialized;
     Uint8 enabled;
 } ControlBoardParms;
+
+typedef union {
+    Uint32 uint32_val;
+    float float_val;
+} IntOrFloat;
 
 #define ROUND(x) (((x) > (floor(x) + 0.5f)) ? ceil(x) : floor(x))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))

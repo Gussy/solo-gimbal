@@ -129,6 +129,8 @@ CAND_Result cand_rx( struct cand_message * msg );
 CAND_Result cand_tx_response( CAND_DestinationID did, CAND_ParameterID pid, Uint32 val );
 CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid, Uint32 *val, uint8_t resp_cnt );
 CAND_Result cand_tx_fault( CAND_FaultCode fault_code );
+CAND_Result cand_tx_request(CAND_DestinationID did, CAND_ParameterID pid);
+CAND_Result cand_tx_multi_request(CAND_DestinationID did, CAND_ParameterID* pids, uint8_t request_cnt);
 CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, Uint32* param, Uint8 param_cnt);
 CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 param);
 CAND_Result cand_tx_command(CAND_DestinationID did, CAND_Command cmd);

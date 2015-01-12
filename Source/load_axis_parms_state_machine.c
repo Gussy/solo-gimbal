@@ -9,198 +9,111 @@
 #include "cand.h"
 #include "cand_BitFields.h"
 #include "flash_params.h"
+#include "device_init.h"
 #include "PM_Sensorless-Settings.h"
-
-IntOrFloat int_converter;
 
 void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 {
+    // If we've received the current parameter we're requesting, go on to asking for the next parameter we need.
+    // The parameter received flags are updated in can_message_processor.c when the parameter responses come in
     switch(load_parms_state_info->load_axis_parms_state) {
-        case LOAD_AXIS_PARMS_STATE_LOAD_TORQUE_KP:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-
-                    break;
-
-                case AZ:
-
-                    break;
-
-                case ROLL:
-
-                    break;
+        case LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KP:
+            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_TORQUE_PID_KP_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KI;
+            } else {
+                cand_tx_request(CAND_ID_AZ, CAND_PID_TORQUE_KP); // All parameter requests go to the AZ board
             }
             break;
 
-        case LOAD_AXIS_PARMS_STATE_LOAD_TORQUE_KI:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-
-                    break;
-
-                case AZ:
-
-                    break;
-
-                case ROLL:
-
-                    break;
+        case LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KI:
+            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_TORQUE_PID_KI_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KD;
+            } else {
+                cand_tx_request(CAND_ID_AZ, CAND_PID_TORQUE_KI); // All parameter requests go to the AZ board
             }
             break;
 
-        case LOAD_AXIS_PARMS_STATE_LOAD_TORQUE_KD:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-
-                    break;
-
-                case AZ:
-
-                    break;
-
-                case ROLL:
-
-                    break;
+        case LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KD:
+            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_TORQUE_PID_KD_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_SLOPE;
+            } else {
+                cand_tx_request(CAND_ID_AZ, CAND_PID_TORQUE_KD); // All parameter requests go to the AZ board
             }
             break;
 
-        case LOAD_AXIS_PARMS_STATE_LOAD_COMMUTATION_CALIBRATION_SLOPE:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-
-                    break;
-
-                case AZ:
-
-                    break;
-
-                case ROLL:
-
-                    break;
+        case LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_SLOPE:
+            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_INTERCEPT;
+            } else {
+                cand_tx_request(CAND_ID_AZ, CAND_PID_COMMUTATION_CALIBRATION_SLOPE); // All parameter requests go to the AZ board
             }
             break;
 
-        case LOAD_AXIS_PARMS_STATE_LOAD_COMMUTATION_CALIBRATION_INTERCEPT:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-
-                    break;
-
-                case AZ:
-
-                    break;
-
-                case ROLL:
-
-                    break;
+        case LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_INTERCEPT:
+            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_HOME_OFFSET;
+            } else {
+                cand_tx_request(CAND_ID_AZ, CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT); // All parameter requests go to the AZ board
             }
             break;
 
-        case LOAD_AXIS_PARMS_STATE_LOAD_COMMUTATION_CALIBRATION_HOME_OFFSET:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-
-                    break;
-
-                case AZ:
-
-                    break;
-
-                case ROLL:
-
-                    break;
-            }
-            break;
-
-        // All rate params are sent to the EL axis, since this is where the rate loops run
-        case LOAD_AXIS_PARMS_STATE_LOAD_RATE_P:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-                    int_converter.float_val = flash_params.rate_pid_p[EL];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_EL_P, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = AZ;
-                    break;
-
-                case AZ:
-                    int_converter.float_val = flash_params.rate_pid_p[AZ];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_AZ_P, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = ROLL;
-                    break;
-
-                case ROLL:
-                    int_converter.float_val = flash_params.rate_pid_p[ROLL];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_RL_P, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = EL;
-                    load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_LOAD_RATE_I;
-                    break;
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_LOAD_RATE_I:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-                    int_converter.float_val = flash_params.rate_pid_i[EL];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_EL_I, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = AZ;
-                    break;
-
-                case AZ:
-                    int_converter.float_val = flash_params.rate_pid_i[AZ];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_AZ_I, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = ROLL;
-                    break;
-
-                case ROLL:
-                    int_converter.float_val = flash_params.rate_pid_i[ROLL];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_RL_I, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = EL;
-                    load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_LOAD_RATE_D;
-                    break;
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_LOAD_RATE_D:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-                    int_converter.float_val = flash_params.rate_pid_d[EL];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_EL_D, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = AZ;
-                    break;
-
-                case AZ:
-                    int_converter.float_val = flash_params.rate_pid_d[AZ];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_AZ_D, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = ROLL;
-                    break;
-
-                case ROLL:
-                    int_converter.float_val = flash_params.rate_pid_d[ROLL];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_RL_D, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = EL;
-                    load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_LOAD_RATE_WINDUP;
-                    break;
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_LOAD_RATE_WINDUP:
-            switch (load_parms_state_info->current_load_axis) {
-                case EL:
-                    int_converter.float_val = flash_params.rate_pid_windup[EL];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_EL_WINDUP, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = AZ;
-                    break;
-
-                case AZ:
-                    int_converter.float_val = flash_params.rate_pid_windup[AZ];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_AZ_WINDUP, int_converter.uint32_val);
-                    load_parms_state_info->current_load_axis = ROLL;
-                    break;
-
-                case ROLL:
-                    int_converter.float_val = flash_params.rate_pid_windup[ROLL];
-                    cand_tx_param(CAND_ID_EL, CAND_PID_RATE_RL_WINDUP, int_converter.uint32_val);
+        case LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_HOME_OFFSET:
+            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD) {
+                if (GetBoardHWID() == EL) {
+                    // If we're the EL axis, we need to request all of the rate loop PID params
+                    load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_EL;
+                } else {
+                    // Otherwise (we're the roll axis, AZ doesn't request parameters), we've received all the parameters we need, so we signal being done
                     load_parms_state_info->axis_parms_load_complete = TRUE;
-                    break;
+                }
+            } else {
+                cand_tx_request(CAND_ID_AZ, CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET); // All parameter requests go to the AZ board
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_EL:
+            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_EL_PID_INIT_PARAMS_RECVD) == ALL_EL_PID_INIT_PARAMS_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_AZ;
+            } else {
+                // For rate loop pid params, request all 4 of them for an axis at once
+                CAND_ParameterID request_params[4];
+                request_params[0] = CAND_PID_RATE_EL_P;
+                request_params[1] = CAND_PID_RATE_EL_I;
+                request_params[2] = CAND_PID_RATE_EL_D;
+                request_params[3] = CAND_PID_RATE_EL_WINDUP;
+
+                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_AZ:
+            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_AZ_PID_INIT_PARAMS_RECVD) == ALL_AZ_PID_INIT_PARAMS_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_ROLL;
+            } else {
+                // For rate loop pid params, request all 4 of them for an axis at once
+                CAND_ParameterID request_params[4];
+                request_params[0] = CAND_PID_RATE_AZ_P;
+                request_params[1] = CAND_PID_RATE_AZ_I;
+                request_params[2] = CAND_PID_RATE_AZ_D;
+                request_params[3] = CAND_PID_RATE_AZ_WINDUP;
+
+                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_ROLL:
+            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_ROLL_PID_INIT_PARAMS_RECVD) == ALL_ROLL_PID_INIT_PARAMS_RECVD) {
+                // We've now received all of the parameters we're looking for, so signal being done
+                load_parms_state_info->axis_parms_load_complete = TRUE;
+            } else {
+                // For rate loop pid params, request all 4 of them for an axis at once
+                CAND_ParameterID request_params[4];
+                request_params[0] = CAND_PID_RATE_RL_P;
+                request_params[1] = CAND_PID_RATE_RL_I;
+                request_params[2] = CAND_PID_RATE_RL_D;
+                request_params[3] = CAND_PID_RATE_RL_WINDUP;
+
+                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
             }
             break;
     }
