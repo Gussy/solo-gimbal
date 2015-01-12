@@ -405,7 +405,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        AxisCalibrationSlopes[GetBoardHWID()] = float_converter.float_val;
+                        AxisCalibrationSlopes[GIMBAL_TARGET][GetBoardHWID()] = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD;
                     }
                     break;
@@ -416,7 +416,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        AxisCalibrationIntercepts[GetBoardHWID()] = float_converter.float_val;
+                        AxisCalibrationIntercepts[GIMBAL_TARGET][GetBoardHWID()] = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD;
                     }
                     break;
@@ -425,7 +425,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
                     if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD)) {
-                        AxisHomePositions[GetBoardHWID()] = msg.param_response[msg.param_response_cnt - 1];
+                        AxisHomePositions[GIMBAL_TARGET][GetBoardHWID()] = msg.param_response[msg.param_response_cnt - 1];
                         load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD;
                     }
                     break;

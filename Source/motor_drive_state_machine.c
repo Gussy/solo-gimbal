@@ -14,6 +14,7 @@
 #include "commutation_calibration_state_machine.h"
 #include "homing_calibration_state_machine.h"
 #include "PID.h"
+#include "flash_params.h"
 #include "PeripheralHeaderIncludes.h"
 
 #include <string.h>
@@ -121,7 +122,17 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         case STATE_LOAD_OWN_INIT_PARAMS:
             // This state is only run on the AZ board to load commutation calibration parameters and torque loop PID gains
             // The rate loop PID gains are only needed on the EL board, so these are loaded over CAN
-            // TODO: Load our own commutation calibration parameters and torque loop PID gains.  Just testing with rate loop PID gains for now
+            md_parms->pid_id.param.Kp = flash_params.torque_pid_kp[AZ];
+            md_parms->pid_id.param.Ki = flash_params.torque_pid_ki[AZ];
+            md_parms->pid_id.param.Kd = flash_params.torque_pid_kd[AZ];
+
+            md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp[AZ];
+            md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[AZ];
+            md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[AZ];
+
+            AxisCalibrationSlopes[GIMBAL_TARGET][AZ] = flash_params.AxisCalibrationSlopes[AZ];
+            AxisCalibrationIntercepts[GIMBAL_TARGET][AZ] = flash_params.AxisCalibrationIntercepts[AZ];
+            AxisHomePositions[GIMBAL_TARGET][AZ] = flash_params.AxisHomePositions[AZ];
 
             // After we've loaded our own init parameters, make a note of it, so we can continue later when we're waiting for
             // all axes to have received their init parameters
@@ -134,11 +145,11 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
         case STATE_REQUEST_AXIS_INIT_PARAMS:
             // Run the load init parms state machine to sequence through requesting the axis parms
-            LoadAxisParmsStateMachine(&load_ap_state_info);
+            LoadAxisParmsStateMachine(load_ap_state_info);
 
             // If we've completed requesting and receiving the params from AZ,
             // we can continue with our init sequence
-            if (load_ap_state_info.axis_parms_load_complete) {
+            if (load_ap_state_info->axis_parms_load_complete) {
                 axis_parms->all_init_params_recvd = TRUE;
                 md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
             }

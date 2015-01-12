@@ -14,12 +14,16 @@ int AxisHomePositions[GIMBAL_CNT][AXIS_CNT] = {
         5595,   // AZ
         4806    // ROLL
     },
+    /*
     // Gimbal G2
     {
         5135,   // EL
         4696,   // AZ
         4319,   // ROLL
     },
+    */
+    // TODO: Temp for testing
+    { 0, 0, 0},
     // Gimbal G3
     {
         0,      // EL
@@ -35,12 +39,16 @@ float AxisCalibrationSlopes[GIMBAL_CNT][AXIS_CNT] = {
         0.1231,     // AZ
         0.1324      // ROLL
     },
+    /*
     // Gimbal G2
     {
         0.127,      // EL
         0.1267,     // AZ
         0.1274,     // ROLL
     },
+    */
+    //TODO: Temp for testing
+    {0.0, 0.0, 0.0},
     // Gimbal G3
     {
         0.0,        // EL
@@ -56,12 +64,16 @@ float AxisCalibrationIntercepts[GIMBAL_CNT][AXIS_CNT] = {
         0.3659,  // AZ
         0.3635   // ROLL
     },
+    /*
     // Gimbal G2
     {
         0.3801,     // EL
         0.4128,     // AZ
         0.43,       // ROLL
     },
+    */
+    //TODO: For testing
+    {0.0, 0.0, 0.0},
     // Gimbal G3
     {
         0.0,        // EL
@@ -71,19 +83,31 @@ float AxisCalibrationIntercepts[GIMBAL_CNT][AXIS_CNT] = {
 };
 
 float AxisTorqueLoopKp[AXIS_CNT] = {
+    //TODO: For testing
+    0.0, 0.0, 0.0
+   /*
     1.25,   // EL
     0.8,    // AZ
     0.8     // ROLL
+    */
 };
 
 float AxisTorqueLoopKi[AXIS_CNT] = {
+    //TODO: For testing
+    0.0, 0.0, 0.0
+    /*
     0.75,   // EL
     0.75,   // AZ
     0.75    // ROLL
+    */
 };
 
 float AxisTorqueLoopKd[AXIS_CNT] = {
+    //TODO: For testing
+    0.0, 0.0, 0.0
+    /*
     1.0,    // EL
     0.0,    // AZ
     0.0     // ROLL
+    */
 };

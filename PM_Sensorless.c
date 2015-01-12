@@ -280,24 +280,6 @@ MotorDriveParms motor_drive_parms = {
 
 Uint8 unused = FALSE;
 Uint8 current_flag = FALSE;
-Uint8 rate_el_p_flag = FALSE;
-Uint8 rate_el_i_flag = FALSE;
-Uint8 rate_el_d_flag = FALSE;
-Uint8 rate_el_windup_flag = FALSE;
-Uint8 rate_az_p_flag = FALSE;
-Uint8 rate_az_i_flag = FALSE;
-Uint8 rate_az_d_flag = FALSE;
-Uint8 rate_az_windup_flag = FALSE;
-Uint8 rate_rl_p_flag = FALSE;
-Uint8 rate_rl_i_flag = FALSE;
-Uint8 rate_rl_d_flag = FALSE;
-Uint8 rate_rl_windup_flag = FALSE;
-Uint8 commutation_calibration_slope_flag = FALSE;
-Uint8 commutation_calibration_intercept_flag = FALSE;
-Uint8 commutation_calibration_home_offset_flag = FALSE;
-Uint8 torque_kp_flag = FALSE;
-Uint8 torque_ki_flag = FALSE;
-Uint8 torque_kd_flag = FALSE;
 
 ParamSet param_set[CAND_PID_LAST];
 
@@ -315,24 +297,6 @@ void init_param_set(void)
 
 	// Set up parameters we're using
 	param_set[CAND_PID_TORQUE].sema = &current_flag;
-	param_set[CAND_PID_RATE_EL_P].sema = &rate_el_p_flag;
-	param_set[CAND_PID_RATE_EL_I].sema = &rate_el_i_flag;
-	param_set[CAND_PID_RATE_EL_D].sema = &rate_el_d_flag;
-	param_set[CAND_PID_RATE_EL_WINDUP].sema = &rate_el_windup_flag;
-	param_set[CAND_PID_RATE_AZ_P].sema = &rate_az_p_flag;
-	param_set[CAND_PID_RATE_AZ_I].sema = &rate_az_i_flag;
-	param_set[CAND_PID_RATE_AZ_D].sema = &rate_az_d_flag;
-	param_set[CAND_PID_RATE_AZ_WINDUP].sema = &rate_az_windup_flag;
-	param_set[CAND_PID_RATE_RL_P].sema = &rate_rl_p_flag;
-	param_set[CAND_PID_RATE_RL_I].sema = &rate_rl_i_flag;
-	param_set[CAND_PID_RATE_RL_D].sema = &rate_rl_d_flag;
-	param_set[CAND_PID_RATE_RL_WINDUP].sema = &rate_rl_windup_flag;
-	param_set[CAND_PID_COMMUTATION_CALIBRATION_SLOPE].sema = &commutation_calibration_slope_flag;
-	param_set[CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT].sema = &commutation_calibration_intercept_flag;
-	param_set[CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET].sema = &commutation_calibration_home_offset_flag;
-	param_set[CAND_PID_TORQUE_KP].sema = &torque_kp_flag;
-	param_set[CAND_PID_TORQUE_KI].sema = &torque_ki_flag;
-	param_set[CAND_PID_TORQUE_KD].sema = &torque_kd_flag;
 }
 
 void main(void)
