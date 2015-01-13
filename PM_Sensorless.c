@@ -299,6 +299,8 @@ void init_param_set(void)
 	param_set[CAND_PID_TORQUE].sema = &current_flag;
 }
 
+static void MainISRwork(void);
+
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
@@ -420,26 +422,33 @@ void main(void)
 	InitInterrupts();
 
 	// Parse version
-	if (GitTag && *GitTag == 'v') {
+#ifdef GitTag
+	{
 		int in[3];
 		char str[100];
 		strncpy( str, GitTag, 50);
-		sscanf( str, "v%d.%d.%d", &in[0], &in[1], &in[2]);
-		our_version.major = in[0];
-		our_version.minor = in[1];
-		our_version.rev = in[2];
-	} else {
-		our_version.major = our_version.minor = our_version.rev = 0xff;
+		if (sscanf( str, "v%d.%d.%d", &in[0], &in[1], &in[2]) != 3) {
+			our_version.major = our_version.minor = our_version.rev = 0xff;
+		} else {
+			our_version.major = in[0];
+			our_version.minor = in[1];
+			our_version.rev = in[2];
+		}
 	}
+#endif
 
-	if (GitVersionString && *GitVersionString == 'v') {
+
+#ifdef GitVersionString
+	{
 		int len = strlen(GitVersionString);
-		if( strcmp((GitVersionString+len-5),"dirty") == 0 ) {
+		if ((len > 5)&&( strcmp((GitVersionString+len-5),"dirty")) == 0 ) {
 			our_version.dirty = 1;
 		} else {
 			our_version.dirty = 0;
 		}
 	}
+#endif
+
 	our_version.branch = *GitBranch;
 
 	axis_parms.enable_flag = FALSE;
@@ -475,6 +484,16 @@ void main(void)
 		if (board_hw_id == AZ) {
 		    mavlink_state_machine();
 		}
+		{
+			static Uint32 OldIsrTicker = 0;
+			static Uint32 MissedInterrupts = 0;
+			if (OldIsrTicker != IsrTicker) {
+				if (OldIsrTicker != (IsrTicker-1)) MissedInterrupts++;
+				OldIsrTicker = IsrTicker;
+				MainISRwork();
+			}
+		}
+
 
 	}
 } //END MAIN CODE
@@ -1027,6 +1046,21 @@ interrupt void MainISR(void)
     // Verifying the ISR
     IsrTicker++;
 
+#if (DSP2803x_DEVICE_H==1)||(DSP280x_DEVICE_H==1)||(F2806x_DEVICE_H==1)
+    // Enable more interrupts from this timer
+    // KRK Changed to ECAP1 interrupt
+    ECap1Regs.ECCLR.bit.CTR_EQ_PRD1 = 0x1;
+    ECap1Regs.ECCLR.bit.INT = 0x1;
+
+    // Acknowledge interrupt to receive more interrupts from PIE group 3
+    // KRK Changed to Group 4 to use ECAP interrupt.
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
+#endif
+
+}
+
+static void MainISRwork(void)
+{
     // TODO: Measuring timing
     GpioDataRegs.GPASET.bit.GPIO28 = 1;
 	GpioDataRegs.GPASET.bit.GPIO29 = 1;
@@ -1257,16 +1291,7 @@ interrupt void MainISR(void)
     GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
 
 
-#if (DSP2803x_DEVICE_H==1)||(DSP280x_DEVICE_H==1)||(F2806x_DEVICE_H==1)
-    // Enable more interrupts from this timer
-    // KRK Changed to ECAP1 interrupt
-    ECap1Regs.ECCLR.bit.CTR_EQ_PRD1 = 0x1;
-    ECap1Regs.ECCLR.bit.INT = 0x1;
 
-    // Acknowledge interrupt to receive more interrupts from PIE group 3
-    // KRK Changed to Group 4 to use ECAP interrupt.
-    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
-#endif
 }
 
 int16 CorrectEncoderError(int16 raw_error)
