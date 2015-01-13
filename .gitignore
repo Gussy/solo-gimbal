@@ -6,3 +6,4 @@ Headers/describe.h
 project.log
 Headers/version.h
 .launches/
+.settings/
