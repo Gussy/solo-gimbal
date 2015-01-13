@@ -13,11 +13,14 @@
 
 static void process_mavlink_input();
 
+#define ATTITUDE_DATA_REFRESH_RATE 10
+
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
 
 int messages_received = 0;
 int heartbeats_received = 0;
+int heartbeats_detected = 0;
 int attitude_received = 0;
 
 float roll = 0.0;
@@ -42,6 +45,13 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode)
     static mavlink_message_t heartbeat_msg;
     mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL, &heartbeat_msg, MAV_TYPE_GIMBAL, MAV_AUTOPILOT_INVALID, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, mav_mode, mav_state);
     send_mavlink_message(&heartbeat_msg);
+}
+
+void request_mavlink_updates()
+{
+    static mavlink_message_t msg_request_data_stream;
+    mavlink_msg_request_data_stream_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL, &msg_request_data_stream,1,1,MAV_DATA_STREAM_EXTRA1,ATTITUDE_DATA_REFRESH_RATE,1);
+    send_mavlink_message(&msg_request_data_stream);
 }
 
 void mavlink_state_machine()
@@ -112,6 +122,10 @@ static void process_mavlink_input()
             switch (received_msg.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT:
                 heartbeats_received++;
+                if (!heartbeats_detected) {
+                	heartbeats_detected = 1;
+                	request_mavlink_updates();
+               	}
                 break;
 
             case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
