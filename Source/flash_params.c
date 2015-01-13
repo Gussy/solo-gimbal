@@ -97,21 +97,21 @@ struct flash_param_struct_0000 flash_params =
     0,                          // Other ID
     // Axis calibration slopes
     {
-        0.127,  // EL
-        0.1267, // AZ
-        0.1274, // ROLL
+        0.126,        // EL
+        0.1247,       // AZ
+        0.1245        // ROLL
     },
     // Axis calibration intercepts
     {
-        0.3801, // EL
-        0.4128, // AZ
-        0.43,   // ROLL
+        0.4536,      // EL
+        0.3718,      // AZ
+        0.4079       // ROLL
     },
     // Axis home positions
     {
-        5135,   // EL
-        4696,   // AZ
-        4319    // ROLL
+        5120,      // EL
+        4898,      // AZ
+        4944       // ROLL
     },
     // Rate PID P gains
     {
