@@ -66,11 +66,26 @@ void mavlink_state_machine()
     	pos[0] = -1*yaw/(3.14159/2)*ENCODER_COUNTS_PER_REV;
     	// set azimuth to zero since it points north, zero keeps it trying to point forward
     	pos[0] = 0;
+    	if (pos[0] < 0) {
+    	    pos[0] += ENCODER_COUNTS_PER_REV;
+    	} else if(pos[0] > ENCODER_COUNTS_PER_REV) {
+    	    pos[0] -= ENCODER_COUNTS_PER_REV;
+    	}
     	// @todo: change to the behavior desired by 3DR
     	// elevation
     	pos[1] = -1*pitch/(3.14159*2)*ENCODER_COUNTS_PER_REV;
+    	if (pos[1] < 0) {
+            pos[1] += ENCODER_COUNTS_PER_REV;
+        } else if(pos[1] > ENCODER_COUNTS_PER_REV) {
+            pos[1] -= ENCODER_COUNTS_PER_REV;
+        }
     	// roll
     	pos[2] = -1*roll/(3.14159*2)*ENCODER_COUNTS_PER_REV;
+    	if (pos[2] < 0) {
+            pos[2] += ENCODER_COUNTS_PER_REV;
+        } else if(pos[2] > ENCODER_COUNTS_PER_REV) {
+            pos[2] -= ENCODER_COUNTS_PER_REV;
+        }
 
     	// Inhibit transmission of new target angles if we're running the balance procedure,
     	// so we don't overwrite the balance angles

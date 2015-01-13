@@ -15,7 +15,7 @@ Incremental Build Level control file.
 
 //#define ENABLE_BALANCE_PROCEDURE
 //#define ENABLE_CURRENT_TOGGLE
-#define ENABLE_RATE_LOOP_TUNING
+//#define ENABLE_RATE_LOOP_TUNING
 #define USE_AVERAGE_POWER_FILTER
 //#define ENABLE_AXIS_CALIBRATION_PROCEDURE
 #define POSITION_LOOP_TYPE 2 // 0 = basic position loop, 1 = advanced position loop, 2 = simple single pid

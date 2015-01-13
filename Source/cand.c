@@ -430,7 +430,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
 						    // If we would, this is an ill formed message, so we just give up here and return the parameters that
 						    // have already been parsed
-						    if (byte_in_payload + 4 >= 8) {
+						    if (byte_in_payload + 4 > 8) {
 						        break;
 						    }
 
@@ -440,7 +440,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
                             // If we would, this is an ill formed message, so we just give up here and return the parameters that
                             // have already been parsed
-                            if (byte_in_payload + 2 >= 8) {
+                            if (byte_in_payload + 2 > 8) {
                                 break;
                             }
 
@@ -450,7 +450,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
                             // If we would, this is an ill formed message, so we just give up here and return the parameters that
                             // have already been parsed
-                            if (byte_in_payload + 1 >= 8) {
+                            if (byte_in_payload + 1 > 8) {
                                 break;
                             }
 
@@ -503,7 +503,7 @@ CAND_Result cand_rx( struct cand_message * msg )
                             // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
                             // If we would, this is an ill formed message, so we just give up here and return the parameters that
                             // have already been parsed
-                            if (byte_in_payload + 4 >= 8) {
+                            if (byte_in_payload + 4 > 8) {
                                 break;
                             }
 
@@ -513,7 +513,7 @@ CAND_Result cand_rx( struct cand_message * msg )
                             // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
                             // If we would, this is an ill formed message, so we just give up here and return the parameters that
                             // have already been parsed
-                            if (byte_in_payload + 2 >= 8) {
+                            if (byte_in_payload + 2 > 8) {
                                 break;
                             }
 
@@ -523,7 +523,7 @@ CAND_Result cand_rx( struct cand_message * msg )
                             // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
                             // If we would, this is an ill formed message, so we just give up here and return the parameters that
                             // have already been parsed
-                            if (byte_in_payload + 1 >= 8) {
+                            if (byte_in_payload + 1 > 8) {
                                 break;
                             }
 
@@ -757,7 +757,7 @@ CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid
 
 		    // Make sure we won't overflow the payload by adding this parameter.  If we would,
 		    // give up and transmit the param responses that have already been inserted into the payload
-		    if (pcnt + 4 >= 8) {
+		    if (pcnt + 4 > 8) {
 		        break;
 		    }
 		    payload[pcnt++] = (val[resp_cnt - 1] >> 24) & 0x000000FF;
@@ -769,7 +769,7 @@ CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid
 
 		    // Make sure we won't overflow the payload by adding this parameter.  If we would,
             // give up and transmit the param responses that have already been inserted into the payload
-            if (pcnt + 2 >= 8) {
+            if (pcnt + 2 > 8) {
                 break;
             }
             payload[pcnt++] = (val[resp_cnt - 1] >> 8) & 0x000000FF;
@@ -779,7 +779,7 @@ CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid
 
             // Make sure we won't overflow the payload by adding this parameter.  If we would,
             // give up and transmit the param responses that have already been inserted into the payload
-            if (pcnt + 1 >= 8) {
+            if (pcnt + 1 > 8) {
                 break;
             }
             payload[pcnt++] = val[resp_cnt - 1] & 0x000000FF;
