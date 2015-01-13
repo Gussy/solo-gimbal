@@ -9,7 +9,7 @@
 #define SPI_H_
 
 #include "PeripheralHeaderIncludes.h"
-#include "f2806xileg_vdc_PM.h" // For DELAY_US
+#include "f2806/f2806xileg_vdc_PM.h" // For DELAY_US
 
 typedef enum {
     CLOCK_POLARITY_NORMAL,

@@ -7,7 +7,7 @@
 
 #include "hardware/uart.h"
 #include "parameters/mavlink_parameter_interface.h"
-#include "mavlink_gimbal_interface.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "can/cand.h"
 #include "PM_Sensorless-Settings.h"
 

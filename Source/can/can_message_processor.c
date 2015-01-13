@@ -12,7 +12,7 @@
 #include "can/cand.h"
 #include "hardware/device_init.h"
 #include "parameters/flash_params.h"
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 #include "control/PID.h"
 
 void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info)

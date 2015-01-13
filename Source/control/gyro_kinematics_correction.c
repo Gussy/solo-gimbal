@@ -5,7 +5,7 @@
  *      Author: abamberger
  */
 
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 #include "control/gyro_kinematics_correction.h"
 
 #include <math.h>
