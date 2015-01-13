@@ -301,6 +301,8 @@ void init_param_set(void)
 
 static void MainISRwork(void);
 
+Uint32 MissedInterrupts = 0;
+
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
@@ -486,7 +488,6 @@ void main(void)
 		}
 		{
 			static Uint32 OldIsrTicker = 0;
-			static Uint32 MissedInterrupts = 0;
 			if (OldIsrTicker != IsrTicker) {
 				if (OldIsrTicker != (IsrTicker-1)) MissedInterrupts++;
 				OldIsrTicker = IsrTicker;
