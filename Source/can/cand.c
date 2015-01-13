@@ -12,10 +12,10 @@
 
 #include "PeripheralHeaderIncludes.h"
 
-#include "cand_BitFields.h"
-#include "cand.h"
+#include "can/cand_BitFields.h"
+#include "can/cand.h"
 #include "HWSpecific.h"
-#include "device_init.h"
+#include "hardware/device_init.h"
 #include "PM_Sensorless.h"
 
 #include <stdlib.h>

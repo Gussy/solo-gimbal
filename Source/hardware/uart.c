@@ -5,8 +5,8 @@
  *      Author: abamberger
  */
 
-#include "uart.h"
-#include "ringbuf.h"
+#include "hardware/uart.h"
+#include "helpers/ringbuf.h"
 
 #include <stdio.h>
 #include <stdarg.h>

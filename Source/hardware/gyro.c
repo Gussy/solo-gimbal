@@ -4,7 +4,7 @@
  *  Created on: Sep 10, 2014
  *      Author: abamberger
  */
-#include "gyro.h"
+#include "hardware/gyro.h"
 #include "F2806x_Examples.h" // For DELAY_US
 
 #define INTER_COMMAND_DELAY 2

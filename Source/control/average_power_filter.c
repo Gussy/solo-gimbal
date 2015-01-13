@@ -8,7 +8,7 @@
 #include <math.h>
 
 #include "PM_Sensorless-Settings.h"
-#include "average_power_filter.h"
+#include "control/average_power_filter.h"
 
 void init_average_power_filter(AveragePowerFilterParms* filter_parms, int current_sample_freq, int tau, float current_limit)
 {

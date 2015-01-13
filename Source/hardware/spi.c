@@ -5,8 +5,8 @@
  *      Author: abamberger
  */
 
-#include "gpio.h"
-#include "spi.h"
+#include "hardware/gpio.h"
+#include "hardware/spi.h"
 
 #include "F2806x_Examples.h"
 

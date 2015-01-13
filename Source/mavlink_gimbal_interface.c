@@ -5,10 +5,10 @@
  *      Author: abamberger
  */
 
-#include "uart.h"
+#include "hardware/uart.h"
 #include "mavlink_parameter_interface.h"
 #include "mavlink_gimbal_interface.h"
-#include "cand.h"
+#include "can/cand.h"
 #include "PM_Sensorless-Settings.h"
 
 static void process_mavlink_input();

@@ -9,8 +9,8 @@
 #define MOTOR_DRIVE_STATE_MACHINE_H_
 
 #include "PM_Sensorless.h"
-#include "running_average_filter.h"
-#include "average_power_filter.h"
+#include "control/running_average_filter.h"
+#include "control/average_power_filter.h"
 #include "load_axis_parms_state_machine.h"
 
 #define PRE_INIT_TIME_MS 2000

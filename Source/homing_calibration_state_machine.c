@@ -7,7 +7,7 @@
 
 #include "homing_calibration_state_machine.h"
 #include "HWSpecific.h"
-#include "device_init.h"
+#include "hardware/device_init.h"
 
 _iq IdRefLockHoming = _IQ(0.18); // 0.5A if 2.75A max scale is correct
 

@@ -5,7 +5,7 @@
  *      Author: abamberger
  */
 
-#include "system_analyzer.h"
+#include "hardware/system_analyzer.h"
 
 SpiPortDescriptor sys_analyzer_desc = {
         &SpibRegs,                              // SPI Control Regs

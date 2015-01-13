@@ -5,7 +5,7 @@
  *      Author: abamberger
  */
 
-#include "PID.h"
+#include "control/PID.h"
 
 #include <stdlib.h>
 

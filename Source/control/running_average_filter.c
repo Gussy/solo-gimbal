@@ -5,7 +5,7 @@
  *      Author: abamberger
  */
 
-#include "running_average_filter.h"
+#include "control/running_average_filter.h"
 #include <string.h>
 
 void initialize_running_average_filter(RunningAvgFilterParms* filter_parms, int16 az_initial_value, int16 el_initial_value, int16 rl_initial_value)

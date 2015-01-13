@@ -5,11 +5,11 @@
  *      Author: abamberger
  */
 
-#include "rate_loops.h"
-#include "cb.h"
-#include "PID.h"
-#include "gyro.h"
-#include "gyro_kinematics_correction.h"
+#include "control/rate_loops.h"
+#include "can/cb.h"
+#include "control/PID.h"
+#include "hardware/gyro.h"
+#include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
 
 Uint32 gyro_read_1_start = 0;

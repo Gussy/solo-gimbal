@@ -11,11 +11,11 @@
 //
 //============================================================================
 //============================================================================
-#include "device_init.h"
+#include "hardware/device_init.h"
 
 #include "PM_Sensorless.h"
 #include "HWSpecific.h"
-#include "uart.h"
+#include "hardware/uart.h"
 
 // Functions that will be run from RAM need to be assigned to
 // a different section.  This section will then be mapped to a load and

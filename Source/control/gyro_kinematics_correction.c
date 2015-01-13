@@ -6,7 +6,7 @@
  */
 
 #include "HWSpecific.h"
-#include "gyro_kinematics_correction.h"
+#include "control/gyro_kinematics_correction.h"
 
 #include <math.h>
 

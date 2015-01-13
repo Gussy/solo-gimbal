@@ -6,10 +6,10 @@
  */
 
 #include "load_axis_parms_state_machine.h"
-#include "cand.h"
-#include "cand_BitFields.h"
+#include "can/cand.h"
+#include "can/cand_BitFields.h"
 #include "flash_params.h"
-#include "device_init.h"
+#include "hardware/device_init.h"
 #include "PM_Sensorless-Settings.h"
 
 void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)

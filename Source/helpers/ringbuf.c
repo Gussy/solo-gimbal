@@ -4,7 +4,7 @@
 // Author: Robby Morrill
 // Started: 11/1/2012
 
-#include "ringbuf.h"
+#include "helpers/ringbuf.h"
 
 /* Below ring buffers are ensured to only produce
  * in one thread and consume in another, thereby

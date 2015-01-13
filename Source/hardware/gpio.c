@@ -5,7 +5,7 @@
  *      Author: abamberger
  */
 
-#include "gpio.h"
+#include "hardware/gpio.h"
 
 //NOTE: I promise this isn't as stupid as it looks.  These functions are currently used by the spi driver subsystem, where I wanted to be able to put the GPIO line
 //that is to be used as a slave select into the spi descriptor struct.  Since the gpio bit definitions are bitfields, I can't put a pointer to the appropriate set and clear

@@ -8,7 +8,7 @@
 #ifndef MAVLINK_PARAMETER_INTERFACE_H_
 #define MAVLINK_PARAMETER_INTERFACE_H_
 
-#include "cand_BitFields.h"
+#include "can/cand_BitFields.h"
 
 #ifndef uint8_t
 #define uint8_t Uint8
