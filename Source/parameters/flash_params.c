@@ -166,6 +166,8 @@ struct flash_param_struct_0000 flash_params =
     0x0000,                     // Flash Struct ID
     0,                          // Board ID
     0,                          // Other ID
+    0x0000,                     // Software version number TODO: populate this from git version info
+    115,                        // Mavlink baud rate
     // Axis calibration slopes
     {
         0.126,        // EL

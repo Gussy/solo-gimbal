@@ -141,6 +141,12 @@ static void process_mavlink_input()
                 attitude_received++;
                 handle_attitude(&received_msg);
                 break;
+
+            default:
+            {
+                Uint8 msgid = received_msg.msgid;
+            }
+                break;
             }
         }
     }

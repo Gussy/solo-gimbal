@@ -47,6 +47,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 
 // Prototype statements for functions found within this file.
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
+static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms);
 void DeviceInit();
 void MemCopy();
 void InitFlash();
@@ -279,6 +280,18 @@ MotorDriveParms motor_drive_parms = {
 
 Uint8 unused = FALSE;
 Uint8 current_flag = FALSE;
+Uint8 rate_pid_el_p_flag = FALSE;
+Uint8 rate_pid_el_i_flag = FALSE;
+Uint8 rate_pid_el_d_flag = FALSE;
+Uint8 rate_pid_el_windup_flag = FALSE;
+Uint8 rate_pid_az_p_flag = FALSE;
+Uint8 rate_pid_az_i_flag = FALSE;
+Uint8 rate_pid_az_d_flag = FALSE;
+Uint8 rate_pid_az_windup_flag = FALSE;
+Uint8 rate_pid_rl_p_flag = FALSE;
+Uint8 rate_pid_rl_i_flag = FALSE;
+Uint8 rate_pid_rl_d_flag = FALSE;
+Uint8 rate_pid_rl_windup_flag = FALSE;
 
 ParamSet param_set[CAND_PID_LAST];
 
@@ -296,6 +309,18 @@ void init_param_set(void)
 
 	// Set up parameters we're using
 	param_set[CAND_PID_TORQUE].sema = &current_flag;
+	param_set[CAND_PID_RATE_EL_P].sema = &rate_pid_el_p_flag;
+	param_set[CAND_PID_RATE_EL_I].sema = &rate_pid_el_i_flag;
+	param_set[CAND_PID_RATE_EL_D].sema = &rate_pid_el_d_flag;
+	param_set[CAND_PID_RATE_EL_WINDUP].sema = &rate_pid_el_windup_flag;
+	param_set[CAND_PID_RATE_AZ_P].sema = &rate_pid_az_p_flag;
+    param_set[CAND_PID_RATE_AZ_I].sema = &rate_pid_az_i_flag;
+    param_set[CAND_PID_RATE_AZ_D].sema = &rate_pid_az_d_flag;
+    param_set[CAND_PID_RATE_AZ_WINDUP].sema = &rate_pid_az_windup_flag;
+    param_set[CAND_PID_RATE_RL_P].sema = &rate_pid_rl_p_flag;
+    param_set[CAND_PID_RATE_RL_I].sema = &rate_pid_rl_i_flag;
+    param_set[CAND_PID_RATE_RL_D].sema = &rate_pid_rl_d_flag;
+    param_set[CAND_PID_RATE_RL_WINDUP].sema = &rate_pid_rl_windup_flag;
 }
 
 void main(void)
@@ -451,6 +476,9 @@ void main(void)
 		if (board_hw_id == AZ) {
 		    mavlink_state_machine();
 		}
+
+		// Update any parameters that have changed due to CAN messages
+		ProcessParamUpdates(param_set, &control_board_parms);
 
 	}
 } //END MAIN CODE
@@ -639,7 +667,6 @@ int enable_counts_max = 1667;
 void A3(void) // SPARE (not used)
 //-----------------------------------------
 {
-    /*
 	if (board_hw_id == EL) {
 		// Wait 1s before enabling the gimbal
 		if (axis_parms.enable_flag == FALSE) {
@@ -649,7 +676,6 @@ void A3(void) // SPARE (not used)
 			}
 		}
 	}
-	*/
 
 	//-----------------
 	//the next time CpuTimer0 'counter' reaches Period value go to A1
@@ -947,6 +973,134 @@ interrupt void GyroIntISR(void)
 
 int position_loop_deadband_counts = 10;
 int position_loop_deadband_hysteresis = 100;
+
+static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms)
+{
+    IntOrFloat float_converter;
+    // Check for updated rate loop PID params
+    if (*(param_set[CAND_PID_RATE_EL_P].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[EL].integralCumulative = 0.0;
+        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_P].param;
+        rate_pid_loop_float[EL].gainP = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_EL_P].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_EL_I].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[EL].integralCumulative = 0.0;
+        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_I].param;
+        rate_pid_loop_float[EL].gainI = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_EL_I].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_EL_D].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[EL].integralCumulative = 0.0;
+        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_D].param;
+        rate_pid_loop_float[EL].gainD = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_EL_D].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_EL_WINDUP].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[EL].integralCumulative = 0.0;
+        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_WINDUP].param;
+        rate_pid_loop_float[EL].integralMax = float_converter.float_val;
+        rate_pid_loop_float[EL].integralMin = -float_converter.float_val;
+        *(param_set[CAND_PID_RATE_EL_WINDUP].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_AZ_P].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[AZ].integralCumulative = 0.0;
+        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_P].param;
+        rate_pid_loop_float[AZ].gainP = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_AZ_P].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_AZ_I].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[AZ].integralCumulative = 0.0;
+        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_I].param;
+        rate_pid_loop_float[AZ].gainI = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_AZ_I].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_AZ_D].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[AZ].integralCumulative = 0.0;
+        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_D].param;
+        rate_pid_loop_float[AZ].gainD = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_AZ_D].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_AZ_WINDUP].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[AZ].integralCumulative = 0.0;
+        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_WINDUP].param;
+        rate_pid_loop_float[AZ].integralMax = float_converter.float_val;
+        rate_pid_loop_float[AZ].integralMin = -float_converter.float_val;
+        *(param_set[CAND_PID_RATE_AZ_WINDUP].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_RL_P].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
+        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_P].param;
+        rate_pid_loop_float[ROLL].gainP = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_RL_P].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_RL_I].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
+        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_I].param;
+        rate_pid_loop_float[ROLL].gainI = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_RL_I].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_RL_D].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
+        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_D].param;
+        rate_pid_loop_float[ROLL].gainD = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_RL_D].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_RL_WINDUP].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
+        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_WINDUP].param;
+        rate_pid_loop_float[ROLL].integralMax = float_converter.float_val;
+        rate_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
+        *(param_set[CAND_PID_RATE_RL_WINDUP].sema) = FALSE;
+    }
+}
 
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)
 {

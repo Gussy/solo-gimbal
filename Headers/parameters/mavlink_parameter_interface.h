@@ -46,9 +46,11 @@ typedef union {
 } mavlink_param_union_c2000_t;
 
 typedef struct {
-    mavlink_param_union_c2000_t param;
     uint8_t param_type;
+    float* float_data_ptr;
+    uint32_t* uint32_data_ptr;
     CAND_ParameterID can_parameter_id;
+    CAND_DestinationID can_parameter_destination_axis;
     char param_id[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1];
 } GimbalMavlinkParameter;
 
