@@ -45,8 +45,8 @@ Next, Include project specific include files.
 #endif
 
 #ifdef F2806x_DEVICE_H
-#include "f2806xileg_vdc_PM.h"              // Include header for the ILEG2DCBUSMEAS object
-#include "f2806xpwm_PM_aes_modified.h"      // Include header for the PWMGEN object.  Using an AES modified version of this header to fix an issue with global variables in the original header
+#include "f2806/f2806xileg_vdc_PM.h"              // Include header for the ILEG2DCBUSMEAS object
+#include "f2806/f2806xpwm_PM_aes_modified.h"      // Include header for the PWMGEN object.  Using an AES modified version of this header to fix an issue with global variables in the original header
 #endif
 
 #include "can/cand_BitFields.h"
