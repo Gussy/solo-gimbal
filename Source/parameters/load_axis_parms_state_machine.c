@@ -5,10 +5,10 @@
  *      Author: abamberger
  */
 
-#include "load_axis_parms_state_machine.h"
+#include "parameters/load_axis_parms_state_machine.h"
 #include "can/cand.h"
 #include "can/cand_BitFields.h"
-#include "flash_params.h"
+#include "parameters/flash_params.h"
 #include "hardware/device_init.h"
 #include "PM_Sensorless-Settings.h"
 

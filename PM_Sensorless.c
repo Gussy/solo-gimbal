@@ -31,13 +31,13 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "control/average_power_filter.h"
 #include "control/running_average_filter.h"
 #include "hardware/uart.h"
-#include "mavlink_gimbal_interface.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "can/can_message_processor.h"
-#include "helpers/version.h"
-#include "flash_params.h"
-#include "motor_drive_state_machine.h"
+#include "version.h"
+#include "parameters/flash_params.h"
+#include "motor/motor_drive_state_machine.h"
 #include "control/rate_loops.h"
-#include "load_axis_parms_state_machine.h"
+#include "parameters/load_axis_parms_state_machine.h"
 
 #include <math.h>
 #include <string.h>

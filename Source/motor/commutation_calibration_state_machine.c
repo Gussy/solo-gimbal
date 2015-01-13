@@ -5,7 +5,7 @@
  *      Author: abamberger
  */
 
-#include "commutation_calibration_state_machine.h"
+#include "motor/commutation_calibration_state_machine.h"
 
 _iq IdRefLockCommutationCalibration = _IQ(0.18); // 0.5A if 2.75A max scale is correct
 

@@ -5,7 +5,7 @@
  *      Author: abamberger
  */
 
-#include "homing_calibration_state_machine.h"
+#include "motor/homing_calibration_state_machine.h"
 #include "HWSpecific.h"
 #include "hardware/device_init.h"
 

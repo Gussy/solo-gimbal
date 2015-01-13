@@ -11,7 +11,7 @@
 #include "can/cb.h"
 #include "can/cand.h"
 #include "hardware/device_init.h"
-#include "flash_params.h"
+#include "parameters/flash_params.h"
 #include "HWSpecific.h"
 #include "control/PID.h"
 

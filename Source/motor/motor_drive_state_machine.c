@@ -5,16 +5,16 @@
  *      Author: abamberger
  */
 
-#include "motor_drive_state_machine.h"
+#include "motor/motor_drive_state_machine.h"
 #include "PM_Sensorless.h"
 #include "PM_Sensorless-Settings.h"
 #include "can/cand.h"
 #include "can/cb.h"
 #include "hardware/device_init.h"
-#include "commutation_calibration_state_machine.h"
-#include "homing_calibration_state_machine.h"
+#include "motor/commutation_calibration_state_machine.h"
+#include "motor/homing_calibration_state_machine.h"
 #include "control/PID.h"
-#include "flash_params.h"
+#include "parameters/flash_params.h"
 #include "PeripheralHeaderIncludes.h"
 
 #include <string.h>

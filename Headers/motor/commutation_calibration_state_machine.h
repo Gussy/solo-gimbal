@@ -6,7 +6,7 @@
  */
 
 #include "PM_Sensorless.h"
-#include "motor_drive_state_machine.h"
+#include "motor/motor_drive_state_machine.h"
 
 #ifndef COMMUTATION_CALIBRATION_STATE_MACHINE_H_
 #define COMMUTATION_CALIBRATION_STATE_MACHINE_H_

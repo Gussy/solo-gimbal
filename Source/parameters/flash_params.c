@@ -11,7 +11,7 @@
 
 #include "Flash2806x_API_Library.h"
 
-#include "flash_params.h"
+#include "parameters/flash_params.h"
 
 #include "F2806x_SysCtrl.h"
 

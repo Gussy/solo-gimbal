@@ -11,7 +11,7 @@
 #include "PM_Sensorless.h"
 #include "control/running_average_filter.h"
 #include "control/average_power_filter.h"
-#include "load_axis_parms_state_machine.h"
+#include "parameters/load_axis_parms_state_machine.h"
 
 #define PRE_INIT_TIME_MS 2000
 #define FAULT_REVIVE_TIME_MS 1000
