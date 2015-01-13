@@ -639,6 +639,7 @@ int enable_counts_max = 1667;
 void A3(void) // SPARE (not used)
 //-----------------------------------------
 {
+    /*
 	if (board_hw_id == EL) {
 		// Wait 1s before enabling the gimbal
 		if (axis_parms.enable_flag == FALSE) {
@@ -648,6 +649,7 @@ void A3(void) // SPARE (not used)
 			}
 		}
 	}
+	*/
 
 	//-----------------
 	//the next time CpuTimer0 'counter' reaches Period value go to A1
@@ -956,7 +958,12 @@ static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms
     }
 
     // AZ axis motor is mounted opposite of the encoder relative to the other two axes, so we need to invert it here if we're AZ
-    if (board_hw_id == AZ) {
+#if (HW_REV == 1)
+    if (board_hw_id == AZ)
+#elif (HW_REV == 2)
+    // On new hardware, EL is also flipped relative to what it was on the old hardware
+    if ((board_hw_id == AZ) || (board_hw_id == EL)) {
+#endif
         encoder_parms->raw_theta = ANALOG_POT_MECH_DIVIDER - encoder_parms->raw_theta;
     }
 
