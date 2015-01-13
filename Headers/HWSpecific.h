@@ -14,10 +14,14 @@
 
 //#include "cand_BitFields.h"
 
+#define HW_REV 2 // 1 is old hardware, 2 is new hardware
+
 enum gimbal_targets {
 	GIMBAL_G1 = 0,  // Gimbal SN 102
 	GIMBAL_G2,      // Gimbal SN 103
 	GIMBAL_G3,      // SATB
+	GIMBAL_G4,      // Rev. 2 SN P001
+	GIMBAL_G5,      // Rev. 2 SN P002
 	GIMBAL_CNT
 };
 
@@ -36,7 +40,7 @@ typedef enum {
 
 #define ENCODER_COUNTS_PER_REV 10000
 
-#define GIMBAL_TARGET GIMBAL_G2
+#define GIMBAL_TARGET GIMBAL_G5
 
 // Map gyro axes to gimbal axes
 static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
@@ -45,6 +49,7 @@ static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
         ROLL
 };
 
+#if (HW_REV == 1)
 static const int GyroSignMap[AXIS_CNT] = {
         -1, // EL
         -1, // AZ
@@ -62,6 +67,25 @@ static const int EncoderSignMap[AXIS_CNT] = {
         -1, // AZ
         -1  // ROLL
 };
+#elif (HW_REV == 2)
+static const int GyroSignMap[AXIS_CNT] = {
+        1, // EL
+        1, // AZ
+        -1  // ROLL
+};
+
+static const int TorqueSignMap[AXIS_CNT] = {
+        1, // EL
+        -1, // AZ
+        -1  // ROLL
+};
+
+static const int EncoderSignMap[AXIS_CNT] = {
+        1, // EL
+        -1, // AZ
+        -1  // ROLL
+};
+#endif
 
 extern int AxisHomePositions[GIMBAL_CNT][AXIS_CNT];
 extern float AxisCalibrationSlopes[GIMBAL_CNT][AXIS_CNT];

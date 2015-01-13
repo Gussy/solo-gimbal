@@ -91,7 +91,7 @@ extern Uint16 PRG_key7;
 #define  DINT   asm(" setc INTM")
 
 // TODO: This is temporary for development purposes until we start loading the calibration parameters in flash
-#define PROTOTYPE_HW 1 // 1 is old hardware, prototype Arthur has, 2 is new hardware, prototype Aaron has
+#define PROTOTYPE_HW 2 // 1 is old hardware, prototype Arthur has, 2 is new hardware, prototype Aaron has
 
 #if (PROTOTYPE_HW == 1)
 struct flash_param_struct_0000 flash_params =
