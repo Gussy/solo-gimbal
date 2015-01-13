@@ -30,7 +30,6 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "system_analyzer.h"
 #include "average_power_filter.h"
 #include "running_average_filter.h"
-#include "sandstorm.h"
 #include "uart.h"
 #include "mavlink_gimbal_interface.h"
 #include "can_message_processor.h"
