@@ -682,7 +682,6 @@ int enable_counts_max = 1667;
 void A3(void) // SPARE (not used)
 //-----------------------------------------
 {
-    /*
 	if (board_hw_id == EL) {
 		// Wait 1s before enabling the gimbal
 		if (axis_parms.enable_flag == FALSE) {
@@ -692,7 +691,6 @@ void A3(void) // SPARE (not used)
 			}
 		}
 	}
-	*/
 
 	//-----------------
 	//the next time CpuTimer0 'counter' reaches Period value go to A1

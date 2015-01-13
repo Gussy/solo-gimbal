@@ -1,23 +1,23 @@
 /*==================================================================================*/
-/*	User specific Linker command file for running from RAM							*/
+/*     User specific Linker command file for running from RAM                                          */
 /*==================================================================================*/
-/*	FILE:			F28069_RAM_2xPM_Sensorless.CMD                                  */
+/*     FILE:                F28069_RAM_2xPM_Sensorless.CMD                                  */
 /*                                                                                  */
-/*	Description:	Linker command file for User custom sections targetted to run   */
-/*					from RAM.  			                                            */
+/*     Description:  Linker command file for User custom sections targetted to run   */
+/*                                from RAM.                                                              */
 /*                                                                                  */
-/*  Target:  		TMS320F2806x					                                */
+/*  Target:          TMS320F2806x                                                             */
 /*                                                                                  */
-/*	Version: 		1.0                                 							*/
+/*     Version:             1.0                                                                               */
 /*                                                                                  */
 /*----------------------------------------------------------------------------------*/
-/*  Copyright Texas Instruments © 2010                                			    */	
+/*  Copyright Texas Instruments © 2010                                                       */
 /*----------------------------------------------------------------------------------*/
 /*  Revision History:                                                               */
 /*----------------------------------------------------------------------------------*/
-/*  Date	  | Description                                                         */
+/*  Date        | Description                                                         */
 /*----------------------------------------------------------------------------------*/
-/*  01/11/11  | Release 1.0  		 			                                    */
+/*  01/11/11  | Release 1.0                                                                       */
 /*----------------------------------------------------------------------------------*/
 
 
@@ -46,27 +46,27 @@ MEMORY
 {
 PAGE 0 :
    
-	BEGIN		: origin = 0x000000,	length = 0x000002
-	BOOT_RSVD	: origin = 0x000002,	length = 0x00004E             
-	RAMM0		: origin = 0x000050,	length = 0x0003B0
-	progRAM		: origin = 0x008000,	length = 0x00A000
+       BEGIN         : origin = 0x000000, length = 0x000002
+       BOOT_RSVD     : origin = 0x000002, length = 0x00004E
+       RAMM0         : origin = 0x000050, length = 0x0003B0
+       progRAM              : origin = 0x008000, length = 0x006000
 
-	FPUTABLES   : origin = 0x3FD860, length = 0x0006A0	   /* FPU Tables in Boot ROM */
-   	IQTABLES   	: origin = 0x3FDF00, length = 0x000B50     /* IQ Math Tables in Boot ROM */
-   	IQTABLES2  	: origin = 0x3FEA50, length = 0x00008C     /* IQ Math Tables in Boot ROM */
-   	IQTABLES3  	: origin = 0x3FEADC, length = 0x0000AA	   /* IQ Math Tables in Boot ROM */
+       FPUTABLES   : origin = 0x3FD860, length = 0x0006A0        /* FPU Tables in Boot ROM */
+       IQTABLES      : origin = 0x3FDF00, length = 0x000B50     /* IQ Math Tables in Boot ROM */
+       IQTABLES2     : origin = 0x3FEA50, length = 0x00008C     /* IQ Math Tables in Boot ROM */
+       IQTABLES3     : origin = 0x3FEADC, length = 0x0000AA      /* IQ Math Tables in Boot ROM */
 
-    BOOTROM    	: origin = 0x3FF3B0, length = 0x000C10
+    BOOTROM          : origin = 0x3FF3B0, length = 0x000C10
 
-	RESET       : origin = 0x3FFFC0, 	length = 0x000002               
+       RESET       : origin = 0x3FFFC0, length = 0x000002
 
          
 PAGE 1 : 
 
-	RAMM1		: origin = 0x000480,	length = 0x000380
-	dataRAM		: origin = 0x009800,	length = 0x002800
+       RAMM1         : origin = 0x000480, length = 0x000380
+       dataRAM              : origin = 0x00E000, length = 0x006000
 }
- 
+
  
 SECTIONS
 {
@@ -78,28 +78,26 @@ SECTIONS
 
    /*.cinit           : > RAMM0,      PAGE = 0*/
    .cinit           : > dataRAM,      PAGE = 1
-   .pinit           : > RAMM0,      PAGE = 0
-   .switch          : > RAMM0,      PAGE = 0
+   .pinit           : > progRAM,      PAGE = 0
+   .switch          : > progRAM,      PAGE = 0
    .reset           : > RESET,      PAGE = 0, TYPE = DSECT
    
    .stack           : > RAMM1,      PAGE = 1
 
    .ebss            : > dataRAM,     PAGE = 1
-   .econst          : > dataRAM,     PAGE = 1      
+   .econst          : > dataRAM,     PAGE = 1
 
    .esysmem         : > RAMM1,      PAGE = 1
 
    IQmath           : >  progRAM,   PAGE = 0
-   IQmathTables     : >  IQTABLES, 	PAGE = 0, TYPE = NOLOAD
+   IQmathTables     : >  IQTABLES,       PAGE = 0, TYPE = NOLOAD
    FPUmathTables    : > FPUTABLES, PAGE = 0, TYPE = NOLOAD
 }
 
-   
+
+/*
 SECTIONS
 {
-	DLOG: > dataRAM,PAGE=1
+       DLOG: > dataRAM,PAGE=1
 }
-
-
-
- 
+*/

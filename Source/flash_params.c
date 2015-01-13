@@ -90,6 +90,10 @@ extern Uint16 PRG_key7;
 #define	 EDIS	asm(" EDIS")
 #define  DINT   asm(" setc INTM")
 
+// TODO: This is temporary for development purposes until we start loading the calibration parameters in flash
+#define PROTOTYPE_HW 1 // 1 is old hardware, prototype Arthur has, 2 is new hardware, prototype Aaron has
+
+#if (PROTOTYPE_HW == 1)
 struct flash_param_struct_0000 flash_params =
 {
     0x0000,                     // Flash Struct ID
@@ -97,21 +101,21 @@ struct flash_param_struct_0000 flash_params =
     0,                          // Other ID
     // Axis calibration slopes
     {
-        0.127,  // EL
-        0.1267, // AZ
-        0.1274, // ROLL
+        0.127,      // EL
+        0.1267,     // AZ
+        0.1274,     // ROLL
     },
     // Axis calibration intercepts
     {
-        0.3801, // EL
-        0.4128, // AZ
-        0.43,   // ROLL
+        0.3801,     // EL
+        0.4128,     // AZ
+        0.43,       // ROLL
     },
     // Axis home positions
     {
         5135,   // EL
         4696,   // AZ
-        4319    // ROLL
+        4319,   // ROLL
     },
     // Rate PID P gains
     {
@@ -156,6 +160,74 @@ struct flash_param_struct_0000 flash_params =
         0.0     // ROLL
     }
 };
+#elif (PROTOTYPE_HW == 2)
+struct flash_param_struct_0000 flash_params =
+{
+    0x0000,                     // Flash Struct ID
+    0,                          // Board ID
+    0,                          // Other ID
+    // Axis calibration slopes
+    {
+        0.126,        // EL
+        0.1247,       // AZ
+        0.1245        // ROLL
+    },
+    // Axis calibration intercepts
+    {
+        0.4536,      // EL
+        0.3718,      // AZ
+        0.4079       // ROLL
+    },
+    // Axis home positions
+    {
+        5120,      // EL
+        4898,      // AZ
+        4944       // ROLL
+    },
+    // Rate PID P gains
+    {
+        2.5,    // EL
+        2.0,    // AZ
+        5.0     // ROLL
+    },
+    // Rate PID I gains
+    {
+        0.25,   // EL
+        0.5,    // AZ
+        0.5     // ROLL
+    },
+    // Rate PID D gains
+    {
+        0.0,    // EL
+        1.0,    // AZ
+        0.0     // ROLL
+    },
+    // Rate PID windup limits
+    {
+        32768.0,// EL
+        32768.0,// AZ
+        32768.0 // ROLL
+    },
+    // Torque Loop PID Kp
+    {
+        1.25,   // EL
+        0.8,    // AZ
+        0.8     // ROLL
+    },
+    // Torque Loop PID Ki
+    {
+        0.75,   // EL
+        0.75,   // AZ
+        0.75    // ROLL
+    },
+    // Torque Loop PID Kd
+    {
+        1.0,    // EL
+        0.0,    // AZ
+        0.0     // ROLL
+    }
+};
+#endif
 
 
 static int verify_checksum(Uint16 *start_addr)
