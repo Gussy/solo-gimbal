@@ -419,29 +419,6 @@ void main(void)
 
 	InitInterrupts();
 
-	// Parse version
-	if (GitTag && *GitTag == 'v') {
-		int in[3];
-		char str[100];
-		strncpy( str, GitTag, 50);
-		sscanf( str, "v%d.%d.%d", &in[0], &in[1], &in[2]);
-		our_version.major = in[0];
-		our_version.minor = in[1];
-		our_version.rev = in[2];
-	} else {
-		our_version.major = our_version.minor = our_version.rev = 0xff;
-	}
-
-	if (GitVersionString && *GitVersionString == 'v') {
-		int len = strlen(GitVersionString);
-		if( strcmp((GitVersionString+len-5),"dirty") == 0 ) {
-			our_version.dirty = 1;
-		} else {
-			our_version.dirty = 0;
-		}
-	}
-	our_version.branch = *GitBranch;
-
 	axis_parms.enable_flag = FALSE;
 
 	// IDLE loop. Just sit and loop forever:
