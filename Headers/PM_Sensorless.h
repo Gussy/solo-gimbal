@@ -31,11 +31,11 @@ Next, Include project specific include files.
 
 #include "park.h"                           // Include header for the PARK object
 #include "ipark.h"                          // Include header for the IPARK object
-#include "pid_grando_aes_modified.h"        // Include header for the PID_GRANDO_CONTROLLER object.  Using an AES modified version of this header to fix several bugs in the original implementation
+#include "control/pid_grando_aes_modified.h"        // Include header for the PID_GRANDO_CONTROLLER object.  Using an AES modified version of this header to fix several bugs in the original implementation
 #include "clarke.h"                         // Include header for the CLARKE object
-#include "svgen_dq_aes_modified.h"          // Include header for the SVGENDQ object.  Using an AES modified version of this header to fix an issue with global variables in the original header
+#include "control/svgen_dq_aes_modified.h"          // Include header for the SVGENDQ object.  Using an AES modified version of this header to fix an issue with global variables in the original header
 #include "rampgen.h"                        // Include header for the RAMPGEN object
-#include "rmp_cntl_aes_modified.h"          // Include header for the RMPCNTL object.  Using an AES modified version of this header to fix an issue with global variables in the original header
+#include "control/rmp_cntl_aes_modified.h"          // Include header for the RMPCNTL object.  Using an AES modified version of this header to fix an issue with global variables in the original header
 
 #ifdef DSP2803x_DEVICE_H
 #include "f2803xileg_vdc_PM.h"              // Include header for the ILEG2DCBUSMEAS object
@@ -49,8 +49,8 @@ Next, Include project specific include files.
 #include "f2806xpwm_PM_aes_modified.h"      // Include header for the PWMGEN object.  Using an AES modified version of this header to fix an issue with global variables in the original header
 #endif
 
-#include "cand_BitFields.h"
-#include "HWSpecific.h"
+#include "can/cand_BitFields.h"
+#include "hardware/HWSpecific.h"
 
 typedef enum {
     BLINK_NO_COMM,
