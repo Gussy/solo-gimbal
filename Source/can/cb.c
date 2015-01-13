@@ -3,7 +3,7 @@
 #include "can/cand_BitFields.h"
 #include "can/cand.h"
 #include "PM_Sensorless.h"
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 
 #include <string.h>
 

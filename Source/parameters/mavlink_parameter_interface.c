@@ -5,7 +5,7 @@
  *      Author: abamberger
  */
 
-#include "mavlink_gimbal_interface.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "parameters/mavlink_parameter_interface.h"
 
 #include <string.h>

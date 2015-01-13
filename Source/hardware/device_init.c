@@ -14,7 +14,7 @@
 #include "hardware/device_init.h"
 
 #include "PM_Sensorless.h"
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 #include "hardware/uart.h"
 
 // Functions that will be run from RAM need to be assigned to
