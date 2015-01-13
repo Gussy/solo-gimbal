@@ -10,7 +10,7 @@
 
 #include "PeripheralHeaderIncludes.h"
 #include "PM_Sensorless.h"
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 
 #define ALL_INIT_PARAMS_RECVD_1 0x0FFF
 #define ALL_INIT_PARAMS_RECVD_2 0x003F

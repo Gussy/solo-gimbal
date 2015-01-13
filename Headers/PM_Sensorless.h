@@ -50,7 +50,7 @@ Next, Include project specific include files.
 #endif
 
 #include "can/cand_BitFields.h"
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 
 typedef enum {
     BLINK_NO_COMM,

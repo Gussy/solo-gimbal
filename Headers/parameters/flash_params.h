@@ -9,7 +9,7 @@
 #define FLASH_PARAMS_H_
 
 
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 
 struct flash_param_struct_0000 {
 	Uint16 flash_struct_id;

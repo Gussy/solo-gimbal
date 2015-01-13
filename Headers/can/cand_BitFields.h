@@ -2,7 +2,7 @@
 #ifndef CAN_BITFIELDS_H
 #define CAN_BITFIELDS_H
 
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 
 /**
  * CAN API

@@ -24,7 +24,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "can/cand.h"
 #include "can/cb.h"
 #include "hardware/gyro.h"
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 #include "control/gyro_kinematics_correction.h"
 #include "control/PID.h"
 #include "hardware/system_analyzer.h"

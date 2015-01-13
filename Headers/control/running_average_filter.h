@@ -10,7 +10,7 @@
 
 #include "PM_Sensorless-Settings.h"
 #include "PeripheralHeaderIncludes.h"
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 
 #define RUNNING_AVERAGE_DECIMATION_LIMIT 100
 

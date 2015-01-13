@@ -9,7 +9,7 @@
 #define PID_H_
 
 #include "PeripheralHeaderIncludes.h"
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 
 #define OUTPUT_LIMIT             32767
 // Used to limit result

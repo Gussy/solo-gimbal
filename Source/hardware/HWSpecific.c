@@ -5,7 +5,7 @@
  *      Author: abamberger
  */
 
-#include "HWSpecific.h"
+#include "hardware/HWSpecific.h"
 
 int AxisHomePositions[GIMBAL_CNT][AXIS_CNT] = {
     // Gimbal G1
