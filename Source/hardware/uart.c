@@ -117,14 +117,14 @@ void uart_printf(const char* format, ...)
 
 void uart_send_data(Uint8* data, int length)
 {
-    //int txbuf_start_size = tx_ringbuf.size(&tx_ringbuf);
     int i;
     for (i = 0; i < length; i++) {
         tx_ringbuf.push(&tx_ringbuf, data[i]);
     }
 
-    // If the transmit ring buffer was empty to begin with, enable the transmit interrupt
-    // (this will start copying the contents of the transmit ring buffer into the transmit FIFO)
+    // Enable the tx interrupt.  This will start copying the contents of the transmit ring buffer into the transmit FIFO
+    // The interrupt was either previously disabled, because the ring buffer was empty, so we don't want to be interrupting
+    // all the time with nothing to transmit, or it was already enabled, and thus enabling it again won't have any effect
     UART_SCI_PORT.SCIFFTX.bit.TXFFIENA = 1;
 }
 
@@ -132,11 +132,7 @@ interrupt void uart_tx_isr(void)
 {
     // Attempt to load up to 4 bytes into the TX FIFO
     while ((tx_ringbuf.size(&tx_ringbuf) > 0) && (UART_SCI_PORT.SCIFFTX.bit.TXFFST < 4)) {
-            UART_SCI_PORT.SCITXBUF = tx_ringbuf.pop(&tx_ringbuf);
-            /*
-            while (!UART_SCI_PORT.SCICTL2.bit.TXRDY)
-            {}
-            */
+        UART_SCI_PORT.SCITXBUF = tx_ringbuf.pop(&tx_ringbuf);
     }
 
     // If we've emptied the transmit ring buffer, turn off the transmit interrupt (it will be re-enabled when there is more data to send)
