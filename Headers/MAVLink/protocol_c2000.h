@@ -15,6 +15,10 @@
 #ifndef PROTOCOL_C2000_H_
 #define PROTOCOL_C2000_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 #include <stdint.h>
 
@@ -677,12 +681,12 @@ static inline uint16_t mav_get_int8_t_array_c2000(const void* buf, int8_t* value
 }
 
 /**
- * @brief Initialize a CRC for the C2000 architecture
+ * @brief Initialize the buffer for the X.25 CRC
  *
- * This function is identical to the non-c2000 version.  It is redefined here simply to prevent a circular
- * reference dependency on the header the normal version is defined in
+ * This is identical to the non-C2000 version of this function (the constant used is also identical)
+ * It is simply replicated here to remove a circular dependency issue between this header and checksum.h
  *
- * @param crcAccum Pointer to CRC accumulator to initialize
+ * @param crcAccum the 16 bit X.25 CRC
  */
 static inline void crc_init_c2000(uint16_t* crcAccum)
 {
@@ -690,14 +694,18 @@ static inline void crc_init_c2000(uint16_t* crcAccum)
 }
 
 /**
- * @brief Accumulate one byte of data into the CRC accumulator for the C2000 architecture
+ * @brief Accumulate the X.25 CRC by adding one char at a time.
  *
- * This function is mostly identical to the non-c2000 version.  The only difference is that extra
- * masking is performed in this function between steps, since because uint8_t variables on c2000 are actually
- * 16-bits, not masking out the top 8 bits after every step causes unintended upper-byte garbage to corrupt the CRC
+ * The checksum function adds the hash of one char at a time to the
+ * 16 bit checksum (uint16_t).
  *
- * @param data Byte of data to be accumulated into the CRC accumulator
- * @param crcAccum Pointer to CRC accumulator to accumulate data byte into
+ * The C2000 version is unique in that it needs to do extra masking of the incoming data byte
+ * and temporary accumulator byte, since uint8_t on C2000 is actually 16-bits.  Without doing
+ * the extra masking rollover into the upper byte of the word causes the CRC to be calculated
+ * incorrectly
+ *
+ * @param data new char to hash
+ * @param crcAccum the already accumulated checksum
  */
 static inline void crc_accumulate_c2000(uint8_t data, uint16_t *crcAccum)
 {
@@ -715,15 +723,14 @@ static inline void crc_accumulate_c2000(uint8_t data, uint16_t *crcAccum)
 }
 
 /**
- * @brief Calculates a CRC over a byte buffer for the C2000 architecture
+ * @brief Calculates the X.25 checksum on a byte buffer
  *
- * The only difference between this function and the non-c2000 version is that this version
- * internally calls the c2000 version of crc_accumulate, which is necessary for the reasons
- * stated in the description of crc_accumulate_c2000
+ * The only difference between this and the non-C2000 version is that this calls the C2000 specific
+ * version of crc_accumulate to make sure that 16-bit "bytes" are handled correctly
  *
- * @param pBuffer Pointer to buffer to calculate CRC over
- * @param length Length of buffer to calculate CRC over (in bytes)
- * @return Calculated CRC
+ * @param  pBuffer buffer containing the byte array to hash
+ * @param  length  length of the byte array
+ * @return the checksum over the buffer bytes
  */
 static inline uint16_t crc_calculate_c2000(const uint8_t* pBuffer, uint16_t length)
 {
@@ -739,7 +746,14 @@ static inline uint16_t crc_calculate_c2000(const uint8_t* pBuffer, uint16_t leng
 }
 
 /**
- * @brief Accumulates a MAVLink message payload into an existing CRC accumulator
+ * @brief Accumulate the X.25 CRC by adding an array of bytes
+ *
+ * The checksum function adds the hash of one char at a time to the
+ * 16 bit checksum (uint16_t).
+ *
+ * The C2000 version is specific to message payloads (where the normal version works for any byte buffer),
+ * but in the library this is the only way the normal version is used.  The C2000 version uses the C2000-specific
+ * byte retrieval function to handle extracting bytes out of a message payload on the C2000 architecture
  *
  * @param crcAccum Pointer to CRC accumulator to accumulate message payload CRC into
  * @param payload Pointer to beginning of MAVLink message payload
@@ -752,5 +766,9 @@ static inline void crc_accumulate_msg_payload_c2000(uint16_t *crcAccum, void* pa
         crc_accumulate_c2000(mav_get_uint8_t_c2000(payload, crc_bytes_accumulated++), crcAccum);
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PROTOCOL_C2000_H_ */
