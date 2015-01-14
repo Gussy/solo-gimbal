@@ -28,6 +28,8 @@ float roll = 0.0;
 float pitch = 0.0;
 float yaw = 0.0;
 
+float targets[3] = {0,0,0};
+
 MavlinkProcessingState mavlink_state = MAVLINK_STATE_PARSE_INPUT;
 
 int last_parameter_sent = 0;
@@ -83,22 +85,22 @@ void mavlink_state_machine()
     	// azimuth
     	pos[0] = -1*yaw/(3.14159/2)*ENCODER_COUNTS_PER_REV;
     	// set azimuth to zero since it points north, zero keeps it trying to point forward
-    	pos[0] = 0;
+    	pos[0] = targets[AZ]*ENCODER_COUNTS_PER_REV;
     	if (pos[0] < 0) {
     	    pos[0] += ENCODER_COUNTS_PER_REV;
     	} else if(pos[0] > ENCODER_COUNTS_PER_REV) {
     	    pos[0] -= ENCODER_COUNTS_PER_REV;
     	}
-    	// @todo: change to the behavior desired by 3DR
+
     	// elevation
-    	pos[1] = -1*pitch/(3.14159*2)*ENCODER_COUNTS_PER_REV;
+    	pos[1] = targets[EL]*ENCODER_COUNTS_PER_REV-1*pitch/(3.14159*2)*ENCODER_COUNTS_PER_REV;
     	if (pos[1] < 0) {
             pos[1] += ENCODER_COUNTS_PER_REV;
         } else if(pos[1] > ENCODER_COUNTS_PER_REV) {
             pos[1] -= ENCODER_COUNTS_PER_REV;
         }
     	// roll
-    	pos[2] = -1*roll/(3.14159*2)*ENCODER_COUNTS_PER_REV;
+    	pos[2] = targets[ROLL]*ENCODER_COUNTS_PER_REV-1*roll/(3.14159*2)*ENCODER_COUNTS_PER_REV;
     	if (pos[2] < 0) {
             pos[2] += ENCODER_COUNTS_PER_REV;
         } else if(pos[2] > ENCODER_COUNTS_PER_REV) {
@@ -149,6 +151,9 @@ static void process_mavlink_input()
                 attitude_received++;
                 handle_attitude(&received_msg);
                 break;
+            case MAVLINK_MSG_ID_MOUNT_CONTROL:
+            	handle_mount_control(&received_msg);
+            	break;
 
             default:
             {
@@ -168,6 +173,15 @@ void handle_attitude(mavlink_message_t* received_msg)
     roll = decoded_msg.roll;
     pitch = decoded_msg.pitch;
     yaw = decoded_msg.yaw;
+}
+
+void handle_mount_control(mavlink_message_t* received_msg)
+{
+	mavlink_mount_control_t decoded_msg;
+	mavlink_msg_mount_control_decode(received_msg, &decoded_msg);
+	targets[EL] = decoded_msg.input_a/(360*100.0); ///< pitch(deg*100) or lat, depending on mount mode
+	targets[ROLL] = decoded_msg.input_b/(360*100.0); ///< roll(deg*100) or lon depending on mount mode
+	targets[AZ] = decoded_msg.input_c/(360*100.0); ///< yaw(deg*100) or alt (in cm) depending on mount mode
 }
 
 void send_mavlink_message(mavlink_message_t* msg)

@@ -30,6 +30,7 @@ void mavlink_state_machine();
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_debug_data(DebugData* debug_data);
 void handle_attitude(mavlink_message_t* received_msg);
+void handle_mount_control(mavlink_message_t* received_msg);
 void send_mavlink_message(mavlink_message_t* msg);
 
 // This is defined in terms of 150ms periods, so 6 is the closest we can get to a 1Hz heartbeat
