@@ -149,10 +149,9 @@ interrupt void uart_tx_isr(void)
     // Attempt to load up to 4 bytes into the TX FIFO
     int i;
     for (i = 0; i < 4; i++) {
-        if (tx_ringbuf.size(&tx_ringbuf) > 0) {
+        if ((tx_ringbuf.size(&tx_ringbuf) > 0)&&(UART_SCI_PORT.SCICTL2.bit.TXRDY)) {
             UART_SCI_PORT.SCITXBUF = tx_ringbuf.pop(&tx_ringbuf);
-            while (!UART_SCI_PORT.SCICTL2.bit.TXRDY)
-            {}
+            //while (!UART_SCI_PORT.SCICTL2.bit.TXRDY)            {}
         }
     }
 
