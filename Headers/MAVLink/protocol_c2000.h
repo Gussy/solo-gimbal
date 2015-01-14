@@ -16,6 +16,9 @@
 #define PROTOCOL_C2000_H_
 
 #include <string.h>
+#include <stdint.h>
+
+typedef unsigned long long uint64_t;
 
 #define X25_INIT_CRC_C2000 0xffff
 

@@ -22,6 +22,14 @@
 
 #include <stdint.h>
 
+/*
+// Sometimes this is defined by stdint, and sometimes it isn't (I don't know why, there is some define in stdint that must get set by the compiler only sometimes)
+// So define it here just in case
+#ifndef uint64_t
+typedef unsigned long long uint64_t;
+#endif
+*/
+
 #include "ardupilotmega/mavlink.h"
 
 #endif /* GIMBAL_MAVLINK_H_ */

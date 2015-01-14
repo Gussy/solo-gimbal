@@ -112,26 +112,12 @@ void uart_printf(const char* format, ...)
     int string_len = strlen(buffer);
     uart_send_data((Uint8*)buffer, string_len);
 
-    /*
-    int txbuf_start_size = tx_ringbuf.size(&tx_ringbuf);
-    int i;
-    for (i = 0; i < string_len; ++i) {
-        tx_ringbuf.push(&tx_ringbuf, buffer[i]);
-    }
-
-    // If the transmit ring buffer was empty to begin with, enable the transmit interrupt
-    // (this will start copying the contents of the transmit ring buffer into the transmit FIFO)
-    if (txbuf_start_size == 0) {
-        UART_SCI_PORT.SCIFFTX.bit.TXFFIENA = 1;
-    }
-    */
-
     return;
 }
 
 void uart_send_data(Uint8* data, int length)
 {
-    int txbuf_start_size = tx_ringbuf.size(&tx_ringbuf);
+    //int txbuf_start_size = tx_ringbuf.size(&tx_ringbuf);
     int i;
     for (i = 0; i < length; i++) {
         tx_ringbuf.push(&tx_ringbuf, data[i]);
@@ -139,20 +125,18 @@ void uart_send_data(Uint8* data, int length)
 
     // If the transmit ring buffer was empty to begin with, enable the transmit interrupt
     // (this will start copying the contents of the transmit ring buffer into the transmit FIFO)
-    if (txbuf_start_size == 0) {
-        UART_SCI_PORT.SCIFFTX.bit.TXFFIENA = 1;
-    }
+    UART_SCI_PORT.SCIFFTX.bit.TXFFIENA = 1;
 }
 
 interrupt void uart_tx_isr(void)
 {
     // Attempt to load up to 4 bytes into the TX FIFO
-    int i;
-    for (i = 0; i < 4; i++) {
-        if ((tx_ringbuf.size(&tx_ringbuf) > 0)&&(UART_SCI_PORT.SCICTL2.bit.TXRDY)) {
+    while ((tx_ringbuf.size(&tx_ringbuf) > 0) && (UART_SCI_PORT.SCIFFTX.bit.TXFFST < 4)) {
             UART_SCI_PORT.SCITXBUF = tx_ringbuf.pop(&tx_ringbuf);
-            //while (!UART_SCI_PORT.SCICTL2.bit.TXRDY)            {}
-        }
+            /*
+            while (!UART_SCI_PORT.SCICTL2.bit.TXRDY)
+            {}
+            */
     }
 
     // If we've emptied the transmit ring buffer, turn off the transmit interrupt (it will be re-enabled when there is more data to send)

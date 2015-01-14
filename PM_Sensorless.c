@@ -999,6 +999,8 @@ interrupt void GyroIntISR(void)
 int position_loop_deadband_counts = 10;
 int position_loop_deadband_hysteresis = 100;
 
+int debug_output_decimation_count = 0;
+
 static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data)
 {
     IntOrFloat float_converter;
@@ -1138,12 +1140,15 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
         }
 
         if (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE) {
-            debug_data->debug_1 = param_set[CAND_PID_DEBUG_3].param;
+            debug_data->debug_3 = param_set[CAND_PID_DEBUG_3].param;
             *(param_set[CAND_PID_DEBUG_3].sema) = FALSE;
         }
 
         // If any of the debug data changed, send the debug mavlink message
-        send_mavlink_debug_data(debug_data);
+        if (debug_output_decimation_count++ > 50) {
+            debug_output_decimation_count = 0;
+            send_mavlink_debug_data(debug_data);
+        }
     }
 
 
