@@ -171,7 +171,5 @@ H_MAG = subs(H_MAG, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
 f = matlabFunction(H_MAG,'file','calcH_MAG.m');
 
 %% generate helper functions
-angMeas = subs(angMeas, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
-f = matlabFunction(angMeas,'file','calcMagAng.m');
 Tmn = subs(Tmn, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
 f = matlabFunction(Tmn,'file','calcTmn.m');
