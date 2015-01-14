@@ -23,7 +23,7 @@ typedef struct {
 
 //TODO: System ID of 50 is temporary for now
 #define MAVLINK_GIMBAL_SYSID 50
-#define ATTITUDE_DATA_REFRESH_RATE 10
+#define ATTITUDE_DATA_REFRESH_RATE 50
 // This is defined in terms of 150ms periods, so 6 is the closest we can get to a 1Hz heartbeat
 #define MAVLINK_HEARTBEAT_PERIOD 6
 

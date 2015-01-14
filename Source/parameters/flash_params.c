@@ -214,7 +214,7 @@ struct flash_param_struct_0000 flash_params =
     },
     // Torque Loop PID Kp
     {
-        1.25,   // EL
+        0.8,   // EL
         0.8,    // AZ
         0.8     // ROLL
     },
@@ -226,7 +226,7 @@ struct flash_param_struct_0000 flash_params =
     },
     // Torque Loop PID Kd
     {
-        1.0,    // EL
+        0.0,    // EL
         0.0,    // AZ
         0.0     // ROLL
     }

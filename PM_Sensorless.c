@@ -1168,9 +1168,9 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
         }
 
         // If any of the debug data changed, send the debug mavlink message
-        if (debug_output_decimation_count++ > 50) {
+        if (debug_output_decimation_count++ > 19) {
             debug_output_decimation_count = 0;
-            send_mavlink_debug_data(debug_data);
+            //send_mavlink_debug_data(debug_data);
         }
     }
 

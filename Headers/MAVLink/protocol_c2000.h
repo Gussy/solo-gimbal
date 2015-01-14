@@ -32,6 +32,12 @@ typedef unsigned long long uint64_t;
 #ifndef int64_t
 typedef long long int64_t;
 #endif
+#ifndef uint8_t
+typedef unsigned char uint8_t;
+#endif
+#ifndef int8_t
+typedef char int8_t;
+#endif
 
 #define X25_INIT_CRC_C2000 0xffff
 
