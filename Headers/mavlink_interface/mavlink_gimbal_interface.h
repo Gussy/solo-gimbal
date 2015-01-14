@@ -13,13 +13,12 @@
 #include "mavlink_interface/gimbal_mavlink.h"
 
 typedef enum {
-    MAVLINK_STATE_PARSE_INPUT,
-    MAVLINK_STATE_SEND_PARAM_LIST
+	MAVLINK_STATE_PARSE_INPUT, MAVLINK_STATE_SEND_PARAM_LIST
 } MavlinkProcessingState;
 
 typedef struct {
-    MAV_STATE mav_state;
-    MAV_MODE_GIMBAL mav_mode;
+	MAV_STATE mav_state;
+	MAV_MODE_GIMBAL mav_mode;
 } MavlinkGimbalInfo;
 
 //TODO: System ID of 50 is temporary for now
