@@ -5,16 +5,18 @@
  *      Author: abamberger
  */
 
-#include "hardware/uart.h"
-#include "parameters/mavlink_parameter_interface.h"
-#include "mavlink_interface/mavlink_gimbal_interface.h"
-#include "can/cand.h"
 #include "PM_Sensorless.h"
 #include "PM_Sensorless-Settings.h"
 
-static void process_mavlink_input();
+#include "can/cand.h"
+#include "hardware/uart.h"
+#include "parameters/mavlink_parameter_interface.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
 
-#define ATTITUDE_DATA_REFRESH_RATE 10
+static void process_mavlink_input();
+static send_mavlink_request_stream();
+static handle_attitude(mavlink_message_t* received_msg);
+static handle_mount_control(mavlink_message_t* received_msg);
 
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
@@ -40,30 +42,6 @@ void init_mavlink() {
 
 	// Initialize the default parameters for the parameter interface
 	init_default_mavlink_params();
-}
-
-void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
-	static mavlink_message_t heartbeat_msg;
-	mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
-			&heartbeat_msg, MAV_TYPE_GIMBAL, MAV_AUTOPILOT_INVALID,
-			MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, mav_mode, mav_state);
-	send_mavlink_message(&heartbeat_msg);
-}
-
-void send_mavlink_debug_data(DebugData* debug_data) {
-	static mavlink_message_t debug_msg;
-	mavlink_msg_debug_vect_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
-			&debug_msg, "Debug 1", 0, (float) debug_data->debug_1,
-			(float) debug_data->debug_2, (float) debug_data->debug_3);
-	send_mavlink_message(&debug_msg);
-}
-
-void request_mavlink_updates() {
-	static mavlink_message_t msg_request_data_stream;
-	mavlink_msg_request_data_stream_pack(MAVLINK_GIMBAL_SYSID,
-			MAV_COMP_ID_GIMBAL, &msg_request_data_stream, 1, 1,
-			MAV_DATA_STREAM_EXTRA1, ATTITUDE_DATA_REFRESH_RATE, 1);
-	send_mavlink_message(&msg_request_data_stream);
 }
 
 void mavlink_state_machine() {
@@ -138,7 +116,7 @@ static void process_mavlink_input() {
 				heartbeats_received++;
 				if (!heartbeats_detected) {
 					heartbeats_detected = 1;
-					request_mavlink_updates();
+					send_mavlink_request_stream();
 				}
 				break;
 
@@ -168,7 +146,7 @@ static void process_mavlink_input() {
 	}
 }
 
-void handle_attitude(mavlink_message_t* received_msg) {
+static handle_attitude(mavlink_message_t* received_msg) {
 	mavlink_attitude_t decoded_msg;
 	mavlink_msg_attitude_decode(received_msg, &decoded_msg);
 
@@ -177,12 +155,36 @@ void handle_attitude(mavlink_message_t* received_msg) {
 	yaw = decoded_msg.yaw;
 }
 
-void handle_mount_control(mavlink_message_t* received_msg) {
+static handle_mount_control(mavlink_message_t* received_msg) {
 	mavlink_mount_control_t decoded_msg;
 	mavlink_msg_mount_control_decode(received_msg, &decoded_msg);
 	targets[EL] = decoded_msg.input_a / (360 * 100.0); ///< pitch(deg*100) or lat, depending on mount mode
 	targets[ROLL] = decoded_msg.input_b / (360 * 100.0); ///< roll(deg*100) or lon depending on mount mode
 	targets[AZ] = decoded_msg.input_c / (360 * 100.0); ///< yaw(deg*100) or alt (in cm) depending on mount mode
+}
+
+void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
+	static mavlink_message_t heartbeat_msg;
+	mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
+			&heartbeat_msg, MAV_TYPE_GIMBAL, MAV_AUTOPILOT_INVALID,
+			MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, mav_mode, mav_state);
+	send_mavlink_message(&heartbeat_msg);
+}
+
+static send_mavlink_request_stream() {
+	static mavlink_message_t msg_request_data_stream;
+	mavlink_msg_request_data_stream_pack(MAVLINK_GIMBAL_SYSID,
+			MAV_COMP_ID_GIMBAL, &msg_request_data_stream, 1, 1,
+			MAV_DATA_STREAM_EXTRA1, ATTITUDE_DATA_REFRESH_RATE, 1);
+	send_mavlink_message(&msg_request_data_stream);
+}
+
+void send_mavlink_debug_data(DebugData* debug_data) {
+	static mavlink_message_t debug_msg;
+	mavlink_msg_debug_vect_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
+			&debug_msg, "Debug 1", 0, (float) debug_data->debug_1,
+			(float) debug_data->debug_2, (float) debug_data->debug_3);
+	send_mavlink_message(&debug_msg);
 }
 
 void send_mavlink_message(mavlink_message_t* msg) {
