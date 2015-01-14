@@ -18,7 +18,16 @@
 #include <string.h>
 #include <stdint.h>
 
+// This is necessary because the uint64_t and int64_t definitions are only enabled in stdint.h if __TMS320C28X__ is defined
+// This must only be defined by the compiler under specific circumstances (which I haven't figured out yet), because sometimes the
+// stdint.h definitions are enabled and sometimes they aren't.  To ensure this file will always compile, add the typedefs ourselves
+// if the stdint.h ones don't come through
+#ifndef uint64_t
 typedef unsigned long long uint64_t;
+#endif
+#ifndef int64_t
+typedef long long int64_t;
+#endif
 
 #define X25_INIT_CRC_C2000 0xffff
 

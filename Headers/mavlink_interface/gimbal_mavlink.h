@@ -13,22 +13,14 @@
 // are needed, and the defines don't need to be repeated everywhere they're included
 
 #ifndef uint8_t
-#define uint8_t Uint8
+typedef Uint8 uint8_t;
 #endif
 
 #ifndef int8_t
-#define int8_t int8
+typedef int8 int8_t;
 #endif
 
 #include <stdint.h>
-
-/*
-// Sometimes this is defined by stdint, and sometimes it isn't (I don't know why, there is some define in stdint that must get set by the compiler only sometimes)
-// So define it here just in case
-#ifndef uint64_t
-typedef unsigned long long uint64_t;
-#endif
-*/
 
 #include "ardupilotmega/mavlink.h"
 
