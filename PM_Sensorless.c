@@ -177,6 +177,7 @@ AxisParms axis_parms = {
 ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Gyro readings
     {0, 0, 0},                                              // Corrected gyro readings
+    {0, 0, 0},                                              // Gyro offsets
     {0, 0, 0},                                              // Encoder readings
     {0, 0, 0},                                              // Motor torques
     {0, 0, 0},                                              // Unfiltered position errors
@@ -301,6 +302,21 @@ Uint8 rate_pid_rl_windup_flag = FALSE;
 Uint8 debug_1_flag = FALSE;
 Uint8 debug_2_flag = FALSE;
 Uint8 debug_3_flag = FALSE;
+Uint8 pos_pid_el_p_flag = FALSE;
+Uint8 pos_pid_el_i_flag = FALSE;
+Uint8 pos_pid_el_d_flag = FALSE;
+Uint8 pos_pid_el_windup_flag = FALSE;
+Uint8 pos_pid_az_p_flag = FALSE;
+Uint8 pos_pid_az_i_flag = FALSE;
+Uint8 pos_pid_az_d_flag = FALSE;
+Uint8 pos_pid_az_windup_flag = FALSE;
+Uint8 pos_pid_rl_p_flag = FALSE;
+Uint8 pos_pid_rl_i_flag = FALSE;
+Uint8 pos_pid_rl_d_flag = FALSE;
+Uint8 pos_pid_rl_windup_flag = FALSE;
+Uint8 gyro_offset_el_flag = FALSE;
+Uint8 gyro_offset_az_flag = FALSE;
+Uint8 gyro_offset_rl_flag = FALSE;
 
 ParamSet param_set[CAND_PID_LAST];
 
@@ -333,6 +349,21 @@ void init_param_set(void)
     param_set[CAND_PID_DEBUG_1].sema = &debug_1_flag;
     param_set[CAND_PID_DEBUG_2].sema = &debug_2_flag;
     param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
+    param_set[CAND_PID_POS_AZ_P].sema = &pos_pid_az_p_flag;
+    param_set[CAND_PID_POS_AZ_I].sema = &pos_pid_az_i_flag;
+    param_set[CAND_PID_POS_AZ_D].sema = &pos_pid_az_d_flag;
+    param_set[CAND_PID_POS_AZ_WINDUP].sema = &pos_pid_az_windup_flag;
+    param_set[CAND_PID_POS_EL_P].sema = &pos_pid_el_p_flag;
+    param_set[CAND_PID_POS_EL_I].sema = &pos_pid_el_i_flag;
+    param_set[CAND_PID_POS_EL_D].sema = &pos_pid_el_d_flag;
+    param_set[CAND_PID_POS_EL_WINDUP].sema = &pos_pid_el_windup_flag;
+    param_set[CAND_PID_POS_RL_P].sema = &pos_pid_rl_p_flag;
+    param_set[CAND_PID_POS_RL_I].sema = &pos_pid_rl_i_flag;
+    param_set[CAND_PID_POS_RL_D].sema = &pos_pid_rl_d_flag;
+    param_set[CAND_PID_POS_RL_WINDUP].sema = &pos_pid_rl_windup_flag;
+    param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
+    param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
+    param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
 }
 
 static void MainISRwork(void);
@@ -1149,6 +1180,146 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
         rate_pid_loop_float[ROLL].integralMax = float_converter.float_val;
         rate_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
         *(param_set[CAND_PID_RATE_RL_WINDUP].sema) = FALSE;
+    }
+
+    // Check for updated position loop PID params
+    if (*(param_set[CAND_PID_POS_EL_P].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[EL].integralCumulative = 0.0;
+        pos_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_EL_P].param;
+        pos_pid_loop_float[EL].gainP = float_converter.float_val;
+        *(param_set[CAND_PID_POS_EL_P].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_EL_I].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[EL].integralCumulative = 0.0;
+        pos_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_EL_I].param;
+        pos_pid_loop_float[EL].gainI = float_converter.float_val;
+        *(param_set[CAND_PID_POS_EL_I].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_EL_D].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[EL].integralCumulative = 0.0;
+        pos_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_EL_D].param;
+        pos_pid_loop_float[EL].gainD = float_converter.float_val;
+        *(param_set[CAND_PID_POS_EL_D].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_EL_WINDUP].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[EL].integralCumulative = 0.0;
+        pos_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_EL_WINDUP].param;
+        pos_pid_loop_float[EL].integralMax = float_converter.float_val;
+        pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
+        *(param_set[CAND_PID_POS_EL_WINDUP].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_AZ_P].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[AZ].integralCumulative = 0.0;
+        pos_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_AZ_P].param;
+        pos_pid_loop_float[AZ].gainP = float_converter.float_val;
+        *(param_set[CAND_PID_POS_AZ_P].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_AZ_I].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[AZ].integralCumulative = 0.0;
+        pos_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_AZ_I].param;
+        pos_pid_loop_float[AZ].gainI = float_converter.float_val;
+        *(param_set[CAND_PID_POS_AZ_I].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_AZ_D].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[AZ].integralCumulative = 0.0;
+        pos_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_AZ_D].param;
+        pos_pid_loop_float[AZ].gainD = float_converter.float_val;
+        *(param_set[CAND_PID_POS_AZ_D].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_AZ_WINDUP].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[AZ].integralCumulative = 0.0;
+        pos_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_AZ_WINDUP].param;
+        pos_pid_loop_float[AZ].integralMax = float_converter.float_val;
+        pos_pid_loop_float[AZ].integralMin = -float_converter.float_val;
+        *(param_set[CAND_PID_POS_AZ_WINDUP].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_RL_P].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
+        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_RL_P].param;
+        pos_pid_loop_float[ROLL].gainP = float_converter.float_val;
+        *(param_set[CAND_PID_POS_RL_P].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_RL_I].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
+        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_RL_I].param;
+        pos_pid_loop_float[ROLL].gainI = float_converter.float_val;
+        *(param_set[CAND_PID_POS_RL_I].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_RL_D].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
+        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_RL_D].param;
+        pos_pid_loop_float[ROLL].gainD = float_converter.float_val;
+        *(param_set[CAND_PID_POS_RL_D].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_POS_RL_WINDUP].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
+        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_POS_RL_WINDUP].param;
+        pos_pid_loop_float[ROLL].integralMax = float_converter.float_val;
+        pos_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
+        *(param_set[CAND_PID_POS_RL_WINDUP].sema) = FALSE;
+    }
+
+    // Check for updated gyro offsets
+    if (*(param_set[CAND_PID_GYRO_OFFSET_EL].sema) == TRUE) {
+        cb_parms->gyro_offsets[EL] = (int16)(param_set[CAND_PID_GYRO_OFFSET_EL].param);
+        *(param_set[CAND_PID_GYRO_OFFSET_EL].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) == TRUE) {
+        cb_parms->gyro_offsets[AZ] = (int16)(param_set[CAND_PID_GYRO_OFFSET_AZ].param);
+        *(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_GYRO_OFFSET_RL].sema) == TRUE) {
+        cb_parms->gyro_offsets[ROLL] = (int16)(param_set[CAND_PID_GYRO_OFFSET_RL].param);
+        *(param_set[CAND_PID_GYRO_OFFSET_RL].sema) = FALSE;
     }
 
     if ((*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE)) {
