@@ -9,16 +9,8 @@
 #define MAVLINK_INTERFACE_H_
 
 #include "PeripheralHeaderIncludes.h"
-
-#ifndef uint8_t
-#define uint8_t Uint8
-#endif
-
-#ifndef int8_t
-#define int8_t int8
-#endif
-
-#include "ardupilotmega/mavlink.h"
+#include "PM_Sensorless.h"
+#include "mavlink_interface/gimbal_mavlink.h"
 
 typedef enum {
     MAVLINK_STATE_PARSE_INPUT,
@@ -36,6 +28,7 @@ typedef struct {
 void init_mavlink();
 void mavlink_state_machine();
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
+void send_mavlink_debug_data(DebugData* debug_data);
 void handle_attitude(mavlink_message_t* received_msg);
 void send_mavlink_message(mavlink_message_t* msg);
 

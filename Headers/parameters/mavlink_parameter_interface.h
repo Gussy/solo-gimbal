@@ -9,16 +9,7 @@
 #define MAVLINK_PARAMETER_INTERFACE_H_
 
 #include "can/cand_BitFields.h"
-
-#ifndef uint8_t
-#define uint8_t Uint8
-#endif
-
-#ifndef int8_t
-#define int8_t int8
-#endif
-
-#include "ardupilotmega/mavlink.h"
+#include "mavlink_interface/gimbal_mavlink.h"
 
 typedef enum {
     MAVLINK_GIMBAL_PARAM_PID_YAW_P = 0,
@@ -46,9 +37,11 @@ typedef union {
 } mavlink_param_union_c2000_t;
 
 typedef struct {
-    mavlink_param_union_c2000_t param;
     uint8_t param_type;
+    float* float_data_ptr;
+    uint32_t* uint32_data_ptr;
     CAND_ParameterID can_parameter_id;
+    CAND_DestinationID can_parameter_destination_axis;
     char param_id[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1];
 } GimbalMavlinkParameter;
 

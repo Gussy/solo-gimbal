@@ -139,6 +139,12 @@ typedef struct {
     Uint8 enabled;
 } ControlBoardParms;
 
+typedef struct {
+    int16 debug_1;
+    int16 debug_2;
+    int16 debug_3;
+} DebugData;
+
 typedef union {
     Uint32 uint32_val;
     float float_val;

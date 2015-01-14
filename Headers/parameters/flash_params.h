@@ -15,6 +15,8 @@ struct flash_param_struct_0000 {
 	Uint16 flash_struct_id;
 	Uint16 board_id;
 	Uint16 other_id;
+	Uint32 sys_swver;
+	Uint32 mavlink_baud_rate;
 	float AxisCalibrationSlopes[AXIS_CNT];
 	float AxisCalibrationIntercepts[AXIS_CNT];
 	int AxisHomePositions[AXIS_CNT];

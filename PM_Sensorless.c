@@ -47,6 +47,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 
 // Prototype statements for functions found within this file.
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
+static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data);
 void DeviceInit();
 void MemCopy();
 void InitFlash();
@@ -209,6 +210,12 @@ MavlinkGimbalInfo mavlink_gimbal_info = {
     MAV_MODE_GIMBAL_UNINITIALIZED       // Custom mode for heartbeat message
 };
 
+DebugData debug_data = {
+    0,      // Debug 1
+    0,      // Debug 2
+    0       // Debug 3
+};
+
 AveragePowerFilterParms power_filter_parms = {
     0.0,        // Iq filter output
     0.0,        // Iq filter previous
@@ -279,6 +286,21 @@ MotorDriveParms motor_drive_parms = {
 
 Uint8 unused = FALSE;
 Uint8 current_flag = FALSE;
+Uint8 rate_pid_el_p_flag = FALSE;
+Uint8 rate_pid_el_i_flag = FALSE;
+Uint8 rate_pid_el_d_flag = FALSE;
+Uint8 rate_pid_el_windup_flag = FALSE;
+Uint8 rate_pid_az_p_flag = FALSE;
+Uint8 rate_pid_az_i_flag = FALSE;
+Uint8 rate_pid_az_d_flag = FALSE;
+Uint8 rate_pid_az_windup_flag = FALSE;
+Uint8 rate_pid_rl_p_flag = FALSE;
+Uint8 rate_pid_rl_i_flag = FALSE;
+Uint8 rate_pid_rl_d_flag = FALSE;
+Uint8 rate_pid_rl_windup_flag = FALSE;
+Uint8 debug_1_flag = FALSE;
+Uint8 debug_2_flag = FALSE;
+Uint8 debug_3_flag = FALSE;
 
 ParamSet param_set[CAND_PID_LAST];
 
@@ -296,7 +318,26 @@ void init_param_set(void)
 
 	// Set up parameters we're using
 	param_set[CAND_PID_TORQUE].sema = &current_flag;
+	param_set[CAND_PID_RATE_EL_P].sema = &rate_pid_el_p_flag;
+	param_set[CAND_PID_RATE_EL_I].sema = &rate_pid_el_i_flag;
+	param_set[CAND_PID_RATE_EL_D].sema = &rate_pid_el_d_flag;
+	param_set[CAND_PID_RATE_EL_WINDUP].sema = &rate_pid_el_windup_flag;
+	param_set[CAND_PID_RATE_AZ_P].sema = &rate_pid_az_p_flag;
+    param_set[CAND_PID_RATE_AZ_I].sema = &rate_pid_az_i_flag;
+    param_set[CAND_PID_RATE_AZ_D].sema = &rate_pid_az_d_flag;
+    param_set[CAND_PID_RATE_AZ_WINDUP].sema = &rate_pid_az_windup_flag;
+    param_set[CAND_PID_RATE_RL_P].sema = &rate_pid_rl_p_flag;
+    param_set[CAND_PID_RATE_RL_I].sema = &rate_pid_rl_i_flag;
+    param_set[CAND_PID_RATE_RL_D].sema = &rate_pid_rl_d_flag;
+    param_set[CAND_PID_RATE_RL_WINDUP].sema = &rate_pid_rl_windup_flag;
+    param_set[CAND_PID_DEBUG_1].sema = &debug_1_flag;
+    param_set[CAND_PID_DEBUG_2].sema = &debug_2_flag;
+    param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
 }
+
+static void MainISRwork(void);
+
+Uint32 MissedInterrupts = 0;
 
 void main(void)
 {
@@ -474,6 +515,18 @@ void main(void)
 		if (board_hw_id == AZ) {
 		    mavlink_state_machine();
 		}
+		{
+			static Uint32 OldIsrTicker = 0;
+			if (OldIsrTicker != IsrTicker) {
+				if (OldIsrTicker != (IsrTicker-1)) MissedInterrupts++;
+				OldIsrTicker = IsrTicker;
+				MainISRwork();
+			}
+		}
+
+
+		// Update any parameters that have changed due to CAN messages
+		ProcessParamUpdates(param_set, &control_board_parms, &debug_data);
 
 	}
 } //END MAIN CODE
@@ -662,7 +715,6 @@ int enable_counts_max = 1667;
 void A3(void) // SPARE (not used)
 //-----------------------------------------
 {
-    /*
 	if (board_hw_id == EL) {
 		// Wait 1s before enabling the gimbal
 		if (axis_parms.enable_flag == FALSE) {
@@ -672,7 +724,6 @@ void A3(void) // SPARE (not used)
 			}
 		}
 	}
-	*/
 
 	//-----------------
 	//the next time CpuTimer0 'counter' reaches Period value go to A1
@@ -971,6 +1022,161 @@ interrupt void GyroIntISR(void)
 int position_loop_deadband_counts = 10;
 int position_loop_deadband_hysteresis = 100;
 
+int debug_output_decimation_count = 0;
+
+static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data)
+{
+    IntOrFloat float_converter;
+    // Check for updated rate loop PID params
+    if (*(param_set[CAND_PID_RATE_EL_P].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[EL].integralCumulative = 0.0;
+        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_P].param;
+        rate_pid_loop_float[EL].gainP = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_EL_P].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_EL_I].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[EL].integralCumulative = 0.0;
+        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_I].param;
+        rate_pid_loop_float[EL].gainI = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_EL_I].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_EL_D].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[EL].integralCumulative = 0.0;
+        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_D].param;
+        rate_pid_loop_float[EL].gainD = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_EL_D].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_EL_WINDUP].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[EL].integralCumulative = 0.0;
+        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_WINDUP].param;
+        rate_pid_loop_float[EL].integralMax = float_converter.float_val;
+        rate_pid_loop_float[EL].integralMin = -float_converter.float_val;
+        *(param_set[CAND_PID_RATE_EL_WINDUP].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_AZ_P].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[AZ].integralCumulative = 0.0;
+        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_P].param;
+        rate_pid_loop_float[AZ].gainP = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_AZ_P].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_AZ_I].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[AZ].integralCumulative = 0.0;
+        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_I].param;
+        rate_pid_loop_float[AZ].gainI = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_AZ_I].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_AZ_D].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[AZ].integralCumulative = 0.0;
+        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_D].param;
+        rate_pid_loop_float[AZ].gainD = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_AZ_D].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_AZ_WINDUP].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[AZ].integralCumulative = 0.0;
+        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_WINDUP].param;
+        rate_pid_loop_float[AZ].integralMax = float_converter.float_val;
+        rate_pid_loop_float[AZ].integralMin = -float_converter.float_val;
+        *(param_set[CAND_PID_RATE_AZ_WINDUP].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_RL_P].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
+        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_P].param;
+        rate_pid_loop_float[ROLL].gainP = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_RL_P].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_RL_I].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
+        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_I].param;
+        rate_pid_loop_float[ROLL].gainI = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_RL_I].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_RL_D].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
+        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_D].param;
+        rate_pid_loop_float[ROLL].gainD = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_RL_D].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_RATE_RL_WINDUP].sema) == TRUE) {
+        // Dump the integrator and differentiator
+        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
+        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        // Load the new gain
+        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_WINDUP].param;
+        rate_pid_loop_float[ROLL].integralMax = float_converter.float_val;
+        rate_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
+        *(param_set[CAND_PID_RATE_RL_WINDUP].sema) = FALSE;
+    }
+
+    if ((*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE)) {
+        if (*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) {
+            debug_data->debug_1 = param_set[CAND_PID_DEBUG_1].param;
+            *(param_set[CAND_PID_DEBUG_1].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) {
+            debug_data->debug_2 = param_set[CAND_PID_DEBUG_2].param;
+            *(param_set[CAND_PID_DEBUG_2].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE) {
+            debug_data->debug_3 = param_set[CAND_PID_DEBUG_3].param;
+            *(param_set[CAND_PID_DEBUG_3].sema) = FALSE;
+        }
+
+        // If any of the debug data changed, send the debug mavlink message
+        if (debug_output_decimation_count++ > 50) {
+            debug_output_decimation_count = 0;
+            send_mavlink_debug_data(debug_data);
+        }
+    }
+
+
+}
+
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)
 {
     encoder_parms->raw_theta = AdcResult.ADCRESULT6;
@@ -982,7 +1188,7 @@ static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms
 
     // AZ axis motor is mounted opposite of the encoder relative to the other two axes, so we need to invert it here if we're AZ
 #if (HW_REV == 1)
-    if (board_hw_id == AZ)
+    if (board_hw_id == AZ) {
 #elif (HW_REV == 2)
     // On new hardware, EL is also flipped relative to what it was on the old hardware
     if ((board_hw_id == AZ) || (board_hw_id == EL)) {
@@ -1031,6 +1237,21 @@ interrupt void MainISR(void)
     // Verifying the ISR
     IsrTicker++;
 
+#if (DSP2803x_DEVICE_H==1)||(DSP280x_DEVICE_H==1)||(F2806x_DEVICE_H==1)
+    // Enable more interrupts from this timer
+    // KRK Changed to ECAP1 interrupt
+    ECap1Regs.ECCLR.bit.CTR_EQ_PRD1 = 0x1;
+    ECap1Regs.ECCLR.bit.INT = 0x1;
+
+    // Acknowledge interrupt to receive more interrupts from PIE group 3
+    // KRK Changed to Group 4 to use ECAP interrupt.
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
+#endif
+
+}
+
+static void MainISRwork(void)
+{
     // TODO: Measuring timing
     GpioDataRegs.GPASET.bit.GPIO28 = 1;
 	GpioDataRegs.GPASET.bit.GPIO29 = 1;
@@ -1261,16 +1482,7 @@ interrupt void MainISR(void)
     GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
 
 
-#if (DSP2803x_DEVICE_H==1)||(DSP280x_DEVICE_H==1)||(F2806x_DEVICE_H==1)
-    // Enable more interrupts from this timer
-    // KRK Changed to ECAP1 interrupt
-    ECap1Regs.ECCLR.bit.CTR_EQ_PRD1 = 0x1;
-    ECap1Regs.ECCLR.bit.INT = 0x1;
 
-    // Acknowledge interrupt to receive more interrupts from PIE group 3
-    // KRK Changed to Group 4 to use ECAP interrupt.
-    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
-#endif
 }
 
 int16 CorrectEncoderError(int16 raw_error)

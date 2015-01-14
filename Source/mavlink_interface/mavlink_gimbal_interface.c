@@ -9,6 +9,7 @@
 #include "parameters/mavlink_parameter_interface.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "can/cand.h"
+#include "PM_Sensorless.h"
 #include "PM_Sensorless-Settings.h"
 
 static void process_mavlink_input();
@@ -45,6 +46,13 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode)
     static mavlink_message_t heartbeat_msg;
     mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL, &heartbeat_msg, MAV_TYPE_GIMBAL, MAV_AUTOPILOT_INVALID, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, mav_mode, mav_state);
     send_mavlink_message(&heartbeat_msg);
+}
+
+void send_mavlink_debug_data(DebugData* debug_data)
+{
+    static mavlink_message_t debug_msg;
+    mavlink_msg_debug_vect_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL, &debug_msg, "Debug 1", 0, (float)debug_data->debug_1, (float)debug_data->debug_2, (float)debug_data->debug_3);
+    send_mavlink_message(&debug_msg);
 }
 
 void request_mavlink_updates()
@@ -140,6 +148,12 @@ static void process_mavlink_input()
             case MAVLINK_MSG_ID_ATTITUDE:
                 attitude_received++;
                 handle_attitude(&received_msg);
+                break;
+
+            default:
+            {
+                Uint8 msgid = received_msg.msgid;
+            }
                 break;
             }
         }
