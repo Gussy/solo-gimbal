@@ -14,10 +14,9 @@ xlabel('time (sec)');
 
 %% calculate and plot tilt correction magnitude
 figure;
-angErrLog = sqrt(statesLog(1,:).^2 + statesLog(2,:).^2 + statesLog(3,:).^2)*180/pi;
-plot(time,angErrLog);
+plot(time,tiltCorrLog);
 grid on;
-ylabel('Tilt correction magnitude (deg)');
+ylabel('Tilt Correction Magnitude (rad)');
 xlabel('time (sec)');
 
 %% plot Euler angle estimates
@@ -29,7 +28,11 @@ xlabel('time (sec)');
 
 %% plot Euler angle error estimates
 figure;
-plot(time,eulErrLog*180/pi);
+subplot(3,1,1);plot(time,eulErrLog(1,:)*180/pi);
+ylabel('Roll Error (deg)');grid on;
+subplot(3,1,2);plot(time,eulErrLog(2,:)*180/pi);
+ylabel('Pitch Error (deg)');grid on;
+subplot(3,1,3);plot(time,eulErrLog(3,:)*180/pi);
+ylabel('Yaw Error (deg)');
 grid on;
-ylabel('Euler Angle Errors (deg)');
 xlabel('time (sec)');

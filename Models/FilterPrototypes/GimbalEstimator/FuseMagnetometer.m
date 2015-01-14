@@ -9,6 +9,7 @@ function [...
     states, ... % predicted states
     P, ... % predicted covariance
     magData, ... % body frame magnetic flux measurements
+    decl, ... % magnetic field declination from true north
     gPhi, gPsi, gTheta) % gimbal yaw, roll, pitch angles
 
 q0 = quat(1);
@@ -27,7 +28,7 @@ varInnov = (H*P*transpose(H) + R_MAG);
 Kfusion = (P*transpose(H))/varInnov;
 
 % Calculate the innovation
-innovation = calcMagAng(states(10),gPhi,gPsi,gTheta,magX,magY,magZ,q0,q1,q2,q3);
+innovation = calcMagAng(decl,gPhi,gPsi,gTheta,magX,magY,magZ,q0,q1,q2,q3);
 
 if (innovation > pi)
     innovation = innovation - 2*pi;
@@ -73,7 +74,7 @@ P = P - Kfusion*H*P;
 P = 0.5*(P + transpose(P));
 
 % ensure diagonals are positive
-for i=1:10
+for i=1:9
     if P(i,i) < 0
         P(i,i) = 0;
     end

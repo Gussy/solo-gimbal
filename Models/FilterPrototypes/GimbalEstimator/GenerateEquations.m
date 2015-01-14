@@ -111,11 +111,8 @@ vNew = [vn;ve;vd] + [0;0;gravity]*dt + Tsn*dVelTruth;
 % define the IMU bias error update equations
 dabNew = [dax_b; day_b; daz_b];
 
-% define the declination update equation
-declNew = decl;
-
 % Define the state vector & number of states
-stateVector = [errRotVec;vn;ve;vd;dAngBias;decl];
+stateVector = [errRotVec;vn;ve;vd;dAngBias];
 nStates=numel(stateVector);
 
 %% derive the covariance prediction equation
@@ -129,7 +126,7 @@ nStates=numel(stateVector);
 distVector = [daxNoise;dayNoise;dazNoise;dvxNoise;dvyNoise;dvzNoise];
 
 % derive the control(disturbance) influence matrix
-G = jacobian([errRotNew;vNew;dabNew;declNew], distVector);
+G = jacobian([errRotNew;vNew;dabNew], distVector);
 G = subs(G, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
 
 % derive the state error matrix
@@ -140,7 +137,7 @@ f = matlabFunction(Q,'file','calcQ.m');
 % derive the state transition matrix
 vNew = subs(vNew,{'daxNoise','dayNoise','dazNoise','dvxNoise','dvyNoise','dvzNoise'}, {0,0,0,0,0,0});
 errRotNew = subs(errRotNew,{'daxNoise','dayNoise','dazNoise','dvxNoise','dvyNoise','dvzNoise'}, {0,0,0,0,0,0});
-F = jacobian([errRotNew;vNew;dabNew;declNew], stateVector);
+F = jacobian([errRotNew;vNew;dabNew], stateVector);
 F = subs(F, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
 f = matlabFunction(F,'file','calcF.m');
 
