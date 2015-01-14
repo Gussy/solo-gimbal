@@ -37,7 +37,7 @@ static inline void mav_put_float_c2000(void* buf, int wire_offset, float b)
 }
 
 /**
- * @brief Insert a 64-bit integer into the payload of a message for the C2000 architecture
+ * @brief Insert an unsigned 64-bit integer into the payload of a message for the C2000 architecture
  *
  * @param buf Pointer to beginning of MAVLink message payload
  * @param wire_offset Offset in bytes into the payload where the value should be inserted
@@ -51,7 +51,20 @@ static inline void mav_put_uint64_t_c2000(void* buf, int wire_offset, uint64_t b
 }
 
 /**
- * @brief Insert a 32-bit integer into the payload of a message for the C2000 architecture
+ * @brief Insert a signed 64-bit integer into the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be inserted
+ * @param b Value to be inserted into the payload
+ *
+ */
+static inline void mav_put_int64_t_c2000(void* buf, int wire_offset, int64_t b)
+{
+    mav_put_uint64_t_c2000(buf, wire_offset, (uint64_t)b);
+}
+
+/**
+ * @brief Insert an unsigned 32-bit integer into the payload of a message for the C2000 architecture
  *
  * @param buf Pointer to beginning of MAVLink message payload
  * @param wire_offset Offset in bytes into the payload where the value should be inserted
@@ -65,7 +78,20 @@ static inline void mav_put_uint32_t_c2000(void* buf, int wire_offset, uint32_t b
 }
 
 /**
- * @brief Insert a 16-bit integer into the payload of a message for the C2000 architecture
+ * @brief Insert a signed 32-bit integer into the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be inserted
+ * @param b Value to be inserted into the payload
+ *
+ */
+static inline void mav_put_int32_t_c2000(void* buf, int wire_offset, int32_t b)
+{
+    mav_put_uint32_t_c2000(buf, wire_offset, (uint32_t)b);
+}
+
+/**
+ * @brief Insert an unsigned 16-bit integer into the payload of a message for the C2000 architecture
  *
  * @param buf Pointer to beginning of MAVLink message payload
  * @param wire_offset Offset in bytes into the payload where the value should be inserted
@@ -79,7 +105,20 @@ static inline void mav_put_uint16_t_c2000(void* buf, int wire_offset, uint16_t b
 }
 
 /**
- * @brief Insert an 8-bit integer into the payload of a message for the C2000 architecture
+ * @brief Insert a signed 16-bit integer into the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be inserted
+ * @param b Value to be inserted into the payload
+ *
+ */
+static inline void mav_put_int16_t_c2000(void* buf, int wire_offset, int16_t b)
+{
+    mav_put_uint16_t_c2000(buf, wire_offset, (uint16_t)b);
+}
+
+/**
+ * @brief Insert an unsigned 8-bit integer into the payload of a message for the C2000 architecture
  *
  * @param buf Pointer to beginning of MAVLink message payload
  * @param wire_offset Offset in bytes into the payload where the value should be inserted
@@ -98,6 +137,32 @@ static inline void mav_put_uint8_t_c2000(void* buf, int wire_offset, uint8_t b)
         *dest_ptr &= 0x00FF;
         *dest_ptr |= ((b << 8) & 0xFF00);
     }
+}
+
+/**
+ * @brief Insert a signed 8-bit integer into the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be inserted
+ * @param b Value to be inserted into the payload
+ *
+ */
+static inline void mav_put_int8_t_c2000(void* buf, int wire_offset, int8_t b)
+{
+    mav_put_uint8_t_c2000(buf, wire_offset, (uint8_t)b);
+}
+
+/**
+ * @brief Insert a character into the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be inserted
+ * @param b Value to be inserted into the payload
+ *
+ */
+static inline void mav_put_char_t_c2000(void* buf, int wire_offset, char b)
+{
+    mav_put_uint8_t_c2000(buf, wire_offset, (uint8_t)b);
 }
 
 /**
@@ -124,7 +189,7 @@ static inline void mav_put_float_array_c2000(void* buf_dest, const float* buf_sr
 }
 
 /**
- * @brief Copy an array of 64-bit integers into the payload of a message for the C2000 architecture
+ * @brief Copy an array of unsigned 64-bit integers into the payload of a message for the C2000 architecture
  *
  * @param buf_dest Pointer to beginning of MAVLink message payload
  * @param buf_src Pointer to beginning of array to be copied
@@ -147,7 +212,21 @@ static inline void mav_put_uint64_t_array_c2000(void* buf_dest, const uint64_t* 
 }
 
 /**
- * @brief Copy an array of 32-bit integers into the payload of a message for the C2000 architecture
+ * @brief Copy an array of signed 64-bit integers into the payload of a message for the C2000 architecture
+ *
+ * @param buf_dest Pointer to beginning of MAVLink message payload
+ * @param buf_src Pointer to beginning of array to be copied
+ * @param wire_offset Offset in bytes into the payload where the array should be copied
+ * @param len Length of the array to be copied in array elements (not bytes)
+ *
+ */
+static inline void mav_put_int64_t_array_c2000(void* buf_dest, const int64_t* buf_src, int wire_offset, int len)
+{
+    mav_put_uint64_t_array_c2000(buf_dest, (const uint64_t*)buf_src, wire_offset, len);
+}
+
+/**
+ * @brief Copy an array of unsigned 32-bit integers into the payload of a message for the C2000 architecture
  *
  * @param buf_dest Pointer to beginning of MAVLink message payload
  * @param buf_src Pointer to beginning of array to be copied
@@ -169,9 +248,23 @@ static inline void mav_put_uint32_t_array_c2000(void* buf_dest, const uint32_t* 
     }
 }
 
+/**
+ * @brief Copy an array of signed 32-bit integers into the payload of a message for the C2000 architecture
+ *
+ * @param buf_dest Pointer to beginning of MAVLink message payload
+ * @param buf_src Pointer to beginning of array to be copied
+ * @param wire_offset Offset in bytes into the payload where the array should be copied
+ * @param len Length of the array to be copied in array elements (not bytes)
+ *
+ */
+static inline void mav_put_int32_t_array_c2000(void* buf_dest, const int32_t* buf_src, int wire_offset, int len)
+{
+    mav_put_uint32_t_array_c2000(buf_dest, (const uint32_t*)buf_src, wire_offset, len);
+}
+
 
 /**
- * @brief Copy an array of 16-bit integers into the payload of a message for the C2000 architecture
+ * @brief Copy an array of unsigned 16-bit integers into the payload of a message for the C2000 architecture
  *
  * @param buf_dest Pointer to beginning of MAVLink message payload
  * @param buf_src Pointer to beginning of array to be copied
@@ -194,7 +287,21 @@ static inline void mav_put_uint16_t_array_c2000(void* buf_dest, const uint16_t* 
 }
 
 /**
- * @brief Copy an array of 8-bit integers into the payload of a message for the C2000 architecture
+ * @brief Copy an array of signed 16-bit integers into the payload of a message for the C2000 architecture
+ *
+ * @param buf_dest Pointer to beginning of MAVLink message payload
+ * @param buf_src Pointer to beginning of array to be copied
+ * @param wire_offset Offset in bytes into the payload where the array should be copied
+ * @param len Length of the array to be copied in array elements (not bytes)
+ *
+ */
+static inline void mav_put_int16_t_array_c2000(void* buf_dest, const int16_t* buf_src, int wire_offset, int len)
+{
+    mav_put_uint16_t_array_c2000(buf_dest, (const uint16_t*)buf_src, wire_offset, len);
+}
+
+/**
+ * @brief Copy an array of characters into the payload of a message for the C2000 architecture
  *
  * @param buf_dest Pointer to beginning of MAVLink message payload
  * @param buf_src Pointer to beginning of array to be copied
@@ -217,7 +324,40 @@ static inline void mav_put_char_array_c2000(void* buf_dest, const char* buf_src,
 }
 
 /**
- * @brief
+ * @brief Copy an array of unsigned 8-bit integers into the payload of a message for the C2000 architecture
+ *
+ * @param buf_dest Pointer to beginning of MAVLink message payload
+ * @param buf_src Pointer to beginning of array to be copied
+ * @param wire_offset Offset in bytes into the payload where the array should be copied
+ * @param len Length of the array to be copied in array elements (not bytes)
+ *
+ */
+static inline void mav_put_uint8_t_array_c2000(void* buf_dest, const uint8_t* buf_src, int wire_offset, int len)
+{
+    mav_put_char_array_c2000(buf_dest, (const char*)buf_src, wire_offset, len);
+}
+
+/**
+ * @brief Copy an array of signed 8-bit integers into the payload of a message for the C2000 architecture
+ *
+ * @param buf_dest Pointer to beginning of MAVLink message payload
+ * @param buf_src Pointer to beginning of array to be copied
+ * @param wire_offset Offset in bytes into the payload where the array should be copied
+ * @param len Length of the array to be copied in array elements (not bytes)
+ *
+ */
+static inline void mav_put_int8_t_array_c2000(void* buf_dest, const int8_t* buf_src, int wire_offset, int len)
+{
+    mav_put_char_array_c2000(buf_dest, (const char*)buf_src, wire_offset, len);
+}
+
+/**
+ * @brief Retrieve a 32-bit floating point number from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
  */
 static inline float mav_get_float_c2000(const void* buf, int wire_offset)
 {
@@ -225,24 +365,95 @@ static inline float mav_get_float_c2000(const void* buf, int wire_offset)
     return *dest_ptr;
 }
 
+/**
+ * @brief Retrieve an unsigned 64-bit integer from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
+ */
 static inline uint64_t mav_get_uint64_t_c2000(const void* buf, int wire_offset)
 {
     uint64_t* dest_ptr = (uint64_t*)((uint8_t*)buf + (wire_offset / 2));
     return *dest_ptr;
 }
 
+/**
+ * @brief Retrieve a signed 64-bit integer from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
+ */
+static inline int64_t mav_get_int64_t_c2000(const void* buf, int wire_offset)
+{
+    return (int64_t)mav_get_uint64_t_c2000(buf, wire_offset);
+}
+
+/**
+ * @brief Retrieve an unsigned 32-bit integer from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
+ */
 static inline uint32_t mav_get_uint32_t_c2000(const void* buf, int wire_offset)
 {
     uint32_t* dest_ptr = (uint32_t*)((uint8_t*)buf + (wire_offset / 2));
     return *dest_ptr;
 }
 
+/**
+ * @brief Retrieve a signed 32-bit integer from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
+ */
+static inline int32_t mav_get_int32_t_c2000(const void* buf, int wire_offset)
+{
+    return (int32_t)mav_get_uint32_t_c2000(buf, wire_offset);
+}
+
+/**
+ * @brief Retrieve an unsigned 16-bit integer from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
+ */
 static inline uint16_t mav_get_uint16_t_c2000(const void* buf, int wire_offset)
 {
     uint16_t* dest_ptr = (uint16_t*)((uint8_t*)buf + (wire_offset / 2));
     return *dest_ptr;
 }
 
+/**
+ * @brief Retrieve a signed 16-bit integer from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
+ */
+static inline int16_t mav_get_int16_t_c2000(const void* buf, int wire_offset)
+{
+    return (int16_t)mav_get_uint16_t_c2000(buf, wire_offset);
+}
+
+/**
+ * @brief Retrieve an unsigned 8-bit integer from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
+ */
 static inline uint8_t mav_get_uint8_t_c2000(const void* buf, int wire_offset)
 {
     uint8_t* dest_ptr = (uint8_t*)buf;
@@ -255,6 +466,42 @@ static inline uint8_t mav_get_uint8_t_c2000(const void* buf, int wire_offset)
     }
 }
 
+/**
+ * @brief Retrieve a signed 8-bit integer from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
+ */
+static inline int8_t mav_get_int8_t_c2000(const void* buf, int wire_offset)
+{
+    return (int8_t)mav_get_uint8_t_c2000(buf, wire_offset);
+}
+
+/**
+ * @brief Retrieve a character from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be fetched from
+ * @return Value retrieved from MAVLink message payload
+ *
+ */
+static inline int8_t mav_get_char_c2000(const void* buf, int wire_offset)
+{
+    return (char)mav_get_uint8_t_c2000(buf, wire_offset);
+}
+
+/**
+ * @brief Retrieve an array of floating point numbers from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
 static inline uint16_t mav_get_float_array_c2000(const void* buf, float* value, int array_length, int wire_offset)
 {
     int i;
@@ -265,6 +512,16 @@ static inline uint16_t mav_get_float_array_c2000(const void* buf, float* value, 
     return array_length;
 }
 
+/**
+ * @brief Retrieve an array of unsigned 64-bit integers from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
 static inline uint16_t mav_get_uint64_t_array_c2000(const void* buf, uint64_t* value, int array_length, int wire_offset)
 {
     int i;
@@ -275,6 +532,31 @@ static inline uint16_t mav_get_uint64_t_array_c2000(const void* buf, uint64_t* v
     return array_length;
 }
 
+/**
+ * @brief Retrieve an array of signed 64-bit integers from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
+static inline uint16_t mav_get_int64_t_array_c2000(const void* buf, int64_t* value, int array_length, int wire_offset)
+{
+    return mav_get_uint64_t_array_c2000(buf, (uint64_t*)value, array_length, wire_offset);
+}
+
+/**
+ * @brief Retrieve an array of unsigned 32-bit integers from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
 static inline uint16_t mav_get_uint32_t_array_c2000(const void* buf, uint32_t* value, int array_length, int wire_offset)
 {
     int i;
@@ -285,6 +567,31 @@ static inline uint16_t mav_get_uint32_t_array_c2000(const void* buf, uint32_t* v
     return array_length;
 }
 
+/**
+ * @brief Retrieve an array of signed 32-bit integers from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
+static inline uint16_t mav_get_int32_t_array_c2000(const void* buf, int32_t* value, int array_length, int wire_offset)
+{
+    return mav_get_uint32_t_array_c2000(buf, (uint32_t*)value, array_length, wire_offset);
+}
+
+/**
+ * @brief Retrieve an array of unsigned 16-bit integers from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
 static inline uint16_t mav_get_uint16_t_array_c2000(const void* buf, uint16_t* value, int array_length, int wire_offset)
 {
     int i;
@@ -295,6 +602,31 @@ static inline uint16_t mav_get_uint16_t_array_c2000(const void* buf, uint16_t* v
     return array_length;
 }
 
+/**
+ * @brief Retrieve an array of signed 16-bit integers from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
+static inline uint16_t mav_get_int16_t_array_c2000(const void* buf, int16_t* value, int array_length, int wire_offset)
+{
+    return mav_get_uint16_t_array_c2000(buf, (uint16_t*)value, array_length, wire_offset);
+}
+
+/**
+ * @brief Retrieve an array of characters from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
 static inline uint16_t mav_get_char_array_c2000(const void* buf, char* value, int array_length, int wire_offset)
 {
     int i;
@@ -305,11 +637,59 @@ static inline uint16_t mav_get_char_array_c2000(const void* buf, char* value, in
     return array_length;
 }
 
+/**
+ * @brief Retrieve an array of unsigned 8-bit integers from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
+static inline uint16_t mav_get_uint8_t_array_c2000(const void* buf, uint8_t* value, int array_length, int wire_offset)
+{
+    return mav_get_char_array_c2000(buf, (char*)value, array_length, wire_offset);
+}
+
+/**
+ * @brief Retrieve an array of signed 8-bit integers from the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param value Pointer to buffer where array should be extracted to
+ * @param array_length Length of array to fetch in array elements (not bytes)
+ * @param wire_offset Offset in bytes into the payload where the array should be fetched from
+ * @return Length of the array retrieved (in array elements, not bytes)
+ *
+ */
+static inline uint16_t mav_get_int8_t_array_c2000(const void* buf, int8_t* value, int array_length, int wire_offset)
+{
+    return mav_get_char_array_c2000(buf, (char*)value, array_length, wire_offset);
+}
+
+/**
+ * @brief Initialize a CRC for the C2000 architecture
+ *
+ * This function is identical to the non-c2000 version.  It is redefined here simply to prevent a circular
+ * reference dependency on the header the normal version is defined in
+ *
+ * @param crcAccum Pointer to CRC accumulator to initialize
+ */
 static inline void crc_init_c2000(uint16_t* crcAccum)
 {
         *crcAccum = X25_INIT_CRC_C2000;
 }
 
+/**
+ * @brief Accumulate one byte of data into the CRC accumulator for the C2000 architecture
+ *
+ * This function is mostly identical to the non-c2000 version.  The only difference is that extra
+ * masking is performed in this function between steps, since because uint8_t variables on c2000 are actually
+ * 16-bits, not masking out the top 8 bits after every step causes unintended upper-byte garbage to corrupt the CRC
+ *
+ * @param data Byte of data to be accumulated into the CRC accumulator
+ * @param crcAccum Pointer to CRC accumulator to accumulate data byte into
+ */
 static inline void crc_accumulate_c2000(uint8_t data, uint16_t *crcAccum)
 {
     /*Accumulate one byte of data into the CRC*/
@@ -325,6 +705,17 @@ static inline void crc_accumulate_c2000(uint8_t data, uint16_t *crcAccum)
     *crcAccum = (*crcAccum >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4);
 }
 
+/**
+ * @brief Calculates a CRC over a byte buffer for the C2000 architecture
+ *
+ * The only difference between this function and the non-c2000 version is that this version
+ * internally calls the c2000 version of crc_accumulate, which is necessary for the reasons
+ * stated in the description of crc_accumulate_c2000
+ *
+ * @param pBuffer Pointer to buffer to calculate CRC over
+ * @param length Length of buffer to calculate CRC over (in bytes)
+ * @return Calculated CRC
+ */
 static inline uint16_t crc_calculate_c2000(const uint8_t* pBuffer, uint16_t length)
 {
     // The only difference between this and the regular version is that this calls the C2000 specific
@@ -338,6 +729,13 @@ static inline uint16_t crc_calculate_c2000(const uint8_t* pBuffer, uint16_t leng
     return crcTmp;
 }
 
+/**
+ * @brief Accumulates a MAVLink message payload into an existing CRC accumulator
+ *
+ * @param crcAccum Pointer to CRC accumulator to accumulate message payload CRC into
+ * @param payload Pointer to beginning of MAVLink message payload
+ * @param length Length of message payload (in bytes)
+ */
 static inline void crc_accumulate_msg_payload_c2000(uint16_t *crcAccum, void* payload, uint16_t length)
 {
     int crc_bytes_accumulated = 0;

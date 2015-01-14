@@ -1165,7 +1165,7 @@ static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms
 
     // AZ axis motor is mounted opposite of the encoder relative to the other two axes, so we need to invert it here if we're AZ
 #if (HW_REV == 1)
-    if (board_hw_id == AZ)
+    if (board_hw_id == AZ) {
 #elif (HW_REV == 2)
     // On new hardware, EL is also flipped relative to what it was on the old hardware
     if ((board_hw_id == AZ) || (board_hw_id == EL)) {

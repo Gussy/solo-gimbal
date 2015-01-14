@@ -14,7 +14,7 @@
 
 //#include "cand_BitFields.h"
 
-#define HW_REV 2 // 1 is old hardware, 2 is new hardware
+#define HW_REV 1 // 1 is old hardware, 2 is new hardware
 
 enum gimbal_targets {
 	GIMBAL_G1 = 0,  // Gimbal SN 102
