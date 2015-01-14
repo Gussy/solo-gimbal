@@ -335,6 +335,10 @@ void init_param_set(void)
     param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
 }
 
+static void MainISRwork(void);
+
+Uint32 MissedInterrupts = 0;
+
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
@@ -488,6 +492,15 @@ void main(void)
 		if (board_hw_id == AZ) {
 		    mavlink_state_machine();
 		}
+		{
+			static Uint32 OldIsrTicker = 0;
+			if (OldIsrTicker != IsrTicker) {
+				if (OldIsrTicker != (IsrTicker-1)) MissedInterrupts++;
+				OldIsrTicker = IsrTicker;
+				MainISRwork();
+			}
+		}
+
 
 		// Update any parameters that have changed due to CAN messages
 		ProcessParamUpdates(param_set, &control_board_parms, &debug_data);
@@ -1196,6 +1209,21 @@ interrupt void MainISR(void)
     // Verifying the ISR
     IsrTicker++;
 
+#if (DSP2803x_DEVICE_H==1)||(DSP280x_DEVICE_H==1)||(F2806x_DEVICE_H==1)
+    // Enable more interrupts from this timer
+    // KRK Changed to ECAP1 interrupt
+    ECap1Regs.ECCLR.bit.CTR_EQ_PRD1 = 0x1;
+    ECap1Regs.ECCLR.bit.INT = 0x1;
+
+    // Acknowledge interrupt to receive more interrupts from PIE group 3
+    // KRK Changed to Group 4 to use ECAP interrupt.
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
+#endif
+
+}
+
+static void MainISRwork(void)
+{
     // TODO: Measuring timing
     GpioDataRegs.GPASET.bit.GPIO28 = 1;
 	GpioDataRegs.GPASET.bit.GPIO29 = 1;
@@ -1426,16 +1454,7 @@ interrupt void MainISR(void)
     GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
 
 
-#if (DSP2803x_DEVICE_H==1)||(DSP280x_DEVICE_H==1)||(F2806x_DEVICE_H==1)
-    // Enable more interrupts from this timer
-    // KRK Changed to ECAP1 interrupt
-    ECap1Regs.ECCLR.bit.CTR_EQ_PRD1 = 0x1;
-    ECap1Regs.ECCLR.bit.INT = 0x1;
 
-    // Acknowledge interrupt to receive more interrupts from PIE group 3
-    // KRK Changed to Group 4 to use ECAP interrupt.
-    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
-#endif
 }
 
 int16 CorrectEncoderError(int16 raw_error)
