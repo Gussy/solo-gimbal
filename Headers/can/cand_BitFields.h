@@ -62,6 +62,12 @@ typedef enum  {
     CAND_PID_TARGET_ANGLES_AZ,
     CAND_PID_TARGET_ANGLES_EL,
     CAND_PID_TARGET_ANGLES_ROLL,
+    CAND_PID_GYRO_EL,
+    CAND_PID_GYRO_AZ,
+    CAND_PID_GYRO_RL,
+    CAND_PID_DEBUG_1,
+    CAND_PID_DEBUG_2,
+    CAND_PID_DEBUG_3,
 
     // One Byte Parameters
     CAND_PID_2_BYTE_CUTOFF =                            47,

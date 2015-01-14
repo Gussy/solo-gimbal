@@ -9,16 +9,7 @@
 #define MAVLINK_PARAMETER_INTERFACE_H_
 
 #include "can/cand_BitFields.h"
-
-#ifndef uint8_t
-#define uint8_t Uint8
-#endif
-
-#ifndef int8_t
-#define int8_t int8
-#endif
-
-#include "ardupilotmega/mavlink.h"
+#include "mavlink_interface/gimbal_mavlink.h"
 
 typedef enum {
     MAVLINK_GIMBAL_PARAM_PID_YAW_P = 0,

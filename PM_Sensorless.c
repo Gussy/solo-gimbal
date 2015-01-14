@@ -47,7 +47,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 
 // Prototype statements for functions found within this file.
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
-static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms);
+static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data);
 void DeviceInit();
 void MemCopy();
 void InitFlash();
@@ -210,6 +210,12 @@ MavlinkGimbalInfo mavlink_gimbal_info = {
     MAV_MODE_GIMBAL_UNINITIALIZED       // Custom mode for heartbeat message
 };
 
+DebugData debug_data = {
+    0,      // Debug 1
+    0,      // Debug 2
+    0       // Debug 3
+};
+
 AveragePowerFilterParms power_filter_parms = {
     0.0,        // Iq filter output
     0.0,        // Iq filter previous
@@ -292,6 +298,9 @@ Uint8 rate_pid_rl_p_flag = FALSE;
 Uint8 rate_pid_rl_i_flag = FALSE;
 Uint8 rate_pid_rl_d_flag = FALSE;
 Uint8 rate_pid_rl_windup_flag = FALSE;
+Uint8 debug_1_flag = FALSE;
+Uint8 debug_2_flag = FALSE;
+Uint8 debug_3_flag = FALSE;
 
 ParamSet param_set[CAND_PID_LAST];
 
@@ -321,6 +330,9 @@ void init_param_set(void)
     param_set[CAND_PID_RATE_RL_I].sema = &rate_pid_rl_i_flag;
     param_set[CAND_PID_RATE_RL_D].sema = &rate_pid_rl_d_flag;
     param_set[CAND_PID_RATE_RL_WINDUP].sema = &rate_pid_rl_windup_flag;
+    param_set[CAND_PID_DEBUG_1].sema = &debug_1_flag;
+    param_set[CAND_PID_DEBUG_2].sema = &debug_2_flag;
+    param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
 }
 
 void main(void)
@@ -478,7 +490,7 @@ void main(void)
 		}
 
 		// Update any parameters that have changed due to CAN messages
-		ProcessParamUpdates(param_set, &control_board_parms);
+		ProcessParamUpdates(param_set, &control_board_parms, &debug_data);
 
 	}
 } //END MAIN CODE
@@ -974,7 +986,7 @@ interrupt void GyroIntISR(void)
 int position_loop_deadband_counts = 10;
 int position_loop_deadband_hysteresis = 100;
 
-static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms)
+static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data)
 {
     IntOrFloat float_converter;
     // Check for updated rate loop PID params
@@ -1100,6 +1112,28 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
         rate_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
         *(param_set[CAND_PID_RATE_RL_WINDUP].sema) = FALSE;
     }
+
+    if ((*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE)) {
+        if (*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) {
+            debug_data->debug_1 = param_set[CAND_PID_DEBUG_1].param;
+            *(param_set[CAND_PID_DEBUG_1].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) {
+            debug_data->debug_2 = param_set[CAND_PID_DEBUG_2].param;
+            *(param_set[CAND_PID_DEBUG_2].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE) {
+            debug_data->debug_1 = param_set[CAND_PID_DEBUG_3].param;
+            *(param_set[CAND_PID_DEBUG_3].sema) = FALSE;
+        }
+
+        // If any of the debug data changed, send the debug mavlink message
+        send_mavlink_debug_data(debug_data);
+    }
+
+
 }
 
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)

@@ -28,3 +28,5 @@ void CBSendVersionV2( DavinciVersion* v );
 void IFBSendVersionV2( DavinciVersion* v );
 void MDBSendTorques(int16 az, int16 roll);
 void MDBRequestBIT(CAND_DestinationID did);
+void SendGyrosToCopter(int16 az_gyro, int16 el_gyro, int16 rl_gyro);
+void SendDebug1ToAz(int16 debug_1, int16 debug_2, int16 debug_3);

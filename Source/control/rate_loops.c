@@ -73,6 +73,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         cb_parms->gyro_readings[EL] = raw_gyro_readings[EL] * GyroSignMap[EL];
         cb_parms->gyro_readings[ROLL] = raw_gyro_readings[ROLL] * GyroSignMap[ROLL];
 
+        SendDebug1ToAz(cb_parms->gyro_readings[AZ], cb_parms->gyro_readings[EL], cb_parms->gyro_readings[ROLL]);
+
         // Do gyro kinematics correction
         do_gyro_correction(&(cb_parms->gyro_readings[0]), &(cb_parms->encoder_readings[0]), &(cb_parms->corrected_gyro_readings[0]));
         //TODO: Temp for testing with a single axis

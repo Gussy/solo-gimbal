@@ -34,6 +34,20 @@ static inline void mav_put_float_c2000(void* buf, int wire_offset, float b)
 }
 
 /**
+ * @brief Insert a 64-bit integer into the payload of a message for the C2000 architecture
+ *
+ * @param buf Pointer to beginning of MAVLink message payload
+ * @param wire_offset Offset in bytes into the payload where the value should be inserted
+ * @param b Value to be inserted into the payload
+ *
+ */
+static inline void mav_put_uint64_t_c2000(void* buf, int wire_offset, uint64_t b)
+{
+    uint64_t* dest_ptr = (uint64_t*)((uint8_t*)buf + (wire_offset / 2));
+    *dest_ptr = b;
+}
+
+/**
  * @brief Insert a 32-bit integer into the payload of a message for the C2000 architecture
  *
  * @param buf Pointer to beginning of MAVLink message payload
@@ -102,6 +116,29 @@ static inline void mav_put_float_array_c2000(void* buf_dest, const float* buf_sr
     } else {
         for (i = 0; i < len; i++) {
             mav_put_float_c2000(buf_dest, wire_offset + i, buf_src[i]);
+        }
+    }
+}
+
+/**
+ * @brief Copy an array of 64-bit integers into the payload of a message for the C2000 architecture
+ *
+ * @param buf_dest Pointer to beginning of MAVLink message payload
+ * @param buf_src Pointer to beginning of array to be copied
+ * @param wire_offset Offset in bytes into the payload where the array should be copied
+ * @param len Length of the array to be copied in array elements (not bytes)
+ *
+ */
+static inline void mav_put_uint64_t_array_c2000(void* buf_dest, const uint64_t* buf_src, int wire_offset, int len)
+{
+    int i;
+    if (buf_src == NULL) {
+        for (i = 0; i < len; i++) {
+            mav_put_uint64_t_c2000(buf_dest, wire_offset + i, 0x0000000000000000);
+        }
+    } else {
+        for (i = 0; i < len; i++) {
+            mav_put_uint64_t_c2000(buf_dest, wire_offset + i, buf_src[i]);
         }
     }
 }
@@ -185,6 +222,12 @@ static inline float mav_get_float_c2000(const void* buf, int wire_offset)
     return *dest_ptr;
 }
 
+static inline uint64_t mav_get_uint64_t_c2000(const void* buf, int wire_offset)
+{
+    uint64_t* dest_ptr = (uint64_t*)((uint8_t*)buf + (wire_offset / 2));
+    return *dest_ptr;
+}
+
 static inline uint32_t mav_get_uint32_t_c2000(const void* buf, int wire_offset)
 {
     uint32_t* dest_ptr = (uint32_t*)((uint8_t*)buf + (wire_offset / 2));
@@ -214,6 +257,16 @@ static inline uint16_t mav_get_float_array_c2000(const void* buf, float* value, 
     int i;
     for (i = 0; i < array_length; i++) {
         value[i] = mav_get_float_c2000(buf, wire_offset + i);
+    }
+
+    return array_length;
+}
+
+static inline uint16_t mav_get_uint64_t_array_c2000(const void* buf, uint64_t* value, int array_length, int wire_offset)
+{
+    int i;
+    for (i = 0; i < array_length; i++) {
+        value[i] = mav_get_uint64_t_c2000(buf, wire_offset + i);
     }
 
     return array_length;
