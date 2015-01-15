@@ -8,16 +8,16 @@ indexLimitSlow = round(duration/dtSlow);
 indexLimitFast = indexLimitSlow*rateMult;
 
 % create data logging variables
-time = zeros(1,indexLimitSlow);
-statesLog = zeros(9,indexLimitSlow);
-quatLog   = zeros(4,indexLimitSlow);
-eulLog = zeros(3,indexLimitSlow);
-eulErrLog = eulLog;
-tiltCorrLog = zeros(1,indexLimitSlow);
-velInnovLog = zeros(3,indexLimitSlow);
-decInnovLog = zeros(1,indexLimitSlow);
-velInnovVarLog = velInnovLog;
-decInnovVarLog = decInnovLog;
+EKFlogs.time = zeros(1,indexLimitSlow);
+EKFlogs.states = zeros(9,indexLimitSlow);
+EKFlogs.quat   = zeros(4,indexLimitSlow);
+EKFlogs.euler = zeros(3,indexLimitSlow);
+EKFlogs.eulErr = EKFlogs.euler;
+EKFlogs.tiltCorr = zeros(1,indexLimitSlow);
+EKFlogs.velInnov = zeros(3,indexLimitSlow);
+EKFlogs.decInnov = zeros(1,indexLimitSlow);
+EKFlogs.velInnovVar = EKFlogs.velInnov;
+EKFlogs.decInnovVar = EKFlogs.decInnov;
 eulLogFast = zeros(3,indexLimitFast);
 timeFast = zeros(1,indexLimitFast);
 
@@ -173,24 +173,25 @@ for fastIndex = 1:indexLimitFast % 1000 Hz gimbal prediction loop
     % computational delays
     if (rem(fastIndex,rateMult) == 5)
         slowIndex = slowIndex + 1;
-        time(slowIndex) = dtSlow*slowIndex;
+        time = dtSlow*slowIndex;
+        EKFlogs.time(slowIndex) = time;
         
         % predict states
         [quat, states, Tsn, delAngCorrected, delVelCorrected]  = PredictStates(quat,states,delAngSlow,delVelSlow,dtSlow);
         
         % log state prediction data
-        statesLog(:,slowIndex) = states;
-        quatLog(:,slowIndex) = quat;
-        eulLog(:,slowIndex) = QuatToEul(quat);
+        EKFlogs.states(:,slowIndex) = states;
+        EKFlogs.quat(:,slowIndex) = quat;
+        EKFlogs.euler(:,slowIndex) = QuatToEul(quat);
         if (headingAligned)
-            eulErrLog(:,slowIndex) = eulLog(:,slowIndex) - QuatToEul(quatTruth);
-            if (eulErrLog(3,slowIndex) > pi)
-                eulErrLog(3,slowIndex) = eulErrLog(3,slowIndex) - 2*pi;
-            elseif (eulErrLog(3,slowIndex) < -pi)
-                eulErrLog(3,slowIndex) = eulErrLog(3,slowIndex) + 2*pi;
+            EKFlogs.eulErr(:,slowIndex) = EKFlogs.euler(:,slowIndex) - QuatToEul(quatTruth);
+            if (EKFlogs.eulErr(3,slowIndex) > pi)
+                EKFlogs.eulErr(3,slowIndex) = EKFlogs.eulErr(3,slowIndex) - 2*pi;
+            elseif (EKFlogs.eulErr(3,slowIndex) < -pi)
+                EKFlogs.eulErr(3,slowIndex) = EKFlogs.eulErr(3,slowIndex) + 2*pi;
             end
         else
-            eulErrLog(:,slowIndex) = [NaN;NaN;NaN];
+            EKFlogs.eulErr(:,slowIndex) = [NaN;NaN;NaN];
         end
         
         % predict covariance matrix
@@ -200,13 +201,13 @@ for fastIndex = 1:indexLimitFast % 1000 Hz gimbal prediction loop
         [quat,states,tiltCorrection,covariance,velInnov,velInnovVar] = FuseVelocity(quat,states,covariance,measVel);
         
         % log velocity fusion data
-        velInnovLog(:,slowIndex) = velInnov;
-        velInnovVarLog(:,slowIndex) = velInnovVar;
-        tiltCorrLog(1,slowIndex) = tiltCorrection;
+        EKFlogs.velInnov(:,slowIndex) = velInnov;
+        EKFlogs.velInnovVar(:,slowIndex) = velInnovVar;
+        EKFlogs.tiltCorr(1,slowIndex) = tiltCorrection;
         
         % Align the heading once there has been enough time for the filter to
         % settle and the tilt corrections have dropped below a threshold
-        if (((time(slowIndex) > 5.0 && tiltCorrection < 1e-4) || (time(slowIndex) > 30.0)) && headingAligned==0)
+        if (((time > 5.0 && tiltCorrection < 1e-4) || (time > 30.0)) && headingAligned==0)
             % calculate the initial heading using magnetometer, gimbal,
             % estimated tilt and declination
             quat = AlignHeading(gPhi,gPsi,gTheta,Tsn,magMeas,quat,declParam);
@@ -216,8 +217,8 @@ for fastIndex = 1:indexLimitFast % 1000 Hz gimbal prediction loop
         % fuse magnetometer measurements and log fusion data
         if (headingAligned == 1)
             [quat,states,covariance,decInnov,decInnovVar] = FuseMagnetometer(quat,states,covariance,magMeas,declParam,gPhi,gPsi,gTheta);
-            decInnovLog(:,slowIndex) = decInnov;
-            decInnovVarLog(:,slowIndex) = decInnovVar;
+            EKFlogs.decInnov(:,slowIndex) = decInnov;
+            EKFlogs.decInnovVar(:,slowIndex) = decInnovVar;
         end
         
         % calculate the output data required by the gimbal controller
