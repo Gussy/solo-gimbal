@@ -49,7 +49,7 @@ PAGE 0:
    /* Memory (RAM/FLASH/OTP) blocks can be moved to PAGE1 for data allocation */
 
 	BOOT_RSVD   : origin = 0x000000, length = 0x000050     /* Part of M0, BOOT rom will use this for stack */
-	progRAM		: origin = 0x008000, length = 0x002000
+	progRAM		: origin = 0x008000, length = 0x001000
 		
 	OTP         : origin = 0x3D7800, length = 0x000400     /* on-chip OTP */
 	//FLASHH      : origin = 0x3D8000, length = 0x004000     /* on-chip FLASH */
@@ -82,7 +82,7 @@ PAGE 1 :
 
 	RAMM0       : origin = 0x000050, length = 0x0003B0     /* on-chip RAM block M0 */
    	RAMM1       : origin = 0x000480, length = 0x000380     /* on-chip RAM block M1 */
-	dataRAM		: origin = 0x00A000, length = 0x002000
+	dataRAM		: origin = 0x009000, length = 0x003000
    	//RAML4       : origin = 0x00A000, length = 0x002000     /* on-chip RAM block L4 */
    	dlogRAM		: origin 0x00C000, length = 0x002000
    	//RAML5       : origin = 0x00C000, length = 0x002000     /* on-chip RAM block L5 */

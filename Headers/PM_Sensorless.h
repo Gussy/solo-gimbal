@@ -31,11 +31,11 @@ Next, Include project specific include files.
 
 #include "park.h"                           // Include header for the PARK object
 #include "ipark.h"                          // Include header for the IPARK object
-#include "pid_grando_aes_modified.h"        // Include header for the PID_GRANDO_CONTROLLER object.  Using an AES modified version of this header to fix several bugs in the original implementation
+#include "control/pid_grando_aes_modified.h"        // Include header for the PID_GRANDO_CONTROLLER object.  Using an AES modified version of this header to fix several bugs in the original implementation
 #include "clarke.h"                         // Include header for the CLARKE object
-#include "svgen_dq_aes_modified.h"          // Include header for the SVGENDQ object.  Using an AES modified version of this header to fix an issue with global variables in the original header
+#include "control/svgen_dq_aes_modified.h"          // Include header for the SVGENDQ object.  Using an AES modified version of this header to fix an issue with global variables in the original header
 #include "rampgen.h"                        // Include header for the RAMPGEN object
-#include "rmp_cntl_aes_modified.h"          // Include header for the RMPCNTL object.  Using an AES modified version of this header to fix an issue with global variables in the original header
+#include "control/rmp_cntl_aes_modified.h"          // Include header for the RMPCNTL object.  Using an AES modified version of this header to fix an issue with global variables in the original header
 
 #ifdef DSP2803x_DEVICE_H
 #include "f2803xileg_vdc_PM.h"              // Include header for the ILEG2DCBUSMEAS object
@@ -45,12 +45,12 @@ Next, Include project specific include files.
 #endif
 
 #ifdef F2806x_DEVICE_H
-#include "f2806xileg_vdc_PM.h"              // Include header for the ILEG2DCBUSMEAS object
-#include "f2806xpwm_PM_aes_modified.h"      // Include header for the PWMGEN object.  Using an AES modified version of this header to fix an issue with global variables in the original header
+#include "f2806/f2806xileg_vdc_PM.h"              // Include header for the ILEG2DCBUSMEAS object
+#include "f2806/f2806xpwm_PM_aes_modified.h"      // Include header for the PWMGEN object.  Using an AES modified version of this header to fix an issue with global variables in the original header
 #endif
 
-#include "cand_BitFields.h"
-#include "HWSpecific.h"
+#include "can/cand_BitFields.h"
+#include "hardware/HWSpecific.h"
 
 typedef enum {
     BLINK_NO_COMM,
@@ -77,7 +77,7 @@ typedef enum {
 } RateLoopPass;
 
 typedef struct {
-    Uint16 param;
+    Uint32 param;
     Uint8 *sema;
 } ParamSet;
 
@@ -110,11 +110,15 @@ typedef struct {
     Uint16 run_motor;
     Uint8 BIT_heartbeat_enable;
     int BIT_heartbeat_decimate;
+    Uint16 all_init_params_recvd;
+    Uint16 other_axis_hb_recvd[AXIS_CNT];
+    Uint16 other_axis_init_params_recvd[AXIS_CNT];
 } AxisParms;
 
 typedef struct {
     int16 gyro_readings[AXIS_CNT];
     int16 corrected_gyro_readings[AXIS_CNT];
+    int16 gyro_offsets[AXIS_CNT];
     int16 encoder_readings[AXIS_CNT];
     int16 motor_torques[AXIS_CNT];
     int16 unfiltered_position_errors[AXIS_CNT];
@@ -136,6 +140,17 @@ typedef struct {
     Uint8 enabled;
 } ControlBoardParms;
 
+typedef struct {
+    int16 debug_1;
+    int16 debug_2;
+    int16 debug_3;
+} DebugData;
+
+typedef union {
+    Uint32 uint32_val;
+    float float_val;
+} IntOrFloat;
+
 #define ROUND(x) (((x) > (floor(x) + 0.5f)) ? ceil(x) : floor(x))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
@@ -145,6 +160,7 @@ typedef struct {
 int GetIndexTimeOut(void);
 int GetAxisHomed(void);
 Uint16 GetEnableFlag(void);
+Uint16 GetAxisParmsLoaded(void);
 void AxisFault(CAND_FaultCode fault_code);
 int16 CorrectEncoderError(int16 raw_error);
 interrupt void MainISR(void);
