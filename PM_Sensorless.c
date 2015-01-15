@@ -1308,17 +1308,20 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
 
     // Check for updated gyro offsets
     if (*(param_set[CAND_PID_GYRO_OFFSET_EL].sema) == TRUE) {
-        cb_parms->gyro_offsets[EL] = (int16)(param_set[CAND_PID_GYRO_OFFSET_EL].param);
+    	float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_EL].param;
+        cb_parms->gyro_offsets[EL] = (int16)(float_converter.float_val);
         *(param_set[CAND_PID_GYRO_OFFSET_EL].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) == TRUE) {
-        cb_parms->gyro_offsets[AZ] = (int16)(param_set[CAND_PID_GYRO_OFFSET_AZ].param);
+    	float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_AZ].param;
+        cb_parms->gyro_offsets[AZ] = (int16)(float_converter.float_val);
         *(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_GYRO_OFFSET_RL].sema) == TRUE) {
-        cb_parms->gyro_offsets[ROLL] = (int16)(param_set[CAND_PID_GYRO_OFFSET_RL].param);
+    	float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_RL].param;
+        cb_parms->gyro_offsets[ROLL] = (int16)(float_converter.float_val);
         *(param_set[CAND_PID_GYRO_OFFSET_RL].sema) = FALSE;
     }
 

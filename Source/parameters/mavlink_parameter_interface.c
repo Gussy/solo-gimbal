@@ -164,29 +164,29 @@ void init_default_mavlink_params()
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].param_id, "GYRO_OFF_YAW", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].can_parameter_id = CAND_PID_GYRO_OFFSET_AZ;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].can_parameter_destination_axis = CAND_ID_EL;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].param_type = MAV_PARAM_TYPE_UINT32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].uint32_data_ptr = &(flash_params.gyro_offsets[AZ]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].float_data_ptr = &(flash_params.gyro_offsets[AZ]);
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_PITCH].param_id, "GYRO_OFF_PITCH", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_PITCH].can_parameter_id = CAND_PID_GYRO_OFFSET_EL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_PITCH].can_parameter_destination_axis = CAND_ID_EL;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_PITCH].param_type = MAV_PARAM_TYPE_UINT32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_PITCH].uint32_data_ptr = &(flash_params.gyro_offsets[EL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_PITCH].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_PITCH].float_data_ptr = &(flash_params.gyro_offsets[EL]);
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].param_id, "GYRO_OFF_ROLL", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].can_parameter_id = CAND_PID_GYRO_OFFSET_RL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].can_parameter_destination_axis = CAND_ID_EL;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].param_type = MAV_PARAM_TYPE_UINT32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].uint32_data_ptr = &(flash_params.gyro_offsets[ROLL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].float_data_ptr = &(flash_params.gyro_offsets[ROLL]);
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_id, "SYSID_SWVER", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].can_parameter_id = CAND_PID_INVALID;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_type = MAV_PARAM_TYPE_INT32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_type = MAV_PARAM_TYPE_UINT32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].uint32_data_ptr = &(flash_params.sys_swver);
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].param_id, "SERIAL_BAUD", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].can_parameter_id = CAND_PID_INVALID;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].param_type = MAV_PARAM_TYPE_INT32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].param_type = MAV_PARAM_TYPE_UINT32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].uint32_data_ptr = &(flash_params.mavlink_baud_rate);
 }
 
@@ -215,7 +215,7 @@ void handle_param_set(mavlink_message_t* received_msg)
             // If the param is actually an integer, we need to convert it first
             if (decoded_msg.param_type == MAV_PARAM_TYPE_REAL32) {
                 *(param->float_data_ptr) = decoded_msg.param_value;
-            } else if (decoded_msg.param_type == MAV_PARAM_TYPE_INT32) {
+            } else if (decoded_msg.param_type == MAV_PARAM_TYPE_UINT32) {
                 IntOrFloat float_converter;
                 float_converter.float_val = decoded_msg.param_value;
                 *(param->uint32_data_ptr) = float_converter.uint32_val;
@@ -253,7 +253,7 @@ void send_gimbal_param(int param_num)
     if (param->param_type == MAV_PARAM_TYPE_REAL32) {
         param_val = *(param->float_data_ptr);
     } else {
-        float_converter.uint32_val = *(param->float_data_ptr);
+        float_converter.uint32_val = *(param->uint32_data_ptr);
         param_val = float_converter.float_val;
     }
 

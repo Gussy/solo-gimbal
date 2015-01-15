@@ -28,7 +28,7 @@ struct flash_param_struct_0000 {
 	float pos_pid_i[AXIS_CNT];
 	float pos_pid_d[AXIS_CNT];
 	float pos_pid_windup[AXIS_CNT];
-	Uint32 gyro_offsets[AXIS_CNT];
+	float gyro_offsets[AXIS_CNT];
 	float torque_pid_kp[AXIS_CNT];
 	float torque_pid_ki[AXIS_CNT];
 	float torque_pid_kd[AXIS_CNT];
