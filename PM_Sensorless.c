@@ -436,10 +436,15 @@ void main(void)
 
     board_hw_id = GetBoardHWID();
 
-    // Initialize Gyro
-    InitGyro();
-    // now initialize the gyro again
-    InitGyro();
+    if (board_hw_id == EL) {
+        // Initialize Gyro
+        InitGyro();
+        // now initialize the gyro again
+        InitGyro();
+
+        // Initialize the HeroBus interface
+        init_gp_interface();
+    }
 
     // If we're the AZ board, initialize UART for MAVLink communication
     // Also initialize the MAVLink subsystem
