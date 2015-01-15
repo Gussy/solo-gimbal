@@ -1,6 +1,6 @@
 %% plot gyro bias estimates
 figure;
-plot(time,statesLog(7:9,:)/dt*180/pi);
+plot(time,statesLog(7:9,:)/dtSlow*180/pi);
 grid on;
 ylabel('Gyro Bias Estimate (deg/sec)');
 xlabel('time (sec)');
@@ -26,7 +26,7 @@ xlabel('time (sec)');
 figure;
 plot(time,eulLog*180/pi);
 grid on;
-ylabel('Euler Angle Estimates (deg)');
+ylabel('EKF Euler Angle Estimates (deg)');
 xlabel('time (sec)');
 
 %% plot Euler angle error estimates
@@ -38,4 +38,11 @@ ylabel('Pitch Error (deg)');grid on;
 subplot(3,1,3);plot(time,eulErrLog(3,:)*180/pi);
 ylabel('Yaw Error (deg)');
 grid on;
+xlabel('time (sec)');
+
+%% plot high rate Euler angles
+figure;
+plot(timeFast,eulLogFast*180/pi);
+grid on;
+ylabel('Gimbal Euler Angle Estimates (deg)');
 xlabel('time (sec)');

@@ -1,18 +1,26 @@
 %% Set initial conditions
 clear all;
-dt = 1/50;
+dtSlow = 1/50;
+dtFast = 1/1000;
+rateMult = round(dtSlow/dtFast);
 duration = 60;
-indexLimit = round(duration/dt);
-time = zeros(1,indexLimit);
-statesLog = zeros(9,indexLimit);
-quatLog   = zeros(4,indexLimit);
-eulLog = zeros(3,indexLimit);
+indexLimitSlow = round(duration/dtSlow);
+indexLimitFast = indexLimitSlow*rateMult;
+
+% create data logging variables
+time = zeros(1,indexLimitSlow);
+statesLog = zeros(9,indexLimitSlow);
+quatLog   = zeros(4,indexLimitSlow);
+eulLog = zeros(3,indexLimitSlow);
 eulErrLog = eulLog;
-tiltCorrLog = zeros(1,indexLimit);
-velInnovLog = zeros(3,indexLimit);
-decInnovLog = zeros(1,indexLimit);
+tiltCorrLog = zeros(1,indexLimitSlow);
+velInnovLog = zeros(3,indexLimitSlow);
+decInnovLog = zeros(1,indexLimitSlow);
 velInnovVarLog = velInnovLog;
 decInnovVarLog = decInnovLog;
+eulLogFast = zeros(3,indexLimitFast);
+timeFast = zeros(1,indexLimitFast);
+
 % Use a random initial truth orientation
 phiInit = 0.1*randn;
 thetaInit = 0.1*randn;
@@ -46,7 +54,7 @@ accNoise = 0.05;
 
 % define the state covariances with the exception of the quaternion covariances
 Sigma_velNED = 0.5; % 1 sigma uncertainty in horizontal velocity components
-Sigma_dAngBias  = 1*pi/180*dt; % 1 Sigma uncertainty in delta angle bias
+Sigma_dAngBias  = 1*pi/180*dtSlow; % 1 Sigma uncertainty in delta angle bias
 Sigma_angErr = 1; % 1 Sigma uncertainty in angular misalignment (rad)
 covariance   = single(diag([Sigma_angErr*[1;1;1];Sigma_velNED*[1;1;1];Sigma_dAngBias*[1;1;1]]).^2);
 
@@ -64,90 +72,173 @@ gravAccel = [0;0;-9.81];
 
 %% Main Loop
 headingAligned=0;
-for index = 1:indexLimit
-    %% Calculate Truth Data
+slowIndex = 0;
+delAngFast = [0;0;0];
+delVelFast = [0;0;0];
+delAngSlow = [0;0;0];
+delVelSlow = [0;0;0];
+prevAngRateMeas = [0;0;0];
+prevAccelMeas   = [0;0;0];
+quatFast = [1;0;0;0];
+quatFastSaved = quatFast;
+angRateBiasEKF = [0;0;0];
+quatEKF = [1;0;0;0];
+for fastIndex = 1:indexLimitFast % 1000 Hz gimbal prediction loop
+    timeFast(fastIndex) = dtFast*fastIndex;
+    % Calculate Truth Data
     % Need to replace this with a full kinematic model or test data
-    time(index) = dt*index;
-    % calculate truth angular rates - we don't start maneouvring until 
+    % calculate truth angular rates - we don't start maneouvring until
     % heading alignment is complete
     psiRateTruth = gndSpd/radius*headingAligned;
     angRateTruth = [0;0;psiRateTruth]; % constant yaw rate
+    
     % calculate yaw and track angles
-    psiTruth = psiTruth + psiRateTruth*dt;
-    trackAngTruth = trackAngTruth + psiRateTruth*dt;
+    psiTruth = psiTruth + psiRateTruth*dtFast;
+    trackAngTruth = trackAngTruth + psiRateTruth*dtFast;
+    
     % Cacluate truth quternion
     quatTruth = EulToQuat([phiInit,thetaInit,psiTruth]);
+    
     % Calculate truth rotaton from sensor to NED
     TsnTruth = Quat2Tbn(quatTruth);
+    
     % calculate truth accel vector
     centripAccel = centripAccelMag*[-sin(trackAngTruth);cos(trackAngTruth);0];
     accelTruth = transpose(TsnTruth)*(gravAccel + centripAccel);
+    
     % calculate truth velocity vector
     truthVel = gndSpd*[cos(trackAngTruth);sin(trackAngTruth);0];
     
-    %% synthesise sensor measurements
+    % synthesise sensor measurements
     % Synthesise IMU measurements, adding bias and noise
     angRateMeas = angRateTruth + gyroBias + gyroNoise*[randn;randn;randn];
     accelMeas   = accelTruth + accBias + accNoise*[randn;randn;randn];
+    
     % synthesise velocity measurements
     measVel = truthVel;
+    
     % synthesise gimbal angles
     gPhi = 0;
     gTheta = 0;
     gPsi = gPsiInit;
+    
     % Define rotation from magnetometer to sensor using a 312 rotation sequence
     TmsTruth = calcTms(gPhi,gPsi,gTheta);
+    
     % calculate rotation from NED to magnetometer axes Tnm = Tsm * Tns
     TnmTruth = transpose(TmsTruth) * transpose(TsnTruth);
+    
     % synthesise magnetometer measurements adding sensor bias
     magMeas = TnmTruth*magEarthTruth + magMeasBias;
-
-    %% Run Filter
-    % predict states
-    [quat, states, Tsn, delAng, delVel]  = PredictStates(quat,states,angRateMeas,accelMeas,dt);
     
-    % log state prediciton data
-    statesLog(:,index) = states;
-    quatLog(:,index) = quat;
-    eulLog(:,index) = QuatToEul(quat);
-    if (headingAligned)
-        eulErrLog(:,index) = eulLog(:,index) - QuatToEul(quatTruth);
-        if (eulErrLog(3,index) > pi)
-            eulErrLog(3,index) = eulErrLog(3,index) - 2*pi;
-        elseif (eulErrLog(3,index) < -pi)
-            eulErrLog(3,index) = eulErrLog(3,index) + 2*pi;
+    % integrate the IMU measurements to produce delta angles and velocities
+    % using a trapezoidal integrator
+    if isempty(prevAngRateMeas)
+        prevAngRateMeas = angRateMeas;
+    end
+    if isempty(prevAccelMeas)
+        prevAccelMeas = accelMeas;
+    end
+    delAngFast = delAngFast + 0.5*(angRateMeas + prevAngRateMeas)*dtFast;
+    delVelFast = delVelFast + 0.5*(accelMeas + prevAccelMeas)*dtFast;
+    prevAngRateMeas = angRateMeas;
+    prevAccelMeas   = accelMeas;
+    
+    % Run an attitude prediction calculation at 1000Hz
+    % Convert the rotation vector to its equivalent quaternion
+    % using a first order approximation after applying the correction for
+    % gyro bias using bias estimates from the EKF
+    deltaQuat = [1;0.5*(angRateMeas - angRateBiasEKF)*dtFast];
+    % Update the quaternions by rotating from the previous attitude through
+    % the delta angle rotation quaternion
+    quatFast = QuatMult(quatFast,deltaQuat);
+    % Normalise the quaternions
+    quatFast = NormQuat(quatFast);
+    % log the high rate data
+    eulLogFast(:,fastIndex) = QuatToEul(quatFast);
+    
+    % every 20msec we send them to the EKF computer and reset
+    % the total
+    % we also save a copy of the quaternion from our high rate prediction
+    if (rem(fastIndex,rateMult) == 0)
+        delAngSlow = delAngFast;
+        delVelSlow = delVelFast;
+        delAngFast = [0;0;0];
+        delVelFast = [0;0;0];
+        quatFastSaved = quatFast;
+    end
+    
+    % run the 50Hz EKF loop but do so 5 msec behind the
+    % data transmission to simulate the effect of transmission and
+    % computational delays
+    if (rem(fastIndex,rateMult) == 5)
+        slowIndex = slowIndex + 1;
+        time(slowIndex) = dtSlow*slowIndex;
+        
+        % predict states
+        [quat, states, Tsn, delAngCorrected, delVelCorrected]  = PredictStates(quat,states,delAngSlow,delVelSlow,dtSlow);
+        
+        % log state prediction data
+        statesLog(:,slowIndex) = states;
+        quatLog(:,slowIndex) = quat;
+        eulLog(:,slowIndex) = QuatToEul(quat);
+        if (headingAligned)
+            eulErrLog(:,slowIndex) = eulLog(:,slowIndex) - QuatToEul(quatTruth);
+            if (eulErrLog(3,slowIndex) > pi)
+                eulErrLog(3,slowIndex) = eulErrLog(3,slowIndex) - 2*pi;
+            elseif (eulErrLog(3,slowIndex) < -pi)
+                eulErrLog(3,slowIndex) = eulErrLog(3,slowIndex) + 2*pi;
+            end
+        else
+            eulErrLog(:,slowIndex) = [NaN;NaN;NaN];
         end
-    else
-        eulErrLog(:,index) = [NaN;NaN;NaN];
+        
+        % predict covariance matrix
+        covariance = PredictCovarianceOptimised(delAngCorrected,delVelCorrected,quat,states,covariance,dtSlow);
+        
+        % fuse velocity measurements
+        [quat,states,tiltCorrection,covariance,velInnov,velInnovVar] = FuseVelocity(quat,states,covariance,measVel);
+        
+        % log velocity fusion data
+        velInnovLog(:,slowIndex) = velInnov;
+        velInnovVarLog(:,slowIndex) = velInnovVar;
+        tiltCorrLog(1,slowIndex) = tiltCorrection;
+        
+        % Align the heading once there has been enough time for the filter to
+        % settle and the tilt corrections have dropped below a threshold
+        if (((time(slowIndex) > 5.0 && tiltCorrection < 1e-4) || (time(slowIndex) > 30.0)) && headingAligned==0)
+            % calculate the initial heading using magnetometer, gimbal,
+            % estimated tilt and declination
+            quat = AlignHeading(gPhi,gPsi,gTheta,Tsn,magMeas,quat,declParam);
+            headingAligned = 1;
+        end
+        
+        % fuse magnetometer measurements and log fusion data
+        if (headingAligned == 1)
+            [quat,states,covariance,decInnov,decInnovVar] = FuseMagnetometer(quat,states,covariance,magMeas,declParam,gPhi,gPsi,gTheta);
+            decInnovLog(:,slowIndex) = decInnov;
+            decInnovVarLog(:,slowIndex) = decInnovVar;
+        end
+        
+        % calculate the output data required by the gimbal controller
+        quatEKF = quat;
+        angRateBiasEKF = states(7:9)/dtSlow;
     end
-
-    % predict covariance matrix
-    covariance = PredictCovarianceOptimised(delAng,delVel,quat,states,covariance,dt);
     
-    % fuse velocity measurements
-    [quat,states,tiltCorrection,covariance,velInnov,velInnovVar] = FuseVelocity(quat,states,covariance,measVel);
-    
-    % log velocity fusion data
-    velInnovLog(:,index) = velInnov;
-    velInnovVarLog(:,index) = velInnovVar;
-    tiltCorrLog(1,index) = tiltCorrection;
-
-    % Align the heading once there has been enough time for the filter to
-    % settle and the tilt corrections have dropped below a threshold
-    if (((time(index) > 5.0 && tiltCorrection < 1e-4) || (time(index) > 30.0)) && headingAligned==0)
-        % calculate the initial heading using magnetometer, gimbal,
-        % estimated tilt and declination
-        quat = AlignHeading(gPhi,gPsi,gTheta,Tsn,magMeas,quat,declParam);
-        headingAligned = 1;
+    % Assume the gimbal controller receive the EKF solution 10 msec after 
+    % it sent the sensor data
+    if (rem(fastIndex,rateMult) == 10)
+        % calculate the quaternion from the EKF corrected attitude to the
+        % attitude calculated using the local fast prediction algorithm
+        deltaQuatFast = QuatDivide(quatEKF,quatFastSaved);
+        % apply this correction to the fast solution at the current time
+        % step (this can be applied across several steps to smooth the
+        % output if required)
+        quatFast = QuatMult(quatFast,deltaQuatFast);
+        % normalise the resultant quaternion
+        quatFast = NormQuat(quatFast);
     end
     
-    % fuse magnetometer measurements and log fusion data
-    if (headingAligned == 1)
-        [quat,states,covariance,decInnov,decInnovVar] = FuseMagnetometer(quat,states,covariance,magMeas,declParam,gPhi,gPsi,gTheta);
-        decInnovLog(:,index) = decInnov;
-        decInnovVarLog(:,index) = decInnovVar;
-    end
-    %%
 end
 
 %% Generate Plots

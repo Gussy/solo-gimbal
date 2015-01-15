@@ -115,9 +115,7 @@ dabNew = [dax_b; day_b; daz_b];
 stateVector = [errRotVec;vn;ve;vd;dAngBias];
 nStates=numel(stateVector);
 
-%% derive the covariance prediction equation
-% This reduces the number of floating point operations by a factor of 6 or
-% more compared to using the standard matrix operations in code
+%% derive the filter Jacobians
 
 % Define the control (disturbance) vector. Error growth in the inertial
 % solution is assumed to be driven by 'noise' in the delta angles and
@@ -142,6 +140,8 @@ F = subs(F, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
 matlabFunction(F,'file','calcF.m');
 
 %% Derive the predicted covariance
+% This reduces the number of floating point operations by a factor of 4 or
+% more compared to using the standard matrix operations in code
 % define a symbolic covariance matrix using strings to represent 
 % '_l_' to represent '( '
 % '_c_' to represent ,
