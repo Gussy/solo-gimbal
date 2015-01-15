@@ -44,6 +44,12 @@ void init_mavlink() {
 	init_default_mavlink_params();
 }
 
+DebugData attitude_debug_data = {
+	0,
+	0,
+	0
+};
+
 void mavlink_state_machine() {
 	switch (mavlink_state) {
 	case MAVLINK_STATE_PARSE_INPUT:
@@ -88,6 +94,15 @@ void mavlink_state_machine() {
 		} else if (pos[2] > ENCODER_COUNTS_PER_REV) {
 			pos[2] -= ENCODER_COUNTS_PER_REV;
 		}
+
+		//TODO: For debugging pixhawk attitude drift
+		/*
+		attitude_debug_data.debug_1 = pos[0];
+		attitude_debug_data.debug_2 = pos[1];
+		attitude_debug_data.debug_3 = pos[2];
+
+		send_mavlink_debug_data(&attitude_debug_data);
+		*/
 
 		// Inhibit transmission of new target angles if we're running the balance procedure,
 		// so we don't overwrite the balance angles
