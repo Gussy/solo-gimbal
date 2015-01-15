@@ -149,7 +149,7 @@ static void process_mavlink_input() {
 				handle_attitude(&received_msg);
 				break;
 			case MAVLINK_MSG_ID_MOUNT_CONTROL:
-				//handle_mount_control(&received_msg);
+				handle_mount_control(&received_msg);
 				break;
 
 			default: {
