@@ -91,7 +91,7 @@ extern Uint16 PRG_key7;
 #define  DINT   asm(" setc INTM")
 
 // TODO: This is temporary for development purposes until we start loading the calibration parameters in flash
-#define PROTOTYPE_HW 1 // 1 is old hardware, prototype Arthur has, 2 is new hardware, prototype Aaron has
+#define PROTOTYPE_HW 2 // 1 is old hardware, prototype Arthur has, 2 is new hardware, prototype Aaron has
 
 #if (PROTOTYPE_HW == 1)
 struct flash_param_struct_0000 flash_params =
@@ -242,6 +242,36 @@ struct flash_param_struct_0000 flash_params =
         32768.0,// AZ
         32768.0 // ROLL
     },
+    // Position PID P gains
+	{
+		1.0, // EL
+		1.0, // AZ
+		1.0  // ROLL
+	},
+	// Position PID I gains
+	{
+		0, // EL
+		0, // AZ
+		0  // ROLL
+	},
+	// Position PID D gains
+	{
+		0, // EL
+		0, // AZ
+		0  // ROLL
+	},
+	// Position PID windup limits
+	{
+		2000, // EL
+		2000, // AZ
+		2000  // ROLL
+	},
+	// Gyro offsets
+	{
+		0, // EL
+		0, // AZ
+		0  // ROLL
+	},
     // Torque Loop PID Kp
     {
         0.8,   // EL
