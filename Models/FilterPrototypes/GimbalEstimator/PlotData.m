@@ -4,6 +4,9 @@ plot(time,statesLog(7:9,:)/dt*180/pi);
 grid on;
 ylabel('Gyro Bias Estimate (deg/sec)');
 xlabel('time (sec)');
+hold on;
+plot([min(time),max(time)],[gyroBias,gyroBias]*180/pi);
+hold off;
 
 %% plot velocity
 figure;

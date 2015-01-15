@@ -95,25 +95,12 @@ for index = 1:indexLimit
     gPhi = 0;
     gTheta = 0;
     gPsi = gPsiInit;
-    % calculate rotation from magnetometer to sensor 
-    % Define rotation from magnetometer to yaw gimbal
-    T3 = [ cos(gPsi)  sin(gPsi)   0; ...
-            -sin(gPsi)  cos(gPsi)   0; ...
-             0          0           1];
-    % Define rotation from yaw gimbal to roll gimbal
-    T1 = [ 1          0           0; ...
-             0          cos(gPhi)   sin(gPhi); ...
-             0         -sin(gPhi)   cos(gPhi)];
-    % Define rotation from roll gimbal to pitch gimbal
-    T2 = [ cos(gTheta)    0      -sin(gTheta); ...
-             0              1       0; ...
-             sin(gTheta)    0       cos(gTheta)];
     % Define rotation from magnetometer to sensor using a 312 rotation sequence
-    TmsTruth = T2*T1*T3;
+    TmsTruth = calcTms(gPhi,gPsi,gTheta);
     % calculate rotation from NED to magnetometer axes Tnm = Tsm * Tns
     TnmTruth = transpose(TmsTruth) * transpose(TsnTruth);
     % synthesise magnetometer measurements adding sensor bias
-    magBody = TnmTruth*magEarthTruth + magMeasBias;
+    magMeas = TnmTruth*magEarthTruth + magMeasBias;
 
     %% Run Filter
     % predict states
@@ -135,7 +122,7 @@ for index = 1:indexLimit
     end
 
     % predict covariance matrix
-    covariance  = PredictCovariance(delAng,delVel,quat,states,covariance,dt);
+    covariance = PredictCovarianceOptimised(delAng,delVel,quat,states,covariance,dt);
     
     % fuse velocity measurements
     [quat,states,tiltCorrection,covariance,velInnov,velInnovVar] = FuseVelocity(quat,states,covariance,measVel);
@@ -150,13 +137,13 @@ for index = 1:indexLimit
     if (((time(index) > 5.0 && tiltCorrection < 1e-4) || (time(index) > 30.0)) && headingAligned==0)
         % calculate the initial heading using magnetometer, gimbal,
         % estimated tilt and declination
-        quat = AlignHeading(gPhi,gPsi,gTheta,Tsn,magBody,quat,declParam);
+        quat = AlignHeading(gPhi,gPsi,gTheta,Tsn,magMeas,quat,declParam);
         headingAligned = 1;
     end
     
     % fuse magnetometer measurements and log fusion data
     if (headingAligned == 1)
-        [quat,states,covariance,decInnov,decInnovVar] = FuseMagnetometer(quat,states,covariance,magBody,declParam,gPhi,gPsi,gTheta);
+        [quat,states,covariance,decInnov,decInnovVar] = FuseMagnetometer(quat,states,covariance,magMeas,declParam,gPhi,gPsi,gTheta);
         decInnovLog(:,index) = decInnov;
         decInnovVarLog(:,index) = decInnovVar;
     end
