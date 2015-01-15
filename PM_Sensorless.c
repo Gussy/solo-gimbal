@@ -117,6 +117,7 @@ Uint16 GyroISRTime = 0;
 Uint8 GyroIntStatus = 0;
 Uint8 GyroIntStatus2 = 0;
 Uint16 BackTicker = 0;
+Uint32 debug_output_decimation_count = 0;
 
 int16* SysAnalyzerDataPtr = NULL;
 float* SysAnalyzerDataFloatPtr = NULL;
@@ -1052,8 +1053,6 @@ interrupt void GyroIntISR(void)
 
 int position_loop_deadband_counts = 10;
 int position_loop_deadband_hysteresis = 100;
-
-int debug_output_decimation_count = 0;
 
 static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data)
 {
