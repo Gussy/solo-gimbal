@@ -82,17 +82,15 @@ Uint16 i2c_get_bb()
 
 void i2c_send_data(Uint8* data, int length)
 {
-    int txbuf_start_size = i2c_tx_ringbuf.size(&i2c_tx_ringbuf);
     int i;
     for (i = 0; i < length; i++) {
         i2c_tx_ringbuf.push(&i2c_tx_ringbuf, data[i]);
     }
 
-    // If the transmit ring buffer was empty to begin with, enable the transmit interrupt
-    // (this will start copying the contents of the transmit ring buffer into the transmit FIFO)
-    if (txbuf_start_size == 0) {
-        I2caRegs.I2CFFTX.bit.TXFIENA = 1;
-    }
+    // Enable the tx interrupt.  This will start copying the contents of the transmit ring buffer into the transmit FIFO
+    // The interrupt was either previously disabled, because the ring buffer was empty, so we don't want to be interrupting
+    // all the time with nothing to transmit, or it was already enabled, and thus enabling it again won't have any effect
+    I2caRegs.I2CFFTX.bit.TXFIENA = 1;
 }
 
 interrupt void i2c_fifo_isr(void)
@@ -110,11 +108,8 @@ interrupt void i2c_fifo_isr(void)
     } else {
         // The interrupt was a FIFO transmit interrupt
         // Attempt to load up to 4 bytes into the TX FIFO
-        int i;
-        for (i = 0; i < 4; i++) {
-            if (i2c_tx_ringbuf.size(&i2c_tx_ringbuf) > 0) {
-                I2caRegs.I2CDXR = i2c_tx_ringbuf.pop(&i2c_tx_ringbuf);
-            }
+        while ((i2c_tx_ringbuf.size(&i2c_tx_ringbuf) > 0) && (I2caRegs.I2CFFTX.bit.TXFFST < 4)) {
+            I2caRegs.I2CDXR = i2c_tx_ringbuf.pop(&i2c_tx_ringbuf);
         }
 
         // If we've emptied the transmit ring buffer, turn off the transmit interrupt (it will be re-enabled when there is more data to send)
