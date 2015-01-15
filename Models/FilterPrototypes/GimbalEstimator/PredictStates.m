@@ -1,37 +1,22 @@
 function [quat, states, Tbn, correctedDelAng, correctedDelVel]  = PredictStates( ...
     quat, ... % previous quaternion states 4x1
     states, ... % previous states (3x1 rotation error, 3x1 velocity, 3x1 gyro bias)
-    angRate, ... % IMU rate gyro measurements, 3x1 (rad/sec)
-    accel, ... % IMU accelerometer measurements 3x1 (m/s/s)
+    dAng, ... % IMU delta angles, 3x1 (rad)
+    dVel, ... % IMU delta velocities 3x1 (m/s)
     dt) % time since last IMU measurement (sec)
 
 % Define parameters used for previous angular rates and acceleration shwich
 % are used for trapezoidal integration
-persistent prevAngRate;
-if isempty(prevAngRate)
-    prevAngRate = angRate;
-end
-persistent prevAccel;
-if isempty(prevAccel)
-    prevAccel = accel;
-end
 % define persistent variables for previous delta angle and velocity which
 % are required for sculling and coning error corrections
 persistent prevDelAng;
 if isempty(prevDelAng)
-    prevDelAng = prevAngRate*dt;
+    prevDelAng = dAng;
 end
 persistent prevDelVel;
 if isempty(prevDelVel)
-    prevDelVel = prevAccel*dt;
+    prevDelVel = dVel;
 end
-
-% Convert IMU data to delta angles and velocities using trapezoidal
-% integration
-dAng = 0.5*(angRate + prevAngRate)*dt;
-dVel = 0.5*(accel   + prevAccel  )*dt;
-prevAngRate = angRate;
-prevAccel   = accel;
 
 % Remove sensor bias errors
 dAng = dAng - states(7:9);

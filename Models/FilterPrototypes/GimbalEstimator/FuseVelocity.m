@@ -1,7 +1,7 @@
 function [...
     quat, ... % quaternion state vector after fusion of measurements
     states, ... % state vector after fusion of measurements
-    angErr, ... % angle error
+    tiltErr, ... % angle error
     P, ... % state covariance matrix after fusion of corrections
     innovation,... % NED velocity innovations (m/s)
     varInnov] ... % NED velocity innovation variance ((m/s)^2)
@@ -22,7 +22,7 @@ for obsIndex = 1:3
     innovation(obsIndex) = states(stateIndex) - measVel(obsIndex);
     
     % Calculate the Kalman Gain
-    H = zeros(1,10);
+    H = zeros(1,9);
     H(1,stateIndex) = 1;
     varInnov(obsIndex) = (H*P*transpose(H) + R_OBS);
     K = (P*transpose(H))/varInnov(obsIndex);
@@ -59,7 +59,7 @@ for obsIndex = 1:3
     P = 0.5*(P + transpose(P));
     
     % ensure diagonals are positive
-    for i=1:10
+    for i=1:9
         if P(i,i) < 0
             P(i,i) = 0;
         end
@@ -67,6 +67,6 @@ for obsIndex = 1:3
     
 end
 
-angErr = sqrt(dot(angErrVec,angErrVec));
+tiltErr = sqrt(dot(angErrVec(1:2),angErrVec(1:2)));
 
 end

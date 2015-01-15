@@ -9,8 +9,7 @@ function P  = PredictCovariance(deltaAngle, ...
 % built into the derived covariance predition equations. 
 % This process noise determines the rate of estimation of IMU bias errors
 dAngBiasSigma = dt*dt*5E-4; % delta angle bias process noise (rad)
-decSigma = dt* 1E-4; % declination process noise (rad)
-processNoise = [0*ones(1,6), dAngBiasSigma*[1 1 1], decSigma];
+processNoise = [0*ones(1,6), dAngBiasSigma*[1 1 1]];
 
 % Specify the estimated errors on the IMU delta angles and delta velocities
 % Allow for 0.5 deg/sec of gyro error
@@ -44,7 +43,7 @@ Q = calcQ(daxNoise,dayNoise,dazNoise,dvxNoise,dvyNoise,dvzNoise,q0,q1,q2,q3);
 P = F*P*transpose(F) + Q;
 
 % Add the general process noise
-for i = 1:10
+for i = 1:9
     P(i,i) = P(i,i) + processNoise(i)^2;
 end
 

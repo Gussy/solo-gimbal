@@ -111,16 +111,11 @@ vNew = [vn;ve;vd] + [0;0;gravity]*dt + Tsn*dVelTruth;
 % define the IMU bias error update equations
 dabNew = [dax_b; day_b; daz_b];
 
-% define the declination update equation
-declNew = decl;
-
 % Define the state vector & number of states
-stateVector = [errRotVec;vn;ve;vd;dAngBias;decl];
+stateVector = [errRotVec;vn;ve;vd;dAngBias];
 nStates=numel(stateVector);
 
-%% derive the covariance prediction equation
-% This reduces the number of floating point operations by a factor of 6 or
-% more compared to using the standard matrix operations in code
+%% derive the filter Jacobians
 
 % Define the control (disturbance) vector. Error growth in the inertial
 % solution is assumed to be driven by 'noise' in the delta angles and
@@ -129,21 +124,95 @@ nStates=numel(stateVector);
 distVector = [daxNoise;dayNoise;dazNoise;dvxNoise;dvyNoise;dvzNoise];
 
 % derive the control(disturbance) influence matrix
-G = jacobian([errRotNew;vNew;dabNew;declNew], distVector);
+G = jacobian([errRotNew;vNew;dabNew], distVector);
 G = subs(G, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
 
 % derive the state error matrix
 distMatrix = diag(distVector);
 Q = G*distMatrix*transpose(G);
-f = matlabFunction(Q,'file','calcQ.m');
+matlabFunction(Q,'file','calcQ.m');
 
 % derive the state transition matrix
 vNew = subs(vNew,{'daxNoise','dayNoise','dazNoise','dvxNoise','dvyNoise','dvzNoise'}, {0,0,0,0,0,0});
 errRotNew = subs(errRotNew,{'daxNoise','dayNoise','dazNoise','dvxNoise','dvyNoise','dvzNoise'}, {0,0,0,0,0,0});
-F = jacobian([errRotNew;vNew;dabNew;declNew], stateVector);
+F = jacobian([errRotNew;vNew;dabNew], stateVector);
 F = subs(F, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
-f = matlabFunction(F,'file','calcF.m');
+matlabFunction(F,'file','calcF.m');
 
+%% Derive the predicted covariance
+% This reduces the number of floating point operations by a factor of 4 or
+% more compared to using the standard matrix operations in code
+% define a symbolic covariance matrix using strings to represent 
+% '_l_' to represent '( '
+% '_c_' to represent ,
+% '_r_' to represent ')' 
+% these can be substituted later to create executable code
+for rowIndex = 1:nStates
+    for colIndex = 1:nStates
+        eval(['syms OP_l_',num2str(rowIndex),'_c_',num2str(colIndex), '_r_ real']);
+        eval(['P(',num2str(rowIndex),',',num2str(colIndex), ') = OP_l_',num2str(rowIndex),'_c_',num2str(colIndex),'_r_;']);
+    end
+end
+% Derive the predicted covariance matrix using the standard equation
+% try the built in matlab optimiser
+PP = F*P*transpose(F) + Q;
+matlabFunction(PP,'file','calcP.m');
+% try the one used for for the main nav filter development
+[F,SF]=OptimiseAlgebra(F,'SF');
+[G,SG]=OptimiseAlgebra(G,'SG');
+[Q,SQ]=OptimiseAlgebra(Q,'SQ');
+matlabFunction(PP,'file','calcP.m');
+[PP,SPP]=OptimiseAlgebra(PP,'SPP');
+fid = fopen('calcP.txt','wt');
+%% Write equation for state transition matrix
+fprintf(fid,'SF = zeros(%d,1);\n',numel(SF));
+for rowIndex = 1:numel(SF)
+    string = char(SF(rowIndex,1));
+    fprintf(fid,'SF(%d) = %s;\n',rowIndex,string);
+end
+fprintf(fid,'\n');
+
+%% Write equations for control influence (disturbance) matrix
+fprintf(fid,'\n');
+fprintf(fid,'SG = zeros(%d,1);\n',numel(SG));
+for rowIndex = 1:numel(SG)
+    string = char(SG(rowIndex,1));
+    fprintf(fid,'SG(%d) = %s;\n',rowIndex,string);
+end
+fprintf(fid,'\n');
+
+%% Write equations for state error matrix
+fprintf(fid,'\n');
+fprintf(fid,'SQ = zeros(%d,1);\n',numel(SQ));
+for rowIndex = 1:numel(SQ)
+    string = char(SQ(rowIndex,1));
+    fprintf(fid,'SQ(%d) = %s;\n',rowIndex,string);
+end
+fprintf(fid,'\n');
+
+%% Write equations for covariance prediction
+fprintf(fid,'\n');
+fprintf(fid,'SPP = zeros(%d,1);\n',numel(SPP));
+for rowIndex = 1:numel(SPP)
+    string = char(SPP(rowIndex,1));
+    fprintf(fid,'SPP(%d) = %s;\n',rowIndex,string);
+end
+fprintf(fid,'\n');
+
+fprintf(fid,'\n');
+fprintf(fid,'nextP = zeros(%d,%d);\n',nStates,nStates);
+for rowIndex = 1:nStates
+    for colIndex = 1:nStates
+        string = char(PP(rowIndex,colIndex));
+        % don't write out a zero-assignment
+        if ~strcmpi(string,'0')
+            fprintf(fid,'nextP(%d,%d) = %s;\n',rowIndex,colIndex,string);
+        end
+    end
+end
+fprintf(fid,'\n');
+
+fclose(fid);
 %% derive equations for fusion of magnetic deviation measurement
 % Define rotation from magnetometer to yaw gimbal
 T3 = [ cos(gPsi)  sin(gPsi)   0; ...
@@ -168,8 +237,9 @@ magMeasNED = Tmn*[magX;magY;magZ];
 angMeas = tan(magMeasNED(2)/magMeasNED(1)) - decl;
 H_MAG = jacobian(angMeas,stateVector); % measurement Jacobian
 H_MAG = subs(H_MAG, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
-f = matlabFunction(H_MAG,'file','calcH_MAG.m');
+matlabFunction(H_MAG,'file','calcH_MAG.m');
 
 %% generate helper functions
+matlabFunction(Tms,'file','calcTms.m');
 Tmn = subs(Tmn, {'rotErr1', 'rotErr2', 'rotErr3'}, {0,0,0});
-f = matlabFunction(Tmn,'file','calcTmn.m');
+matlabFunction(Tmn,'file','calcTmn.m');
