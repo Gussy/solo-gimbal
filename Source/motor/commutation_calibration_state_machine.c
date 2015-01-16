@@ -96,6 +96,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 						last_position = new_mech_theta;
 						cc_parms->settling_timer = 0;
 		                cc_parms->ramp_cntl.TargetValue += 4*(1.0f/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS);
+		                if (cc_parms->ramp_cntl.TargetValue > 1.0) cc_parms->ramp_cntl.TargetValue = 1.0;
 		                cc_parms->current_iteration = 0;
 						hardstop = 0;
 	                    break;

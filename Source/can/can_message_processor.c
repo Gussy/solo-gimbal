@@ -422,7 +422,8 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
                 		flash_params.AxisCalibrationIntercepts[msg.sender_id] = float_converter.float_val;
-                		//write_flash();
+                		// intercept comes after slope
+                		write_flash();
                 	} else
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
