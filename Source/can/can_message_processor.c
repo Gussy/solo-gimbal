@@ -31,8 +31,9 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         // Remember the last fault from each axis
         cb_parms->last_axis_fault[msg.sender_id] = msg.fault_code;
         // Put us into fault mode (disables current to the motor)
+#ifndef AZ_TEST
         md_parms->motor_drive_state = STATE_FAULT;
-
+#endif
         fault_cnt++;
         break;
 
@@ -400,6 +401,12 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     break;
 
                 case CAND_PID_COMMUTATION_CALIBRATION_SLOPE:
+                	if (GetBoardHWID() == AZ) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                		flash_params.AxisCalibrationSlopes[msg.sender_id] = float_converter.float_val;
+                		//write_flash();
+                	} else
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
                     if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD)) {
@@ -411,6 +418,12 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     break;
 
                 case CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT:
+                	if (GetBoardHWID() == AZ) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                		flash_params.AxisCalibrationIntercepts[msg.sender_id] = float_converter.float_val;
+                		//write_flash();
+                	} else
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
                     if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD)) {

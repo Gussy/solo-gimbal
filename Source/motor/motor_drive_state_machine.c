@@ -26,6 +26,7 @@ CommutationCalibrationParms cc_parms = {
     0,                                      // Current electrical sub-cycle
     0,                                      // Current direction
     0,                                      // Settling timer
+    0,
     RMPCNTL_DEFAULTS,                       // Ramp control parameters
     {0}                                     // Calibration data
 };
@@ -88,9 +89,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // If we're the EL board, transmit an enable message to the other boards
             if (GetBoardHWID() == EL) {
-#ifndef ENABLE_AXIS_CALIBRATION_PROCEDURE
+//#ifndef ENABLE_AXIS_CALIBRATION_PROCEDURE
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
-#endif
+//#endif
             }
 
             //TODO: Temporarily sequencing the initialization of the different axes
@@ -140,7 +141,11 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // Once we're done loading our own parameters, we need to wait for the other axes to request and receive all of
             // their parameters
+#ifdef AZ_TEST
+            md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
+#else
             md_parms->motor_drive_state = STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED;
+#endif
             break;
 
         case STATE_REQUEST_AXIS_INIT_PARAMS:
@@ -224,7 +229,13 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_TAKE_COMMUTATION_CALIBRATION_DATA:
-            CommutationCalibrationStateMachine(md_parms, encoder_parms, &cc_parms);
+#ifndef AZ_TEST
+
+        	if (((GetBoardHWID() == AZ)&&((cb_parms->axes_homed[ROLL]))&&((cb_parms->axes_homed[EL])))||
+        		((GetBoardHWID() == ROLL)&&((cb_parms->axes_homed[EL])))||
+        		((GetBoardHWID() == EL)))
+#endif
+        		CommutationCalibrationStateMachine(md_parms, encoder_parms, &cc_parms);
             break;
 
         case STATE_HOMING:
@@ -238,6 +249,23 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // Drive id and iq to 0
             md_parms->pid_id.term.Ref = 0;
             md_parms->pid_iq.term.Ref = 0;
+#if 0
+            def ENABLE_AXIS_CALIBRATION_PROCEDURE
+            {
+            	static short sent = 0;
+            	if (cb_parms->axes_homed[ROLL]) {
+            		if (sent & 0x02 == 0) {
+            			cand_tx_command(CAND_ID_AZ, CAND_CMD_ENABLE);
+            			sent |= 0x02;
+            		}
+            	} else {
+            		if (sent & 0x01 == 0) {
+            			cand_tx_command(CAND_ID_ROLL, CAND_CMD_ENABLE);
+            			sent |= 0x01;
+            		}
+            	}
+            }
+#endif
 
             if ((cb_parms->axes_homed[AZ] == TRUE) && (cb_parms->axes_homed[EL] == TRUE) && (cb_parms->axes_homed[ROLL] == TRUE)) {
                 //cb_parms->enabled = TRUE;

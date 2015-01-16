@@ -22,6 +22,8 @@ void HomingCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* enco
             hc_parms->ramp_cntl.SetpointValue = 0.0;
             hc_parms->ramp_cntl.EqualFlag = 0;
 
+#if 1
+            //ndef ENABLE_AXIS_CALIBRATION_PROCEDURE
             //TODO: For now, hardcoding the pot calibration parameters per-axis
             // The automatic calibration routine is too unstable right now
             encoder_parms->calibration_slope = AxisCalibrationSlopes[GIMBAL_TARGET][GetBoardHWID()];
@@ -39,8 +41,9 @@ void HomingCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* enco
                 md_parms->motor_drive_state = STATE_RUNNING;
                 axis_parms->blink_state = BLINK_READY;
             }
-
-            //homing_state = HOMING_STATE_TAKE_CALIBRATION_POINT_1;
+#else
+            hc_parms->homing_state = HOMING_STATE_TAKE_CALIBRATION_POINT_1;
+#endif
         }
         break;
 
