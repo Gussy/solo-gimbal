@@ -376,7 +376,15 @@ void main(void)
 	DeviceInit();	// Device Life support & GPIO
 
 	// initialize flash
-	init_flash();
+    board_hw_id = GetBoardHWID();
+	if (board_hw_id == AZ) {
+		int i;
+		init_flash();
+		for ( i = 0; i < 3; i++) {
+			AxisCalibrationSlopes[GIMBAL_TARGET][i] = flash_params.AxisCalibrationSlopes[i];
+			AxisCalibrationIntercepts[GIMBAL_TARGET][i] = flash_params.AxisCalibrationIntercepts[i];
+		}
+	}
 #if 0
 	write_flash();
 #endif
@@ -747,7 +755,11 @@ int enable_counts_max = 1667;
 void A3(void) // SPARE (not used)
 //-----------------------------------------
 {
+#ifdef AZ_TEST
+	if (1) {
+#else
 	if (board_hw_id == EL) {
+#endif
 		// Wait 1s before enabling the gimbal
 		if (axis_parms.enable_flag == FALSE) {
 			if (enable_counts++ >= enable_counts_max) {

@@ -18,10 +18,12 @@
 
 enum gimbal_targets {
 	GIMBAL_G1 = 0,  // Gimbal SN 102
+#if 0
 	GIMBAL_G2,      // Gimbal SN 103
 	GIMBAL_G3,      // SATB
 	GIMBAL_G4,      // Rev. 2 SN P001
 	GIMBAL_G5,      // Rev. 2 SN P002
+#endif
 	GIMBAL_CNT
 };
 
@@ -40,7 +42,7 @@ typedef enum {
 
 #define ENCODER_COUNTS_PER_REV 10000
 
-#define GIMBAL_TARGET GIMBAL_G5
+#define GIMBAL_TARGET GIMBAL_G1
 
 // Map gyro axes to gimbal axes
 static const GimbalAxis GyroAxisMap[AXIS_CNT] = {

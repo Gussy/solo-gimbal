@@ -14,6 +14,7 @@ int AxisHomePositions[GIMBAL_CNT][AXIS_CNT] = {
         5595,   // AZ
         4806    // ROLL
     },
+#if GIMBAL_CNT > 1
     /*
     // Gimbal G2
     {
@@ -42,6 +43,7 @@ int AxisHomePositions[GIMBAL_CNT][AXIS_CNT] = {
         4898,      // AZ
         4944       // ROLL
     }
+#endif
 };
 
 float AxisCalibrationSlopes[GIMBAL_CNT][AXIS_CNT] = {
@@ -51,6 +53,7 @@ float AxisCalibrationSlopes[GIMBAL_CNT][AXIS_CNT] = {
         0.1231,     // AZ
         0.1324      // ROLL
     },
+#if GIMBAL_CNT > 1
     /*
     // Gimbal G2
     {
@@ -79,6 +82,7 @@ float AxisCalibrationSlopes[GIMBAL_CNT][AXIS_CNT] = {
         0.1247,       // AZ
         0.1245        // ROLL
     }
+#endif
 };
 
 float AxisCalibrationIntercepts[GIMBAL_CNT][AXIS_CNT] = {
@@ -88,6 +92,7 @@ float AxisCalibrationIntercepts[GIMBAL_CNT][AXIS_CNT] = {
         0.3659,  // AZ
         0.3635   // ROLL
     },
+#if GIMBAL_CNT > 1
     /*
     // Gimbal G2
     {
@@ -116,6 +121,7 @@ float AxisCalibrationIntercepts[GIMBAL_CNT][AXIS_CNT] = {
         0.3718,      // AZ
         0.4079       // ROLL
     }
+#endif
 };
 
 float AxisTorqueLoopKp[AXIS_CNT] = {

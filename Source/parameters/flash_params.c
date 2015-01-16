@@ -200,18 +200,33 @@ struct flash_param_struct_0000 flash_params =
     0,                          // Other ID
     0x0000,                     // Software version number TODO: populate this from git version info
     115,                        // Mavlink baud rate
+#if 0
     // Axis calibration slopes
     {
-        0.126,        // EL
-        0.1247,       // AZ
-        0.1245        // ROLL
+        0.1298177, //0.0,        // EL
+        0.1088867, //0.0,       // AZ
+        0.1394676  //0.0        // ROLL
     },
     // Axis calibration intercepts
     {
-        0.4536,      // EL
-        0.3718,      // AZ
-        0.4079       // ROLL
+        0.4357381, //0.0,      // EL
+        0.4617004, //0.0,      // AZ
+        0.4723126  //0.0       // ROLL
     },
+#else
+    // Axis calibration slopes
+    {
+        0.0,       // EL
+        0.0,       // AZ
+        0.0        // ROLL
+    },
+    // Axis calibration intercepts
+    {
+        0.0,      // EL
+        0.0,      // AZ
+        0.0       // ROLL
+    },
+#endif
     // Axis home positions
     {
         5120,      // EL
@@ -322,25 +337,16 @@ int init_flash(void)
 		// this is an error that needs to be resolved at compile time
 		while (1);
 	}
-#define START_ADDR 0x3E8000
+#define START_ADDR 0x3D8000
 	if (verify_checksum((Uint16 *)START_ADDR)) {
 		// copy to ram
 		memcpy(&flash_params,(Uint16 *)START_ADDR,sizeof(flash_params));
 		return 1;
 	}
-	write_flash();
+	//write_flash();
 
 	return -1;
 }
-
-Uint16 PRG_key0 = 0xFFFF;
-Uint16 PRG_key1 = 0xFFFF;
-Uint16 PRG_key2 = 0xFFFF;
-Uint16 PRG_key3 = 0xFFFF;
-Uint16 PRG_key4 = 0xFFFF;
-Uint16 PRG_key5 = 0xFFFF;
-Uint16 PRG_key6 = 0xFFFF;
-Uint16 PRG_key7 = 0xFFFF;
 
 Uint16 Example_CsmUnlock()
 {
@@ -388,6 +394,10 @@ int write_flash(void)
 	Uint32  Length;         // Number of 16-bit values to be programmed
 	Uint16  VersionHex;     // Version of the API in decimal encoded hex
 
+	EALLOW;
+	Flash_CPUScaleFactor = SCALE_FACTOR;
+	EDIS;
+
 	VersionHex = Flash_APIVersionHex();
 	if(VersionHex != 0x0100)
 	{
@@ -417,6 +427,7 @@ int write_flash(void)
     return 1;
 }
 
+#if 0
 /*------------------------------------------------------------------
   Callback function - must be executed from outside flash/OTP
 -----------------------------------------------------------------*/
@@ -427,4 +438,4 @@ void MyCallbackFunction(void)
     MyCallbackCounter++;
     asm("    NOP");
 }
-
+#endif
