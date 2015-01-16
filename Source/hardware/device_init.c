@@ -562,7 +562,8 @@ void InitInterrupts()
     PieVectTable.XINT1 = &GyroIntISR; // Gyro ISR is driven from external interrupt 1
     PieVectTable.SCIRXINTB = &uart_rx_isr; // Uart RX ISR is driven from SCI-B receive
     PieVectTable.SCITXINTB = &uart_tx_isr; // Uart TX ISR is driven from SCI-B transmit
-    PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx interrupts are handled by the same ISR
+    PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx fifo interrupts are handled by the same ISR
+    PieVectTable.I2CINT1A = &i2c_int_a_isr; // All non-fifo I2C interrupts are handled by the same ISR
     EDIS;
 
     // Enable PIE group 4 interrupt 1 for ECAP1_INT (for main 10kHz loop)
@@ -575,6 +576,8 @@ void InitInterrupts()
     PieCtrlRegs.PIEIER9.bit.INTx4 = 1;
     // Enable PIE group 8 interrupt 2 for I2C FIFO interrupts
     PieCtrlRegs.PIEIER8.bit.INTx2 = 1;
+    // Enable PIE group 8 interrupt 1 for Regular I2C interrupts (the only one we're currently using is addressed as slave (AAS))
+    PieCtrlRegs.PIEIER8.bit.INTx1 = 1;
 
     // Configure and enable ECAP1 (for main 10KHz loop)
     ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = 0x1;  //Enable ECAP1 Period Match interrupt
@@ -590,11 +593,11 @@ void InitInterrupts()
     // Enable CPU INT4 for ECAP1_INT:
     IER |= M_INT4;
     // Only enable gyro interrupt for the EL board
-    // Only enable I2C interrupt for the EL board
+    // Only enable I2C interrupts for the EL board
     if (GetBoardHWID() == EL) {
         // Enable CPU INT1 for XINT1
         IER |= M_INT1;
-        // Enable CPU INT8 for I2C FIFO
+        // Enable CPU INT8 for I2C FIFO and I2C addressed as slave (AAS)
         IER |= M_INT8;
     }
     // Only enable UART interrupt for the AZ board

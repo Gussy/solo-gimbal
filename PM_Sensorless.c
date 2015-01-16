@@ -573,10 +573,11 @@ void main(void)
 		// Update any parameters that have changed due to CAN messages
 		ProcessParamUpdates(param_set, &control_board_parms, &debug_data);
 
+		// After a delay, for testing, send a message to the camera to command it to turn off
 		if (gp_cmd_wait >= 35) {
             if (gp_get_power_status() == GP_POWER_ON) {
                 if ((gp_get_last_cmd_result() != GP_CMD_SUCCESSFUL) && gp_ready_for_cmd()) {
-                    gp_send_command('C', 'M', 0x01);
+                    gp_send_command('P', 'W', 0x00);
                 }
             }
 		}
