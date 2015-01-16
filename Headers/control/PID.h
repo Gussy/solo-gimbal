@@ -60,6 +60,7 @@ typedef struct {
 } PIDData_Float;
 
 extern PIDData_Float rate_pid_loop_float[AXIS_CNT];
+extern PIDData_Float pos_pid_loop_float[AXIS_CNT];
 
 int16 UpdatePID(GimbalAxis axis, int16 sError);
 

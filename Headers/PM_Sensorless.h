@@ -118,6 +118,7 @@ typedef struct {
 typedef struct {
     int16 gyro_readings[AXIS_CNT];
     int16 corrected_gyro_readings[AXIS_CNT];
+    int16 gyro_offsets[AXIS_CNT];
     int16 encoder_readings[AXIS_CNT];
     int16 motor_torques[AXIS_CNT];
     int16 unfiltered_position_errors[AXIS_CNT];

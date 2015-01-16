@@ -143,6 +143,36 @@ struct flash_param_struct_0000 flash_params =
         32768.0,// AZ
         32768.0 // ROLL
     },
+    // Position PID P gains
+    {
+        1.0, // EL
+        1.0, // AZ
+        1.0  // ROLL
+    },
+    // Position PID I gains
+    {
+        0.0, // EL
+        0.0, // AZ
+        0.0  // ROLL
+    },
+    // Position PID D gains
+    {
+        0.0, // EL
+        0.0, // AZ
+        0.0  // ROLL
+    },
+    // Position PID windup limits
+    {
+        2000.0, // EL
+        2000.0, // AZ
+        2000.0  // ROLL
+    },
+    // Gyro offsets
+    {
+        0.0, // EL
+        0.0, // AZ
+        0.0  // ROLL
+    },
     // Torque Loop PID Kp
     {
         1.25,   // EL
@@ -227,9 +257,39 @@ struct flash_param_struct_0000 flash_params =
         32768.0,// AZ
         32768.0 // ROLL
     },
+    // Position PID P gains
+	{
+		1.0, // EL
+		1.0, // AZ
+		1.0  // ROLL
+	},
+	// Position PID I gains
+	{
+		0.0, // EL
+		0.0, // AZ
+		0.0  // ROLL
+	},
+	// Position PID D gains
+	{
+		0.0, // EL
+		0.0, // AZ
+		0.0  // ROLL
+	},
+	// Position PID windup limits
+	{
+		2000.0, // EL
+		2000.0, // AZ
+		2000.0  // ROLL
+	},
+	// Gyro offsets
+	{
+		0.0, // EL
+		0.0, // AZ
+		0.0  // ROLL
+	},
     // Torque Loop PID Kp
     {
-        1.25,   // EL
+        0.8,   // EL
         0.8,    // AZ
         0.8     // ROLL
     },
@@ -241,7 +301,7 @@ struct flash_param_struct_0000 flash_params =
     },
     // Torque Loop PID Kd
     {
-        1.0,    // EL
+        0.0,    // EL
         0.0,    // AZ
         0.0     // ROLL
     }

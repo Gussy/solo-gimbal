@@ -69,9 +69,9 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
 #endif
 
         // Do gyro sign correction
-        cb_parms->gyro_readings[AZ] = raw_gyro_readings[AZ] * GyroSignMap[AZ];
-        cb_parms->gyro_readings[EL] = raw_gyro_readings[EL] * GyroSignMap[EL];
-        cb_parms->gyro_readings[ROLL] = raw_gyro_readings[ROLL] * GyroSignMap[ROLL];
+        cb_parms->gyro_readings[AZ] = (raw_gyro_readings[AZ] * GyroSignMap[AZ]) - cb_parms->gyro_offsets[AZ];
+        cb_parms->gyro_readings[EL] = (raw_gyro_readings[EL] * GyroSignMap[EL]) - cb_parms->gyro_offsets[EL];
+        cb_parms->gyro_readings[ROLL] = (raw_gyro_readings[ROLL] * GyroSignMap[ROLL]) - cb_parms->gyro_offsets[ROLL];
 
         SendDebug1ToAz(cb_parms->gyro_readings[AZ], cb_parms->gyro_readings[EL], cb_parms->gyro_readings[ROLL]);
 
@@ -169,7 +169,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 cb_parms->axis_errors[AZ] = -cb_parms->corrected_gyro_readings[AZ];
             }
 #else
-            cb_parms->axis_errors[AZ] = cb_parms->unfiltered_position_errors[AZ] * cb_parms->pointing_loop_gains[AZ] - cb_parms->corrected_gyro_readings[AZ];
+            //cb_parms->axis_errors[AZ] = cb_parms->unfiltered_position_errors[AZ] * cb_parms->pointing_loop_gains[AZ] - cb_parms->corrected_gyro_readings[AZ];
+            cb_parms->axis_errors[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->unfiltered_position_errors[AZ]) - cb_parms->corrected_gyro_readings[AZ];
 #endif
 #endif
             // Set up the next rate loop pass to be the el error computation pass
@@ -235,7 +236,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 cb_parms->axis_errors[EL] = -cb_parms->corrected_gyro_readings[EL];
             }
 #else
-            cb_parms->axis_errors[EL] = cb_parms->unfiltered_position_errors[EL]* cb_parms->pointing_loop_gains[EL] -cb_parms->corrected_gyro_readings[EL];
+            //cb_parms->axis_errors[EL] = cb_parms->unfiltered_position_errors[EL]* cb_parms->pointing_loop_gains[EL] -cb_parms->corrected_gyro_readings[EL];
+            cb_parms->axis_errors[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->unfiltered_position_errors[EL]) - cb_parms->corrected_gyro_readings[EL];
 #endif
 #endif
             // Set up the next rate loop pass to be the roll error computation pass
@@ -301,7 +303,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 cb_parms->axis_errors[ROLL] = -cb_parms->corrected_gyro_readings[ROLL];
             }
 #else
-            cb_parms->axis_errors[ROLL] = cb_parms->unfiltered_position_errors[ROLL]* cb_parms->pointing_loop_gains[ROLL]  -cb_parms->corrected_gyro_readings[ROLL];
+            //cb_parms->axis_errors[ROLL] = cb_parms->unfiltered_position_errors[ROLL]* cb_parms->pointing_loop_gains[ROLL]  -cb_parms->corrected_gyro_readings[ROLL];
+            cb_parms->axis_errors[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->unfiltered_position_errors[ROLL]) - cb_parms->corrected_gyro_readings[ROLL];
 #endif
 #endif
             // Set up the next rate loop pass to be the torque command output pass

@@ -109,7 +109,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // Set our own blink state to init
             axis_parms->blink_state = BLINK_INIT;
-
+#ifndef ENABLE_AXIS_CALIBRATION_PROCEDURE
             if (GetBoardHWID() == AZ) {
                 // If we're the AZ board, we first have to load our own parameters from flash, then transmit parameters
                 // to the other axes.
@@ -118,6 +118,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 // If we're EL or ROLL, we have to request our parameters from the AZ board
                 md_parms->motor_drive_state = STATE_REQUEST_AXIS_INIT_PARAMS;
             }
+#else
+            md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
+#endif
             break;
 
         case STATE_LOAD_OWN_INIT_PARAMS:
