@@ -49,6 +49,12 @@ void init_i2c(I2CIntACallback interrupt_a_callback)
     // The GoPro expects the controller to be at address 0x60, so set that as our slave address
     I2caRegs.I2COAR = 0x0060;
 
+    //TODO: Need to do more investigation of why the TX FIFO interrupt doesn't seem to be working.  Through the debugger,
+    // I am able to see that the TX interrupt is enabled, and that the TX interrupt flag is set, but the ISR never fires.  The CPU
+    // level interrupt is enabled, and I know that the ISR is set up correctly because the TX and RX FIFO interrupts share an ISR,
+    // and the RX interrupt works correctly.  There are no I2C module erratas for this part, and some cursory online searches reveal
+    // no other obvious cases of this problem.  I disabled FIFO operation and am using normal module operation, which seems to work
+    // correctly, but I would like to finish debugging FIFO operation at some point
     /*
     // Configure the receive FIFO
     I2caRegs.I2CFFRX.bit.RXFFRST = 0; // Hold the RX FIFO in reset while we configure it
