@@ -21,11 +21,11 @@ for obsIndex = 1:3
     % Calculate the velocity measurement innovation
     innovation(obsIndex) = states(stateIndex) - measVel(obsIndex);
     
-    % Calculate the Kalman Gain
+    % Calculate the Kalman Gain taking advantage of direct state observation
     H = zeros(1,9);
     H(1,stateIndex) = 1;
-    varInnov(obsIndex) = (H*P*transpose(H) + R_OBS);
-    K = (P*transpose(H))/varInnov(obsIndex);
+    varInnov(obsIndex) = P(stateIndex,stateIndex) + R_OBS;
+    K = P(:,stateIndex)/varInnov(obsIndex);
     
     % Calculate state corrections
     xk = K * innovation(obsIndex);
@@ -53,7 +53,7 @@ for obsIndex = 1:3
     end
     
     % Update the covariance
-    P = P - K*H*P;
+    P = P - K*P(stateIndex,:);
     
     % Force symmetry on the covariance matrix to prevent ill-conditioning
     P = 0.5*(P + transpose(P));

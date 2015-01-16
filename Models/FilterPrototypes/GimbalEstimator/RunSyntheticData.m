@@ -8,18 +8,10 @@ indexLimitSlow = round(duration/dtSlow);
 indexLimitFast = indexLimitSlow*rateMult;
 
 % create data logging variables
-time = zeros(1,indexLimitSlow);
-statesLog = zeros(9,indexLimitSlow);
-quatLog   = zeros(4,indexLimitSlow);
-eulLog = zeros(3,indexLimitSlow);
-eulErrLog = eulLog;
-tiltCorrLog = zeros(1,indexLimitSlow);
-velInnovLog = zeros(3,indexLimitSlow);
-decInnovLog = zeros(1,indexLimitSlow);
-velInnovVarLog = velInnovLog;
-decInnovVarLog = decInnovLog;
-eulLogFast = zeros(3,indexLimitFast);
-timeFast = zeros(1,indexLimitFast);
+gimbal.time = zeros(1,indexLimitFast);
+gimbal.euler = zeros(3,indexLimitFast);
+gimbal.eulerTruth = zeros(3,indexLimitFast);
+gimbal.eulerError = zeros(3,indexLimitFast);
 
 % Use a random initial truth orientation
 phiInit = 0.1*randn;
@@ -29,11 +21,6 @@ quatTruth = EulToQuat([phiInit,thetaInit,psiInit]);% [1;0.05*randn;0.05*randn;2*
 quatLength = sqrt(quatTruth(1)^2 + quatTruth(2)^2 + quatTruth(3)^2 + quatTruth(4)^2);
 quatTruth = quatTruth / quatLength;
 TsnTruth = Quat2Tbn(quatTruth);
-
-% initialise the filter to level (let it find its own attitude)
-quat = [1;0;0;0];
-states = zeros(9,1);
-Tsn = Quat2Tbn(quat);
 
 % define the earths truth magnetic field
 declTruth = 10*pi/180;
@@ -71,7 +58,8 @@ centripAccelMag = gndSpd/radius*gndSpd;
 gravAccel = [0;0;-9.81];
 
 %% Main Loop
-headingAligned=0;
+hdgAlignedEKF=0;
+hdgAlignedGimbal=0;
 slowIndex = 0;
 delAngFast = [0;0;0];
 delVelFast = [0;0;0];
@@ -84,12 +72,12 @@ quatFastSaved = quatFast;
 angRateBiasEKF = [0;0;0];
 quatEKF = [1;0;0;0];
 for fastIndex = 1:indexLimitFast % 1000 Hz gimbal prediction loop
-    timeFast(fastIndex) = dtFast*fastIndex;
+    time = dtFast*fastIndex;
     % Calculate Truth Data
     % Need to replace this with a full kinematic model or test data
     % calculate truth angular rates - we don't start maneouvring until
     % heading alignment is complete
-    psiRateTruth = gndSpd/radius*headingAligned;
+    psiRateTruth = gndSpd/radius*hdgAlignedEKF;
     angRateTruth = [0;0;psiRateTruth]; % constant yaw rate
     
     % calculate yaw and track angles
@@ -173,59 +161,11 @@ for fastIndex = 1:indexLimitFast % 1000 Hz gimbal prediction loop
     % computational delays
     if (rem(fastIndex,rateMult) == 5)
         slowIndex = slowIndex + 1;
-        time(slowIndex) = dtSlow*slowIndex;
-        
-        % predict states
-        [quat, states, Tsn, delAngCorrected, delVelCorrected]  = PredictStates(quat,states,delAngSlow,delVelSlow,dtSlow);
-        
-        % log state prediction data
-        statesLog(:,slowIndex) = states;
-        quatLog(:,slowIndex) = quat;
-        eulLog(:,slowIndex) = QuatToEul(quat);
-        if (headingAligned)
-            eulErrLog(:,slowIndex) = eulLog(:,slowIndex) - QuatToEul(quatTruth);
-            if (eulErrLog(3,slowIndex) > pi)
-                eulErrLog(3,slowIndex) = eulErrLog(3,slowIndex) - 2*pi;
-            elseif (eulErrLog(3,slowIndex) < -pi)
-                eulErrLog(3,slowIndex) = eulErrLog(3,slowIndex) + 2*pi;
-            end
-        else
-            eulErrLog(:,slowIndex) = [NaN;NaN;NaN];
-        end
-        
-        % predict covariance matrix
-        covariance = PredictCovarianceOptimised(delAngCorrected,delVelCorrected,quat,states,covariance,dtSlow);
-        
-        % fuse velocity measurements
-        [quat,states,tiltCorrection,covariance,velInnov,velInnovVar] = FuseVelocity(quat,states,covariance,measVel);
-        
-        % log velocity fusion data
-        velInnovLog(:,slowIndex) = velInnov;
-        velInnovVarLog(:,slowIndex) = velInnovVar;
-        tiltCorrLog(1,slowIndex) = tiltCorrection;
-        
-        % Align the heading once there has been enough time for the filter to
-        % settle and the tilt corrections have dropped below a threshold
-        if (((time(slowIndex) > 5.0 && tiltCorrection < 1e-4) || (time(slowIndex) > 30.0)) && headingAligned==0)
-            % calculate the initial heading using magnetometer, gimbal,
-            % estimated tilt and declination
-            quat = AlignHeading(gPhi,gPsi,gTheta,Tsn,magMeas,quat,declParam);
-            headingAligned = 1;
-        end
-        
-        % fuse magnetometer measurements and log fusion data
-        if (headingAligned == 1)
-            [quat,states,covariance,decInnov,decInnovVar] = FuseMagnetometer(quat,states,covariance,magMeas,declParam,gPhi,gPsi,gTheta);
-            decInnovLog(:,slowIndex) = decInnov;
-            decInnovVarLog(:,slowIndex) = decInnovVar;
-        end
-        
-        % calculate the output data required by the gimbal controller
-        quatEKF = quat;
-        angRateBiasEKF = states(7:9)/dtSlow;
+        [quatEKF,angRateBiasEKF,EKFlogs,hdgAlignedEKF] = calcEKF(delAngSlow,delVelSlow,measVel,gPhi,gPsi,gTheta,magMeas,declParam,time,dtSlow,slowIndex,indexLimitSlow);
     end
     
-    % Assume the gimbal controller receive the EKF solution 10 msec after 
+    % Correct Gimbal attitude usng EKF data
+    % Assume the gimbal controller receive the EKF solution 10 msec after
     % it sent the sensor data
     if (rem(fastIndex,rateMult) == 10)
         % calculate the quaternion from the EKF corrected attitude to the
@@ -237,6 +177,23 @@ for fastIndex = 1:indexLimitFast % 1000 Hz gimbal prediction loop
         quatFast = QuatMult(quatFast,deltaQuatFast);
         % normalise the resultant quaternion
         quatFast = NormQuat(quatFast);
+        % flag when the gimbals own heading is aligned
+        hdgAlignedGimbal = hdgAlignedEKF;
+    end
+    
+    % Log gimbal data
+    gimbal.time(fastIndex) = time;
+    gimbal.euler(:,fastIndex) = QuatToEul(quatFast);
+    gimbal.eulerTruth(:,fastIndex) = QuatToEul(quatTruth);
+    if (hdgAlignedGimbal)
+        gimbal.eulerError(:,fastIndex) = gimbal.euler(:,fastIndex) - gimbal.eulerTruth(:,fastIndex);
+        if (gimbal.eulerError(3,fastIndex) > pi)
+            gimbal.eulerError(3,fastIndex) = gimbal.eulerError(3,fastIndex) - 2*pi;
+        elseif (gimbal.eulerError(3,fastIndex) < -pi)
+            gimbal.eulerError(3,fastIndex) = gimbal.eulerError(3,fastIndex) + 2*pi;
+        end
+    else
+        gimbal.eulerError(:,fastIndex) = [NaN;NaN;NaN];
     end
     
 end
