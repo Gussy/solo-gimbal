@@ -14,7 +14,7 @@
 #include "parameters/load_axis_parms_state_machine.h"
 
 #define PRE_INIT_TIME_MS 2000
-#define FAULT_REVIVE_TIME_MS 1000
+#define FAULT_REVIVE_TIME_MS 5000
 
 typedef enum {
     STATE_PRE_INIT,
