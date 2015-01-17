@@ -23,9 +23,12 @@ magZ = magData(3);
 
 R_MAG = 0.1745^2;
 
+% Calculate observation Jacobian
 H = calcH_MAG(gPhi,gPsi,gTheta,magX,magY,magZ,q0,q1,q2,q3);
-varInnov = (H*P*transpose(H) + R_MAG);
-Kfusion = (P*transpose(H))/varInnov;
+% Calculate innovation variance and Kalman gains
+% Take advantage of the fact that only the first 3 elements in H are non zero
+varInnov = (H(1,1:3)*P(1:3,1:3)*transpose(H(1,1:3)) + R_MAG);
+Kfusion = (P(:,1:3)*transpose(H(1,1:3)))/varInnov;
 
 % Calculate the innovation
 innovation = calcMagAng(decl,gPhi,gPsi,gTheta,magX,magY,magZ,q0,q1,q2,q3);
@@ -67,7 +70,8 @@ if (quatMag > 1e-6)
 end
 
 % correct the covariance P = P - K*H*P
-P = P - Kfusion*H*P;
+% Take advantage of the fact that only the first 3 elements in H are non zero
+P = P - Kfusion*H(1,1:3)*P(1:3,:);
 
 % Force symmetry on the covariance matrix to prevent ill-conditioning
 % of the matrix which would cause the filter to blow-up
