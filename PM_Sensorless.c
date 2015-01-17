@@ -47,7 +47,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 
 // Prototype statements for functions found within this file.
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
-static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data);
+static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms);
 void DeviceInit();
 void MemCopy();
 void InitFlash();
@@ -150,7 +150,8 @@ BalanceProcedureParms balance_proc_parms = {
     0,      // Current balance angle index
     0,      // Current balance angle counter
     133,    // Balance angle counter max
-    EL      // Balance axis
+    0,      // Current direction (0 = negative to positive, 1 = positive to negative)
+    EL    // Balance axis
 };
 
 EncoderParms encoder_parms = {
@@ -319,6 +320,10 @@ Uint8 pos_pid_rl_windup_flag = FALSE;
 Uint8 gyro_offset_el_flag = FALSE;
 Uint8 gyro_offset_az_flag = FALSE;
 Uint8 gyro_offset_rl_flag = FALSE;
+#ifdef ENABLE_BALANCE_PROCEDURE
+Uint8 balance_axis_flag = FALSE;
+Uint8 balance_step_duration_flag = FALSE;
+#endif
 
 ParamSet param_set[CAND_PID_LAST];
 
@@ -366,6 +371,10 @@ void init_param_set(void)
     param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
     param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
     param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
+#ifdef ENABLE_BALANCE_PROCEDURE
+    param_set[CAND_PID_BALANCE_AXIS].sema = &balance_axis_flag;
+    param_set[CAND_PID_BALANCE_STEP_DURATION].sema = &balance_step_duration_flag;
+#endif
 }
 
 static void MainISRwork(void);
@@ -567,7 +576,7 @@ void main(void)
 
 
 		// Update any parameters that have changed due to CAN messages
-		ProcessParamUpdates(param_set, &control_board_parms, &debug_data);
+		ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms);
 
 	}
 } //END MAIN CODE
@@ -994,9 +1003,18 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 	if (axis_parms.run_motor) {
         if (balance_proc_parms.balance_angle_counter++ > balance_proc_parms.balance_angle_counter_max) {
             balance_proc_parms.balance_angle_counter = 0;
-            balance_proc_parms.current_balance_angle_index++;
-            if (balance_proc_parms.current_balance_angle_index >= BALANCE_PROCEDURE_ANGLE_COUNT) {
-                balance_proc_parms.current_balance_angle_index = 0;
+            if (balance_proc_parms.current_direction == 0) {
+                balance_proc_parms.current_balance_angle_index++;
+                if (balance_proc_parms.current_balance_angle_index >= BALANCE_PROCEDURE_ANGLE_COUNT) {
+                    balance_proc_parms.current_direction = 1;
+                    balance_proc_parms.current_balance_angle_index -= 2; // Subtract 2 so that we don't repeat the last angle when we're going the other direction
+                }
+            } else {
+                balance_proc_parms.current_balance_angle_index--;
+                if (balance_proc_parms.current_balance_angle_index < 0) {
+                    balance_proc_parms.current_direction = 0;
+                    balance_proc_parms.current_balance_angle_index += 2; // Add 2 so that we don't repeat the last angle when we're going the other direction
+                }
             }
             control_board_parms.angle_targets[balance_proc_parms.balance_axis] = balance_proc_parms.balance_angles[balance_proc_parms.balance_axis][balance_proc_parms.current_balance_angle_index];
         }
@@ -1067,7 +1085,7 @@ interrupt void GyroIntISR(void)
 int position_loop_deadband_counts = 10;
 int position_loop_deadband_hysteresis = 100;
 
-static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data)
+static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms)
 {
     IntOrFloat float_converter;
     // Check for updated rate loop PID params
@@ -1359,6 +1377,36 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
             //send_mavlink_debug_data(debug_data);
         }
     }
+
+#ifdef ENABLE_BALANCE_PROCEDURE
+    if (*(param_set[CAND_PID_BALANCE_AXIS].sema) == TRUE) {
+        // Convert and set the new axis
+        IntOrFloat float_converter;
+        float_converter.uint32_val = param_set[CAND_PID_BALANCE_AXIS].param;
+        GimbalAxis new_axis = (GimbalAxis)float_converter.float_val;
+        balance_proc_parms->balance_axis = new_axis;
+
+        // Also reset the direction, step, and time counters when we get a new axis, so we begin
+        // at the start of the balance procedure for the new axis
+        balance_proc_parms->balance_angle_counter = 0;
+        balance_proc_parms->current_balance_angle_index = 0;
+        balance_proc_parms->current_direction = 0;
+
+        // Also update the target angle here so we immediately snap to the new position on the new axis
+        cb_parms->angle_targets[balance_proc_parms->balance_axis] = balance_proc_parms->balance_angles[balance_proc_parms->balance_axis][balance_proc_parms->current_balance_angle_index];
+
+        *(param_set[CAND_PID_BALANCE_AXIS].sema) = FALSE;
+    }
+
+    if (*(param_set[CAND_PID_BALANCE_STEP_DURATION].sema) == TRUE) {
+        // Convert and update the new counter max
+        IntOrFloat float_converter;
+        float_converter.uint32_val = param_set[CAND_PID_BALANCE_STEP_DURATION].param;
+        balance_proc_parms->balance_angle_counter_max = (int)(float_converter.float_val / 150.0); // The counter gets incremented every 150ms, and the parameter comes in as ms
+
+        *(param_set[CAND_PID_BALANCE_STEP_DURATION].sema) = FALSE;
+    }
+#endif
 
 
 }

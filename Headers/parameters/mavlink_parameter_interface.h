@@ -10,6 +10,7 @@
 
 #include "can/cand_BitFields.h"
 #include "mavlink_interface/gimbal_mavlink.h"
+#include "PM_Sensorless-Settings.h"
 
 typedef enum {
     MAVLINK_GIMBAL_PARAM_PID_YAW_P = 0,
@@ -41,6 +42,10 @@ typedef enum {
     MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL,
     MAVLINK_GIMBAL_PARAM_SYSID_SWVER,
     MAVLINK_GIMBAL_PARAM_SERIAL_BAUD,
+#ifdef ENABLE_BALANCE_PROCEDURE
+    MAVLINK_GIMBAL_PARAM_BALANCE_AXIS,
+    MAVLINK_GIMBAL_PARAM_BALANCE_STEP_DURATION,
+#endif
     MAVLINK_GIMBAL_PARAM_MAX
 } GimbalMavlinkParameterID;
 

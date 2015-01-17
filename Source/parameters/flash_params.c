@@ -190,7 +190,9 @@ struct flash_param_struct_0000 flash_params =
         1.0,    // EL
         0.0,    // AZ
         0.0     // ROLL
-    }
+    },
+    0.0,           // Balance axis (only used when balance mode is compiled in)
+    20000.0        // Balance step time in ms (only used when balance mode is compiled in)
 };
 #elif (PROTOTYPE_HW == 2)
 struct flash_param_struct_0000 flash_params =
@@ -203,15 +205,15 @@ struct flash_param_struct_0000 flash_params =
 #if 0
     // Axis calibration slopes
     {
-        0.1258, //0.0,        // EL
-        0.1154, //0.0,       // AZ
-        0.1379  //0.0        // ROLL
+        0.1312, //0.0,        // EL
+        0.1143, //0.0,       // AZ
+        0.1328  //0.0        // ROLL
     },
     // Axis calibration intercepts
     {
-        0.4303, //0.0,      // EL
-        0.4521, //0.0,      // AZ
-        0.4722  //0.0       // ROLL
+        0.5095, //0.0,      // EL
+        0.3718, //0.0,      // AZ
+        0.37  //0.0       // ROLL
     },
 #else
     // Axis calibration slopes
@@ -304,7 +306,9 @@ struct flash_param_struct_0000 flash_params =
         0.0,    // EL
         0.0,    // AZ
         0.0     // ROLL
-    }
+    },
+    0.0,           // Balance axis (only used when balance mode is compiled in)
+    20000.0        // Balance step time in ms (only used when balance mode is compiled in)
 };
 #endif
 

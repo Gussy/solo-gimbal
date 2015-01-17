@@ -88,6 +88,7 @@ typedef struct {
     int current_balance_angle_index;
     int balance_angle_counter;
     int balance_angle_counter_max;
+    int current_direction;
     GimbalAxis balance_axis;
 } BalanceProcedureParms;
 

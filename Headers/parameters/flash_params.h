@@ -32,6 +32,8 @@ struct flash_param_struct_0000 {
 	float torque_pid_kp[AXIS_CNT];
 	float torque_pid_ki[AXIS_CNT];
 	float torque_pid_kd[AXIS_CNT];
+	float balance_axis;
+	float balance_step_duration;
 };
 
 extern struct flash_param_struct_0000 flash_params;
