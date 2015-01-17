@@ -141,7 +141,9 @@ Uint16 IndexTimeOut = 0;
 BalanceProcedureParms balance_proc_parms = {
     // Balance angle setpoints
     {
-        {6389, 6944, 7500, 7917, 8333, 8750, 9167, 9583, 0, 416, 833, 1250},
+        //TODO: Temporarily limiting range of EL balance procedure to account for flex that constrains look down angle
+        //{6389, 6944, 7500, 7917, 8333, 8750, 9167, 9583, 0, 416, 833, 1250},
+        {8889, 9028, 9306, 9444, 9722, 9861, 0, 139, 417, 694, 972, 1250},
         {9306, 9444, 9583, 9722, 9861, 9931, 0, 139, 278, 417, 556, 694},
         {8889, 9028, 9306, 9444, 9722, 9861, 0, 139, 278, 556, 833, 1111}
     },
@@ -190,7 +192,6 @@ ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Axis errors
     {0, 0, 0},                                              // Angle targets,
     {CAND_FAULT_NONE, CAND_FAULT_NONE, CAND_FAULT_NONE},    // Last axis faults
-    {10, 10, 10},                                              // Pointing loop gains
     {FALSE, FALSE, FALSE},									// Encoder values received
     {FALSE, FALSE, FALSE},                                  // Axes homed
     0,                                                      // 2nd stage position loop decimation counter

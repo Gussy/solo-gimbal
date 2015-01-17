@@ -203,15 +203,15 @@ struct flash_param_struct_0000 flash_params =
 #if 0
     // Axis calibration slopes
     {
-        0.1298177, //0.0,        // EL
-        0.1088867, //0.0,       // AZ
-        0.1394676  //0.0        // ROLL
+        0.1258, //0.0,        // EL
+        0.1154, //0.0,       // AZ
+        0.1379  //0.0        // ROLL
     },
     // Axis calibration intercepts
     {
-        0.4357381, //0.0,      // EL
-        0.4617004, //0.0,      // AZ
-        0.4723126  //0.0       // ROLL
+        0.4303, //0.0,      // EL
+        0.4521, //0.0,      // AZ
+        0.4722  //0.0       // ROLL
     },
 #else
     // Axis calibration slopes
@@ -229,9 +229,9 @@ struct flash_param_struct_0000 flash_params =
 #endif
     // Axis home positions
     {
-        5120,      // EL
-        4898,      // AZ
-        4944       // ROLL
+        5090,      // EL
+        4840,      // AZ
+        4993       // ROLL
     },
     // Rate PID P gains
     {

@@ -113,7 +113,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         case ERROR_AZ_PASS:
 #if defined(ENABLE_BALANCE_PROCEDURE)
             if (bal_proc_parms->balance_axis == AZ) {
-                cb_parms->axis_errors[AZ] = (CorrectEncoderError(cb_parms->angle_targets[AZ] - cb_parms->encoder_readings[AZ]) * cb_parms->pointing_loop_gains[AZ]);
+                cb_parms->axis_errors[AZ] = CorrectEncoderError(cb_parms->angle_targets[AZ] - cb_parms->encoder_readings[AZ]);
                 cb_parms->axis_errors[EL] = 0;
                 cb_parms->axis_errors[ROLL] = 0;
             }
@@ -169,7 +169,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 cb_parms->axis_errors[AZ] = -cb_parms->corrected_gyro_readings[AZ];
             }
 #else
-            //cb_parms->axis_errors[AZ] = cb_parms->unfiltered_position_errors[AZ] * cb_parms->pointing_loop_gains[AZ] - cb_parms->corrected_gyro_readings[AZ];
             cb_parms->axis_errors[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->unfiltered_position_errors[AZ]) - cb_parms->corrected_gyro_readings[AZ];
 #endif
 #endif
@@ -180,7 +179,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         case ERROR_EL_PASS:
 #if defined(ENABLE_BALANCE_PROCEDURE)
             if (bal_proc_parms->balance_axis == EL) {
-                cb_parms->axis_errors[EL] = (CorrectEncoderError(cb_parms->angle_targets[EL] - cb_parms->encoder_readings[EL]) * cb_parms->pointing_loop_gains[EL]);
+                cb_parms->axis_errors[EL] = CorrectEncoderError(cb_parms->angle_targets[EL] - cb_parms->encoder_readings[EL]);
                 cb_parms->axis_errors[AZ] = 0;
                 cb_parms->axis_errors[ROLL] = 0;
             }
@@ -236,7 +235,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 cb_parms->axis_errors[EL] = -cb_parms->corrected_gyro_readings[EL];
             }
 #else
-            //cb_parms->axis_errors[EL] = cb_parms->unfiltered_position_errors[EL]* cb_parms->pointing_loop_gains[EL] -cb_parms->corrected_gyro_readings[EL];
             cb_parms->axis_errors[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->unfiltered_position_errors[EL]) - cb_parms->corrected_gyro_readings[EL];
 #endif
 #endif
@@ -247,7 +245,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         case ERROR_ROLL_PASS:
 #if defined(ENABLE_BALANCE_PROCEDURE)
             if (bal_proc_parms->balance_axis == ROLL) {
-                cb_parms->axis_errors[ROLL] = (CorrectEncoderError(cb_parms->angle_targets[ROLL] - cb_parms->encoder_readings[ROLL]) * cb_parms->pointing_loop_gains[ROLL]);
+                cb_parms->axis_errors[ROLL] = CorrectEncoderError(cb_parms->angle_targets[ROLL] - cb_parms->encoder_readings[ROLL]);
                 cb_parms->axis_errors[AZ] = 0;
                 cb_parms->axis_errors[EL] = 0;
             }
@@ -303,7 +301,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 cb_parms->axis_errors[ROLL] = -cb_parms->corrected_gyro_readings[ROLL];
             }
 #else
-            //cb_parms->axis_errors[ROLL] = cb_parms->unfiltered_position_errors[ROLL]* cb_parms->pointing_loop_gains[ROLL]  -cb_parms->corrected_gyro_readings[ROLL];
             cb_parms->axis_errors[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->unfiltered_position_errors[ROLL]) - cb_parms->corrected_gyro_readings[ROLL];
 #endif
 #endif
