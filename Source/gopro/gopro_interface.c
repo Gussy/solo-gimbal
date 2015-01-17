@@ -11,7 +11,7 @@
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 GPCmdResult last_cmd_result = GP_CMD_UNKNOWN;
 Uint32 gp_power_on_counter = 0;
-Uint32 wait_for_cmd_request_timeout = 0;
+Uint32 timeout_counter = 0;
 
 void init_gp_interface()
 {
@@ -41,7 +41,7 @@ int gp_send_command(char cmd_name_1, char cmd_name_2, Uint8 cmd_parameter)
         GP_ASSERT_INTR();
 
         // Reset the timeout counter, and move to the wait for command send state
-        wait_for_cmd_request_timeout = 0;
+        timeout_counter = 0;
         gp_control_state = GP_CONTROL_STATE_WAIT_CMD_SEND;
 
         return 0;
@@ -106,17 +106,40 @@ void gp_interface_state_machine()
             // We wait here until we've been addressed by the GoPro, which means it's ready to read the command from us.
             // This will cause an interrupt that changes the state of the state machine, so the only way out of this state from
             // here is to time out.  We time out back to idle if we haven't been addressed for 2 seconds
-            if (wait_for_cmd_request_timeout++ > 667) { // Timeout is 2 seconds per HeroBus spec
-                wait_for_cmd_request_timeout = 0;
+            if (timeout_counter++ > 667) { // Timeout is 2 seconds per HeroBus spec
+                timeout_counter = 0;
                 GP_DEASSERT_INTR();
-                last_cmd_result = GP_CMD_TIMEOUT;
+                last_cmd_result = GP_CMD_SEND_TIMEOUT;
                 gp_control_state = GP_CONTROL_STATE_IDLE;
             }
             break;
 
-        case GP_CONTROL_STATE_RECV_CMD_RESPONSE:
+        case GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE:
+            // We wait here until we've been addressed by the GoPro, which means it's about to transmit its response to us.
+            // This will cause an interrupt that changes the state of the state machine, so the only way out of this state from
+            // here is to time out.  We time out back to idle if we haven't been addressed for 2 seconds
+            if (timeout_counter++ > 667) { // Timeout is 2 seconds per HeroBus spec
+                timeout_counter = 0;
+                GP_DEASSERT_INTR();
+                last_cmd_result = GP_CMD_RESPONSE_TIMEOUT;
+                gp_control_state = GP_CONTROL_STATE_IDLE;
+            }
+            break;
+
+        case GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE_COMPLETE:
+            if (i2c_get_scd()) {
+                // We've seen a stop condition, so the GoPro is done transmitting its response
+                // We can now read the response out of the buffer and validate it
+                gp_control_state = GP_CONTROL_STATE_VALIDATE_CMD_RESPONSE;
+            }
+            break;
+
+        case GP_CONTROL_STATE_VALIDATE_CMD_RESPONSE:
+            // TODO: Actually validate the response.  For now, for testing, just assume it was a valid response
+            // NOTE: This will eventually cause the rx ringbuffer to fill up, since we're never reading from
+            // it to empty it.  This is just for testing
             last_cmd_result = GP_CMD_SUCCESSFUL;
-            // TODO: Validate that the command was successful
+            gp_control_state = GP_CONTROL_STATE_IDLE;
             break;
 
         case GP_CONTROL_STATE_WAIT_READY_FOR_RESPONSE_SEND:
@@ -195,9 +218,12 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
                 // Deassert the GoPro interrupt request line to indicate that we're ready to transmit the command
                 GP_DEASSERT_INTR();
 
+                // Clear the timeout counter in preparation of waiting for a response from the GoPro
+                timeout_counter = 0;
+
                 // Transition to the receive command response state.  The command to send was already
                 // preloaded into the ringbuffer before we asserted the interrupt request to the GoPro
-                gp_control_state = GP_CONTROL_STATE_RECV_CMD_RESPONSE;
+                gp_control_state = GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE;
             } else if (gp_control_state == GP_CONTROL_STATE_WAIT_READY_FOR_RESPONSE_SEND) {
                 // If we're waiting to respond to a GoPro command, de-assert the interrupt request line to indicate
                 // to the GoPro that we're ready for it to read the response
@@ -219,7 +245,14 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
                 // Also clear the stop condition detected bit here so we can poll it to
                 // determine when the GoPro is done transmitting the command
                 i2c_clr_scd();
+            } else if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE) {
+                // We've been addressed by the GoPro to write its response back to us.  Now we just need
+                // to wait for it to finish writing the response
+                gp_control_state = GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE_COMPLETE;
 
+                // Clear the stop condition detected bit here so we can poll it to determine when
+                // the GoPro is done transmitting the response
+                i2c_clr_scd();
             }
         }
     }
