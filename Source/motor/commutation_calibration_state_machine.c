@@ -40,8 +40,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 	static Uint16 hardstop = 0;
     switch (cc_parms->calibration_state) {
         case COMMUTATION_CALIBRATION_STATE_INIT:
-		    encoder_parms->calibration_slope = AxisCalibrationSlopes[GIMBAL_TARGET][GetBoardHWID()];
-		    encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GIMBAL_TARGET][GetBoardHWID()];
+		    encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
+		    encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
         	// don't calibrate if we got slope set already
         	if (encoder_parms->calibration_slope != 0) {
     		    md_parms->motor_drive_state = STATE_HOMING;
@@ -133,7 +133,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 	hardstop++;
                 	if ((hardstop > 1)||(cc_parms->current_iteration >= COMMUTATION_ARRAY_SIZE)) {
                 		if (cc_parms->current_iteration > 16) {
-                			calc_slope_intercept(cc_parms,2,cc_parms->current_iteration-3,&AxisCalibrationSlopes[GIMBAL_TARGET][GetBoardHWID()],&AxisCalibrationIntercepts[GIMBAL_TARGET][GetBoardHWID()]);
+                			calc_slope_intercept(cc_parms,2,cc_parms->current_iteration-3,&AxisCalibrationSlopes[GetBoardHWID()],&AxisCalibrationIntercepts[GetBoardHWID()]);
     						cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_TEST;
                 		} else {
                 			md_parms->motor_drive_state = STATE_FAULT;
@@ -317,8 +317,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         case COMMUTATION_CALIBRATION_STATE_TEST_CHECK_POS:
         	break;
         case COMMUTATION_CALIBRATION_STATE_COMPLETE:
-		    encoder_parms->calibration_slope = AxisCalibrationSlopes[GIMBAL_TARGET][GetBoardHWID()];
-		    encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GIMBAL_TARGET][GetBoardHWID()];
+		    encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
+		    encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
 		    md_parms->motor_drive_state = STATE_HOMING;
 		    if (GetBoardHWID() != AZ) {
                 IntOrFloat float_converter;

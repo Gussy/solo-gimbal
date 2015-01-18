@@ -7,149 +7,41 @@
 
 #include "hardware/HWSpecific.h"
 
-int AxisHomePositions[GIMBAL_CNT][AXIS_CNT] = {
-    // Gimbal G1
-    {
-        5372,   // EL
-        5595,   // AZ
-        4806    // ROLL
-    },
-#if GIMBAL_CNT > 1
-    /*
-    // Gimbal G2
-    {
-        5135,   // EL
-        4696,   // AZ
-        4319,   // ROLL
-    },
-    */
-    // TODO: Temp for testing
-    { 0, 0, 0},
-    // Gimbal G3
-    {
-        0,      // EL
-        0,      // AZ
-        0       // ROLL
-    },
-    // Gimbal G4
-    {
-        4950,      // EL
-        0,      // AZ
-        4995       // ROLL
-    },
-    // Gimbal G5
-    {
-        5120,      // EL
-        4898,      // AZ
-        4944       // ROLL
-    }
-#endif
+// All of these get initialized over CAN at boot time (from parameters stored in flash on the AZ axis),
+// so they all get initialized to 0 here
+
+int AxisHomePositions[AXIS_CNT] = {
+    0,
+    0,
+    0
 };
 
-float AxisCalibrationSlopes[GIMBAL_CNT][AXIS_CNT] = {
-    // Gimbal G1
-    {
-        0.1245,     // EL
-        0.1231,     // AZ
-        0.1324      // ROLL
-    },
-#if GIMBAL_CNT > 1
-    /*
-    // Gimbal G2
-    {
-        0.127,      // EL
-        0.1267,     // AZ
-        0.1274,     // ROLL
-    },
-    */
-    //TODO: Temp for testing
-    {0.0, 0.0, 0.0},
-    // Gimbal G3
-    {
-        0.0,        // EL
-        0.1352,     // AZ
-        0.0,        // ROLL
-    },
-    // Gimbal G4
-    {
-        0.1279,        // EL
-        0.0,     // AZ
-        0.139         // ROLL
-    },
-    // Gimbal G5
-    {
-        0.126,        // EL
-        0.1247,       // AZ
-        0.1245        // ROLL
-    }
-#endif
+float AxisCalibrationSlopes[AXIS_CNT] = {
+    0.0,
+    0.0,
+    0.0
 };
 
-float AxisCalibrationIntercepts[GIMBAL_CNT][AXIS_CNT] = {
-    // Gimbal G1
-    {
-        0.3408,  // EL
-        0.3659,  // AZ
-        0.3635   // ROLL
-    },
-#if GIMBAL_CNT > 1
-    /*
-    // Gimbal G2
-    {
-        0.3801,     // EL
-        0.4128,     // AZ
-        0.43,       // ROLL
-    },
-    */
-    //TODO: For testing
-    {0.0, 0.0, 0.0},
-    // Gimbal G3
-    {
-        0.0,        // EL
-        0.107,      // AZ
-        0.0,        // ROLL
-    },
-    // Gimbal G4
-    {
-        0.4288,        // EL
-        0.0,      // AZ
-        0.3122        // ROLL
-    },
-    // Gimbal G5
-    {
-        0.4536,      // EL
-        0.3718,      // AZ
-        0.4079       // ROLL
-    }
-#endif
+float AxisCalibrationIntercepts[AXIS_CNT] = {
+    0.0,
+    0.0,
+    0.0
 };
 
 float AxisTorqueLoopKp[AXIS_CNT] = {
-    //TODO: For testing
-    0.0, 0.0, 0.0
-   /*
-    1.25,   // EL
-    0.8,    // AZ
-    0.8     // ROLL
-    */
+    0.0,
+    0.0,
+    0.0
 };
 
 float AxisTorqueLoopKi[AXIS_CNT] = {
-    //TODO: For testing
-    0.0, 0.0, 0.0
-    /*
-    0.75,   // EL
-    0.75,   // AZ
-    0.75    // ROLL
-    */
+    0.0,
+    0.0,
+    0.0
 };
 
 float AxisTorqueLoopKd[AXIS_CNT] = {
-    //TODO: For testing
-    0.0, 0.0, 0.0
-    /*
-    1.0,    // EL
-    0.0,    // AZ
-    0.0     // ROLL
-    */
+    0.0,
+    0.0,
+    0.0
 };

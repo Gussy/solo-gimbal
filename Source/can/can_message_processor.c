@@ -312,6 +312,186 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             }
             break;
 
+            case CAND_PID_POS_EL_P:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_p[EL];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_EL_P, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_EL_I:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_i[EL];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_EL_I, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_EL_D:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_d[EL];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_EL_D, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_EL_WINDUP:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_windup[EL];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_EL_WINDUP, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_AZ_P:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_p[AZ];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_AZ_P, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_AZ_I:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_i[AZ];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_AZ_I, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_AZ_D:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_d[AZ];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_AZ_D, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_AZ_WINDUP:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_windup[AZ];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_AZ_WINDUP, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_RL_P:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_p[ROLL];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_RL_P, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_RL_I:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_i[ROLL];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_RL_I, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_RL_D:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_d[ROLL];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_RL_D, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_POS_RL_WINDUP:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.pos_pid_windup[ROLL];
+                    cand_tx_response(msg.sender_id, CAND_PID_POS_RL_WINDUP, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_GYRO_OFFSET_EL:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Gyro offset parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.gyro_offsets[EL];
+                    cand_tx_response(msg.sender_id, CAND_PID_GYRO_OFFSET_EL, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_GYRO_OFFSET_AZ:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Gyro offset parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.gyro_offsets[AZ];
+                    cand_tx_response(msg.sender_id, CAND_PID_GYRO_OFFSET_AZ, float_converter.uint32_val);
+                }
+            }
+            break;
+
+            case CAND_PID_GYRO_OFFSET_RL:
+            {
+                IntOrFloat float_converter;
+                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
+                if (GetBoardHWID() == AZ) {
+                    // Gyro offset parameter requests all come from EL, so can't use the sender ID to lookup the proper value
+                    float_converter.float_val = flash_params.gyro_offsets[ROLL];
+                    cand_tx_response(msg.sender_id, CAND_PID_GYRO_OFFSET_RL, float_converter.uint32_val);
+                }
+            }
+            break;
+
             default:
                 AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER);
                 break;
@@ -412,7 +592,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        AxisCalibrationSlopes[GIMBAL_TARGET][GetBoardHWID()] = float_converter.float_val;
+                        AxisCalibrationSlopes[GetBoardHWID()] = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD;
                     }
                     break;
@@ -430,7 +610,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        AxisCalibrationIntercepts[GIMBAL_TARGET][GetBoardHWID()] = float_converter.float_val;
+                        AxisCalibrationIntercepts[GetBoardHWID()] = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD;
                     }
                     break;
@@ -439,7 +619,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
                     if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD)) {
-                        AxisHomePositions[GIMBAL_TARGET][GetBoardHWID()] = msg.param_response[msg.param_response_cnt - 1];
+                        AxisHomePositions[GetBoardHWID()] = msg.param_response[msg.param_response_cnt - 1];
                         load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD;
                     }
                     break;
@@ -578,6 +758,175 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         load_ap_state_info->init_param_recvd_flags_1 |= INIT_PARAM_RATE_PID_RL_WINDUP_RECVD;
                     }
                     break;
+
+                case CAND_PID_POS_EL_P:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_P_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[EL].gainP = float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_P_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_EL_I:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_I_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[EL].gainI = float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_I_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_EL_D:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_D_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[EL].gainD = float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_D_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_EL_WINDUP:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_WINDUP_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[EL].integralMax = float_converter.float_val;
+                        pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_WINDUP_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_AZ_P:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_AZ_P_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[AZ].gainP = float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_AZ_P_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_AZ_I:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_AZ_I_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[AZ].gainI = float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_AZ_I_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_AZ_D:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_AZ_D_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[AZ].gainD = float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_AZ_D_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_AZ_WINDUP:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_AZ_WINDUP_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[AZ].integralMax = float_converter.float_val;
+                        pos_pid_loop_float[AZ].integralMin = -float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_AZ_WINDUP_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_RL_P:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_RL_P_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[ROLL].gainP = float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_RL_P_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_RL_I:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_RL_I_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[ROLL].gainI = float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_RL_I_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_RL_D:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_RL_D_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[ROLL].gainD = float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_RL_D_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_POS_RL_WINDUP:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_RL_WINDUP_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        pos_pid_loop_float[ROLL].integralMax = float_converter.float_val;
+                        pos_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_RL_WINDUP_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_GYRO_OFFSET_EL:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_GYRO_OFFSET_EL_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        cb_parms->gyro_offsets[EL] = (int16)(float_converter.float_val);
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_GYRO_OFFSET_EL_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_GYRO_OFFSET_AZ:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_GYRO_OFFSET_AZ_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        cb_parms->gyro_offsets[AZ] = (int16)(float_converter.float_val);
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_GYRO_OFFSET_AZ_RECVD;
+                    }
+                    break;
+
+                case CAND_PID_GYRO_OFFSET_RL:
+                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                    // of getting multiple responses for the same parameter)
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_GYRO_OFFSET_RL_RECVD)) {
+                        IntOrFloat float_converter;
+                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                        cb_parms->gyro_offsets[ROLL] = (int16)(float_converter.float_val);
+                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_GYRO_OFFSET_RL_RECVD;
+                    }
+                    break;
+
             }
 
             msg.param_response_cnt--;

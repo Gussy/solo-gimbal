@@ -206,6 +206,7 @@ LoadAxisParmsStateInfo load_ap_state_info = {
     LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KP,    // Load axis parms state
     0x0000,                                     // Init param received flags 1
     0x0000,                                     // Init param received flags 2
+    0x0000,                                     // Init param received flags 3
     FALSE,                                      // Axis parms load complete
 };
 
@@ -391,8 +392,9 @@ void main(void)
 		int i;
 		init_flash();
 		for ( i = 0; i < 3; i++) {
-			AxisCalibrationSlopes[GIMBAL_TARGET][i] = flash_params.AxisCalibrationSlopes[i];
-			AxisCalibrationIntercepts[GIMBAL_TARGET][i] = flash_params.AxisCalibrationIntercepts[i];
+			AxisCalibrationSlopes[i] = flash_params.AxisCalibrationSlopes[i];
+			AxisCalibrationIntercepts[i] = flash_params.AxisCalibrationIntercepts[i];
+			AxisHomePositions[i] = flash_params.AxisHomePositions[i];
 		}
 	}
 #if 0

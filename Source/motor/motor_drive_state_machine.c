@@ -131,9 +131,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[AZ];
             md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[AZ];
 
-            AxisCalibrationSlopes[GIMBAL_TARGET][AZ] = flash_params.AxisCalibrationSlopes[AZ];
-            AxisCalibrationIntercepts[GIMBAL_TARGET][AZ] = flash_params.AxisCalibrationIntercepts[AZ];
-            AxisHomePositions[GIMBAL_TARGET][AZ] = flash_params.AxisHomePositions[AZ];
+            AxisCalibrationSlopes[AZ] = flash_params.AxisCalibrationSlopes[AZ];
+            AxisCalibrationIntercepts[AZ] = flash_params.AxisCalibrationIntercepts[AZ];
+            AxisHomePositions[AZ] = flash_params.AxisHomePositions[AZ];
 
             // After we've loaded our own init parameters, make a note of it, so we can continue later when we're waiting for
             // all axes to have received their init parameters
