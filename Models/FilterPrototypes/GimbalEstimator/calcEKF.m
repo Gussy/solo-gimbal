@@ -1,5 +1,10 @@
 function [quatOut,angRateBiasOut,logOut,headingAlignedOut] = calcEKF(delAngSlow,delVelSlow,measVel,gPhi,gPsi,gTheta,magMeas,declParam,time,dtSlow,frameIndex,maxFrameIndex)
 
+persistent velocityAligned;
+if isempty(velocityAligned)
+    velocityAligned = 0;
+end
+
 persistent quat;
 if isempty(quat)
     quat = [1;0;0;0];
@@ -49,13 +54,19 @@ log.euler(:,frameIndex) = QuatToEul(quat);
 % predict covariance matrix
 covariance = PredictCovarianceOptimised(delAngCorrected,delVelCorrected,quat,states,covariance,dtSlow);
 
-% fuse velocity measurements
-[quat,states,tiltCorrection,covariance,velInnov,velInnovVar] = FuseVelocity(quat,states,covariance,measVel);
+if (velocityAligned == 0)
+    % initialise velocity states
+    states(4:6) = measVel;
+    velocityAligned = 1;
+else
+    % fuse velocity measurements
+    [quat,states,tiltCorrection,covariance,velInnov,velInnovVar] = FuseVelocity(quat,states,covariance,measVel);
+    % log velocity fusion data
+    log.velInnov(:,frameIndex) = velInnov;
+    log.velInnovVar(:,frameIndex) = velInnovVar;
+    log.tiltCorr(1,frameIndex) = tiltCorrection;
+end
 
-% log velocity fusion data
-log.velInnov(:,frameIndex) = velInnov;
-log.velInnovVar(:,frameIndex) = velInnovVar;
-log.tiltCorr(1,frameIndex) = tiltCorrection;
 
 % Align the heading once there has been enough time for the filter to
 % settle and the tilt corrections have dropped below a threshold
