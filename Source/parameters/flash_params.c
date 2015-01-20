@@ -202,18 +202,18 @@ struct flash_param_struct_0000 flash_params =
     0,                          // Other ID
     0x0000,                     // Software version number TODO: populate this from git version info
     115,                        // Mavlink baud rate
-#if 0
+#if 1
     // Axis calibration slopes
     {
-        0.1312, //0.0,        // EL
-        0.1143, //0.0,       // AZ
-        0.1328  //0.0        // ROLL
+        0.1273, //0.0,        // EL
+        0.1101, //0.0,       // AZ
+        0.13997  //0.0        // ROLL
     },
     // Axis calibration intercepts
     {
-        0.5095, //0.0,      // EL
-        0.45, //0.0,      // AZ
-        0.37  //0.0       // ROLL
+        0.4367, //0.0,      // EL
+        0.461, //0.0,      // AZ
+        0.4722  //0.0       // ROLL
     },
 #else
     // Axis calibration slopes

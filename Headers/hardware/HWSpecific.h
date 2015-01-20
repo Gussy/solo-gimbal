@@ -28,7 +28,7 @@ typedef enum {
 } GyroAxis;
 
 #define ENCODER_COUNTS_PER_REV 10000
-#define COUNTS_PER_DEGREE (360.0 / (float)ENCODER_COUNTS_PER_REV)
+#define COUNTS_PER_DEGREE ((float)ENCODER_COUNTS_PER_REV / 360.0)
 
 #define DEGREES_TO_COUNTS(x) (x * COUNTS_PER_DEGREE)
 
