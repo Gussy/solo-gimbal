@@ -89,9 +89,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // If we're the EL board, transmit an enable message to the other boards
             if (GetBoardHWID() == EL) {
-//#ifndef ENABLE_AXIS_CALIBRATION_PROCEDURE
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
-//#endif
             }
 
             //TODO: Temporarily sequencing the initialization of the different axes

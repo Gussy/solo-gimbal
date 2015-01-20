@@ -586,15 +586,16 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
                 		flash_params.AxisCalibrationSlopes[msg.sender_id] = float_converter.float_val;
                 		//write_flash();
-                	} else
-                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
-                    // of getting multiple responses for the same parameter)
-                    if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD)) {
-                        IntOrFloat float_converter;
-                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        AxisCalibrationSlopes[GetBoardHWID()] = float_converter.float_val;
-                        load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD;
-                    }
+                	} else {
+                        // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                        // of getting multiple responses for the same parameter)
+                        if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD)) {
+                            IntOrFloat float_converter;
+                            float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                            AxisCalibrationSlopes[GetBoardHWID()] = float_converter.float_val;
+                            load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD;
+                        }
+                	}
                     break;
 
                 case CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT:
@@ -604,15 +605,16 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 		flash_params.AxisCalibrationIntercepts[msg.sender_id] = float_converter.float_val;
                 		// intercept comes after slope
                 		write_flash();
-                	} else
-                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
-                    // of getting multiple responses for the same parameter)
-                    if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD)) {
-                        IntOrFloat float_converter;
-                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        AxisCalibrationIntercepts[GetBoardHWID()] = float_converter.float_val;
-                        load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD;
-                    }
+                	} else {
+                        // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                        // of getting multiple responses for the same parameter)
+                        if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD)) {
+                            IntOrFloat float_converter;
+                            float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
+                            AxisCalibrationIntercepts[GetBoardHWID()] = float_converter.float_val;
+                            load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD;
+                        }
+                	}
                     break;
 
                 case CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET:
