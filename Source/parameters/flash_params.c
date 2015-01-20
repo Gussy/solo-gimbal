@@ -145,9 +145,9 @@ struct flash_param_struct_0000 flash_params =
     },
     // Position PID P gains
     {
-        1.0, // EL
-        1.0, // AZ
-        1.0  // ROLL
+        5.0, // EL
+        5.0, // AZ
+        5.0  // ROLL
     },
     // Position PID I gains
     {
@@ -175,7 +175,7 @@ struct flash_param_struct_0000 flash_params =
     },
     // Torque Loop PID Kp
     {
-        1.25,   // EL
+        0.8,    // EL
         0.8,    // AZ
         0.8     // ROLL
     },
@@ -187,7 +187,7 @@ struct flash_param_struct_0000 flash_params =
     },
     // Torque Loop PID Kd
     {
-        1.0,    // EL
+        0.0,    // EL
         0.0,    // AZ
         0.0     // ROLL
     },
@@ -212,7 +212,7 @@ struct flash_param_struct_0000 flash_params =
     // Axis calibration intercepts
     {
         0.5095, //0.0,      // EL
-        0.3718, //0.0,      // AZ
+        0.45, //0.0,      // AZ
         0.37  //0.0       // ROLL
     },
 #else
@@ -261,9 +261,9 @@ struct flash_param_struct_0000 flash_params =
     },
     // Position PID P gains
 	{
-		1.0, // EL
-		1.0, // AZ
-		1.0  // ROLL
+		5.0, // EL
+		5.0, // AZ
+		5.0  // ROLL
 	},
 	// Position PID I gains
 	{
@@ -291,7 +291,7 @@ struct flash_param_struct_0000 flash_params =
 	},
     // Torque Loop PID Kp
     {
-        0.8,   // EL
+        0.8,    // EL
         0.8,    // AZ
         0.8     // ROLL
     },
