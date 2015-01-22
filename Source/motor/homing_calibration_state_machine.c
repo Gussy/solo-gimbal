@@ -29,7 +29,7 @@ void HomingCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* enco
             encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
             encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
             // Also hardcode the axis home position
-            encoder_parms->virtual_counts_offset = -AxisHomePositions[GetBoardHWID()];
+            encoder_parms->virtual_counts_offset = -((int16)AxisHomePositions[GetBoardHWID()]);
 
             //TODO: Short circuit the rest of homing, since we're hardcoding these values for now
             cb_parms->axes_homed[GetBoardHWID()] = TRUE;

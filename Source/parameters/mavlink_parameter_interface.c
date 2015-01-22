@@ -15,6 +15,8 @@
 
 GimbalMavlinkParameter gimbal_params[MAVLINK_GIMBAL_PARAM_MAX];
 
+float commit_to_flash_status = 0.0;
+
 void init_default_mavlink_params()
 {
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_P].param_id, "PID_YAW_P", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
@@ -179,6 +181,60 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].param_type = MAV_PARAM_TYPE_REAL32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].float_data_ptr = &(flash_params.gyro_offsets[ROLL]);
 
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].param_id, "CC_YAW_SLOPE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_SLOPE;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].can_parameter_destination_axis = CAND_ID_AZ;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].float_data_ptr = &(flash_params.AxisCalibrationSlopes[AZ]);
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].param_id, "CC_YAW_ICEPT", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].can_parameter_destination_axis = CAND_ID_AZ;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].float_data_ptr = &(flash_params.AxisCalibrationIntercepts[AZ]);
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_HOME_OFFSET].param_id, "CC_YAW_HOME", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_HOME_OFFSET].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_HOME_OFFSET].can_parameter_destination_axis = CAND_ID_AZ;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_HOME_OFFSET].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_HOME_OFFSET].float_data_ptr = &(flash_params.AxisHomePositions[AZ]);
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].param_id, "CC_PITCH_SLOPE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_SLOPE;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].can_parameter_destination_axis = CAND_ID_EL;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].float_data_ptr = &(flash_params.AxisCalibrationSlopes[EL]);
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].param_id, "CC_PITCH_ICEPT", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].can_parameter_destination_axis = CAND_ID_EL;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].float_data_ptr = &(flash_params.AxisCalibrationIntercepts[EL]);
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_HOME_OFFSET].param_id, "CC_PITCH_HOME", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_HOME_OFFSET].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_HOME_OFFSET].can_parameter_destination_axis = CAND_ID_EL;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_HOME_OFFSET].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_HOME_OFFSET].float_data_ptr = &(flash_params.AxisHomePositions[EL]);
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].param_id, "CC_ROLL_SLOPE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_SLOPE;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].can_parameter_destination_axis = CAND_ID_ROLL;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].float_data_ptr = &(flash_params.AxisCalibrationSlopes[ROLL]);
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].param_id, "CC_ROLL_ICEPT", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].can_parameter_destination_axis = CAND_ID_ROLL;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].float_data_ptr = &(flash_params.AxisCalibrationIntercepts[ROLL]);
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_HOME_OFFSET].param_id, "CC_ROLL_HOME", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_HOME_OFFSET].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_HOME_OFFSET].can_parameter_destination_axis = CAND_ID_ROLL;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_HOME_OFFSET].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_HOME_OFFSET].float_data_ptr = &(flash_params.AxisHomePositions[ROLL]);
+
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_id, "SYSID_SWVER", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].can_parameter_id = CAND_PID_INVALID;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_type = MAV_PARAM_TYPE_UINT32;
@@ -188,6 +244,11 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].can_parameter_id = CAND_PID_INVALID;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].param_type = MAV_PARAM_TYPE_UINT32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].uint32_data_ptr = &(flash_params.mavlink_baud_rate);
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].param_id, "COMMIT_FLASH", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].float_data_ptr = &commit_to_flash_status;
 
 #ifdef ENABLE_BALANCE_PROCEDURE
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_AXIS].param_id, "BAL_AXIS", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
@@ -222,35 +283,44 @@ void handle_param_set(mavlink_message_t* received_msg)
     // If we found the param id in our param list, attempt to update the value
     if (param_found >= 0) {
         GimbalMavlinkParameter* param = &gimbal_params[param_found];
-        // First, make sure the type of the param being sent matches the type of the param being updated
-        if (param->param_type == decoded_msg.param_type) {
-            // The float value of the param is always sent, regardless of the actual type
-            // So if the param is actually a float, we can just use the param value
-            // If the param is actually an integer, we need to convert it first
-            if (decoded_msg.param_type == MAV_PARAM_TYPE_REAL32) {
-                *(param->float_data_ptr) = decoded_msg.param_value;
-            } else if (decoded_msg.param_type == MAV_PARAM_TYPE_UINT32) {
-                IntOrFloat float_converter;
-                float_converter.float_val = decoded_msg.param_value;
-                *(param->uint32_data_ptr) = float_converter.uint32_val;
-            }
 
-            // If the parameter has an associated CAN parameter, transmit the updated parameter over CAN
-            // to the appropriate axis
-            if (param->can_parameter_id != CAND_PID_INVALID) {
-                if (param->param_type == MAV_PARAM_TYPE_REAL32) {
-                    // If the parameter is a float, we first have to convert it to an integer to send over CAN
+        // Special case the commit to flash param
+        if (param_found == MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH) {
+            if (decoded_msg.param_value == 69.0) {
+                commit_to_flash_status = (float)write_flash();
+                send_gimbal_param(param_found);
+            }
+        } else {
+            // First, make sure the type of the param being sent matches the type of the param being updated
+            if (param->param_type == decoded_msg.param_type) {
+                // The float value of the param is always sent, regardless of the actual type
+                // So if the param is actually a float, we can just use the param value
+                // If the param is actually an integer, we need to convert it first
+                if (decoded_msg.param_type == MAV_PARAM_TYPE_REAL32) {
+                    *(param->float_data_ptr) = decoded_msg.param_value;
+                } else if (decoded_msg.param_type == MAV_PARAM_TYPE_UINT32) {
                     IntOrFloat float_converter;
-                    float_converter.float_val = *(param->float_data_ptr);
-                    cand_tx_param(param->can_parameter_destination_axis, param->can_parameter_id, float_converter.uint32_val);
-                } else if (param->param_type == MAV_PARAM_TYPE_UINT32) {
-                    // If the parameter is already an integer, we can just send it
-                    cand_tx_param(param->can_parameter_destination_axis, param->can_parameter_id, *(param->uint32_data_ptr));
+                    float_converter.float_val = decoded_msg.param_value;
+                    *(param->uint32_data_ptr) = float_converter.uint32_val;
                 }
-            }
 
-            // Echo the new value of the param back to acknowledge receipt of the param
-            send_gimbal_param(param_found);
+                // If the parameter has an associated CAN parameter, transmit the updated parameter over CAN
+                // to the appropriate axis
+                if (param->can_parameter_id != CAND_PID_INVALID) {
+                    if (param->param_type == MAV_PARAM_TYPE_REAL32) {
+                        // If the parameter is a float, we first have to convert it to an integer to send over CAN
+                        IntOrFloat float_converter;
+                        float_converter.float_val = *(param->float_data_ptr);
+                        cand_tx_param(param->can_parameter_destination_axis, param->can_parameter_id, float_converter.uint32_val);
+                    } else if (param->param_type == MAV_PARAM_TYPE_UINT32) {
+                        // If the parameter is already an integer, we can just send it
+                        cand_tx_param(param->can_parameter_destination_axis, param->can_parameter_id, *(param->uint32_data_ptr));
+                    }
+                }
+
+                // Echo the new value of the param back to acknowledge receipt of the param
+                send_gimbal_param(param_found);
+            }
         }
     }
 }

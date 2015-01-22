@@ -19,7 +19,7 @@ struct flash_param_struct_0000 {
 	Uint32 mavlink_baud_rate;
 	float AxisCalibrationSlopes[AXIS_CNT];
 	float AxisCalibrationIntercepts[AXIS_CNT];
-	int AxisHomePositions[AXIS_CNT];
+	float AxisHomePositions[AXIS_CNT];
 	float rate_pid_p[AXIS_CNT];
 	float rate_pid_i[AXIS_CNT];
 	float rate_pid_d[AXIS_CNT];

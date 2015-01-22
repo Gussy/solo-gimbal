@@ -11,7 +11,7 @@
 #include "PeripheralHeaderIncludes.h"
 
 #define UART_SCI_PORT ScibRegs
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 #define UART_STRING_LIMIT BUFFER_SIZE
 
 void init_uart();

@@ -163,7 +163,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             {
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
-                    cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET, flash_params.AxisHomePositions[msg.sender_id]);
+                    cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET, (int)(flash_params.AxisHomePositions[msg.sender_id]));
                 }
             }
             break;
@@ -621,7 +621,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
                     if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD)) {
-                        AxisHomePositions[GetBoardHWID()] = msg.param_response[msg.param_response_cnt - 1];
+                        AxisHomePositions[GetBoardHWID()] = (float)(msg.param_response[msg.param_response_cnt - 1]);
                         load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD;
                     }
                     break;
