@@ -72,7 +72,7 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
             break;
 
         case LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_EL:
-            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_EL_PID_INIT_PARAMS_RECVD) == ALL_EL_PID_INIT_PARAMS_RECVD) {
+            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_EL_RATE_PID_INIT_PARAMS_RECVD) == ALL_EL_RATE_PID_INIT_PARAMS_RECVD) {
                 load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_AZ;
             } else {
                 // For rate loop pid params, request all 4 of them for an axis at once
@@ -87,7 +87,7 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
             break;
 
         case LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_AZ:
-            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_AZ_PID_INIT_PARAMS_RECVD) == ALL_AZ_PID_INIT_PARAMS_RECVD) {
+            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_AZ_RATE_PID_INIT_PARAMS_RECVD) == ALL_AZ_RATE_PID_INIT_PARAMS_RECVD) {
                 load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_ROLL;
             } else {
                 // For rate loop pid params, request all 4 of them for an axis at once
@@ -102,9 +102,8 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
             break;
 
         case LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_ROLL:
-            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_ROLL_PID_INIT_PARAMS_RECVD) == ALL_ROLL_PID_INIT_PARAMS_RECVD) {
-                // We've now received all of the parameters we're looking for, so signal being done
-                load_parms_state_info->axis_parms_load_complete = TRUE;
+            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_ROLL_RATE_PID_INIT_PARAMS_RECVD) == ALL_ROLL_RATE_PID_INIT_PARAMS_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_EL;
             } else {
                 // For rate loop pid params, request all 4 of them for an axis at once
                 CAND_ParameterID request_params[4];
@@ -114,6 +113,66 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
                 request_params[3] = CAND_PID_RATE_RL_WINDUP;
 
                 cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_EL:
+            if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_EL_POS_PID_INIT_PARAMS_RECVD) == ALL_EL_POS_PID_INIT_PARAMS_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_AZ;
+            } else {
+                // For position loop pid params, request all 4 of them for an axis at once
+                CAND_ParameterID request_params[4];
+                request_params[0] = CAND_PID_POS_EL_P;
+                request_params[1] = CAND_PID_POS_EL_I;
+                request_params[2] = CAND_PID_POS_EL_D;
+                request_params[3] = CAND_PID_POS_EL_WINDUP;
+
+                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_AZ:
+            if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_AZ_POS_PID_INIT_PARAMS_RECVD) == ALL_AZ_POS_PID_INIT_PARAMS_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_RL;
+            } else {
+                // For position loop pid params, request all 4 of them for an axis at once
+                CAND_ParameterID request_params[4];
+                request_params[0] = CAND_PID_POS_AZ_P;
+                request_params[1] = CAND_PID_POS_AZ_I;
+                request_params[2] = CAND_PID_POS_AZ_D;
+                request_params[3] = CAND_PID_POS_AZ_WINDUP;
+
+                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_RL:
+            if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_RL_POS_PID_INIT_PARAMS_RECVD) == ALL_RL_POS_PID_INIT_PARAMS_RECVD) {
+                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_GYRO_OFFSETS;
+            } else {
+                // For position loop pid params, request all 4 of them for an axis at once
+                CAND_ParameterID request_params[4];
+                request_params[0] = CAND_PID_POS_RL_P;
+                request_params[1] = CAND_PID_POS_RL_I;
+                request_params[2] = CAND_PID_POS_RL_D;
+                request_params[3] = CAND_PID_POS_RL_WINDUP;
+
+                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
+            }
+            break;
+
+        case LOAD_AXIS_PARMS_STATE_REQUEST_GYRO_OFFSETS:
+            if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_GYRO_OFFSET_INIT_PARAMS_RECVD) == ALL_GYRO_OFFSET_INIT_PARAMS_RECVD) {
+                // We've now received all of the parameters we're looking for, so signal being done
+                load_parms_state_info->axis_parms_load_complete = TRUE;
+            } else {
+                // For gyro offsets, request all 3 of them at once
+                CAND_ParameterID request_params[3];
+                request_params[0] = CAND_PID_GYRO_OFFSET_EL;
+                request_params[1] = CAND_PID_GYRO_OFFSET_AZ;
+                request_params[2] = CAND_PID_GYRO_OFFSET_RL;
+
+                cand_tx_multi_request(CAND_ID_AZ, request_params, 3); // All parameter requests go to the AZ board
             }
             break;
     }

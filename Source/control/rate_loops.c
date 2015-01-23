@@ -113,7 +113,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         case ERROR_AZ_PASS:
 #if defined(ENABLE_BALANCE_PROCEDURE)
             if (bal_proc_parms->balance_axis == AZ) {
-                cb_parms->axis_errors[AZ] = (CorrectEncoderError(cb_parms->angle_targets[AZ] - cb_parms->encoder_readings[AZ]) * cb_parms->pointing_loop_gains[AZ]);
+                cb_parms->axis_errors[AZ] = CorrectEncoderError(cb_parms->angle_targets[AZ] - cb_parms->encoder_readings[AZ]);
                 cb_parms->axis_errors[EL] = 0;
                 cb_parms->axis_errors[ROLL] = 0;
             }
@@ -169,7 +169,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 cb_parms->axis_errors[AZ] = -cb_parms->corrected_gyro_readings[AZ];
             }
 #else
-            //cb_parms->axis_errors[AZ] = cb_parms->unfiltered_position_errors[AZ] * cb_parms->pointing_loop_gains[AZ] - cb_parms->corrected_gyro_readings[AZ];
             cb_parms->axis_errors[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->unfiltered_position_errors[AZ]) - cb_parms->corrected_gyro_readings[AZ];
 #endif
 #endif
@@ -180,7 +179,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         case ERROR_EL_PASS:
 #if defined(ENABLE_BALANCE_PROCEDURE)
             if (bal_proc_parms->balance_axis == EL) {
-                cb_parms->axis_errors[EL] = (CorrectEncoderError(cb_parms->angle_targets[EL] - cb_parms->encoder_readings[EL]) * cb_parms->pointing_loop_gains[EL]);
+                cb_parms->axis_errors[EL] = CorrectEncoderError(cb_parms->angle_targets[EL] - cb_parms->encoder_readings[EL]);
                 cb_parms->axis_errors[AZ] = 0;
                 cb_parms->axis_errors[ROLL] = 0;
             }
@@ -236,8 +235,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 cb_parms->axis_errors[EL] = -cb_parms->corrected_gyro_readings[EL];
             }
 #else
-            //cb_parms->axis_errors[EL] = cb_parms->unfiltered_position_errors[EL]* cb_parms->pointing_loop_gains[EL] -cb_parms->corrected_gyro_readings[EL];
             cb_parms->axis_errors[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->unfiltered_position_errors[EL]) - cb_parms->corrected_gyro_readings[EL];
+
 #endif
 #endif
             // Set up the next rate loop pass to be the roll error computation pass
@@ -247,7 +246,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         case ERROR_ROLL_PASS:
 #if defined(ENABLE_BALANCE_PROCEDURE)
             if (bal_proc_parms->balance_axis == ROLL) {
-                cb_parms->axis_errors[ROLL] = (CorrectEncoderError(cb_parms->angle_targets[ROLL] - cb_parms->encoder_readings[ROLL]) * cb_parms->pointing_loop_gains[ROLL]);
+                cb_parms->axis_errors[ROLL] = CorrectEncoderError(cb_parms->angle_targets[ROLL] - cb_parms->encoder_readings[ROLL]);
                 cb_parms->axis_errors[AZ] = 0;
                 cb_parms->axis_errors[EL] = 0;
             }
@@ -303,7 +302,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 cb_parms->axis_errors[ROLL] = -cb_parms->corrected_gyro_readings[ROLL];
             }
 #else
-            //cb_parms->axis_errors[ROLL] = cb_parms->unfiltered_position_errors[ROLL]* cb_parms->pointing_loop_gains[ROLL]  -cb_parms->corrected_gyro_readings[ROLL];
             cb_parms->axis_errors[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->unfiltered_position_errors[ROLL]) - cb_parms->corrected_gyro_readings[ROLL];
 #endif
 #endif
@@ -320,9 +318,33 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             // Floating point PID code
             // Run the rate loop PID unless we're in balance procedure mode, then run the position loop PID
 #ifndef ENABLE_BALANCE_PROCEDURE
+
+            // Compute the new motor torque commands
             cb_parms->motor_torques[AZ] = UpdatePID_Float(PID_DATA_RATE_LOOP, AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
             cb_parms->motor_torques[EL] = UpdatePID_Float(PID_DATA_RATE_LOOP, EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
             cb_parms->motor_torques[ROLL] = UpdatePID_Float(PID_DATA_RATE_LOOP, ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
+
+            // For AZ, we need to inject extra torque if we're getting close to either of the stops (because we have limited mechanical travel on AZ, and we
+            // don't want to rail up against the stop).  To do this, outside of a deadband in the middle of travel, we linearly increase an extra torque injection
+            // up to max torque as we get closer and closer to the stop.
+            float extra_torque = 0;
+            if ((cb_parms->encoder_readings[AZ] > 5000) && (cb_parms->encoder_readings[AZ] < ((int16)AZ_KEEP_OFF_STOP_START_COUNT_NEGATIVE))) {
+                // We're starting to get close to the stop on the negative side, so we need to start adding gain to the position error
+                extra_torque = (((AZ_KEEP_OFF_STOP_START_COUNT_NEGATIVE - ((float)cb_parms->encoder_readings[AZ])) / AZ_KEEP_OFF_STOP_SPAN_NEGATIVE) * AZ_KEEP_OFF_STOP_MAX_TORQUE) * TorqueSignMap[AZ];
+            } else if ((cb_parms->encoder_readings[AZ] < 5000) && (cb_parms->encoder_readings[AZ] > ((int16)AZ_KEEP_OFF_STOP_START_COUNT_POSITIVE))) {
+                // We're starting to get close to the stop on the positive side, so we need to start adding gain to the position error
+                extra_torque = (((AZ_KEEP_OFF_STOP_START_COUNT_POSITIVE - ((float)cb_parms->encoder_readings[AZ])) / AZ_KEEP_OFF_STOP_SPAN_POSITIVE) * AZ_KEEP_OFF_STOP_MAX_TORQUE) * TorqueSignMap[AZ];
+            }
+
+            int32 az_torque = cb_parms->motor_torques[AZ] + (int32)extra_torque;
+            if (az_torque > INT16_MAX) {
+                az_torque = INT16_MAX;
+            } else if (az_torque < INT16_MIN) {
+                az_torque = INT16_MIN;
+            }
+
+            cb_parms->motor_torques[AZ] = az_torque;
+
 #else
             cb_parms->motor_torques[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
             cb_parms->motor_torques[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];

@@ -261,7 +261,7 @@ void DeviceInit(void)
 	GpioDataRegs.GPACLEAR.bit.GPIO10 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO10 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-11 - PIN FUNCTION = Overcurrent flag from current limited on 5v power to camera
+//  GPIO-11 - PIN FUNCTION = HeroBus 5v Charging Overcurrent/Overtemp flag (Active Low)
 	GpioCtrlRegs.GPAMUX1.bit.GPIO11 = 0;	// 0=GPIO,  1=EPWM6B,  2=SCIRXDB,  3=ECAP1
 	GpioCtrlRegs.GPADIR.bit.GPIO11 = 0;		// 1=OUTput,  0=INput
 //	GpioDataRegs.GPACLEAR.bit.GPIO11 = 1;	// uncomment if --> Set Low initially

@@ -67,8 +67,10 @@ typedef enum  {
     CAND_PID_GYRO_OFFSET_EL,
 	CAND_PID_GYRO_OFFSET_AZ,
 	CAND_PID_GYRO_OFFSET_RL,
+	CAND_PID_BALANCE_AXIS,
+	CAND_PID_BALANCE_STEP_DURATION,
     // Two Byte Parameters
-    CAND_PID_4_BYTE_CUTOFF =                            35,
+    CAND_PID_4_BYTE_CUTOFF =                            38,
     CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET,
     CAND_PID_CORETEMP,
     CAND_PID_TORQUE,
@@ -84,7 +86,7 @@ typedef enum  {
     CAND_PID_DEBUG_3,
 
     // One Byte Parameters
-    CAND_PID_2_BYTE_CUTOFF =                            50,
+    CAND_PID_2_BYTE_CUTOFF =                            54,
     CAND_PID_BIT,
     CAND_PID_VOLTAGE,
     CAND_PID_USER_CONTROL_FLAGS,

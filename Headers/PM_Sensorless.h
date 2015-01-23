@@ -88,6 +88,7 @@ typedef struct {
     int current_balance_angle_index;
     int balance_angle_counter;
     int balance_angle_counter_max;
+    int current_direction;
     GimbalAxis balance_axis;
 } BalanceProcedureParms;
 
@@ -130,7 +131,6 @@ typedef struct {
     int16 axis_errors[AXIS_CNT];
     Uint16 angle_targets[AXIS_CNT];
     CAND_FaultCode last_axis_fault[AXIS_CNT];
-    int16 pointing_loop_gains[AXIS_CNT];
     Uint8 encoder_value_received[AXIS_CNT];
     Uint16 axes_homed[AXIS_CNT];
     int pos_loop_2nd_stage_decimation_count;

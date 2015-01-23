@@ -31,28 +31,19 @@ PIDData rate_pid_loop[AXIS_CNT] = {
 };
 
 PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
-    // Old not-so-great tuning
-    /*
-    { 1.75, 0.25, 0.0, 2000.0, -2000.0, 1.0, 0.0, 0.1, 0.0 },
-    { 5.0, 0.5, 1.0, 2000.0, -2000.0, 1.0, 0.0, 0.1, 0.0 },
-    { 10.0, 0.25, 0.0, 2000.0, -2000.0, 1.0, 0.0, 0.1, 0.0 }
-    */
-    // New, sportier tuning
-    /*
-    { 2.5, 0.25, 0.0, 32767.0, -32768.0, 1.0, 0.0, 0.1, 0.0 },
-    { 2.0, 0.5, 1.0, 32767.0, -32768.0, 1.0, 0.0, 0.1, 0.0 },
-    { 5.0, 0.5, 0.0, 32767.0, -32768.0, 1.0, 0.0, 0.1, 0.0 }
-    */
-    // Zero tuning for testing param init over CAN
+    // These get loaded over CAN at boot, so they are initialized to zero
+    // (Except overall gain and d-term alpha, which are hardcoded)
     { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 },
     { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 },
     { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 }
 };
 
 PIDData_Float pos_pid_loop_float[AXIS_CNT] = {
-    { 1.0, 0.0,  0.0, 2000.0, -2000.0, 1.0, 0.0, 0.0, 0.0 },
-    { 1.0, 0.0, 0.0, 2000.0, -2000.0, 1.0, 0.0, 0.0, 0.0 },
-    { 1.0, 0.0, 0.0, 2000.0, -2000.0, 1.0, 0.0, 0.0, 0.0 }
+    // These get loaded over CAN at boot, so they are initialized to zero
+    // (Except overall gain and d-term alpha, which are hardcoded)
+    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 },
+    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 },
+    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 }
 };
 
 
