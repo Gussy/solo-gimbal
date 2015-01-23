@@ -781,7 +781,6 @@ void A3(void) // SPARE (not used)
     // Need to call the gopro interface state machine periodically
     gp_interface_state_machine();
 
-{
 #ifdef AZ_TEST
 	if (1) {
 #else
