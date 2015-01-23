@@ -69,6 +69,7 @@ typedef enum  {
 	CAND_PID_GYRO_OFFSET_RL,
 	CAND_PID_BALANCE_AXIS,
 	CAND_PID_BALANCE_STEP_DURATION,
+	CAND_PID_GP_CMD,
     // Two Byte Parameters
     CAND_PID_4_BYTE_CUTOFF =                            38,
     CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET,
@@ -93,6 +94,7 @@ typedef enum  {
     CAND_PID_BEACON_MODE,
     CAND_PID_BEACON_BRIGHTNESS,
     CAND_PID_VERSION,
+    CAND_PID_GP_LAST_CMD_RESULT,
     CAND_PID_LAST =                                     63
 } CAND_ParameterID;
 
@@ -121,13 +123,13 @@ typedef enum  {
  * Commands
  */
 typedef enum  {
-    CAND_CMD_INIT =     0,
-    CAND_CMD_ENABLE,
+    CAND_CMD_ENABLE = 0,
     CAND_CMD_RELAX,
-    CAND_CMD_FIND_INDEX,
-    CAND_CMD_CURRENT_MODE,
-    CAND_CMD_CAL_CURRENT_OFFSET,
-    CAND_CMD_ALIGN_ENCODER_TO_PHASE,
+    CAND_CMD_GOPRO_ON,
+    CAND_CMD_GOPRO_OFF,
+    CAND_CMD_TBD4,
+    CAND_CMD_TBD5,
+    CAND_CMD_TBD6,
     CAND_CMD_TBD7
 } CAND_Command;
 

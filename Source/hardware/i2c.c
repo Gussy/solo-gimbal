@@ -30,7 +30,7 @@ void init_i2c(I2CIntACallback interrupt_a_callback)
     I2caRegs.I2CMDR.bit.IRS = 0;
 
     // Configure the I2C mode register
-    I2caRegs.I2CMDR.bit.FREE = 1; // Set I2C module to free run while the processor is halted on a breakpoint
+    I2caRegs.I2CMDR.bit.FREE = 0; //TODO: For testing, disable free run // Set I2C module to free run while the processor is halted on a breakpoint
     I2caRegs.I2CMDR.bit.MST = 0; // Configure us as an I2C slave
     I2caRegs.I2CMDR.bit.XA = 0; // Select 7-bit addressing mode
     I2caRegs.I2CMDR.bit.DLB = 0; // Disable on-chip loopback
@@ -39,8 +39,6 @@ void init_i2c(I2CIntACallback interrupt_a_callback)
 
     // Configure I2C module interrupts
     I2caRegs.I2CIER.bit.AAS = 1; // Enable interrupts for when we're addressed as a slave
-    I2caRegs.I2CIER.bit.RRDY = 1; // Enable interrupts for when data is received
-    I2caRegs.I2CIER.bit.XRDY = 0; // Disable the transmit interrupt for now.  It will be enabled when there is data to send
 
     // Configure the I2C module clock prescaler
     I2caRegs.I2CPSC.bit.IPSC = 6; // I2C module clock = CPU Clock / (IPSC + 1).  Per spec, I2C module clock must be between 7 and 12 MHz.
@@ -49,13 +47,6 @@ void init_i2c(I2CIntACallback interrupt_a_callback)
     // The GoPro expects the controller to be at address 0x60, so set that as our slave address
     I2caRegs.I2COAR = 0x0060;
 
-    //TODO: Need to do more investigation of why the TX FIFO interrupt doesn't seem to be working.  Through the debugger,
-    // I am able to see that the TX interrupt is enabled, and that the TX interrupt flag is set, but the ISR never fires.  The CPU
-    // level interrupt is enabled, and I know that the ISR is set up correctly because the TX and RX FIFO interrupts share an ISR,
-    // and the RX interrupt works correctly.  There are no I2C module erratas for this part, and some cursory online searches reveal
-    // no other obvious cases of this problem.  I disabled FIFO operation and am using normal module operation, which seems to work
-    // correctly, but I would like to finish debugging FIFO operation at some point
-    /*
     // Configure the receive FIFO
     I2caRegs.I2CFFRX.bit.RXFFRST = 0; // Hold the RX FIFO in reset while we configure it
     I2caRegs.I2CFFRX.bit.RXFFIL = 1; // Set the FIFO interrupt level to 1.
@@ -76,7 +67,6 @@ void init_i2c(I2CIntACallback interrupt_a_callback)
     I2caRegs.I2CFFTX.bit.TXFFIL = 0; // Interrupt when the TX FIFO is empty
     I2caRegs.I2CFFTX.bit.TXFFRST = 1; // Enable TX FIFO
     I2caRegs.I2CFFTX.bit.I2CFFEN = 1; // Enable the I2C FIFO module
-    */
 
     // Enable the I2C module
     I2caRegs.I2CMDR.bit.IRS = 1;
@@ -110,6 +100,9 @@ void i2c_clr_scd()
 void i2c_send_data(Uint8* data, int length)
 {
     int i;
+
+    int tx_start_size = i2c_tx_ringbuf.size(&i2c_tx_ringbuf);
+
     for (i = 0; i < length; i++) {
         i2c_tx_ringbuf.push(&i2c_tx_ringbuf, data[i]);
     }
@@ -117,8 +110,15 @@ void i2c_send_data(Uint8* data, int length)
     // Enable the tx interrupt.  This will start copying the contents of the transmit ring buffer into the transmit FIFO
     // The interrupt was either previously disabled, because the ring buffer was empty, so we don't want to be interrupting
     // all the time with nothing to transmit, or it was already enabled, and thus enabling it again won't have any effect
-    I2caRegs.I2CIER.bit.XRDY = 1;
-    //I2caRegs.I2CFFTX.bit.TXFIENA = 1;
+    I2caRegs.I2CFFTX.bit.TXFIENA = 1;
+
+    // If the ringbuffer was previously empty, we need to fill up the TX FIFO with the first characters in the ringbuffer
+    // This is to ensure we start generating TX interrupts when the TX FIFO is empty
+    if (tx_start_size == 0) {
+        while ((i2c_tx_ringbuf.size(&i2c_tx_ringbuf) > 0) && (I2caRegs.I2CFFTX.bit.TXFFST < 4)) {
+            I2caRegs.I2CDXR = i2c_tx_ringbuf.pop(&i2c_tx_ringbuf);
+        }
+    }
 }
 
 int i2c_get_available_chars()
@@ -171,21 +171,7 @@ interrupt void i2c_int_a_isr(void)
     // We handle the receive ready and transmit ready interrupts here as a special case,
     // otherwise, we call the registered callback function
     switch (int_src) {
-        case I2C_INT_SRC_RX_READY:
-            // Push the received character into the receive ringbuf
-            i2c_rx_ringbuf.push(&i2c_rx_ringbuf, I2caRegs.I2CDRR);
-            break;
-
-        case I2C_INT_SRC_TX_READY:
-            // If there's data to still be transmitted, pop it from the transmit ringbuffer and load it into
-            // the transmit register.  If the transmit ringbuffer is empty, disable the transmit interrupt.
-            // It will be re-enabled when there is more data to send
-            if (i2c_tx_ringbuf.size(&i2c_tx_ringbuf) > 0) {
-                I2caRegs.I2CDXR = i2c_tx_ringbuf.pop(&i2c_tx_ringbuf);
-            } else {
-                I2caRegs.I2CIER.bit.XRDY = 0;
-            }
-            break;
+        // TODO: Add other handlers here if we start using any other interrupts
 
         default:
             // Call the callback with the value of the interrupt source register
@@ -194,22 +180,14 @@ interrupt void i2c_int_a_isr(void)
     }
 
     // According to the datasheet, reading the interrupt source register clears the corresponding interrupt
-    // flag bit except for the register access ready, receive ready, and transmit ready interrupts.  Those 3 we clear
-    // manually here
+    // flag bit except for the register access ready, receive ready, and transmit ready interrupts.
+    // The transmit ready flag is read-only and is cleared automatically when new data is loaded to be sent.
+    // The receive ready flag is cleared automatically when the received data is read.  Therefore, we only
+    // need to manually clear the register access ready flag here
     switch(int_src) {
         case I2C_INT_SRC_REGS_READY:
             I2caRegs.I2CSTR.bit.ARDY = 1;
             break;
-
-            /*
-        case I2C_INT_SRC_RX_READY:
-            I2caRegs.I2CSTR.bit.RRDY = 1;
-            break;
-
-        case I2C_INT_SRC_TX_READY:
-            I2caRegs.I2CSTR.bit.XRDY = 1;
-            break;
-            */
     }
 
     // Acknowledge CPU interrupt to receive more interrupts from PIE group 8

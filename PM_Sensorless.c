@@ -322,6 +322,7 @@ Uint8 pos_pid_rl_windup_flag = FALSE;
 Uint8 gyro_offset_el_flag = FALSE;
 Uint8 gyro_offset_az_flag = FALSE;
 Uint8 gyro_offset_rl_flag = FALSE;
+Uint8 gp_cmd_flag = FALSE;
 #ifdef ENABLE_BALANCE_PROCEDURE
 Uint8 balance_axis_flag = FALSE;
 Uint8 balance_step_duration_flag = FALSE;
@@ -373,6 +374,7 @@ void init_param_set(void)
     param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
     param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
     param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
+    param_set[CAND_PID_GP_CMD].sema = &gp_cmd_flag;
 #ifdef ENABLE_BALANCE_PROCEDURE
     param_set[CAND_PID_BALANCE_AXIS].sema = &balance_axis_flag;
     param_set[CAND_PID_BALANCE_STEP_DURATION].sema = &balance_step_duration_flag;
@@ -970,26 +972,68 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 	}
 	*/
 
+	// If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
+	if (gp_get_new_response_available()) {
+	    // If there are, get them and package them up to be sent out over CAN.
+	    // NOTE: Unfortunately, there are 5 bytes of data I'd like to send, and the biggest parameters are 4 bytes,
+	    // so we have to send the data as 1 4-byte parameter and 1 1-byte parameter.  Both the parameters can be packed into the
+	    // same CAN message, so it doesn't increase the bus load, but it complicates the parsing a bit on the other side
+	    GPCmdResponse* response = gp_get_last_response();
+	    GPCmdResult result = gp_get_last_cmd_result();
+	    Uint32 response_buffer[2];
+	    response_buffer[0] = 0;
+	    response_buffer[0] |= ((((Uint32)response->cmd[0]) << 24) & 0xFF000000);
+	    response_buffer[0] |= ((((Uint32)response->cmd[1]) << 16) & 0x00FF0000);
+	    response_buffer[0] |= ((((Uint32)response->cmd_status) << 8) & 0x0000FF00);
+	    response_buffer[0] |= (((Uint32)response->cmd_response) & 0x000000FF);
+
+	    response_buffer[1] = 0;
+	    response_buffer[1] = result;
+
+	    CAND_ParameterID pids[2];
+	    pids[0] = CAND_PID_GP_CMD;
+	    pids[1] = CAND_PID_GP_LAST_CMD_RESULT;
+	    cand_tx_multi_response(CAND_ID_AZ, pids, response_buffer, 2);
+	}
+
+	/*
 	// After a delay, for testing, send a message to the camera to command it to turn off
     if (gp_cmd_wait++ >= 33) {
         gp_cmd_wait = 0;
         if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
             if (gp_cmd_num == 0) {
                 // Set capture mode to video mode
-                gp_send_command('C', 'M', 0x00);
+                GPCmd cmd;
+                cmd.cmd[0] = 'C';
+                cmd.cmd[1] = 'M';
+                cmd.cmd_parm = 0x00;
+                gp_send_command(&cmd);
             } else if (gp_cmd_num == 1) {
                 // Start video capture
-                gp_send_command('S', 'H', 0x01);
+                GPCmd cmd;
+                cmd.cmd[0] = 'S';
+                cmd.cmd[1] = 'H';
+                cmd.cmd_parm = 0x01;
+                gp_send_command(&cmd);
             } else if (gp_cmd_num == 2) {
                 // Stop video capture
-                gp_send_command('S', 'H', 0x00);
+                GPCmd cmd;
+                cmd.cmd[0] = 'S';
+                cmd.cmd[1] = 'H';
+                cmd.cmd_parm = 0x00;
+                gp_send_command(&cmd);
             } else if (gp_cmd_num == 3) {
                 // Turn off the camera
-                gp_send_command('P', 'W', 0x00);
+                GPCmd cmd;
+                cmd.cmd[0] = 'P';
+                cmd.cmd[1] = 'W';
+                cmd.cmd_parm = 0x00;
+                gp_send_command(&cmd);
             }
             gp_cmd_num++;
         }
     }
+    */
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
 	C_Task_Ptr = &C3;	
@@ -1445,7 +1489,19 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
     }
 #endif
 
+    if (board_hw_id == EL) {
+        // If we're the elevation board, check for any new GoPro commands
+        if (*(param_set[CAND_PID_GP_CMD].sema) == TRUE) {
+            // Extract the GoPro command and parameter from the CAN parameter
+            GPCmd cmd;
+            cmd.cmd[0] = (param_set[CAND_PID_GP_CMD].param >> 24) & 0x000000FF;
+            cmd.cmd[1] = (param_set[CAND_PID_GP_CMD].param >> 16) & 0x000000FF;
+            cmd.cmd_parm = (param_set[CAND_PID_GP_CMD].param >> 8) & 0x000000FF;
+            gp_send_command(&cmd);
 
+            *(param_set[CAND_PID_GP_CMD].sema) = FALSE;
+        }
+    }
 }
 
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)

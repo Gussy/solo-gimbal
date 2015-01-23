@@ -51,7 +51,7 @@ PAGE 0 :
        RAMM0         : origin = 0x000050, length = 0x0003B0
 	   CSM_RSVD      : origin = 0x3F7F80, length = 0x000076     /* Part of FLASHA.  Program with all 0x0000 when CSM is in use. */
 	   CSM_PWL       : origin = 0x3F7FF8, length = 0x000008     /* Part of FLASHA.  CSM password locations in FLASHA */
-       progRAM       : origin = 0x008000, length = 0x007000
+       progRAM       : origin = 0x008000, length = 0x008000
 
        FPUTABLES   : origin = 0x3FD860, length = 0x0006A0        /* FPU Tables in Boot ROM */
        IQTABLES      : origin = 0x3FDF00, length = 0x000B50     /* IQ Math Tables in Boot ROM */
@@ -66,7 +66,7 @@ PAGE 0 :
 PAGE 1 : 
 
        RAMM1         : origin = 0x000480, length = 0x000380
-       dataRAM       : origin = 0x00F000, length = 0x005000
+       dataRAM       : origin = 0x010000, length = 0x004000
 }
 
  
