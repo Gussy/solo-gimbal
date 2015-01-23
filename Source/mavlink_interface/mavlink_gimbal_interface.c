@@ -180,9 +180,14 @@ static handle_mount_control(mavlink_message_t* received_msg) {
 
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
 	static mavlink_message_t heartbeat_msg;
-	mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
-			&heartbeat_msg, MAV_TYPE_GIMBAL, MAV_AUTOPILOT_INVALID,
-			MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, mav_mode, mav_state);
+	mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID,
+	                            MAV_COMP_ID_GIMBAL,
+                                &heartbeat_msg,
+                                MAV_TYPE_GIMBAL,
+                                MAV_AUTOPILOT_INVALID,
+                                MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                                mav_mode,
+                                mav_state);
 	send_mavlink_message(&heartbeat_msg);
 }
 

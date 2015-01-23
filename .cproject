@@ -204,7 +204,7 @@
 						</tool>
 					</fileInfo>
 					<sourceEntries>
-						<entry excluding="Source/DLOG4CHC.asm|Source/F2806x_RAM_PM_Sensorless.CMD|Source/F2806x_SysCtrl.c|Source/F2806x_PieVect.c|Source/F2806x_PieCtrl.c|Source/F2806x_DefaultIsr.c|DSP2803x_usDelay.asm|F28035_RAM_PM_Sensorless.CMD|DSP2803x_GlobalVariableDefs.c|PM_Sensorless-DevInit_F2803x.c|F2806x_FLASH_PM_Sensorless.CMD|IQmath.lib|DSP2803x_Headers_nonBIOS.cmd|F28035_FLASH_PM_Sensorless.CMD" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Source/parameters/Example_Flash2806x_GlobalVariableDefs.c|Source/DLOG4CHC.asm|Source/F2806x_RAM_PM_Sensorless.CMD|Source/F2806x_SysCtrl.c|Source/F2806x_PieVect.c|Source/F2806x_PieCtrl.c|Source/F2806x_DefaultIsr.c|DSP2803x_usDelay.asm|F28035_RAM_PM_Sensorless.CMD|DSP2803x_GlobalVariableDefs.c|PM_Sensorless-DevInit_F2803x.c|F2806x_FLASH_PM_Sensorless.CMD|IQmath.lib|DSP2803x_Headers_nonBIOS.cmd|F28035_FLASH_PM_Sensorless.CMD" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
