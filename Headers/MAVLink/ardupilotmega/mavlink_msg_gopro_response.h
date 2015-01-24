@@ -9,30 +9,26 @@
 typedef struct __mavlink_gopro_response_t
 {
  uint16_t gp_cmd_result; ///< Result of the command attempt to the GoPro, as defined by GOPRO_CMD_RESULT enum.
- uint8_t target_system; ///< System ID
- uint8_t target_component; ///< Component ID
  uint8_t gp_cmd_name_1; ///< First character of the 2 character GoPro command that generated this response
  uint8_t gp_cmd_name_2; ///< Second character of the 2 character GoPro command that generated this response
  uint8_t gp_cmd_response_status; ///< Response byte from the GoPro's response to the command.  0 = Success, 1 = Failure
 } mavlink_gopro_response_t;
 
-#define MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN 7
-#define MAVLINK_MSG_ID_200_LEN 7
+#define MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN 5
+#define MAVLINK_MSG_ID_200_LEN 5
 
-#define MAVLINK_MSG_ID_GOPRO_RESPONSE_CRC 90
-#define MAVLINK_MSG_ID_200_CRC 90
+#define MAVLINK_MSG_ID_GOPRO_RESPONSE_CRC 252
+#define MAVLINK_MSG_ID_200_CRC 252
 
 
 
 #define MAVLINK_MESSAGE_INFO_GOPRO_RESPONSE { \
 	"GOPRO_RESPONSE", \
-	6, \
+	4, \
 	{  { "gp_cmd_result", NULL, MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_gopro_response_t, gp_cmd_result) }, \
-         { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_gopro_response_t, target_system) }, \
-         { "target_component", NULL, MAVLINK_TYPE_UINT8_T, 0, 3, offsetof(mavlink_gopro_response_t, target_component) }, \
-         { "gp_cmd_name_1", NULL, MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_gopro_response_t, gp_cmd_name_1) }, \
-         { "gp_cmd_name_2", NULL, MAVLINK_TYPE_UINT8_T, 0, 5, offsetof(mavlink_gopro_response_t, gp_cmd_name_2) }, \
-         { "gp_cmd_response_status", NULL, MAVLINK_TYPE_UINT8_T, 0, 6, offsetof(mavlink_gopro_response_t, gp_cmd_response_status) }, \
+         { "gp_cmd_name_1", NULL, MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_gopro_response_t, gp_cmd_name_1) }, \
+         { "gp_cmd_name_2", NULL, MAVLINK_TYPE_UINT8_T, 0, 3, offsetof(mavlink_gopro_response_t, gp_cmd_name_2) }, \
+         { "gp_cmd_response_status", NULL, MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_gopro_response_t, gp_cmd_response_status) }, \
          } \
 }
 
@@ -43,8 +39,6 @@ typedef struct __mavlink_gopro_response_t
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param msg The MAVLink message to compress the data into
  *
- * @param target_system System ID
- * @param target_component Component ID
  * @param gp_cmd_name_1 First character of the 2 character GoPro command that generated this response
  * @param gp_cmd_name_2 Second character of the 2 character GoPro command that generated this response
  * @param gp_cmd_response_status Response byte from the GoPro's response to the command.  0 = Success, 1 = Failure
@@ -52,32 +46,26 @@ typedef struct __mavlink_gopro_response_t
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_gopro_response_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-						       uint8_t target_system, uint8_t target_component, uint8_t gp_cmd_name_1, uint8_t gp_cmd_name_2, uint8_t gp_cmd_response_status, uint16_t gp_cmd_result)
+						       uint8_t gp_cmd_name_1, uint8_t gp_cmd_name_2, uint8_t gp_cmd_response_status, uint16_t gp_cmd_result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN];
 	_mav_put_uint16_t(buf, 0, gp_cmd_result);
-	_mav_put_uint8_t(buf, 2, target_system);
-	_mav_put_uint8_t(buf, 3, target_component);
-	_mav_put_uint8_t(buf, 4, gp_cmd_name_1);
-	_mav_put_uint8_t(buf, 5, gp_cmd_name_2);
-	_mav_put_uint8_t(buf, 6, gp_cmd_response_status);
+	_mav_put_uint8_t(buf, 2, gp_cmd_name_1);
+	_mav_put_uint8_t(buf, 3, gp_cmd_name_2);
+	_mav_put_uint8_t(buf, 4, gp_cmd_response_status);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN);
 #elif MAVLINK_C2000
 		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, gp_cmd_result);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, target_system);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 3, target_component);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 4, gp_cmd_name_1);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 5, gp_cmd_name_2);
-		mav_put_uint8_t_c2000(&(msg->payload64[0]), 6, gp_cmd_response_status);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 2, gp_cmd_name_1);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 3, gp_cmd_name_2);
+		mav_put_uint8_t_c2000(&(msg->payload64[0]), 4, gp_cmd_response_status);
 	
 	
 #else
 	mavlink_gopro_response_t packet;
 	packet.gp_cmd_result = gp_cmd_result;
-	packet.target_system = target_system;
-	packet.target_component = target_component;
 	packet.gp_cmd_name_1 = gp_cmd_name_1;
 	packet.gp_cmd_name_2 = gp_cmd_name_2;
 	packet.gp_cmd_response_status = gp_cmd_response_status;
@@ -99,8 +87,6 @@ static inline uint16_t mavlink_msg_gopro_response_pack(uint8_t system_id, uint8_
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message will be sent over
  * @param msg The MAVLink message to compress the data into
- * @param target_system System ID
- * @param target_component Component ID
  * @param gp_cmd_name_1 First character of the 2 character GoPro command that generated this response
  * @param gp_cmd_name_2 Second character of the 2 character GoPro command that generated this response
  * @param gp_cmd_response_status Response byte from the GoPro's response to the command.  0 = Success, 1 = Failure
@@ -109,23 +95,19 @@ static inline uint16_t mavlink_msg_gopro_response_pack(uint8_t system_id, uint8_
  */
 static inline uint16_t mavlink_msg_gopro_response_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
 							   mavlink_message_t* msg,
-						           uint8_t target_system,uint8_t target_component,uint8_t gp_cmd_name_1,uint8_t gp_cmd_name_2,uint8_t gp_cmd_response_status,uint16_t gp_cmd_result)
+						           uint8_t gp_cmd_name_1,uint8_t gp_cmd_name_2,uint8_t gp_cmd_response_status,uint16_t gp_cmd_result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN];
 	_mav_put_uint16_t(buf, 0, gp_cmd_result);
-	_mav_put_uint8_t(buf, 2, target_system);
-	_mav_put_uint8_t(buf, 3, target_component);
-	_mav_put_uint8_t(buf, 4, gp_cmd_name_1);
-	_mav_put_uint8_t(buf, 5, gp_cmd_name_2);
-	_mav_put_uint8_t(buf, 6, gp_cmd_response_status);
+	_mav_put_uint8_t(buf, 2, gp_cmd_name_1);
+	_mav_put_uint8_t(buf, 3, gp_cmd_name_2);
+	_mav_put_uint8_t(buf, 4, gp_cmd_response_status);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN);
 #else
 	mavlink_gopro_response_t packet;
 	packet.gp_cmd_result = gp_cmd_result;
-	packet.target_system = target_system;
-	packet.target_component = target_component;
 	packet.gp_cmd_name_1 = gp_cmd_name_1;
 	packet.gp_cmd_name_2 = gp_cmd_name_2;
 	packet.gp_cmd_response_status = gp_cmd_response_status;
@@ -151,7 +133,7 @@ static inline uint16_t mavlink_msg_gopro_response_pack_chan(uint8_t system_id, u
  */
 static inline uint16_t mavlink_msg_gopro_response_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_gopro_response_t* gopro_response)
 {
-	return mavlink_msg_gopro_response_pack(system_id, component_id, msg, gopro_response->target_system, gopro_response->target_component, gopro_response->gp_cmd_name_1, gopro_response->gp_cmd_name_2, gopro_response->gp_cmd_response_status, gopro_response->gp_cmd_result);
+	return mavlink_msg_gopro_response_pack(system_id, component_id, msg, gopro_response->gp_cmd_name_1, gopro_response->gp_cmd_name_2, gopro_response->gp_cmd_response_status, gopro_response->gp_cmd_result);
 }
 
 /**
@@ -165,15 +147,13 @@ static inline uint16_t mavlink_msg_gopro_response_encode(uint8_t system_id, uint
  */
 static inline uint16_t mavlink_msg_gopro_response_encode_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const mavlink_gopro_response_t* gopro_response)
 {
-	return mavlink_msg_gopro_response_pack_chan(system_id, component_id, chan, msg, gopro_response->target_system, gopro_response->target_component, gopro_response->gp_cmd_name_1, gopro_response->gp_cmd_name_2, gopro_response->gp_cmd_response_status, gopro_response->gp_cmd_result);
+	return mavlink_msg_gopro_response_pack_chan(system_id, component_id, chan, msg, gopro_response->gp_cmd_name_1, gopro_response->gp_cmd_name_2, gopro_response->gp_cmd_response_status, gopro_response->gp_cmd_result);
 }
 
 /**
  * @brief Send a gopro_response message
  * @param chan MAVLink channel to send the message
  *
- * @param target_system System ID
- * @param target_component Component ID
  * @param gp_cmd_name_1 First character of the 2 character GoPro command that generated this response
  * @param gp_cmd_name_2 Second character of the 2 character GoPro command that generated this response
  * @param gp_cmd_response_status Response byte from the GoPro's response to the command.  0 = Success, 1 = Failure
@@ -181,16 +161,14 @@ static inline uint16_t mavlink_msg_gopro_response_encode_chan(uint8_t system_id,
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_gopro_response_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t gp_cmd_name_1, uint8_t gp_cmd_name_2, uint8_t gp_cmd_response_status, uint16_t gp_cmd_result)
+static inline void mavlink_msg_gopro_response_send(mavlink_channel_t chan, uint8_t gp_cmd_name_1, uint8_t gp_cmd_name_2, uint8_t gp_cmd_response_status, uint16_t gp_cmd_result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN];
 	_mav_put_uint16_t(buf, 0, gp_cmd_result);
-	_mav_put_uint8_t(buf, 2, target_system);
-	_mav_put_uint8_t(buf, 3, target_component);
-	_mav_put_uint8_t(buf, 4, gp_cmd_name_1);
-	_mav_put_uint8_t(buf, 5, gp_cmd_name_2);
-	_mav_put_uint8_t(buf, 6, gp_cmd_response_status);
+	_mav_put_uint8_t(buf, 2, gp_cmd_name_1);
+	_mav_put_uint8_t(buf, 3, gp_cmd_name_2);
+	_mav_put_uint8_t(buf, 4, gp_cmd_response_status);
 
 #if MAVLINK_CRC_EXTRA
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_GOPRO_RESPONSE, buf, MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN, MAVLINK_MSG_ID_GOPRO_RESPONSE_CRC);
@@ -200,8 +178,6 @@ static inline void mavlink_msg_gopro_response_send(mavlink_channel_t chan, uint8
 #else
 	mavlink_gopro_response_t packet;
 	packet.gp_cmd_result = gp_cmd_result;
-	packet.target_system = target_system;
-	packet.target_component = target_component;
 	packet.gp_cmd_name_1 = gp_cmd_name_1;
 	packet.gp_cmd_name_2 = gp_cmd_name_2;
 	packet.gp_cmd_response_status = gp_cmd_response_status;
@@ -222,16 +198,14 @@ static inline void mavlink_msg_gopro_response_send(mavlink_channel_t chan, uint8
   is usually the receive buffer for the channel, and allows a reply to an
   incoming message with minimum stack space usage.
  */
-static inline void mavlink_msg_gopro_response_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint8_t target_system, uint8_t target_component, uint8_t gp_cmd_name_1, uint8_t gp_cmd_name_2, uint8_t gp_cmd_response_status, uint16_t gp_cmd_result)
+static inline void mavlink_msg_gopro_response_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint8_t gp_cmd_name_1, uint8_t gp_cmd_name_2, uint8_t gp_cmd_response_status, uint16_t gp_cmd_result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char *buf = (char *)msgbuf;
 	_mav_put_uint16_t(buf, 0, gp_cmd_result);
-	_mav_put_uint8_t(buf, 2, target_system);
-	_mav_put_uint8_t(buf, 3, target_component);
-	_mav_put_uint8_t(buf, 4, gp_cmd_name_1);
-	_mav_put_uint8_t(buf, 5, gp_cmd_name_2);
-	_mav_put_uint8_t(buf, 6, gp_cmd_response_status);
+	_mav_put_uint8_t(buf, 2, gp_cmd_name_1);
+	_mav_put_uint8_t(buf, 3, gp_cmd_name_2);
+	_mav_put_uint8_t(buf, 4, gp_cmd_response_status);
 
 #if MAVLINK_CRC_EXTRA
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_GOPRO_RESPONSE, buf, MAVLINK_MSG_ID_GOPRO_RESPONSE_LEN, MAVLINK_MSG_ID_GOPRO_RESPONSE_CRC);
@@ -241,8 +215,6 @@ static inline void mavlink_msg_gopro_response_send_buf(mavlink_message_t *msgbuf
 #else
 	mavlink_gopro_response_t *packet = (mavlink_gopro_response_t *)msgbuf;
 	packet->gp_cmd_result = gp_cmd_result;
-	packet->target_system = target_system;
-	packet->target_component = target_component;
 	packet->gp_cmd_name_1 = gp_cmd_name_1;
 	packet->gp_cmd_name_2 = gp_cmd_name_2;
 	packet->gp_cmd_response_status = gp_cmd_response_status;
@@ -262,34 +234,6 @@ static inline void mavlink_msg_gopro_response_send_buf(mavlink_message_t *msgbuf
 
 
 /**
- * @brief Get field target_system from gopro_response message
- *
- * @return System ID
- */
-static inline uint8_t mavlink_msg_gopro_response_get_target_system(const mavlink_message_t* msg)
-{
-#if !MAVLINK_C2000
-	return _MAV_RETURN_uint8_t(msg,  2);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
-#endif
-}
-
-/**
- * @brief Get field target_component from gopro_response message
- *
- * @return Component ID
- */
-static inline uint8_t mavlink_msg_gopro_response_get_target_component(const mavlink_message_t* msg)
-{
-#if !MAVLINK_C2000
-	return _MAV_RETURN_uint8_t(msg,  3);
-#else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  3);
-#endif
-}
-
-/**
  * @brief Get field gp_cmd_name_1 from gopro_response message
  *
  * @return First character of the 2 character GoPro command that generated this response
@@ -297,9 +241,9 @@ static inline uint8_t mavlink_msg_gopro_response_get_target_component(const mavl
 static inline uint8_t mavlink_msg_gopro_response_get_gp_cmd_name_1(const mavlink_message_t* msg)
 {
 #if !MAVLINK_C2000
-	return _MAV_RETURN_uint8_t(msg,  4);
+	return _MAV_RETURN_uint8_t(msg,  2);
 #else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  4);
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  2);
 #endif
 }
 
@@ -311,9 +255,9 @@ static inline uint8_t mavlink_msg_gopro_response_get_gp_cmd_name_1(const mavlink
 static inline uint8_t mavlink_msg_gopro_response_get_gp_cmd_name_2(const mavlink_message_t* msg)
 {
 #if !MAVLINK_C2000
-	return _MAV_RETURN_uint8_t(msg,  5);
+	return _MAV_RETURN_uint8_t(msg,  3);
 #else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  5);
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  3);
 #endif
 }
 
@@ -325,9 +269,9 @@ static inline uint8_t mavlink_msg_gopro_response_get_gp_cmd_name_2(const mavlink
 static inline uint8_t mavlink_msg_gopro_response_get_gp_cmd_response_status(const mavlink_message_t* msg)
 {
 #if !MAVLINK_C2000
-	return _MAV_RETURN_uint8_t(msg,  6);
+	return _MAV_RETURN_uint8_t(msg,  4);
 #else
-	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  6);
+	return mav_get_uint8_t_c2000(&(msg->payload64[0]),  4);
 #endif
 }
 
@@ -355,8 +299,6 @@ static inline void mavlink_msg_gopro_response_decode(const mavlink_message_t* ms
 {
 #if MAVLINK_NEED_BYTE_SWAP || MAVLINK_C2000
 	gopro_response->gp_cmd_result = mavlink_msg_gopro_response_get_gp_cmd_result(msg);
-	gopro_response->target_system = mavlink_msg_gopro_response_get_target_system(msg);
-	gopro_response->target_component = mavlink_msg_gopro_response_get_target_component(msg);
 	gopro_response->gp_cmd_name_1 = mavlink_msg_gopro_response_get_gp_cmd_name_1(msg);
 	gopro_response->gp_cmd_name_2 = mavlink_msg_gopro_response_get_gp_cmd_name_2(msg);
 	gopro_response->gp_cmd_response_status = mavlink_msg_gopro_response_get_gp_cmd_response_status(msg);
