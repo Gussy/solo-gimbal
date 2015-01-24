@@ -9,14 +9,19 @@
 #include "PM_Sensorless-Settings.h"
 
 #include "can/cand.h"
+#include "can/cand_BitFields.h"
 #include "hardware/uart.h"
 #include "parameters/mavlink_parameter_interface.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
+#include "gopro/gopro_interface.h"
 
 static void process_mavlink_input();
 static send_mavlink_request_stream();
 static handle_attitude(mavlink_message_t* received_msg);
 static handle_mount_control(mavlink_message_t* received_msg);
+static handle_gopro_power_on(mavlink_message_t* received_msg);
+static handle_gopro_power_off(mavlink_message_t* received_msg);
+static handle_gopro_command(mavlink_message_t* received_msg);
 
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
@@ -148,9 +153,22 @@ static void process_mavlink_input() {
 				attitude_received++;
 				handle_attitude(&received_msg);
 				break;
+
 			case MAVLINK_MSG_ID_MOUNT_CONTROL:
 				handle_mount_control(&received_msg);
 				break;
+
+			case MAVLINK_MSG_ID_GOPRO_POWER_ON:
+			    handle_gopro_power_on(&received_msg);
+			    break;
+
+			case MAVLINK_MSG_ID_GOPRO_POWER_OFF:
+			    handle_gopro_power_off(&received_msg);
+			    break;
+
+			case MAVLINK_MSG_ID_GOPRO_COMMAND:
+			    handle_gopro_command(&received_msg);
+			    break;
 
 			default: {
 				Uint8 msgid = received_msg.msgid;
@@ -178,17 +196,41 @@ static handle_mount_control(mavlink_message_t* received_msg) {
 	targets[AZ] = decoded_msg.input_c / (360 * 100.0); ///< yaw(deg*100) or alt (in cm) depending on mount mode
 }
 
-void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
-	static mavlink_message_t heartbeat_msg;
-	mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID,
-	                            MAV_COMP_ID_GIMBAL,
-                                &heartbeat_msg,
-                                MAV_TYPE_GIMBAL,
-                                MAV_AUTOPILOT_INVALID,
-                                MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-                                mav_mode,
-                                mav_state);
-	send_mavlink_message(&heartbeat_msg);
+static handle_gopro_power_on(mavlink_message_t* received_msg)
+{
+    mavlink_gopro_power_on_t decoded_msg;
+    mavlink_msg_gopro_power_on_decode(received_msg, &decoded_msg);
+
+    // Make sure the message was for us.  If it was, send the GoPro power on command over CAN
+    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+        cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_ON);
+    }
+}
+
+static handle_gopro_power_off(mavlink_message_t* received_msg)
+{
+    mavlink_gopro_power_off_t decoded_msg;
+    mavlink_msg_gopro_power_off_decode(received_msg, &decoded_msg);
+
+    // Make sure the message was for us.  If it was, send the GoPro power off command over CAN
+    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+        cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_OFF);
+    }
+}
+
+static handle_gopro_command(mavlink_message_t* received_msg)
+{
+    mavlink_gopro_command_t decoded_msg;
+    mavlink_msg_gopro_command_decode(received_msg, &decoded_msg);
+
+    // Make sure the message was for us.  If it was, package up the command and send it over CAN
+    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+        Uint32 parameter = 0;
+        parameter |= (((Uint32)decoded_msg.gp_cmd_name_1) << 24) & 0xFF000000;
+        parameter |= (((Uint32)decoded_msg.gp_cmd_name_2) << 16) & 0x00FF0000;
+        parameter |= (((Uint32)decoded_msg.gp_cmd_parm) << 8) & 0x0000FF00;
+        cand_tx_param(CAND_ID_EL, CAND_PID_GP_CMD, parameter);
+    }
 }
 
 static send_mavlink_request_stream() {
@@ -197,6 +239,33 @@ static send_mavlink_request_stream() {
 			MAV_COMP_ID_GIMBAL, &msg_request_data_stream, 1, 1,
 			MAV_DATA_STREAM_EXTRA1, ATTITUDE_DATA_REFRESH_RATE, 1);
 	send_mavlink_message(&msg_request_data_stream);
+}
+
+void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
+    static mavlink_message_t heartbeat_msg;
+    mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID,
+                                MAV_COMP_ID_GIMBAL,
+                                &heartbeat_msg,
+                                MAV_TYPE_GIMBAL,
+                                MAV_AUTOPILOT_INVALID,
+                                MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                                mav_mode,
+                                mav_state);
+    send_mavlink_message(&heartbeat_msg);
+}
+
+void send_mavlink_gopro_response(GPCmdResponse* response)
+{
+    static mavlink_message_t gopro_response_msg;
+    mavlink_msg_gopro_response_pack(MAVLINK_GIMBAL_SYSID,
+                                    MAV_COMP_ID_GIMBAL,
+                                    &gopro_response_msg,
+                                    response->cmd[0],
+                                    response->cmd[1],
+                                    response->cmd_status,
+                                    response->cmd_response,
+                                    response->cmd_result);
+    send_mavlink_message(&gopro_response_msg);
 }
 
 void send_mavlink_debug_data(DebugData* debug_data) {

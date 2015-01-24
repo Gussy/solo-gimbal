@@ -82,6 +82,7 @@ typedef struct {
     char cmd[2];
     Uint8 cmd_status;
     Uint8 cmd_response;
+    GPCmdResult cmd_result;
 } GPCmdResponse;
 
 void init_gp_interface();
@@ -91,7 +92,6 @@ int gp_request_power_on();
 int gp_request_power_off();
 int gp_send_command(GPCmd* cmd);
 Uint16 gp_ready_for_cmd();
-GPCmdResult gp_get_last_cmd_result();
 void addressed_as_slave_callback(I2CAIntSrc int_src);
 GPCmdResponse* gp_get_last_response();
 Uint8 gp_get_new_response_available();

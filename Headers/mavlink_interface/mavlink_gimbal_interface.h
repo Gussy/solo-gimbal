@@ -11,6 +11,7 @@
 #include "PeripheralHeaderIncludes.h"
 #include "PM_Sensorless.h"
 #include "mavlink_interface/gimbal_mavlink.h"
+#include "gopro/gopro_interface.h"
 
 typedef enum {
 	MAVLINK_STATE_PARSE_INPUT, MAVLINK_STATE_SEND_PARAM_LIST
@@ -31,6 +32,7 @@ void init_mavlink();
 void mavlink_state_machine();
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_debug_data(DebugData* debug_data);
+void send_mavlink_gopro_response(GPCmdResponse* response);
 void send_mavlink_message(mavlink_message_t* msg);
 
 #endif /* MAVLINK_INTERFACE_H_ */

@@ -15,6 +15,7 @@
 #include "hardware/HWSpecific.h"
 #include "control/PID.h"
 #include "gopro/gopro_interface.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
 
 void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info)
 {
@@ -48,6 +49,14 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
         case CAND_CMD_RELAX:
             //EnableFlag = 0;
+            break;
+
+        case CAND_CMD_GOPRO_ON:
+            gp_request_power_on();
+            break;
+
+        case CAND_CMD_GOPRO_OFF:
+            gp_request_power_off();
             break;
 
         default:
@@ -500,6 +509,10 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
     case CAND_RX_PARAM_RESPONSE:
         while (msg.param_response_cnt) {
+            // GoPro response messages come as 2 parameter IDs packed into the same param response, so we need a temporary GoPro response to assemble the two parts into,
+            // in case this param reponse happens to be a GoPro command response
+            GPCmdResponse gp_cmd_response;
+
             // Response messages can contain up to 4 parameter responses
             switch (msg.param_response_id[msg.param_response_cnt - 1]) {
                 case CAND_PID_POSITION:
@@ -539,6 +552,23 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
                 case CAND_PID_TARGET_ANGLES_ROLL:
                     cb_parms->angle_targets[ROLL] = msg.param_response[msg.param_response_cnt-1];
+                    break;
+
+                case CAND_PID_GP_CMD:
+                {
+                    Uint32 packed_param = msg.param_response[msg.param_response_cnt - 1];
+                    gp_cmd_response.cmd[0] = (packed_param >> 24) & 0x000000FF;
+                    gp_cmd_response.cmd[1] = (packed_param >> 16) & 0x000000FF;
+                    gp_cmd_response.cmd_status = (packed_param >> 8) & 0x000000FF;
+                    gp_cmd_response.cmd_response = (packed_param & 0x000000FF);
+                }
+                break;
+
+                case CAND_PID_GP_LAST_CMD_RESULT:
+                    gp_cmd_response.cmd_result = (GPCmdResult)msg.param_response[msg.param_response_cnt - 1];
+
+                    // This is the 2nd half of the GoPro result, so we can now send the result over the MAVLink interface
+                    send_mavlink_gopro_response(&gp_cmd_response);
                     break;
 
                 case CAND_PID_TORQUE_KP:

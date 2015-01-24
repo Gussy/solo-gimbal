@@ -17,7 +17,6 @@ volatile Uint32 timeout_counter = 0;
 Uint8 request_cmd_buffer[GP_COMMAND_REQUEST_SIZE];
 Uint8 response_buffer[GP_COMMAND_RESPONSE_SIZE];
 Uint8 receive_buffer[GP_COMMAND_RECEIVE_BUFFER_SIZE];
-GPCmdResult last_cmd_result = GP_CMD_UNKNOWN;
 GPCmdResponse last_cmd_response = {0};
 Uint8 new_response_available = FALSE;
 GPExpectingDataType next_reception_expected = GP_EXPECTING_COMMAND;
@@ -109,11 +108,6 @@ GPPowerStatus gp_get_power_status()
     }
 }
 
-GPCmdResult gp_get_last_cmd_result()
-{
-    return last_cmd_result;
-}
-
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
 // for proper gopro interface operation
 void gp_interface_state_machine()
@@ -197,7 +191,7 @@ void gp_interface_state_machine()
                 for (i = 0; i < receive_buffer[0]; i++) {
                     if ((i + 1) > GP_COMMAND_RECEIVE_BUFFER_SIZE) {
                         // Indicate the error
-                        last_cmd_result = GP_CMD_RECEIVED_DATA_OVERFLOW;
+                        last_cmd_response.cmd_result = GP_CMD_RECEIVED_DATA_OVERFLOW;
                         new_response_available = TRUE;
                         retrieve_error = TRUE;
 
@@ -205,7 +199,7 @@ void gp_interface_state_machine()
                         break;
                     } else if (!(i2c_get_available_chars() > 0)) {
                         // Indicate the error
-                        last_cmd_result = GP_CMD_RECEIVED_DATA_UNDERFLOW;
+                        last_cmd_response.cmd_result = GP_CMD_RECEIVED_DATA_UNDERFLOW;
                         new_response_available = TRUE;
                         retrieve_error = TRUE;
 
@@ -231,7 +225,7 @@ void gp_interface_state_machine()
                 }
             } else {
                 // If there was no data in the receive buffer when we expect there to be, indicate the error
-                last_cmd_result = GP_CMD_RECEIVED_DATA_UNDERFLOW;
+                last_cmd_response.cmd_result = GP_CMD_RECEIVED_DATA_UNDERFLOW;
                 new_response_available = TRUE;
                 gp_control_state = GP_CONTROL_STATE_IDLE;
             }
@@ -284,7 +278,7 @@ void gp_interface_state_machine()
             last_cmd_response.cmd_response = receive_buffer[2];
 
             // The full command transmit has now completed successfully, so we can go back to idle
-            last_cmd_result = GP_CMD_SUCCESSFUL;
+            last_cmd_response.cmd_result = GP_CMD_SUCCESSFUL;
             gp_control_state = GP_CONTROL_STATE_IDLE;
 
             // Indicate that there is a new response available
@@ -363,7 +357,7 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
                 // it issues a command to us first.  Per the spec, we have to give up on our command request and service the GoPro's command
 
                 // Indicate that the command we were trying to send has been preempted by the GoPro
-                last_cmd_result = GP_CMD_PREEMPTED;
+                last_cmd_response.cmd_result = GP_CMD_PREEMPTED;
 
                 // Indicate that a "new response" is available (what's available is the indication that the command was preempted)
                 new_response_available = TRUE;
@@ -387,7 +381,7 @@ static void gp_timeout(GPCmdResult reason)
 {
     timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
     GP_DEASSERT_INTR(); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
-    last_cmd_result = reason;
+    last_cmd_response.cmd_result = reason;
     new_response_available = TRUE; // Indicate that a "new response" is available (what's available is the indication that we timed out)
     gp_control_state = GP_CONTROL_STATE_IDLE;
 }

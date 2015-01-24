@@ -49,6 +49,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 // Prototype statements for functions found within this file.
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
 static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms);
+static void TestGoProCAN(GPCmd* cmd); // TODO: For testing
 void DeviceInit();
 void MemCopy();
 void InitFlash();
@@ -549,8 +550,6 @@ void main(void)
 
 	axis_parms.enable_flag = FALSE;
 
-	gp_request_power_on();
-
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
 	{
@@ -973,67 +972,63 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 	*/
 
 	// If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
-	if (gp_get_new_response_available()) {
-	    // If there are, get them and package them up to be sent out over CAN.
-	    // NOTE: Unfortunately, there are 5 bytes of data I'd like to send, and the biggest parameters are 4 bytes,
-	    // so we have to send the data as 1 4-byte parameter and 1 1-byte parameter.  Both the parameters can be packed into the
-	    // same CAN message, so it doesn't increase the bus load, but it complicates the parsing a bit on the other side
-	    GPCmdResponse* response = gp_get_last_response();
-	    GPCmdResult result = gp_get_last_cmd_result();
-	    Uint32 response_buffer[2];
-	    response_buffer[0] = 0;
-	    response_buffer[0] |= ((((Uint32)response->cmd[0]) << 24) & 0xFF000000);
-	    response_buffer[0] |= ((((Uint32)response->cmd[1]) << 16) & 0x00FF0000);
-	    response_buffer[0] |= ((((Uint32)response->cmd_status) << 8) & 0x0000FF00);
-	    response_buffer[0] |= (((Uint32)response->cmd_response) & 0x000000FF);
+	if (board_hw_id == EL) {
+        if (gp_get_new_response_available()) {
+            // If there are, get them and package them up to be sent out over CAN.
+            // NOTE: Unfortunately, there are 5 bytes of data I'd like to send, and the biggest parameters are 4 bytes,
+            // so we have to send the data as 1 4-byte parameter and 1 1-byte parameter.  Both the parameters can be packed into the
+            // same CAN message, so it doesn't increase the bus load, but it complicates the parsing a bit on the other side
+            GPCmdResponse* response = gp_get_last_response();
+            Uint32 response_buffer[2];
+            response_buffer[0] = 0;
+            response_buffer[0] |= ((((Uint32)response->cmd[0]) << 24) & 0xFF000000);
+            response_buffer[0] |= ((((Uint32)response->cmd[1]) << 16) & 0x00FF0000);
+            response_buffer[0] |= ((((Uint32)response->cmd_status) << 8) & 0x0000FF00);
+            response_buffer[0] |= (((Uint32)response->cmd_response) & 0x000000FF);
 
-	    response_buffer[1] = 0;
-	    response_buffer[1] = result;
+            response_buffer[1] = 0;
+            response_buffer[1] = response->cmd_result;
 
-	    CAND_ParameterID pids[2];
-	    pids[0] = CAND_PID_GP_CMD;
-	    pids[1] = CAND_PID_GP_LAST_CMD_RESULT;
-	    cand_tx_multi_response(CAND_ID_AZ, pids, response_buffer, 2);
+            CAND_ParameterID pids[2];
+            pids[0] = CAND_PID_GP_CMD;
+            pids[1] = CAND_PID_GP_LAST_CMD_RESULT;
+            cand_tx_multi_response(CAND_ID_AZ, pids, response_buffer, 2);
+        }
 	}
 
-	/*
 	// After a delay, for testing, send a message to the camera to command it to turn off
-    if (gp_cmd_wait++ >= 33) {
-        gp_cmd_wait = 0;
-        if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
+	if (board_hw_id == AZ) {
+        GPCmd gp_cmd;
+        if (gp_cmd_wait++ >= 33) {
+            gp_cmd_wait = 0;
             if (gp_cmd_num == 0) {
-                // Set capture mode to video mode
-                GPCmd cmd;
-                cmd.cmd[0] = 'C';
-                cmd.cmd[1] = 'M';
-                cmd.cmd_parm = 0x00;
-                gp_send_command(&cmd);
+                // Turn on the camera
+                cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_ON);
             } else if (gp_cmd_num == 1) {
-                // Start video capture
-                GPCmd cmd;
-                cmd.cmd[0] = 'S';
-                cmd.cmd[1] = 'H';
-                cmd.cmd_parm = 0x01;
-                gp_send_command(&cmd);
+                // Set capture mode to video mode
+                gp_cmd.cmd[0] = 'C';
+                gp_cmd.cmd[1] = 'M';
+                gp_cmd.cmd_parm = 0x00;
+                TestGoProCAN(&gp_cmd);
             } else if (gp_cmd_num == 2) {
-                // Stop video capture
-                GPCmd cmd;
-                cmd.cmd[0] = 'S';
-                cmd.cmd[1] = 'H';
-                cmd.cmd_parm = 0x00;
-                gp_send_command(&cmd);
+                // Start video capture
+                gp_cmd.cmd[0] = 'S';
+                gp_cmd.cmd[1] = 'H';
+                gp_cmd.cmd_parm = 0x01;
+                TestGoProCAN(&gp_cmd);
             } else if (gp_cmd_num == 3) {
+                // Stop video capture
+                gp_cmd.cmd[0] = 'S';
+                gp_cmd.cmd[1] = 'H';
+                gp_cmd.cmd_parm = 0x00;
+                TestGoProCAN(&gp_cmd);
+            } else if (gp_cmd_num == 4) {
                 // Turn off the camera
-                GPCmd cmd;
-                cmd.cmd[0] = 'P';
-                cmd.cmd[1] = 'W';
-                cmd.cmd_parm = 0x00;
-                gp_send_command(&cmd);
+                cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_OFF);
             }
             gp_cmd_num++;
         }
-    }
-    */
+	}
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
 	C_Task_Ptr = &C3;	
@@ -1856,6 +1851,15 @@ Uint16 GetEnableFlag(void)
 Uint16 GetAxisParmsLoaded(void)
 {
     return axis_parms.all_init_params_recvd;
+}
+
+static void TestGoProCAN(GPCmd* cmd)
+{
+    Uint32 parameter = 0;
+    parameter |= (((Uint32)cmd->cmd[0]) << 24) & 0xFF000000;
+    parameter |= (((Uint32)cmd->cmd[1]) << 16) & 0x00FF0000;
+    parameter |= (((Uint32)cmd->cmd_parm) << 8) & 0x0000FF00;
+    cand_tx_param(CAND_ID_EL, CAND_PID_GP_CMD, parameter);
 }
 
 //===========================================================================
