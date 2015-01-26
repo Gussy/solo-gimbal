@@ -998,36 +998,38 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 
 	// After a delay, for testing, send a message to the camera to command it to turn off
 	if (board_hw_id == AZ) {
-        GPCmd gp_cmd;
-        if (gp_cmd_wait++ >= 33) {
-            gp_cmd_wait = 0;
-            if (gp_cmd_num == 0) {
-                // Turn on the camera
-                cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_ON);
-            } else if (gp_cmd_num == 1) {
-                // Set capture mode to video mode
-                gp_cmd.cmd[0] = 'C';
-                gp_cmd.cmd[1] = 'M';
-                gp_cmd.cmd_parm = 0x00;
-                TestGoProCAN(&gp_cmd);
-            } else if (gp_cmd_num == 2) {
-                // Start video capture
-                gp_cmd.cmd[0] = 'S';
-                gp_cmd.cmd[1] = 'H';
-                gp_cmd.cmd_parm = 0x01;
-                TestGoProCAN(&gp_cmd);
-            } else if (gp_cmd_num == 3) {
-                // Stop video capture
-                gp_cmd.cmd[0] = 'S';
-                gp_cmd.cmd[1] = 'H';
-                gp_cmd.cmd_parm = 0x00;
-                TestGoProCAN(&gp_cmd);
-            } else if (gp_cmd_num == 4) {
-                // Turn off the camera
-                cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_OFF);
+	    if (axis_parms.enable_flag) {
+            GPCmd gp_cmd;
+            if (gp_cmd_wait++ >= 33) {
+                gp_cmd_wait = 0;
+                if (gp_cmd_num == 0) {
+                    // Turn on the camera
+                    cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_ON);
+                } else if (gp_cmd_num == 1) {
+                    // Set capture mode to video mode
+                    gp_cmd.cmd[0] = 'C';
+                    gp_cmd.cmd[1] = 'M';
+                    gp_cmd.cmd_parm = 0x00;
+                    TestGoProCAN(&gp_cmd);
+                } else if (gp_cmd_num == 2) {
+                    // Start video capture
+                    gp_cmd.cmd[0] = 'S';
+                    gp_cmd.cmd[1] = 'H';
+                    gp_cmd.cmd_parm = 0x01;
+                    TestGoProCAN(&gp_cmd);
+                } else if (gp_cmd_num == 3) {
+                    // Stop video capture
+                    gp_cmd.cmd[0] = 'S';
+                    gp_cmd.cmd[1] = 'H';
+                    gp_cmd.cmd_parm = 0x00;
+                    TestGoProCAN(&gp_cmd);
+                } else if (gp_cmd_num == 4) {
+                    // Turn off the camera
+                    cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_OFF);
+                }
+                gp_cmd_num++;
             }
-            gp_cmd_num++;
-        }
+	    }
 	}
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
