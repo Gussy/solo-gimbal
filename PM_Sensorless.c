@@ -462,8 +462,6 @@ void main(void)
     if (board_hw_id == EL) {
         // Initialize Gyro
         InitGyro();
-        // now initialize the gyro again
-        InitGyro();
 
         // Initialize the HeroBus interface
         init_gp_interface();
@@ -1767,9 +1765,6 @@ static void MainISRwork(void)
     // TODO: Testing timing
     GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
     GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
-
-
-
 }
 
 int16 CorrectEncoderError(int16 raw_error)

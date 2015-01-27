@@ -31,6 +31,7 @@ Uint32 ReadGyroPass2();
 #define MPU_GYRO_YOUT_L_REG 0x46
 #define MPU_GYRO_ZOUT_H_REG 0x47
 #define MPU_GYRO_ZOUT_L_REG 0x48
+#define MPU_SIGNAL_PATH_RESET_REG 0x68
 #define MPU_USER_CTRL_REG 0x6A
 #define MPU_PWR_MGMT_1_REG 0x6B
 #define MPU_PWR_MGMT_2_REG 0x6C
@@ -106,6 +107,11 @@ Uint32 ReadGyroPass2();
 #define FIFO_OFLOW_INT_MASK (0x01 << 4)
 #define I2C_MASTER_INT_MASK (0x01 << 3)
 #define DATA_READY_INT_MASK (0x01)
+
+// SIGNAL_PATH_RESET register settings
+#define GYRO_RESET (0x01 << 2)
+#define ACCEL_RESET (0x01 << 1)
+#define TEMP_RESET (0x01)
 
 // USER_CTRL register settings
 #define FIFO_ENABLED (0x01 << 6)
