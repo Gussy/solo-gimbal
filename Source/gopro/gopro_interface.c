@@ -9,6 +9,8 @@
 #include "gopro/gopro_interface.h"
 #include "PeripheralHeaderIncludes.h"
 
+#include <ctype.h>
+
 static void gp_timeout(GPCmdResult reason);
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
@@ -34,10 +36,28 @@ Uint16 gp_ready_for_cmd()
 int gp_send_command(GPCmd* cmd)
 {
     if (gp_control_state == GP_CONTROL_STATE_IDLE) {
-        request_cmd_buffer[0] = 0x3; // Length of 3 (2 command name bytes, 1 parameter byte), with upper bit set to 0 to indicate command originated from the gimbal (not the GoPro)
-        request_cmd_buffer[1] = cmd->cmd[0];
-        request_cmd_buffer[2] = cmd->cmd[1];
-        request_cmd_buffer[3] = cmd->cmd_parm;
+        // Need to check if this is a command or a query.  Commands have a parameter, queries don't
+        // Commands are 2 uppercase characters, queries are 2 lowercase characters
+        if (isupper(cmd->cmd[0]) && isupper(cmd->cmd[1])) {
+            // This is a command
+            // Need to special case 'DL', 'DA', and 'FO' commands, since they don't have parameters
+            if (((cmd->cmd[0] == 'D') && ((cmd->cmd[1] == 'L') || (cmd->cmd[1] == 'A'))) ||
+                    ((cmd->cmd[0] == 'F') && (cmd->cmd[1] == 'O'))) {
+                request_cmd_buffer[0] = 0x2; // Length of 2 (2 command name bytes), with upper bit clear to indicate command originated from the gimbal (not the GoPro)
+                request_cmd_buffer[1] = cmd->cmd[0];
+                request_cmd_buffer[2] = cmd->cmd[1];
+            } else {
+                request_cmd_buffer[0] = 0x3; // Length of 3 (2 command name bytes, 1 parameter byte), with upper bit clear to indicate command originated from the gimbal (not the GoPro)
+                request_cmd_buffer[1] = cmd->cmd[0];
+                request_cmd_buffer[2] = cmd->cmd[1];
+                request_cmd_buffer[3] = cmd->cmd_parm;
+            }
+        } else {
+            // This is a query
+            request_cmd_buffer[0] = 0x2; // Length of 2 (2 query name bytes), with upper bit clear to indicate command originated from the gimbal (not the GoPro)
+            request_cmd_buffer[1] = cmd->cmd[0];
+            request_cmd_buffer[2] = cmd->cmd[1];
+        }
 
         // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
         // this command, and this way a caller of gp_get_last_response can know what command the response goes with
@@ -299,7 +319,7 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
 
                 // Load the pending request into the I2C TX ringbuffer.  This will start the process of transferring the
                 // data to the I2C peripheral to send out
-                i2c_send_data(request_cmd_buffer, GP_COMMAND_REQUEST_SIZE);
+                i2c_send_data(request_cmd_buffer, request_cmd_buffer[0] + 1); // Length of command is 1st byte in command buffer, add 1 for length field
 
                 // Deassert the GoPro interrupt request line to indicate that we're ready to transmit the command
                 GP_DEASSERT_INTR();

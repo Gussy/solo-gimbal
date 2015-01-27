@@ -49,7 +49,6 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 // Prototype statements for functions found within this file.
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
 static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms);
-static void TestGoProCAN(GPCmd* cmd); // TODO: For testing
 void DeviceInit();
 void MemCopy();
 void InitFlash();
@@ -996,42 +995,6 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
         }
 	}
 
-	// After a delay, for testing, send a message to the camera to command it to turn off
-	if (board_hw_id == AZ) {
-	    if (axis_parms.enable_flag) {
-            GPCmd gp_cmd;
-            if (gp_cmd_wait++ >= 33) {
-                gp_cmd_wait = 0;
-                if (gp_cmd_num == 0) {
-                    // Turn on the camera
-                    cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_ON);
-                } else if (gp_cmd_num == 1) {
-                    // Set capture mode to video mode
-                    gp_cmd.cmd[0] = 'C';
-                    gp_cmd.cmd[1] = 'M';
-                    gp_cmd.cmd_parm = 0x00;
-                    TestGoProCAN(&gp_cmd);
-                } else if (gp_cmd_num == 2) {
-                    // Start video capture
-                    gp_cmd.cmd[0] = 'S';
-                    gp_cmd.cmd[1] = 'H';
-                    gp_cmd.cmd_parm = 0x01;
-                    TestGoProCAN(&gp_cmd);
-                } else if (gp_cmd_num == 3) {
-                    // Stop video capture
-                    gp_cmd.cmd[0] = 'S';
-                    gp_cmd.cmd[1] = 'H';
-                    gp_cmd.cmd_parm = 0x00;
-                    TestGoProCAN(&gp_cmd);
-                } else if (gp_cmd_num == 4) {
-                    // Turn off the camera
-                    cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_OFF);
-                }
-                gp_cmd_num++;
-            }
-	    }
-	}
-
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
 	C_Task_Ptr = &C3;	
 	//-----------------
@@ -1853,15 +1816,6 @@ Uint16 GetEnableFlag(void)
 Uint16 GetAxisParmsLoaded(void)
 {
     return axis_parms.all_init_params_recvd;
-}
-
-static void TestGoProCAN(GPCmd* cmd)
-{
-    Uint32 parameter = 0;
-    parameter |= (((Uint32)cmd->cmd[0]) << 24) & 0xFF000000;
-    parameter |= (((Uint32)cmd->cmd[1]) << 16) & 0x00FF0000;
-    parameter |= (((Uint32)cmd->cmd_parm) << 8) & 0x0000FF00;
-    cand_tx_param(CAND_ID_EL, CAND_PID_GP_CMD, parameter);
 }
 
 //===========================================================================
