@@ -451,10 +451,10 @@ void main(void)
 
     board_hw_id = GetBoardHWID();
 
-    // Initialize Gyro
-    InitGyro();
-    // now initialize the gyro again
-    InitGyro();
+    if (board_hw_id == EL) {
+        // Initialize Gyro
+        InitGyro();
+    }
 
     // If we're the AZ board, initialize UART for MAVLink communication
     // Also initialize the MAVLink subsystem
@@ -1716,9 +1716,6 @@ static void MainISRwork(void)
     // TODO: Testing timing
     GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
     GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
-
-
-
 }
 
 int16 CorrectEncoderError(int16 raw_error)

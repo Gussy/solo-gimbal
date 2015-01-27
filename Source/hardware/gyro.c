@@ -23,47 +23,28 @@ void InitGyro()
     // Initialize the appropriate SPI peripheral to talk to the gyro
     InitSpiPort(&gyro_spi_desc);
 
-    // Read the who am I register to see if we're talking to the MPU-6K successfully
-    Uint8 who_am_i = SpiReadReg8Bit(&gyro_spi_desc, MPU_WHO_AM_I_REG);
-    DELAY_US(INTER_COMMAND_DELAY);
+    // Assert a gyro device reset per start up spec
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_PWR_MGMT_1_REG, DEVICE_RESET);
+
+    // Wait for 100ms per spec
+    DELAY_US(100 * 1000);
+
+    // Assert analog signal path reset
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_SIGNAL_PATH_RESET_REG, GYRO_RESET | ACCEL_RESET | TEMP_RESET);
+
+    // Wait for 100ms per spec
+    DELAY_US(100 * 1000);
+
+    // Disable the temperature sensor, enable gyro x pll clock
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_PWR_MGMT_1_REG, TEMP_SENSE_DISABLED | CLK_SRC_PLL_GYRO_X);
+
+    // Wait 10ms to wait for pll to settle
+    DELAY_US(10 * 1000);
 
     // Disable the I2C interface, enable the SPI interface, disable FIFO
     SpiWriteReg8Bit(&gyro_spi_desc, MPU_USER_CTRL_REG, FIFO_DISABLED | I2C_MASTER_DISABLED | I2C_INTERFACE_DISABLED);
 
-    DELAY_US(INTER_COMMAND_DELAY);
-
-    // Disable the fsync pin, configure the highest bandwidth filter
-    SpiWriteReg8Bit(&gyro_spi_desc, MPU_CONFIG_REG, FSYNC_DISABLED | LPF_0);
-
-    DELAY_US(INTER_COMMAND_DELAY);
-
-    // Select gyro 500 deg/s full scale range
-    SpiWriteReg8Bit(&gyro_spi_desc, MPU_GYRO_CONFIG_REG, GYRO_FS_500);
-
-    DELAY_US(INTER_COMMAND_DELAY);
-
-    // Configure interrupt
-    SpiWriteReg8Bit(&gyro_spi_desc, MPU_INT_PIN_CFG_REG, INT_ACTIVE_LOW | INT_PUSH_PULL | INT_PULSE | INT_CLEAR_READ_ANY | FSYNC_INT_DISABLED | I2C_BYPASS_DISABLED);
-
-    DELAY_US(INTER_COMMAND_DELAY);
-
-    // Disable the temperature sensor
-    SpiWriteReg8Bit(&gyro_spi_desc, MPU_PWR_MGMT_1_REG, TEMP_SENSE_DISABLED | CLK_SRC_PLL_GYRO_X);
-
-    DELAY_US(INTER_COMMAND_DELAY);
-
-    // Set the sample rate to 1KHz (based on an 8KHz gyro output rate, change this if that changes)
-    // TODO: Temporarily changing this to 4 kHz for testing
-    SpiWriteReg8Bit(&gyro_spi_desc, MPU_SMPRT_DIV_REG, 7); // Sample rate = Gyro Output Rate (8KHz) / (1 + Sample Rate Divider) = 1 KHz
-
-    /*
-    // Read current clock source.  If set to anything other than PLL_GYRO_X, set it to PLL_GYRO_X
-    Uint8 pwrMgmt = SpiReadReg(MPU_PWR_MGMT_1_REG);
-    DELAY_US(1);
-    if ((pwrMgmt & CLK_SRC_MASK) != CLK_SRC_PLL_GYRO_X) {
-        SpiWriteReg(MPU_PWR_MGMT_1_REG, (pwrMgmt & ~CLK_SRC_MASK) | CLK_SRC_PLL_GYRO_X);
-    }
-    */
+    //TBD: Check previous write to determine if pll clock switch was "successful"
 
     DELAY_US(INTER_COMMAND_DELAY);
 
@@ -72,13 +53,36 @@ void InitGyro()
 
     DELAY_US(INTER_COMMAND_DELAY);
 
+    // Disable the fsync pin, configure the highest bandwidth filter
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_CONFIG_REG, FSYNC_DISABLED | LPF_0);
+
+    DELAY_US(INTER_COMMAND_DELAY);
+
+    // Set the sample rate to 1KHz (based on an 8KHz gyro output rate, change this if that changes)
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_SMPRT_DIV_REG, 7); // Sample rate = Gyro Output Rate (8KHz) / (1 + Sample Rate Divider) = 1 KHz
+
+    DELAY_US(INTER_COMMAND_DELAY);
+
+    // Select gyro 500 deg/s full scale range
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_GYRO_CONFIG_REG, GYRO_FS_500);
+
+    DELAY_US(INTER_COMMAND_DELAY);
+
+    // Reset gyro analog signal path which is speculated to re-calibrate zero rate offset
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_SIGNAL_PATH_RESET_REG, GYRO_RESET);
+
+    // Wait for 30ms for gyro signal path reset
+    DELAY_US(30 * 1000);
+
+    // Configure interrupt
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_INT_PIN_CFG_REG, INT_ACTIVE_LOW | INT_PUSH_PULL | INT_PULSE | INT_CLEAR_READ_ANY | FSYNC_INT_DISABLED | I2C_BYPASS_DISABLED);
+
+    DELAY_US(INTER_COMMAND_DELAY);
+
     // Enable interrupt
     SpiWriteReg8Bit(&gyro_spi_desc, MPU_INT_ENABLE_REG, DATA_READY_INT_ENABLED);
 
     DELAY_US(INTER_COMMAND_DELAY);
-
-    // Read the who am I register to see if we're talking to the MPU-6K successfully
-    who_am_i = SpiReadReg8Bit(&gyro_spi_desc, MPU_WHO_AM_I_REG);
 
     // Reconfigure the gyro SPI port to run at 5MHz.  The data result registers can be read at 20MHz, but the configuration registers
     // can only be read and written at 1MHz, so we do all configuration at 1MHz and raise the speed to 5MHz after we're done, so subsequent data
