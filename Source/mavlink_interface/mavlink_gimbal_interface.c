@@ -26,6 +26,8 @@ static handle_gopro_command(mavlink_message_t* received_msg);
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
 
+unsigned char feedback_id;
+
 int messages_received = 0;
 int heartbeats_received = 0;
 int heartbeats_detected = 0;
@@ -252,6 +254,14 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
                                 mav_mode,
                                 mav_state);
     send_mavlink_message(&heartbeat_msg);
+}
+
+void send_mavlink_gimbal_feedback() {
+	static mavlink_message_t feedback_msg;
+	mavlink_msg_gimbal_feedback_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
+			&feedback_msg, 0, 0,
+			feedback_id++,0,1,2,10,11,12,20,21,22);
+	send_mavlink_message(&feedback_msg);
 }
 
 void send_mavlink_gopro_response(GPCmdResponse* response)

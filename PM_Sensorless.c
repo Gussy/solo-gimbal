@@ -101,6 +101,8 @@ int16 DcBusVoltage;
 
 #define T (0.001/ISR_FREQUENCY)    // Samping period (sec), see parameter.h
 
+Uint8 feedback_decimator;
+
 Uint32 IsrTicker = 0;
 Uint32 GyroISRTicker = 0;
 Uint32 ISRStartTimestamp = 0;
@@ -1749,6 +1751,13 @@ static void MainISRwork(void)
 
 
     }
+
+
+	if ((board_hw_id == AZ) && (++feedback_decimator == 100)) {
+		send_mavlink_gimbal_feedback();
+		feedback_decimator = 0;
+	}
+
 
     ISREndTimestamp = CpuTimer2Regs.TIM.all;
 
