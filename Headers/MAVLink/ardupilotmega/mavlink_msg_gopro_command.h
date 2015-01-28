@@ -4,7 +4,7 @@
 #include "protocol_c2000.h"
 #endif
 
-#define MAVLINK_MSG_ID_GOPRO_COMMAND 199
+#define MAVLINK_MSG_ID_GOPRO_COMMAND 187
 
 typedef struct __mavlink_gopro_command_t
 {
@@ -16,10 +16,10 @@ typedef struct __mavlink_gopro_command_t
 } mavlink_gopro_command_t;
 
 #define MAVLINK_MSG_ID_GOPRO_COMMAND_LEN 5
-#define MAVLINK_MSG_ID_199_LEN 5
+#define MAVLINK_MSG_ID_187_LEN 5
 
 #define MAVLINK_MSG_ID_GOPRO_COMMAND_CRC 43
-#define MAVLINK_MSG_ID_199_CRC 43
+#define MAVLINK_MSG_ID_187_CRC 43
 
 
 

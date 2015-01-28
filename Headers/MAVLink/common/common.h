@@ -87,7 +87,8 @@ typedef enum MAV_TYPE
 	MAV_TYPE_ONBOARD_CONTROLLER=18, /* Onboard companion controller | */
 	MAV_TYPE_VTOL_DUOROTOR=19, /* Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter. | */
 	MAV_TYPE_VTOL_QUADROTOR=20, /* Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter. | */
-	MAV_TYPE_ENUM_END=21, /*  | */
+	MAV_TYPE_GIMBAL=26, /* Stabilized gimbal payload | */
+	MAV_TYPE_ENUM_END=27, /*  | */
 } MAV_TYPE;
 #endif
 
@@ -204,6 +205,7 @@ typedef enum MAV_COMPONENT
 	MAV_COMP_ID_IMU_2=201, /*  | */
 	MAV_COMP_ID_IMU_3=202, /*  | */
 	MAV_COMP_ID_GPS=220, /*  | */
+	MAV_COMP_ID_GIMBAL=230, /*  | */
 	MAV_COMP_ID_UDP_BRIDGE=240, /*  | */
 	MAV_COMP_ID_UART_BRIDGE=241, /*  | */
 	MAV_COMP_ID_SYSTEM_CONTROL=250, /*  | */
@@ -231,15 +233,15 @@ typedef enum MAV_SYS_STATUS_SENSOR
 	MAV_SYS_STATUS_SENSOR_YAW_POSITION=4096, /* 0x1000 yaw position | */
 	MAV_SYS_STATUS_SENSOR_Z_ALTITUDE_CONTROL=8192, /* 0x2000 z/altitude control | */
 	MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL=16384, /* 0x4000 x/y position control | */
-	MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS=32768, /* 0x8000 motor outputs / control | */
-	MAV_SYS_STATUS_SENSOR_RC_RECEIVER=65536, /* 0x10000 rc receiver | */
-	MAV_SYS_STATUS_SENSOR_3D_GYRO2=131072, /* 0x20000 2nd 3D gyro | */
-	MAV_SYS_STATUS_SENSOR_3D_ACCEL2=262144, /* 0x40000 2nd 3D accelerometer | */
-	MAV_SYS_STATUS_SENSOR_3D_MAG2=524288, /* 0x80000 2nd 3D magnetometer | */
-	MAV_SYS_STATUS_GEOFENCE=1048576, /* 0x100000 geofence | */
-	MAV_SYS_STATUS_AHRS=2097152, /* 0x200000 AHRS subsystem health | */
-	MAV_SYS_STATUS_TERRAIN=4194304, /* 0x400000 Terrain subsystem health | */
-	MAV_SYS_STATUS_SENSOR_ENUM_END=4194305, /*  | */
+	//MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS=32768, /* 0x8000 motor outputs / control | */
+	//MAV_SYS_STATUS_SENSOR_RC_RECEIVER=65536, /* 0x10000 rc receiver | */
+	//MAV_SYS_STATUS_SENSOR_3D_GYRO2=131072, /* 0x20000 2nd 3D gyro | */
+	//MAV_SYS_STATUS_SENSOR_3D_ACCEL2=262144, /* 0x40000 2nd 3D accelerometer | */
+	//MAV_SYS_STATUS_SENSOR_3D_MAG2=524288, /* 0x80000 2nd 3D magnetometer | */
+	//MAV_SYS_STATUS_GEOFENCE=1048576, /* 0x100000 geofence | */
+	//MAV_SYS_STATUS_AHRS=2097152, /* 0x200000 AHRS subsystem health | */
+	//MAV_SYS_STATUS_TERRAIN=4194304, /* 0x400000 Terrain subsystem health | */
+	//MAV_SYS_STATUS_SENSOR_ENUM_END=4194305, /*  | */
 } MAV_SYS_STATUS_SENSOR;
 #endif
 
