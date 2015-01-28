@@ -1,9 +1,12 @@
 F2806x_RAM/
 FLASH/
+Debug/
 *.graphProp
-Headers/describe.h
 *.ini_initial
+*.prefs
 project.log
-Headers/version.h
 .launches/
 .settings/
+version.h
+data.h
+data.hh

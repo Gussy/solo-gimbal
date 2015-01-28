@@ -116,7 +116,8 @@ void mavlink_state_machine() {
 		pos_payload[0] = pos[0];
 		pos_payload[1] = pos[1];
 		pos_payload[2] = pos[2];
-		cand_tx_multi_param(CAND_ID_EL, pids, pos_payload, 3);
+		// TODO: Removing this for now to debug axis "searching" behavior
+		//cand_tx_multi_param(CAND_ID_EL, pids, pos_payload, 3);
 #endif
 		attitude_received = 0;
 	}
