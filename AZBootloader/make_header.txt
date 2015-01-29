@@ -1,0 +1,3 @@
+There are two things you may need to change in make_header.bat:
+- The location of the hex2000.exe (which is in the same directory as the compiler)
+- The .out file to convert to a header file
