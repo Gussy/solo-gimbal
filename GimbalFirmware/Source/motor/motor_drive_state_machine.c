@@ -309,7 +309,23 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // If new current command from CAN bus get it.
             if (*param_set[CAND_PID_TORQUE].sema) {
-                CBSendEncoder(encoder_parms->virtual_counts);
+                // If we're the EL board, we update our own encoder readings.  Else, we send them over CAN
+                // We're accumulating encoder readings at 10kHz, and sending them out at 1kHz, so we divide by 10
+                // to average the accumulated values
+                if (GetBoardHWID() == EL) {
+                    cb_parms->encoder_readings[EL] = encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated;
+                    //cb_parms->encoder_readings[EL] = encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2];
+                    cb_parms->encoder_value_received[EL] = TRUE;
+                } else {
+                    CBSendEncoder(encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated);
+                    //CBSendEncoder(encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2]);
+                }
+                // Reset the encoder accumulator and accumulator sample counter
+                encoder_parms->virtual_counts_accumulator = 0;
+                encoder_parms->virtual_counts_accumulated = 0;
+                // Reset the median history array
+                memset(&(encoder_parms->encoder_median_history[0]), INT16_MAX, ENCODER_MEDIAN_HISTORY_SIZE * sizeof(int16));
+
                 md_parms->iq_ref = ((int16) param_set[CAND_PID_TORQUE].param) / 32767.0;
                 *param_set[CAND_PID_TORQUE].sema = FALSE;
             }
