@@ -8,18 +8,11 @@
 #ifndef CAND_H_
 #define CAND_H_
 
+#include "f2806x_int8.h"
+
 #include "cand_BitFields.h"
 
 #include <stdint.h>
-
-#ifndef uint8_t
-typedef unsigned char uint8_t;
-#endif
-
-#ifndef int8_t
-typedef char int8_t;
-#endif
-
 
 #define CANMD8(box, byte_offset)	(((byte_offset)>3)?((box.MDH.all>>(8*(3-((byte_offset)-4))))&0xff):(((box.MDL.all>>(8*(3-(byte_offset))))&0xff)))
 

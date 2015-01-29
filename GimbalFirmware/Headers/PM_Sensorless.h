@@ -22,7 +22,7 @@ Note: In this software, the default inverter is supposed to be DRV8312-EVM.
 /*-------------------------------------------------------------------------------
 Next, Include project specific include files.
 -------------------------------------------------------------------------------*/
-
+#include "f2806x_int8.h"
 #include "PeripheralHeaderIncludes.h"
 
 // Headers for TI libraries

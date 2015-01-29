@@ -8,6 +8,7 @@
 #ifndef PID_H_
 #define PID_H_
 
+#include "f2806x_int8.h"
 #include "PeripheralHeaderIncludes.h"
 #include "hardware/HWSpecific.h"
 
