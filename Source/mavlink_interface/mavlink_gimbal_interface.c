@@ -30,7 +30,6 @@ unsigned char feedback_id;
 
 int messages_received = 0;
 int heartbeats_received = 0;
-int heartbeats_detected = 0;
 int attitude_received = 0;
 
 float roll = 0.0;
@@ -136,10 +135,6 @@ static void process_mavlink_input() {
 			switch (received_msg.msgid) {
 			case MAVLINK_MSG_ID_HEARTBEAT:
 				heartbeats_received++;
-				if (!heartbeats_detected) {
-					heartbeats_detected = 1;
-					send_mavlink_request_stream();
-				}
 				break;
 
 			case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
@@ -233,14 +228,6 @@ static handle_gopro_command(mavlink_message_t* received_msg)
         parameter |= (((Uint32)decoded_msg.gp_cmd_parm) << 8) & 0x0000FF00;
         cand_tx_param(CAND_ID_EL, CAND_PID_GP_CMD, parameter);
     }
-}
-
-static send_mavlink_request_stream() {
-	static mavlink_message_t msg_request_data_stream;
-	mavlink_msg_request_data_stream_pack(MAVLINK_GIMBAL_SYSID,
-			MAV_COMP_ID_GIMBAL, &msg_request_data_stream, 1, 1,
-			MAV_DATA_STREAM_EXTRA1, ATTITUDE_DATA_REFRESH_RATE, 1);
-	send_mavlink_message(&msg_request_data_stream);
 }
 
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
