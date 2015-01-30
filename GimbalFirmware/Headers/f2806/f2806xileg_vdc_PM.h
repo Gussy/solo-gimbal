@@ -75,7 +75,7 @@ extern void DSP28x_usDelay(unsigned long Count);
                                             /* (6 ACQPS plus 1)*/						        \
                                                                                                 \
 	AdcRegs.ADCSOC1CTL.bit.CHSEL 	= 0x1;  /* ChSelect: ADC A1-> Phase A Current Sense*/		\
-	AdcRegs.ADCSOC1CTL.bit.TRIGSEL 	= 0x5;	/* Set SOC0 start trigger on EPWM1A, due to*/       \
+	AdcRegs.ADCSOC1CTL.bit.TRIGSEL 	= 0x5;	/* Set SOC1 start trigger on EPWM1A, due to*/       \
 	                                        /* round-robin SOC0 converts first then SOC1*/      \
 	AdcRegs.ADCSOC1CTL.bit.ACQPS 	= 0x6;	/* Set SOC0 S/H Window to 7 ADC Clock Cycles,*/		\
 	                                        /* (6 ACQPS plus 1)*/                               \

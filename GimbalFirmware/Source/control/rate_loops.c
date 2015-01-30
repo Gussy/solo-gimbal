@@ -25,6 +25,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
     static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
     static Uint32 gyro_data_pass_1 = 0;
     static Uint32 gyro_data_pass_2 = 0;
+
 #ifdef TEST_MAX_TORQUE
     static int16 DigbyCount;
 #endif
@@ -73,8 +74,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         cb_parms->gyro_readings[EL] = (raw_gyro_readings[EL] * GyroSignMap[EL]) - cb_parms->gyro_offsets[EL];
         cb_parms->gyro_readings[ROLL] = (raw_gyro_readings[ROLL] * GyroSignMap[ROLL]) - cb_parms->gyro_offsets[ROLL];
 
-        SendDebug1ToAz(cb_parms->gyro_readings[AZ], cb_parms->gyro_readings[EL], cb_parms->gyro_readings[ROLL]);
-
         // Do gyro kinematics correction
         do_gyro_correction(&(cb_parms->gyro_readings[0]), &(cb_parms->encoder_readings[0]), &(cb_parms->corrected_gyro_readings[0]));
         //TODO: Temp for testing with a single axis
@@ -105,6 +104,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         cb_parms->unfiltered_position_errors[AZ] = CorrectEncoderError(cb_parms->angle_targets[AZ] - cb_parms->encoder_readings[AZ]);
         cb_parms->unfiltered_position_errors[EL] = CorrectEncoderError(cb_parms->angle_targets[EL] - cb_parms->encoder_readings[EL]);
         cb_parms->unfiltered_position_errors[ROLL] = CorrectEncoderError(cb_parms->angle_targets[ROLL] - cb_parms->encoder_readings[ROLL]);
+
+        SendDebug1ToAz(cb_parms->encoder_readings[AZ], cb_parms->encoder_readings[EL], cb_parms->encoder_readings[ROLL]);
 
         // Set up the next rate loop pass to be the az error computation pass
         cb_parms->rate_loop_pass = ERROR_AZ_PASS;
@@ -323,6 +324,9 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             cb_parms->motor_torques[AZ] = UpdatePID_Float(PID_DATA_RATE_LOOP, AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
             cb_parms->motor_torques[EL] = UpdatePID_Float(PID_DATA_RATE_LOOP, EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
             cb_parms->motor_torques[ROLL] = UpdatePID_Float(PID_DATA_RATE_LOOP, ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
+
+            //SendDebug1ToAz(el_pos_error, cb_parms->unfiltered_position_errors[EL], (int16_t)(pos_pid_loop_float[EL].integralCumulative + 0.5));
+            //SendDebug1ToAz(cb_parms->unfiltered_position_errors[AZ], cb_parms->unfiltered_position_errors[EL], cb_parms->unfiltered_position_errors[ROLL]);
 
             // For AZ, we need to inject extra torque if we're getting close to either of the stops (because we have limited mechanical travel on AZ, and we
             // don't want to rail up against the stop).  To do this, outside of a deadband in the middle of travel, we linearly increase an extra torque injection

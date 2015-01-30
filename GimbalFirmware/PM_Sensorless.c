@@ -159,6 +159,9 @@ EncoderParms encoder_parms = {
     0,              // Raw theta
     0,              // Virtual counts
     0,              // Virtual counts offset
+    0,              // Virtual counts accumulator
+    0,              // Virtual counts accumulated
+    {0},            // Encoder median history
     0.0,            // Mechanical theta
     0.0,            // Corrected mechanical theta
     0.0,            // Electrical theta
@@ -494,6 +497,10 @@ void main(void)
     // Tau = 120 seconds per CW's calculations
     // Current limit = 0.093 Amps^2 per CW's calculations
     init_average_power_filter(&power_filter_parms, (ISR_FREQUENCY * 1000), 120, 0.093);
+
+    // Initialize the encoder median history array with the 16-bit integer max value, so that the median
+    // accumulation algorithm will work
+    memset(&(encoder_parms.encoder_median_history[0]), INT16_MAX, ENCODER_MEDIAN_HISTORY_SIZE * sizeof(int16));
 
     // Initialize the RAMPGEN module
     motor_drive_parms.rg1.StepAngleMax = _IQ(BASE_FREQ*T);
@@ -1497,11 +1504,6 @@ static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms
 
     // Calculate the emulated encoder value to communicate back to the control board
     encoder_parms->virtual_counts = (encoder_parms->mech_theta * ((float)ENCODER_COUNTS_PER_REV)) - encoder_parms->virtual_counts_offset;
-    if (encoder_parms->virtual_counts < 0) {
-        encoder_parms->virtual_counts += ENCODER_COUNTS_PER_REV;
-    } else if (encoder_parms->virtual_counts >= ENCODER_COUNTS_PER_REV) {
-        encoder_parms->virtual_counts -= ENCODER_COUNTS_PER_REV;
-    }
 
     // Invert the encoder reading if necessary to make sure it counts up in the right direction
     // This is necessary for the kinematics math to work properly
@@ -1509,9 +1511,49 @@ static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms
         encoder_parms->virtual_counts = ENCODER_COUNTS_PER_REV - encoder_parms->virtual_counts;
     }
 
-    // If we're the control board, we need to populate our own encoder reading (otherwise they come over CAN)
-    if (board_hw_id == EL) { // EL axis is control board
-        cb_parms->encoder_readings[EL] = encoder_parms->virtual_counts;
+    // Convert the virtual counts to be symmetric around 0
+    if (encoder_parms->virtual_counts < -(ENCODER_COUNTS_PER_REV / 2)) {
+        encoder_parms->virtual_counts += ENCODER_COUNTS_PER_REV;
+    } else if (encoder_parms->virtual_counts >= (ENCODER_COUNTS_PER_REV / 2)) {
+        encoder_parms->virtual_counts -= ENCODER_COUNTS_PER_REV;
+    }
+
+    // Accumulate the virtual counts at the torque loop rate (10kHz), which will then be averaged to be sent out
+    // at the rate loop rate (1kHz)
+    encoder_parms->virtual_counts_accumulator += encoder_parms->virtual_counts;
+    encoder_parms->virtual_counts_accumulated++;
+
+    /*
+    // Run a median filter on the encoder values.
+    int i;
+    int j;
+    for (i = 0; i < ENCODER_MEDIAN_HISTORY_SIZE; i++) {
+        // Iterate over the median history until we find a value that's larger than the current value we're trying to insert
+        // When we find a larger value in the median history, that's the position the new value should be put into to keep the
+        // median history sorted from smallest to largest.  Then, we need to shift the entire median history past the insertion index
+        // left by one to keep the array sorted.  We only keep half of the expected median history, because there's no point storing the
+        // upper half of the list because the median can't be there
+        if (encoder_parms->virtual_counts < encoder_parms->encoder_median_history[i]) {
+            int16 old_value = 0;
+            int16 new_value = encoder_parms->virtual_counts;
+            for (j = i; j < ENCODER_MEDIAN_HISTORY_SIZE; j++) {
+                old_value = encoder_parms->encoder_median_history[j];
+                encoder_parms->encoder_median_history[j] = new_value;
+                new_value = old_value;
+            }
+
+            // Once we've inserted the new value and shifted the list, we can break out of the outer loop
+            break;
+        }
+    }
+
+    // Keep track of how many virtual encoder values we've accumulated since the last request for virtual encoder values,
+    // so we can pick the right index in the median history array
+    encoder_parms->virtual_counts_accumulated++;
+    */
+
+    // We've received our own encoder value, so indicate as such
+    if (!cb_parms->encoder_value_received[EL]) {
         cb_parms->encoder_value_received[EL] = TRUE;
     }
 }
