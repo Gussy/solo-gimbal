@@ -90,7 +90,8 @@ PAGE 0 :
    IQTABLES3  : origin = 0x3FEADC, length = 0x0000AA	 /* IQ Math Tables in Boot ROM */
 
    /*BOOTROM    : origin = 0x3FF3B0, length = 0x000C10*/
-   FLASHA	  : origin = 0x3E8000, length = 0x00F8F8
+   FLASHA	  : origin = 0x3F4000, length = 0x0038F8
+   FLASHBCDEFG : origin = 0x3DC000, length = 0x018000
    /*
         BOOT       	: origin = 0x3FF3B0, length = 0x000422, fill = 0xFFFF
  	 FLASH_API  	: origin = 0x3FF7D2, length = 0x0006E7, fill = 0xFFFF
@@ -113,8 +114,8 @@ PAGE 1 :
 
    BOOT_RSVD   : origin = 0x000002, length = 0x00004E     /* Part of M0, BOOT rom will use this for stack */
    /*RAMM1       : origin = 0x000400, length = 0x000400     /* on-chip RAM block M1 */
-   /*RAML4       : origin = 0x00A000, length = 0x002000     /* on-chip RAM block L4 */
-   RAML5       : origin = 0x00DB00, length = 0x000400     /* on-chip RAM block L5 */
+   RAML4       : origin = 0x00A000, length = 0x002000     /* on-chip RAM block L4 */
+   RAML5       : origin = 0x00C000, length = 0x002000     /* on-chip RAM block L5 */
    /*USB_RAM     : origin = 0x040000, length = 0x000800     /* USB RAM		  */
    DEV_EMU     : origin = 0x000880, length = 0x000105     /* device emulation registers */
    SYS_PWR_CTL : origin = 0x000985, length = 0x000003     /* System power control registers */
@@ -214,6 +215,7 @@ SECTIONS
    .ebss            : > RAMM0,     PAGE = 0
    .econst          : > FLASHA,    PAGE = 0
    .esysmem         : > RAMM0,     PAGE = 0
+   .dlcode          : > FLASHBCDEFG, PAGE = 0, TYPE = NOLOAD
 
    IQmath           : > FLASHA,   PAGE = 0
    IQmathTables     : > IQTABLES,  PAGE = 0, TYPE = NOLOAD
@@ -223,6 +225,7 @@ SECTIONS
    
    .endmem          : > RAMM0,    PAGE = 0
    /*DMARAML5	        : > RAMM5,     PAGE = 1 */
+   DMARAML5	        : > RAML5,     PAGE = 1
 
   /* Uncomment the section below if calling the IQNexp() or IQexp()
       functions from the IQMath.lib library in order to utilize the

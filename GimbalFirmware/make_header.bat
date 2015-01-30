@@ -1,0 +1,1 @@
+M:\ti\ccsv5\tools\compiler\c2000_6.2.0\bin\hex2000.exe "M:\Projects\3D Robotics\3DRGimbal\GimbalFirmware\F2806x_RAM\PM_Sensorless_F2806x.out" -o Gimbal.bin -boot -gpio8 -b

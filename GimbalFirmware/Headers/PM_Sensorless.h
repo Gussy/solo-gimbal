@@ -165,6 +165,7 @@ void AxisFault(CAND_FaultCode fault_code);
 int16 CorrectEncoderError(int16 raw_error);
 interrupt void MainISR(void);
 interrupt void GyroIntISR(void);
+void power_down_motor(void);
 
 #endif
 
