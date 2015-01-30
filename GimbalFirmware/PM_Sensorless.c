@@ -1418,9 +1418,9 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
         }
 
         // If any of the debug data changed, send the debug mavlink message
-        if (debug_output_decimation_count++ > 19) {
+        if (debug_output_decimation_count++ > 9) {
             debug_output_decimation_count = 0;
-            //send_mavlink_debug_data(debug_data);
+            send_mavlink_debug_data(debug_data);
         }
     }
 
@@ -1807,6 +1807,13 @@ static void MainISRwork(void)
     // TODO: Testing timing
     GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
     GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
+}
+
+void power_down_motor()
+{
+    EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
+    EPwm2Regs.CMPA.half.CMPA=0; // PWM 2A - PhaseB
+    EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
 }
 
 int16 CorrectEncoderError(int16 raw_error)
