@@ -28,7 +28,6 @@ uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
 
 int messages_received = 0;
 int heartbeats_received = 0;
-int heartbeats_detected = 0;
 int attitude_received = 0;
 
 float roll = 0.0;
@@ -158,10 +157,6 @@ static void process_mavlink_input() {
 			switch (received_msg.msgid) {
 			case MAVLINK_MSG_ID_HEARTBEAT:
 				heartbeats_received++;
-				if (!heartbeats_detected) {
-					heartbeats_detected = 1;
-					send_mavlink_request_stream();
-				}
 				break;
 
 			case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
