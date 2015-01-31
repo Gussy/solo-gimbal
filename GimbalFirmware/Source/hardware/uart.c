@@ -37,17 +37,17 @@ void init_uart()
     // Enable the receive error interrupt
     UART_SCI_PORT.SCICTL1.bit.RXERRINTENA = 1;
 
+    /*
     // Set initial baud rate to 115200
     // Baud Rate Register = (LSPCLK (20 MHz) / (Baud Rate * 8)) - 1
     // For 115200, BRR = 20.701, set BRR to 21 for 113636 effective baud rate, for 1.3% deviation from nominal baud rate
     UART_SCI_PORT.SCIHBAUD = 0;
     UART_SCI_PORT.SCILBAUD = 21;
-    /*
+    */
     // Set initial baud rate to 230400
     // For 230400, BRR = 9.851, set BRR to 10 for 227272 effective baud rate, for 1.36% deviation from nominal baud rate
     UART_SCI_PORT.SCIHBAUD = 0;
     UART_SCI_PORT.SCILBAUD = 10;
-    */
 
     // Configure SCI peripheral to free-run when the processor is suspended (debugging at a breakpoint)
     UART_SCI_PORT.SCIPRI.bit.SOFT = 0;
