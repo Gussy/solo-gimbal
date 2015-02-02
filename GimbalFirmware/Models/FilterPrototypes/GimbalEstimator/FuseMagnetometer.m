@@ -27,8 +27,28 @@ R_MAG = 0.1745^2;
 H = calcH_MAG(gPhi,gPsi,gTheta,magX,magY,magZ,q0,q1,q2,q3);
 % Calculate innovation variance and Kalman gains
 % Take advantage of the fact that only the first 3 elements in H are non zero
-varInnov = (H(1,1:3)*P(1:3,1:3)*transpose(H(1,1:3)) + R_MAG);
-Kfusion = (P(:,1:3)*transpose(H(1,1:3)))/varInnov;
+%varInnov = (H(1,1:3)*P(1:3,1:3)*transpose(H(1,1:3)) + R_MAG);
+PH = zeros(3,1);
+varInnov = R_MAG;
+for rowIndex = 1:3
+    PH(rowIndex) = 0;
+    for colIndex = 1:3
+        PH(rowIndex) = PH(rowIndex) + P(rowIndex,colIndex)*H(colIndex);
+    end
+    varInnov = varInnov + H(rowIndex)*PH(rowIndex);
+end
+
+%Kfusion = (P(:,1:3)*transpose(H(1,1:3)))/varInnov;
+Kfusion = zeros(9,1);
+varInnovInv = 1.0 / varInnov;
+for rowIndex = 1:9
+    Kfusion(rowIndex) = 0;
+    for colIndex = 1:3
+        Kfusion(rowIndex) = Kfusion(rowIndex) + P(rowIndex,colIndex)*H(colIndex);
+    end
+    Kfusion(rowIndex) = Kfusion(rowIndex) * varInnovInv;
+end
+
 
 % Calculate the innovation
 innovation = calcMagAng(decl,gPhi,gPsi,gTheta,magX,magY,magZ,q0,q1,q2,q3);
@@ -53,25 +73,41 @@ states = states - Kfusion * innovation;
 % Convert the error rotation vector to its equivalent quaternion
 % error = truth - estimate
 rotationMag = sqrt(states(1)^2 + states(2)^2 + states(3)^2);
-if rotationMag<1e-6
-    deltaQuat = single([1;0;0;0]);
-else
+if rotationMag>1e-6
+    
+    % calculate the delta quaternion
     deltaQuat = [cos(0.5*rotationMag); [states(1);states(2);states(3)]/rotationMag*sin(0.5*rotationMag)];
+    
+    % Update the quaternion states by rotating from the previous attitude through
+    % the delta quaternion
+    nextQuat = [quat(1)*deltaQuat(1)-transpose(quat(2:4))*deltaQuat(2:4); quat(1)*deltaQuat(2:4) + deltaQuat(1)*quat(2:4) + cross(quat(2:4),deltaQuat(2:4))];
+    
+    % normalise the updated quaternion states
+    quatMag = sqrt(nextQuat(1)^2 + nextQuat(2)^2 + nextQuat(3)^2 + nextQuat(4)^2);
+    if (quatMag > 1e-6)
+        nextQuat = nextQuat / quatMag;
+    end
+    
+else
+    nextQuat = quat;
 end
 
-% Update the quaternion states by rotating from the previous attitude through
-% the delta angle rotation quaternion
-nextQuat = [quat(1)*deltaQuat(1)-transpose(quat(2:4))*deltaQuat(2:4); quat(1)*deltaQuat(2:4) + deltaQuat(1)*quat(2:4) + cross(quat(2:4),deltaQuat(2:4))];
-
-% normalise the updated quaternion states
-quatMag = sqrt(nextQuat(1)^2 + nextQuat(2)^2 + nextQuat(3)^2 + nextQuat(4)^2);
-if (quatMag > 1e-6)
-    nextQuat = nextQuat / quatMag;
-end
 
 % correct the covariance P = P - K*H*P
 % Take advantage of the fact that only the first 3 elements in H are non zero
-P = P - Kfusion*H(1,1:3)*P(1:3,:);
+%P = P - Kfusion*H(1,1:3)*P(1:3,:);
+HP = zeros(1,9);
+for colIndex = 1:9
+    HP(colIndex) = 0;
+    for rowIndex = 1:3
+        HP(colIndex) = HP(colIndex) + H(rowIndex)*P(rowIndex,colIndex);
+    end
+end
+for rowIndex = 1:9
+    for colIndex = 1:9
+        P(rowIndex,colIndex) = P(rowIndex,colIndex) - Kfusion(rowIndex)*HP(colIndex);
+    end
+end
 
 % Force symmetry on the covariance matrix to prevent ill-conditioning
 % of the matrix which would cause the filter to blow-up
