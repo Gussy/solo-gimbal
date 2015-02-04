@@ -188,6 +188,7 @@ ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Gyro readings
     {0, 0, 0},                                              // Corrected gyro readings
     {0, 0, 0},                                              // Gyro offsets
+    {0, 0, 0},                                              // Integrated raw gyro readings
     {0, 0, 0},                                              // Encoder readings
     {0, 0, 0},                                              // Motor torques
     {0, 0, 0},                                              // Unfiltered position errors
@@ -1794,11 +1795,13 @@ static void MainISRwork(void)
 
     }
 
-
+    //TODO: Remove this if new gimbal feedback code works
+    /*
 	if ((board_hw_id == AZ) && (++feedback_decimator == 100)) {
 		send_mavlink_gimbal_feedback();
 		feedback_decimator = 0;
 	}
+	*/
 
 
     ISREndTimestamp = CpuTimer2Regs.TIM.all;

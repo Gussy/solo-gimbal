@@ -36,6 +36,12 @@ float roll = 0.0;
 float pitch = 0.0;
 float yaw = 0.0;
 
+// Encoder, Gyro, and Accelerometer telemetry
+int16 latest_encoder_telemetry[3] = {0, 0, 0};
+float latest_gyro_telemetry[3] = {0, 0, 0};
+float latest_accel_telemetry[3] = {0, 0, 0};
+Uint16 telem_received = 0;
+
 float targets[3] = { 0, 0, 0 };
 
 MavlinkProcessingState mavlink_state = MAVLINK_STATE_PARSE_INPUT;
@@ -204,6 +210,102 @@ static void process_mavlink_input() {
 	}
 }
 
+void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder)
+{
+    latest_encoder_telemetry[AZ] = az_encoder;
+    latest_encoder_telemetry[EL] = el_encoder;
+    latest_encoder_telemetry[ROLL] = rl_encoder;
+
+    telem_received |= ENCODER_TELEM_RECEIVED;
+
+    if (telem_received == ALL_TELEM_RECEIVED) {
+        send_mavlink_gimbal_feedback();
+
+        telem_received = 0;
+    }
+}
+
+void receive_gyro_az_telemetry(int32 az_gyro)
+{
+    latest_gyro_telemetry[AZ] = GYRO_FORMAT_TO_RAD_S(az_gyro);
+
+    telem_received |= GYRO_AZ_TELEM_RECEIVED;
+
+    if (telem_received == ALL_TELEM_RECEIVED) {
+        send_mavlink_gimbal_feedback();
+
+        telem_received = 0;
+    }
+}
+
+void receive_gyro_el_telemetry(int32 el_gyro)
+{
+    latest_gyro_telemetry[EL] = GYRO_FORMAT_TO_RAD_S(el_gyro);
+
+    telem_received |= GYRO_EL_TELEM_RECEIVED;
+
+    if (telem_received == ALL_TELEM_RECEIVED) {
+        send_mavlink_gimbal_feedback();
+
+        telem_received = 0;
+    }
+}
+
+void receive_gyro_rl_telemetry(int32 rl_gyro)
+{
+    latest_gyro_telemetry[ROLL] = GYRO_FORMAT_TO_RAD_S(rl_gyro);
+
+    telem_received |= GYRO_RL_TELEM_RECEIVED;
+
+    if (telem_received == ALL_TELEM_RECEIVED) {
+        send_mavlink_gimbal_feedback();
+
+        telem_received = 0;
+    }
+}
+
+void receive_accel_az_telemetry(int32 az_accel)
+{
+    // TODO: Convert to m/s here
+    latest_accel_telemetry[AZ] = az_accel;
+
+    telem_received |= ACCEL_AZ_TELEM_RECEIVED;
+
+    if (telem_received == ALL_TELEM_RECEIVED) {
+        send_mavlink_gimbal_feedback();
+
+        telem_received = 0;
+    }
+}
+
+void receive_accel_el_telemetry(int32 el_accel)
+{
+    // TODO: Convert to m/s here
+    latest_accel_telemetry[EL] = el_accel;
+
+    telem_received |= ACCEL_EL_TELEM_RECEIVED;
+
+    if (telem_received == ALL_TELEM_RECEIVED) {
+        send_mavlink_gimbal_feedback();
+
+        telem_received = 0;
+    }
+}
+
+void receive_accel_rl_telemetry(int32 rl_accel)
+{
+    // TODO: Convert to m/s here
+    latest_accel_telemetry[ROLL] = rl_accel;
+
+    telem_received |= ACCEL_RL_TELEM_RECEIVED;
+
+    if (telem_received == ALL_TELEM_RECEIVED) {
+        send_mavlink_gimbal_feedback();
+
+        telem_received = 0;
+    }
+}
+
 static handle_attitude(mavlink_message_t* received_msg) {
 	mavlink_attitude_t decoded_msg;
 	mavlink_msg_attitude_decode(received_msg, &decoded_msg);
@@ -274,8 +376,19 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
 void send_mavlink_gimbal_feedback() {
 	static mavlink_message_t feedback_msg;
 	mavlink_msg_gimbal_feedback_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
-			&feedback_msg, 0, 0,
-			feedback_id++,0,1,2,10,11,12,20,21,22);
+			&feedback_msg,
+			0,
+			0,
+			feedback_id++,
+			latest_accel_telemetry[AZ],
+			latest_accel_telemetry[ROLL],
+			latest_accel_telemetry[EL],
+			latest_gyro_telemetry[AZ],
+			latest_gyro_telemetry[ROLL],
+			latest_gyro_telemetry[EL],
+			latest_encoder_telemetry[AZ],
+			latest_encoder_telemetry[ROLL],
+			latest_encoder_telemetry[EL]);
 	send_mavlink_message(&feedback_msg);
 }
 

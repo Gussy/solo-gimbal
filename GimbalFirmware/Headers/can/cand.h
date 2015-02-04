@@ -100,6 +100,10 @@ struct cand_message {
     unsigned 		param_cnt:3;
     unsigned 		param_repeat:1;			///< Some queries want a periodic auto-response
 
+    CAND_ExtendedParameterID extended_param_id;
+    unsigned extended_param_length;
+    uint8_t extended_param[7];
+
     CAND_FaultCode  fault_code;
 
     CAND_SenderID	sender_id;
@@ -126,6 +130,7 @@ CAND_Result cand_tx_request(CAND_DestinationID did, CAND_ParameterID pid);
 CAND_Result cand_tx_multi_request(CAND_DestinationID did, CAND_ParameterID* pids, uint8_t request_cnt);
 CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, Uint32* param, Uint8 param_cnt);
 CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 param);
+CAND_Result cand_tx_extended_param(CAND_DestinationID did, CAND_ExtendedParameterID epid, uint8_t* param, int param_length);
 CAND_Result cand_tx_command(CAND_DestinationID did, CAND_Command cmd);
 
 #endif /* CAND_H_ */

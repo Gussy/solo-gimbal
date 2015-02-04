@@ -411,56 +411,71 @@ CAND_Result cand_rx( struct cand_message * msg )
 					// Extended mode, rather than having a register with flags for parameters, we
 					// get a list of ID/params to set, first ID is in the last 6 bits of the arbitration
 					// field
-					int byte_in_payload = 0, p_cnt = 0;
 
-					while ((mbox.MSGCTRL.bit.DLC > byte_in_payload)) {
+				    // First need to check if this message contains extended parameter IDs
+				    // If it does, it requires special processing
+				    CAND_ParameterID first_parameter_id = (CAND_ParameterID)sid.param_set.extended.param_id;
+				    if (first_parameter_id == CAND_PID_EXTENDED) {
+				        msg->extended_param_id = (CAND_ExtendedParameterID)CANMD8(mbox, 0); // First byte of payload is extended parameter ID
+				        // Extract the remainder of the message payload into the parsed message
+				        int i;
+				        for (i = 1; i < mbox.MSGCTRL.bit.DLC; i++) {
+				            msg->extended_param[i - 1] = CANMD8(mbox, i);
+				        }
+				        msg->extended_param_length = mbox.MSGCTRL.bit.DLC - 1; // Subtract 1 for the extended parameter ID
+				        msg->param_cnt = 1;
+				    } else {
+				        int byte_in_payload = 0, p_cnt = 0;
 
-						// Get the special case ID0 out of the arbitration field, else
-						// the next byte in the payload is the next ID
-						if (p_cnt == 0) {
-							msg->param_id[p_cnt] = (CAND_ParameterID)sid.param_set.extended.param_id;
-						} else {
-							msg->param_id[p_cnt] = (CAND_ParameterID)CANMD8(mbox, byte_in_payload);
-							byte_in_payload++;
-						}
+                        while ((mbox.MSGCTRL.bit.DLC > byte_in_payload)) {
 
-						// Params can be either 4, 2, or 1 byte.  We can determine which size each param is by
-						// its parameter ID.  List is packed, so we'll have to count our way through
-						if (msg->param_id[p_cnt] < CAND_PID_4_BYTE_CUTOFF) {
-						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
-						    // If we would, this is an ill formed message, so we just give up here and return the parameters that
-						    // have already been parsed
-						    if (byte_in_payload + 4 > 8) {
-						        break;
-						    }
-
-						    msg->param[p_cnt] = (CANMD8(mbox, byte_in_payload) << 24) | (CANMD8(mbox, byte_in_payload + 1) << 16) | (CANMD8(mbox, byte_in_payload + 2) << 8) | CANMD8(mbox, byte_in_payload + 3);
-						    byte_in_payload += 4;
-						} else if (msg->param_id[p_cnt] < CAND_PID_2_BYTE_CUTOFF) {
-						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
-                            // If we would, this is an ill formed message, so we just give up here and return the parameters that
-                            // have already been parsed
-                            if (byte_in_payload + 2 > 8) {
-                                break;
+                            // Get the special case ID0 out of the arbitration field, else
+                            // the next byte in the payload is the next ID
+                            if (p_cnt == 0) {
+                                msg->param_id[p_cnt] = first_parameter_id;
+                            } else {
+                                msg->param_id[p_cnt] = (CAND_ParameterID)CANMD8(mbox, byte_in_payload);
+                                byte_in_payload++;
                             }
 
-                            msg->param[p_cnt] = ((CANMD8(mbox, byte_in_payload) << 8) | CANMD8(mbox, byte_in_payload + 1)) & 0x0000FFFF;
-                            byte_in_payload += 2;
-						} else {
-						    // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
-                            // If we would, this is an ill formed message, so we just give up here and return the parameters that
-                            // have already been parsed
-                            if (byte_in_payload + 1 > 8) {
-                                break;
+                            // Params can be either 4, 2, or 1 byte.  We can determine which size each param is by
+                            // its parameter ID.  List is packed, so we'll have to count our way through
+                            if (msg->param_id[p_cnt] < CAND_PID_4_BYTE_CUTOFF) {
+                                // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
+                                // If we would, this is an ill formed message, so we just give up here and return the parameters that
+                                // have already been parsed
+                                if (byte_in_payload + 4 > 8) {
+                                    break;
+                                }
+
+                                msg->param[p_cnt] = (CANMD8(mbox, byte_in_payload) << 24) | (CANMD8(mbox, byte_in_payload + 1) << 16) | (CANMD8(mbox, byte_in_payload + 2) << 8) | CANMD8(mbox, byte_in_payload + 3);
+                                byte_in_payload += 4;
+                            } else if (msg->param_id[p_cnt] < CAND_PID_2_BYTE_CUTOFF) {
+                                // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
+                                // If we would, this is an ill formed message, so we just give up here and return the parameters that
+                                // have already been parsed
+                                if (byte_in_payload + 2 > 8) {
+                                    break;
+                                }
+
+                                msg->param[p_cnt] = ((CANMD8(mbox, byte_in_payload) << 8) | CANMD8(mbox, byte_in_payload + 1)) & 0x0000FFFF;
+                                byte_in_payload += 2;
+                            } else {
+                                // Make sure we're not going to overrun the message payload by trying to read this parameter out of it.
+                                // If we would, this is an ill formed message, so we just give up here and return the parameters that
+                                // have already been parsed
+                                if (byte_in_payload + 1 > 8) {
+                                    break;
+                                }
+
+                                msg->param[p_cnt] = CANMD8(mbox, byte_in_payload) & 0x000000FF;
+                                byte_in_payload += 1;
                             }
 
-						    msg->param[p_cnt] = CANMD8(mbox, byte_in_payload) & 0x000000FF;
-						    byte_in_payload += 1;
-						}
-
-						p_cnt++;
-					}
-					msg->param_cnt = p_cnt;
+                            p_cnt++;
+                        }
+                        msg->param_cnt = p_cnt;
+				    }
 				}
 				ret = CAND_RX_PARAM_SET;
 				break;
@@ -694,6 +709,36 @@ CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 p
 
     // send message to destinations provided
     return cand_tx(sid, payload, payload_size);
+}
+
+CAND_Result cand_tx_extended_param(CAND_DestinationID did, CAND_ExtendedParameterID epid, uint8_t* param, int param_length)
+{
+    CAND_SID sid;
+    Uint8 payload[8];
+
+    sid.sidWord               = 0;
+    sid.all.m_id              = CAND_MID_PARAMETER_SET;
+    sid.param_set.all.d_id    = did;
+    sid.param_set.all.param   = CAND_PID_EXTENDED;
+    sid.param_set.extended.addr_mode = CAND_ADDR_MODE_EXTENDED;
+
+    // Extended parameter ID is first byte in payload
+    payload[0] = epid;
+
+    // Make sure we don't overflow the payload
+    // Max size of extended param is 7 bytes
+    int payload_length = param_length;
+    if (payload_length > 7) {
+        payload_length = 7;
+    }
+
+    // Rest of payload is actual parameter
+    int i;
+    for (i = 0; i < payload_length; i++) {
+        payload[i + 1] = param[i];
+    }
+
+    return cand_tx(sid, payload, payload_length + 1);
 }
 
 CAND_Result cand_tx_request(CAND_DestinationID did, CAND_ParameterID pid)

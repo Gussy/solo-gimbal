@@ -12,7 +12,8 @@
 #include "PM_Sensorless.h"
 #include "running_average_filter.h"
 
-
+// The rate loops run at 1kHz, and we want to output telemetry at 100Hz, so we decimate by 10
+#define TELEMETRY_DECIMATION_LIMIT 10
 
 #define AZ_KEEP_OFF_STOP_START_COUNT_NEGATIVE ((float)ENCODER_COUNTS_PER_REV - DEGREES_TO_COUNTS(5.0))
 #define AZ_KEEP_OFF_STOP_END_COUNT_NEGATIVE ((float)ENCODER_COUNTS_PER_REV - DEGREES_TO_COUNTS(20.0))

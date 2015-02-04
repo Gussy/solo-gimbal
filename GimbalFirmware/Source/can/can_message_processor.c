@@ -95,13 +95,93 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
     case CAND_RX_PARAM_SET:
         param_set_cnt++;
-        while(msg.param_cnt) {
-            if (msg.param_id[msg.param_cnt-1] < CAND_PID_LAST) {
-                param_set[msg.param_id[msg.param_cnt-1]].param = msg.param[msg.param_cnt-1];
-                *(param_set[msg.param_id[msg.param_cnt-1]].sema) = TRUE;
+
+        // Check whether it's an extended parameter or not
+        if (msg.param_cnt > 0) {
+            if (msg.param_id[0] == CAND_PID_EXTENDED) {
+                // Extended parameter, parse as such
+                switch (msg.extended_param_id) {
+                    case CAND_EPID_ENCODER_TELEMETRY:
+                        if (msg.extended_param_length == 6) {
+                            int16 az_encoder = ((msg.extended_param[0] << 8) & 0xFF00) | (msg.extended_param[1] & 0x00FF);
+                            int16 el_encoder = ((msg.extended_param[2] << 8) & 0xFF00) | (msg.extended_param[3] & 0x00FF);
+                            int16 rl_encoder = ((msg.extended_param[4] << 8) & 0xFF00) | (msg.extended_param[5] & 0x00FF);
+                            receive_encoder_telemetry(az_encoder, el_encoder, rl_encoder);
+                        }
+                        break;
+
+                    case CAND_EPID_GYRO_AZ_TELEMETRY:
+                        if (msg.extended_param_length == 4) {
+                            int32 az_gyro = ((msg.extended_param[0] << 24) & 0xFF000000) |
+                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    (msg.extended_param[3] & 0x000000FF);
+                            receive_gyro_az_telemetry(az_gyro);
+                        }
+                        break;
+
+                    case CAND_EPID_GYRO_EL_TELEMETRY:
+                        if (msg.extended_param_length == 4) {
+                            int32 el_gyro = ((msg.extended_param[0] << 24) & 0xFF000000) |
+                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    (msg.extended_param[3] & 0x000000FF);
+                            receive_gyro_el_telemetry(el_gyro);
+                        }
+                        break;
+
+                    case CAND_EPID_GYRO_RL_TELEMETRY:
+                        if (msg.extended_param_length == 4) {
+                            int32 rl_gyro = ((msg.extended_param[0] << 24) & 0xFF000000) |
+                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    (msg.extended_param[3] & 0x000000FF);
+                            receive_gyro_rl_telemetry(rl_gyro);
+                        }
+                        break;
+
+                    case CAND_EPID_ACCEL_AZ_TELEMETRY:
+                        if (msg.extended_param_length == 4) {
+                            int32 az_accel = ((msg.extended_param[0] << 24) & 0xFF000000) |
+                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    (msg.extended_param[3] & 0x000000FF);
+                            receive_accel_az_telemetry(az_accel);
+                        }
+                        break;
+
+                    case CAND_EPID_ACCEL_EL_TELEMETRY:
+                        if (msg.extended_param_length == 4) {
+                            int32 el_accel = ((msg.extended_param[0] << 24) & 0xFF000000) |
+                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    (msg.extended_param[3] & 0x000000FF);
+                            receive_accel_el_telemetry(el_accel);
+                        }
+                        break;
+
+                    case CAND_EPID_ACCEL_RL_TELEMETRY:
+                        if (msg.extended_param_length == 4) {
+                            int32 rl_accel = ((msg.extended_param[0] << 24) & 0xFF000000) |
+                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    (msg.extended_param[3] & 0x000000FF);
+                            receive_accel_rl_telemetry(rl_accel);
+                        }
+                        break;
+                }
+            } else {
+                // Not an extended parameter, parse normally
+                while(msg.param_cnt) {
+                    if (msg.param_id[msg.param_cnt-1] < CAND_PID_LAST) {
+                        param_set[msg.param_id[msg.param_cnt-1]].param = msg.param[msg.param_cnt-1];
+                        *(param_set[msg.param_id[msg.param_cnt-1]].sema) = TRUE;
+                    }
+                    msg.param_cnt--;
+                }
             }
-            msg.param_cnt--;
         }
+
         cb_parms->angle_targets[AZ]   = param_set[CAND_PID_TARGET_ANGLES_AZ].param;
         cb_parms->angle_targets[EL]   = param_set[CAND_PID_TARGET_ANGLES_EL].param;
         cb_parms->angle_targets[ROLL] = param_set[CAND_PID_TARGET_ANGLES_ROLL].param;
