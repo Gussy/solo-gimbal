@@ -17,6 +17,15 @@
 #include "gopro/gopro_interface.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 
+void WDogEnable(void)
+{
+    EALLOW;
+    SysCtrlRegs.WDCR = 0x0028;               // Enable watchdog module
+    SysCtrlRegs.WDKEY = 0x55;                // Clear the WD counter
+    SysCtrlRegs.WDKEY = 0xAA;
+    EDIS;
+}
+
 void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info)
 {
     static int fault_cnt = 0;
@@ -49,7 +58,25 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
         case CAND_CMD_RELAX:
             //EnableFlag = 0;
+        	axis_parms->enable_flag = FALSE;
+            md_parms->motor_drive_state = STATE_DISABLED;
+            axis_parms->blink_state = BLINK_READY;
+    		power_down_motor();
             break;
+
+        case CAND_CMD_RESET:
+        	/* only reset if in relaxed state */
+        	if ((axis_parms->enable_flag == FALSE)&&
+        		(md_parms->motor_drive_state == STATE_DISABLED)&&
+            	(axis_parms->blink_state == BLINK_READY)&&
+            	(GetBoardHWID() != AZ)) {
+        		// just making sure we are off
+        		power_down_motor();
+        		// enable watchdog and wait until it goes off
+        		WDogEnable();
+        		while (1);
+        	}
+        	break;
 
         case CAND_CMD_GOPRO_ON:
             gp_request_power_on();

@@ -5,6 +5,7 @@
  *      Author: abamberger
  */
 
+#include "f2806x_int8.h"
 #include "hardware/uart.h"
 #include "helpers/ringbuf.h"
 
@@ -33,6 +34,8 @@ void init_uart()
     // Enable the transmitter and receiver
     UART_SCI_PORT.SCICTL1.bit.RXENA = 1;
     UART_SCI_PORT.SCICTL1.bit.TXENA = 1;
+    // Enable the receive error interrupt
+    UART_SCI_PORT.SCICTL1.bit.RXERRINTENA = 1;
 
     /*
     // Set initial baud rate to 115200
@@ -157,9 +160,20 @@ interrupt void uart_tx_isr(void)
 
 interrupt void uart_rx_isr(void)
 {
-    // Empty the FIFO into the receive ring buffer
-    while (UART_SCI_PORT.SCIFFRX.bit.RXFFST > 0) {
-        uart_rx_ringbuf.push(&uart_rx_ringbuf, UART_SCI_PORT.SCIRXBUF.bit.RXDT);
+    // Check whether this was an interrupt due to a received character or a receive error
+    if (UART_SCI_PORT.SCIRXST.bit.RXERROR) {
+        // This was an error interrupt
+
+        // Reset the peripheral to clear the error condition
+        UART_SCI_PORT.SCICTL1.bit.SWRESET = 0;
+        UART_SCI_PORT.SCICTL1.bit.SWRESET = 1;
+    } else {
+        // This was a received data interrupt
+
+        // Empty the FIFO into the receive ring buffer
+        while (UART_SCI_PORT.SCIFFRX.bit.RXFFST > 0) {
+            uart_rx_ringbuf.push(&uart_rx_ringbuf, UART_SCI_PORT.SCIRXBUF.bit.RXDT);
+        }
     }
 
     // Clear the overflow flag if it is set

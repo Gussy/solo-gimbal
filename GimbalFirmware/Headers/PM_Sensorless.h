@@ -22,7 +22,7 @@ Note: In this software, the default inverter is supposed to be DRV8312-EVM.
 /*-------------------------------------------------------------------------------
 Next, Include project specific include files.
 -------------------------------------------------------------------------------*/
-
+#include "f2806x_int8.h"
 #include "PeripheralHeaderIncludes.h"
 
 // Headers for TI libraries
@@ -92,10 +92,15 @@ typedef struct {
     GimbalAxis balance_axis;
 } BalanceProcedureParms;
 
+#define ENCODER_MEDIAN_HISTORY_SIZE 6
+
 typedef struct {
     int16 raw_theta;
     int16 virtual_counts;
     int16 virtual_counts_offset;
+    int32 virtual_counts_accumulator;
+    Uint16 virtual_counts_accumulated;
+    int16 encoder_median_history[ENCODER_MEDIAN_HISTORY_SIZE];
     float mech_theta;
     float corrected_mech_theta;
     float elec_theta;
@@ -165,6 +170,7 @@ void AxisFault(CAND_FaultCode fault_code);
 int16 CorrectEncoderError(int16 raw_error);
 interrupt void MainISR(void);
 interrupt void GyroIntISR(void);
+void power_down_motor(void);
 
 #endif
 

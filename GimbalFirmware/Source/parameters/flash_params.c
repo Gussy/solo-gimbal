@@ -389,6 +389,31 @@ Uint16 Example_CsmUnlock()
 
 }
 
+int erase_our_flash()
+{
+	Uint16  Status;
+	Uint16  VersionHex;     // Version of the API in decimal encoded hex
+	EALLOW;
+	Flash_CPUScaleFactor = SCALE_FACTOR;
+	EDIS;
+
+	VersionHex = Flash_APIVersionHex();
+	if(VersionHex != 0x0100)
+	{
+	    // Unexpected API version
+	    // Make a decision based on this info.
+	    asm("    ESTOP0");
+	}
+
+	Example_CsmUnlock();
+	/* only need to erase B, everything else will be erased again later. */
+	Status = Flash_Erase(SECTORB, &FlashStatus);
+	Status = Flash_Erase(SECTORG, &FlashStatus);
+	if (Status != STATUS_SUCCESS) {
+		return -1;
+	}
+	return 1;
+}
 
 int write_flash(void)
 {

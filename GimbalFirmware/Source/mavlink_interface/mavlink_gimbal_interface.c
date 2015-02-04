@@ -117,10 +117,33 @@ void mavlink_state_machine() {
 		pos_payload[0] = pos[0];
 		pos_payload[1] = pos[1];
 		pos_payload[2] = pos[2];
-		// TODO: Removing this for now to debug axis "searching" behavior
-		//cand_tx_multi_param(CAND_ID_EL, pids, pos_payload, 3);
+		cand_tx_multi_param(CAND_ID_EL, pids, pos_payload, 3);
 #endif
 		attitude_received = 0;
+	}
+}
+
+static void handle_data_transmission_handshake(mavlink_message_t *msg)
+{
+	/* does this need to be a state machine? */
+	if ((msg->sysid == MAVLINK_GIMBAL_SYSID)&&
+		(msg->compid == MAV_COMP_ID_GIMBAL)) {
+		// make sure this message is for us
+		// stop this axis
+		power_down_motor();
+		// stop the other axis
+		cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RELAX);
+		// reset other axis
+		cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RESET);
+		// erase our flash
+		extern int erase_our_flash();
+		if (erase_our_flash() < 0) {
+			// something went wrong... but what do I do?
+		}
+		// reset
+		extern void WDogEnable(void);
+		WDogEnable();
+		while(1);
 	}
 }
 
@@ -167,6 +190,10 @@ static void process_mavlink_input() {
 			case MAVLINK_MSG_ID_GOPRO_COMMAND:
 			    handle_gopro_command(&received_msg);
 			    break;
+
+			case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
+				handle_data_transmission_handshake(&received_msg);
+				break;
 
 			default: {
 				Uint8 msgid = received_msg.msgid;

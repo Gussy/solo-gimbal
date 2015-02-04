@@ -8,6 +8,7 @@
 #ifndef DEVICE_INIT_H_
 #define DEVICE_INIT_H_
 
+#include "f2806x_int8.h"
 #include "PeripheralHeaderIncludes.h"
 
 void DeviceInit(void);

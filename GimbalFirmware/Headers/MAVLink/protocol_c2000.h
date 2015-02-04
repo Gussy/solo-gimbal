@@ -20,6 +20,7 @@ extern "C" {
 #endif
 
 #include <string.h>
+#include "f2806x_int8.h"
 #include <stdint.h>
 
 // This is necessary because the uint64_t and int64_t definitions are only enabled in stdint.h if __TMS320C28X__ is defined
@@ -31,12 +32,6 @@ typedef unsigned long long uint64_t;
 #endif
 #ifndef int64_t
 typedef long long int64_t;
-#endif
-#ifndef uint8_t
-typedef unsigned char uint8_t;
-#endif
-#ifndef int8_t
-typedef char int8_t;
 #endif
 
 #define X25_INIT_CRC_C2000 0xffff
