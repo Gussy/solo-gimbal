@@ -233,7 +233,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         		((GetBoardHWID() == ROLL)&&((cb_parms->axes_homed[EL])))||
         		((GetBoardHWID() == EL)))
 #endif
-        		CommutationCalibrationStateMachine(md_parms, encoder_parms, &cc_parms);
+        		CommutationCalibrationStateMachine(md_parms, encoder_parms, axis_parms, &cc_parms);
             break;
 
         case STATE_HOMING:
