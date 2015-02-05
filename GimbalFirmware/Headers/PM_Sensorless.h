@@ -141,6 +141,7 @@ typedef struct {
     Uint16 axes_homed[AXIS_CNT];
     int pos_loop_2nd_stage_decimation_count;
     int16 tuning_rate_inject[AXIS_CNT];
+    int16 rate_cmd_inject[AXIS_CNT];
     RateLoopPass rate_loop_pass;
     Uint8 initialized;
     Uint8 enabled;
@@ -160,6 +161,7 @@ typedef union {
 #define ROUND(x) (((x) > (floor(x) + 0.5f)) ? ceil(x) : floor(x))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define CLAMP_TO_BOUNDS(x, bound_lower, bound_upper) (((x) < (bound_lower)) ? (bound_lower) : (((x) > (bound_upper)) ? (bound_upper) : (x)))
 
 #define IndexTimeOutLimit 268
 

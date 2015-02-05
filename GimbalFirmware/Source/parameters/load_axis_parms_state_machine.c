@@ -148,7 +148,9 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 
         case LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_RL:
             if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_RL_POS_PID_INIT_PARAMS_RECVD) == ALL_RL_POS_PID_INIT_PARAMS_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_GYRO_OFFSETS;
+                //load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_GYRO_OFFSETS;
+                // We've now received all of the parameters we're looking for, so signal being done
+                load_parms_state_info->axis_parms_load_complete = TRUE;
             } else {
                 // For position loop pid params, request all 4 of them for an axis at once
                 CAND_ParameterID request_params[4];
@@ -161,6 +163,8 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
             }
             break;
 
+        //TODO: Remove this or fix it to work with the new 16-bit parameters
+        /*
         case LOAD_AXIS_PARMS_STATE_REQUEST_GYRO_OFFSETS:
             if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_GYRO_OFFSET_INIT_PARAMS_RECVD) == ALL_GYRO_OFFSET_INIT_PARAMS_RECVD) {
                 // We've now received all of the parameters we're looking for, so signal being done
@@ -175,5 +179,6 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
                 cand_tx_multi_request(CAND_ID_AZ, request_params, 3); // All parameter requests go to the AZ board
             }
             break;
+        */
     }
 }
