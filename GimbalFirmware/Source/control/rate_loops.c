@@ -116,7 +116,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         cb_parms->unfiltered_position_errors[EL] = CorrectEncoderError(cb_parms->angle_targets[EL] - cb_parms->encoder_readings[EL]);
         cb_parms->unfiltered_position_errors[ROLL] = CorrectEncoderError(cb_parms->angle_targets[ROLL] - cb_parms->encoder_readings[ROLL]);
 
-        SendDebug1ToAz(cb_parms->encoder_readings[AZ], cb_parms->encoder_readings[EL], cb_parms->encoder_readings[ROLL]);
+        //SendDebug1ToAz(cb_parms->encoder_readings[AZ], cb_parms->encoder_readings[EL], cb_parms->encoder_readings[ROLL]);
 
         // Set up the next rate loop pass to be the az error computation pass
         cb_parms->rate_loop_pass = ERROR_AZ_PASS;

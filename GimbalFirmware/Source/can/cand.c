@@ -416,6 +416,7 @@ CAND_Result cand_rx( struct cand_message * msg )
 				    // If it does, it requires special processing
 				    CAND_ParameterID first_parameter_id = (CAND_ParameterID)sid.param_set.extended.param_id;
 				    if (first_parameter_id == CAND_PID_EXTENDED) {
+				        msg->param_id[0] = CAND_PID_EXTENDED;
 				        msg->extended_param_id = (CAND_ExtendedParameterID)CANMD8(mbox, 0); // First byte of payload is extended parameter ID
 				        // Extract the remainder of the message payload into the parsed message
 				        int i;

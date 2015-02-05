@@ -112,60 +112,60 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
                     case CAND_EPID_GYRO_AZ_TELEMETRY:
                         if (msg.extended_param_length == 4) {
-                            int32 az_gyro = ((msg.extended_param[0] << 24) & 0xFF000000) |
-                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
-                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
-                                    (msg.extended_param[3] & 0x000000FF);
+                            int32 az_gyro = (((int32)msg.extended_param[0] << 24) & 0xFF000000) |
+                                    (((int32)msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    (((int32)msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    ((int32)msg.extended_param[3] & 0x000000FF);
                             receive_gyro_az_telemetry(az_gyro);
                         }
                         break;
 
                     case CAND_EPID_GYRO_EL_TELEMETRY:
                         if (msg.extended_param_length == 4) {
-                            int32 el_gyro = ((msg.extended_param[0] << 24) & 0xFF000000) |
-                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
-                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
-                                    (msg.extended_param[3] & 0x000000FF);
+                            int32 el_gyro = (((int32)msg.extended_param[0] << 24) & 0xFF000000) |
+                                    (((int32)msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    (((int32)msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    ((int32)msg.extended_param[3] & 0x000000FF);
                             receive_gyro_el_telemetry(el_gyro);
                         }
                         break;
 
                     case CAND_EPID_GYRO_RL_TELEMETRY:
                         if (msg.extended_param_length == 4) {
-                            int32 rl_gyro = ((msg.extended_param[0] << 24) & 0xFF000000) |
-                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
-                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
-                                    (msg.extended_param[3] & 0x000000FF);
+                            int32 rl_gyro = (((int32)msg.extended_param[0] << 24) & 0xFF000000) |
+                                    (((int32)msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    (((int32)msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    ((int32)msg.extended_param[3] & 0x000000FF);
                             receive_gyro_rl_telemetry(rl_gyro);
                         }
                         break;
 
                     case CAND_EPID_ACCEL_AZ_TELEMETRY:
                         if (msg.extended_param_length == 4) {
-                            int32 az_accel = ((msg.extended_param[0] << 24) & 0xFF000000) |
-                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
-                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
-                                    (msg.extended_param[3] & 0x000000FF);
+                            int32 az_accel = (((int32)msg.extended_param[0] << 24) & 0xFF000000) |
+                                    (((int32)msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    (((int32)msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    ((int32)msg.extended_param[3] & 0x000000FF);
                             receive_accel_az_telemetry(az_accel);
                         }
                         break;
 
                     case CAND_EPID_ACCEL_EL_TELEMETRY:
                         if (msg.extended_param_length == 4) {
-                            int32 el_accel = ((msg.extended_param[0] << 24) & 0xFF000000) |
-                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
-                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
-                                    (msg.extended_param[3] & 0x000000FF);
+                            int32 el_accel = (((int32)msg.extended_param[0] << 24) & 0xFF000000) |
+                                    (((int32)msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    (((int32)msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    ((int32)msg.extended_param[3] & 0x000000FF);
                             receive_accel_el_telemetry(el_accel);
                         }
                         break;
 
                     case CAND_EPID_ACCEL_RL_TELEMETRY:
                         if (msg.extended_param_length == 4) {
-                            int32 rl_accel = ((msg.extended_param[0] << 24) & 0xFF000000) |
-                                    ((msg.extended_param[1] << 16) & 0x00FF0000) |
-                                    ((msg.extended_param[2] << 8) & 0x0000FF00) |
-                                    (msg.extended_param[3] & 0x000000FF);
+                            int32 rl_accel = (((int32)msg.extended_param[0] << 24) & 0xFF000000) |
+                                    (((int32)msg.extended_param[1] << 16) & 0x00FF0000) |
+                                    (((int32)msg.extended_param[2] << 8) & 0x0000FF00) |
+                                    ((int32)msg.extended_param[3] & 0x000000FF);
                             receive_accel_rl_telemetry(rl_accel);
                         }
                         break;
