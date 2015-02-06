@@ -396,7 +396,7 @@ static void handle_gimbal_control(mavlink_message_t* received_msg)
         gyro_offsets[Z_AXIS] = (int16)CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_z, (float)INT16_MIN, (float)INT16_MAX);
 
         cand_tx_multi_param(CAND_ID_EL, rate_cmd_pids, rate_cmds, 3);
-        cand_tx_multi_param(CAND_ID_EL, gyro_offset_pids, gyro_offsets, 3);
+        //cand_tx_multi_param(CAND_ID_EL, gyro_offset_pids, gyro_offsets, 3);
     }
 }
 
