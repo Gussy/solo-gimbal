@@ -63,10 +63,10 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         break;
 
     case KINEMATICS_PASS:
-        // Unpack the gyro data into the correct axes
-        raw_gyro_readings[GyroAxisMap[X_AXIS]] = (int16)((gyro_data_pass_1 >> 8) & 0x0000FFFF);
-        raw_gyro_readings[GyroAxisMap[Y_AXIS]] = (int16)(((gyro_data_pass_1 << 8) & 0x0000FF00) | ((gyro_data_pass_2 >> 16) & 0x000000FF));
-        raw_gyro_readings[GyroAxisMap[Z_AXIS]] = (int16)(gyro_data_pass_2 & 0x0000FFFF);
+        // Unpack the gyro data into the correct axes, and apply the gyro offsets
+        raw_gyro_readings[GyroAxisMap[X_AXIS]] = (int16)(((gyro_data_pass_1 >> 8) & 0x0000FFFF) - cb_parms->gyro_offsets[X_AXIS]);
+        raw_gyro_readings[GyroAxisMap[Y_AXIS]] = (int16)((((gyro_data_pass_1 << 8) & 0x0000FF00) | ((gyro_data_pass_2 >> 16) & 0x000000FF)) - cb_parms->gyro_offsets[Y_AXIS]);
+        raw_gyro_readings[GyroAxisMap[Z_AXIS]] = (int16)((gyro_data_pass_2 & 0x0000FFFF) - cb_parms->gyro_offsets[Z_AXIS]);
 
         // If the system anaylzer is enabled, output the new value here
 #ifdef ENABLE_RATE_LOOP_TUNING
@@ -76,9 +76,9 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
 #endif
 
         // Do gyro sign correction
-        cb_parms->gyro_readings[AZ] = (raw_gyro_readings[AZ] * GyroSignMap[AZ]) - cb_parms->gyro_offsets[AZ];
-        cb_parms->gyro_readings[EL] = (raw_gyro_readings[EL] * GyroSignMap[EL]) - cb_parms->gyro_offsets[EL];
-        cb_parms->gyro_readings[ROLL] = (raw_gyro_readings[ROLL] * GyroSignMap[ROLL]) - cb_parms->gyro_offsets[ROLL];
+        cb_parms->gyro_readings[AZ] = (raw_gyro_readings[AZ] * GyroSignMap[AZ]);
+        cb_parms->gyro_readings[EL] = (raw_gyro_readings[EL] * GyroSignMap[EL]);
+        cb_parms->gyro_readings[ROLL] = (raw_gyro_readings[ROLL] * GyroSignMap[ROLL]);
 
         // Do the 10-cycle integration of the raw gyro readings for the 100Hz gyro telemetry
         cb_parms->integrated_raw_gyro_readings[AZ] += cb_parms->gyro_readings[AZ];
@@ -180,8 +180,10 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 // We're in the deadband, so only rate errors are taken into account
                 cb_parms->axis_errors[AZ] = -cb_parms->corrected_gyro_readings[AZ];
             }
-#else
+#elif (POSITION_LOOP_TYPE == 2)
             cb_parms->axis_errors[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->unfiltered_position_errors[AZ]) - cb_parms->corrected_gyro_readings[AZ];
+#else
+            cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
 #endif
 #endif
             // Set up the next rate loop pass to be the el error computation pass
@@ -246,9 +248,10 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 // We're in the deadband, so only rate errors are taken into account
                 cb_parms->axis_errors[EL] = -cb_parms->corrected_gyro_readings[EL];
             }
-#else
+#elif (POSITION_LOOP_TYPE == 2)
             cb_parms->axis_errors[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->unfiltered_position_errors[EL]) - cb_parms->corrected_gyro_readings[EL];
-
+#else
+            cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject[EL] - cb_parms->corrected_gyro_readings[EL];
 #endif
 #endif
             // Set up the next rate loop pass to be the roll error computation pass
@@ -313,8 +316,10 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 // We're in the deadband, so only rate errors are taken into account
                 cb_parms->axis_errors[ROLL] = -cb_parms->corrected_gyro_readings[ROLL];
             }
-#else
+#elif (POSITION_LOOP_TYPE == 2)
             cb_parms->axis_errors[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->unfiltered_position_errors[ROLL]) - cb_parms->corrected_gyro_readings[ROLL];
+#else
+            cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
 #endif
 #endif
             // Set up the next rate loop pass to be the torque command output pass

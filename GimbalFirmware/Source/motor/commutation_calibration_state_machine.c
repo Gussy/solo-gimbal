@@ -33,7 +33,7 @@ static void calc_slope_intercept(CommutationCalibrationParms* cc_parms, int star
 
 _iq IdRefLockCommutationCalibration = _IQ(0.18); // 0.5A if 2.75A max scale is correct
 
-void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* encoder_parms, CommutationCalibrationParms* cc_parms)
+void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* encoder_parms, AxisParms* axis_parms, CommutationCalibrationParms* cc_parms)
 {
 	static float last_position;
 	static float new_position = 0;
@@ -137,6 +137,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
     						cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_TEST;
                 		} else {
                 			md_parms->motor_drive_state = STATE_FAULT;
+                			axis_parms->blink_state = BLINK_ERROR;
                 		}
 		                cc_parms->current_iteration = 0;
 						last_position = encoder_parms->mech_theta;

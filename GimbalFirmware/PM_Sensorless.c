@@ -204,6 +204,7 @@ ControlBoardParms control_board_parms = {
     {FALSE, FALSE, FALSE},                                  // Axes homed
     0,                                                      // 2nd stage position loop decimation counter
     {0, 0, 0},                                              // Tuning rate inject
+    {0, 0, 0},                                              // Rate command inject
     READ_GYRO_PASS_1,                                       // Rate loop pass
     FALSE,                                                  // Initialized
     FALSE                                                   // Enabled
@@ -325,9 +326,12 @@ Uint8 pos_pid_rl_p_flag = FALSE;
 Uint8 pos_pid_rl_i_flag = FALSE;
 Uint8 pos_pid_rl_d_flag = FALSE;
 Uint8 pos_pid_rl_windup_flag = FALSE;
-Uint8 gyro_offset_el_flag = FALSE;
-Uint8 gyro_offset_az_flag = FALSE;
-Uint8 gyro_offset_rl_flag = FALSE;
+Uint8 gyro_offset_x_flag = FALSE;
+Uint8 gyro_offset_y_flag = FALSE;
+Uint8 gyro_offset_z_flag = FALSE;
+Uint8 rate_cmd_az_flag = FALSE;
+Uint8 rate_cmd_el_flag = FALSE;
+Uint8 rate_cmd_rl_flag = FALSE;
 Uint8 gp_cmd_flag = FALSE;
 #ifdef ENABLE_BALANCE_PROCEDURE
 Uint8 balance_axis_flag = FALSE;
@@ -377,9 +381,12 @@ void init_param_set(void)
     param_set[CAND_PID_POS_RL_I].sema = &pos_pid_rl_i_flag;
     param_set[CAND_PID_POS_RL_D].sema = &pos_pid_rl_d_flag;
     param_set[CAND_PID_POS_RL_WINDUP].sema = &pos_pid_rl_windup_flag;
-    param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
-    param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
-    param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
+    param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema = &gyro_offset_x_flag;
+    param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema = &gyro_offset_y_flag;
+    param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema = &gyro_offset_z_flag;
+    param_set[CAND_PID_RATE_CMD_AZ].sema = &rate_cmd_az_flag;
+    param_set[CAND_PID_RATE_CMD_EL].sema = &rate_cmd_el_flag;
+    param_set[CAND_PID_RATE_CMD_RL].sema = &rate_cmd_rl_flag;
     param_set[CAND_PID_GP_CMD].sema = &gp_cmd_flag;
 #ifdef ENABLE_BALANCE_PROCEDURE
     param_set[CAND_PID_BALANCE_AXIS].sema = &balance_axis_flag;
@@ -1134,6 +1141,8 @@ interrupt void GyroIntISR(void)
 int position_loop_deadband_counts = 10;
 int position_loop_deadband_hysteresis = 100;
 
+int16 rate_cmds_received[3];
+
 static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms)
 {
     IntOrFloat float_converter;
@@ -1385,25 +1394,6 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
         *(param_set[CAND_PID_POS_RL_WINDUP].sema) = FALSE;
     }
 
-    // Check for updated gyro offsets
-    if (*(param_set[CAND_PID_GYRO_OFFSET_EL].sema) == TRUE) {
-    	float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_EL].param;
-        cb_parms->gyro_offsets[EL] = (int16)(float_converter.float_val);
-        *(param_set[CAND_PID_GYRO_OFFSET_EL].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) == TRUE) {
-    	float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_AZ].param;
-        cb_parms->gyro_offsets[AZ] = (int16)(float_converter.float_val);
-        *(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_GYRO_OFFSET_RL].sema) == TRUE) {
-    	float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_RL].param;
-        cb_parms->gyro_offsets[ROLL] = (int16)(float_converter.float_val);
-        *(param_set[CAND_PID_GYRO_OFFSET_RL].sema) = FALSE;
-    }
-
     if ((*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE)) {
         if (*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) {
             debug_data->debug_1 = param_set[CAND_PID_DEBUG_1].param;
@@ -1457,8 +1447,48 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
     }
 #endif
 
+    // There are several sets of parameters that only make sense if we're the elevation board,
+    // such as rate commands, gyro offsets, and gopro commands
     if (board_hw_id == EL) {
-        // If we're the elevation board, check for any new GoPro commands
+        // Check for new rate commands from the copter
+        if ((*(param_set[CAND_PID_RATE_CMD_AZ].sema) == TRUE) || (*(param_set[CAND_PID_RATE_CMD_EL].sema) == TRUE) || (*(param_set[CAND_PID_RATE_CMD_RL].sema) == TRUE)) {
+            if (*(param_set[CAND_PID_RATE_CMD_AZ].sema) == TRUE) {
+                rate_cmds_received[AZ] = (int16)param_set[CAND_PID_RATE_CMD_AZ].param;
+                *(param_set[CAND_PID_RATE_CMD_AZ].sema) = FALSE;
+            }
+
+            if (*(param_set[CAND_PID_RATE_CMD_EL].sema) == TRUE) {
+                rate_cmds_received[EL] = (int16)param_set[CAND_PID_RATE_CMD_EL].param;
+                *(param_set[CAND_PID_RATE_CMD_EL].sema) = FALSE;
+            }
+
+            if (*(param_set[CAND_PID_RATE_CMD_RL].sema) == TRUE) {
+                rate_cmds_received[ROLL] = (int16)param_set[CAND_PID_RATE_CMD_RL].param;
+                *(param_set[CAND_PID_RATE_CMD_RL].sema) = FALSE;
+            }
+
+            // If any of the rate commands have been updated, run the kinematics transform and update the transformed rate commands
+            // (NOTE: in practice, all 3 rate commands should be updated at the same time, since the parameter updates come in the same message)
+            do_gyro_correction(rate_cmds_received, cb_parms->encoder_readings, cb_parms->rate_cmd_inject);
+        }
+
+        // Check for new gyro offsets from the copter
+        if (*(param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema) == TRUE) {
+            cb_parms->gyro_offsets[X_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_X_AXIS].param;
+            *(param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema) == TRUE) {
+            cb_parms->gyro_offsets[Y_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].param;
+            *(param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) == TRUE) {
+            cb_parms->gyro_offsets[Z_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].param;
+            *(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) = FALSE;
+        }
+
+        // Check for any new GoPro commands
         if (*(param_set[CAND_PID_GP_CMD].sema) == TRUE) {
             // Extract the GoPro command and parameter from the CAN parameter
             GPCmd cmd;

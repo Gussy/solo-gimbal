@@ -60,21 +60,6 @@ void MDBSendTorques(int16 az, int16 roll)
     cand_tx_multi_param(CAND_ID_ALL_AXES, &pid, combined, 1);
 }
 
-void SendGyrosToCopter(int16 az_gyro, int16 el_gyro, int16 rl_gyro)
-{
-    CAND_ParameterID pids[3];
-    pids[0] = CAND_PID_GYRO_AZ;
-    pids[1] = CAND_PID_GYRO_EL;
-    pids[2] = CAND_PID_GYRO_RL;
-
-    Uint32 params[3];
-    params[0] = az_gyro;
-    params[1] = el_gyro;
-    params[2] = rl_gyro;
-
-    cand_tx_multi_param(CAND_ID_AZ, pids, params, 3);
-}
-
 void SendDebug1ToAz(int16 debug_1, int16 debug_2, int16 debug_3)
 {
     CAND_ParameterID pids[3];

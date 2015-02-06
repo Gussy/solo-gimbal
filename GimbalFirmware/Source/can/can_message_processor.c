@@ -569,6 +569,8 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             }
             break;
 
+            //TODO: Either remove these or fix them to work with new 16-bit parameters
+            /*
             case CAND_PID_GYRO_OFFSET_EL:
             {
                 IntOrFloat float_converter;
@@ -604,6 +606,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 }
             }
             break;
+            */
 
             default:
                 AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER);
@@ -1030,6 +1033,8 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     }
                     break;
 
+                //TODO: Either remove these or fix them to work with the new 16-bit parameters
+                /*
                 case CAND_PID_GYRO_OFFSET_EL:
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
@@ -1062,6 +1067,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_GYRO_OFFSET_RL_RECVD;
                     }
                     break;
+                */
 
             }
 
