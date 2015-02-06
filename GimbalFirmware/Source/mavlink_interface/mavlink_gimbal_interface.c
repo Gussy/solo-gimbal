@@ -377,23 +377,26 @@ static void handle_gimbal_control(mavlink_message_t* received_msg)
         Uint32 rate_cmds[3] = {0, 0, 0};
         Uint32 gyro_offsets[3] = {0, 0, 0};
 
+        // Copter mapping is X roll, Y el, Z az
+
+        //TODO: Make the axis mapping more robust and less confusing
         // Gyro X rate
-        rate_cmds[AZ] = (int16)CLAMP_TO_BOUNDS(decoded_msg.ratex, (float)INT16_MIN, (float)INT16_MAX);
+        rate_cmds[AZ] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratez, (float)INT16_MIN, (float)INT16_MAX));
 
         // Gyro Y rate
-        rate_cmds[EL] = (int16)CLAMP_TO_BOUNDS(decoded_msg.ratey, (float)INT16_MIN, (float)INT16_MAX);
+        rate_cmds[EL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratey, (float)INT16_MIN, (float)INT16_MAX));
 
         // Gyro Z rate
-        rate_cmds[ROLL] = (int16)CLAMP_TO_BOUNDS(decoded_msg.ratez, (float)INT16_MIN, (float)INT16_MAX);
+        rate_cmds[ROLL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratex, (float)INT16_MIN, (float)INT16_MAX));
 
         // Gyro X offset
-        gyro_offsets[X_AXIS] = (int16)CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_x, (float)INT16_MIN, (float)INT16_MAX);
+        gyro_offsets[X_AXIS] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_z, (float)INT16_MIN, (float)INT16_MAX));
 
         // Gyro Y offset
-        gyro_offsets[Y_AXIS] = (int16)CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_y, (float)INT16_MIN, (float)INT16_MAX);
+        gyro_offsets[Y_AXIS] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_y, (float)INT16_MIN, (float)INT16_MAX));
 
         // Gyro Z offset
-        gyro_offsets[Z_AXIS] = (int16)CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_z, (float)INT16_MIN, (float)INT16_MAX);
+        gyro_offsets[Z_AXIS] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_x, (float)INT16_MIN, (float)INT16_MAX));
 
         cand_tx_multi_param(CAND_ID_EL, rate_cmd_pids, rate_cmds, 3);
         cand_tx_multi_param(CAND_ID_EL, gyro_offset_pids, gyro_offsets, 3);
@@ -415,20 +418,21 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
 
 void send_mavlink_gimbal_feedback() {
 	static mavlink_message_t feedback_msg;
+	// Copter mapping is X roll, Y el, Z az
 	mavlink_msg_gimbal_feedback_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
 			&feedback_msg,
 			0,
 			0,
 			feedback_id++,
-			latest_accel_telemetry[AZ],
 			latest_accel_telemetry[ROLL],
 			latest_accel_telemetry[EL],
-			latest_gyro_telemetry[AZ],
+			latest_accel_telemetry[AZ],
 			latest_gyro_telemetry[ROLL],
 			latest_gyro_telemetry[EL],
-			latest_encoder_telemetry[AZ],
+			latest_gyro_telemetry[AZ],
 			latest_encoder_telemetry[ROLL],
-			latest_encoder_telemetry[EL]);
+			latest_encoder_telemetry[EL],
+			latest_encoder_telemetry[AZ]);
 	send_mavlink_message(&feedback_msg);
 }
 
@@ -448,9 +452,14 @@ void send_mavlink_gopro_response(GPCmdResponse* response)
 
 void send_mavlink_debug_data(DebugData* debug_data) {
 	static mavlink_message_t debug_msg;
-	mavlink_msg_debug_vect_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
-			&debug_msg, "Debug 1", 0, (float) debug_data->debug_1,
-			(float) debug_data->debug_2, (float) debug_data->debug_3);
+	mavlink_msg_debug_vect_pack(MAVLINK_GIMBAL_SYSID,
+	        MAV_COMP_ID_GIMBAL,
+			&debug_msg,
+			"Debug 1",
+			global_timestamp_counter * 100, // Global timestamp counter is in units of 100us
+			(float) debug_data->debug_1,
+			(float) debug_data->debug_2,
+			(float) debug_data->debug_3);
 	send_mavlink_message(&debug_msg);
 }
 
