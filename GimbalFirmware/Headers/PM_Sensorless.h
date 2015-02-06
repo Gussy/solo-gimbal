@@ -175,6 +175,8 @@ interrupt void MainISR(void);
 interrupt void GyroIntISR(void);
 void power_down_motor(void);
 
+extern Uint32 global_timestamp_counter;
+
 #endif
 
 //===========================================================================

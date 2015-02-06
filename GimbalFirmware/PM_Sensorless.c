@@ -99,6 +99,9 @@ int16 TempSlope;
 Uint8 board_hw_id = 0;
 int16 DcBusVoltage;
 
+// Global timestamp counter.  Counts up by 1 every 100uS
+Uint32 global_timestamp_counter = 0;
+
 #define T (0.001/ISR_FREQUENCY)    // Samping period (sec), see parameter.h
 
 Uint8 feedback_decimator;
@@ -1615,6 +1618,9 @@ static void MainISRwork(void)
     // TODO: Measuring timing
     GpioDataRegs.GPASET.bit.GPIO28 = 1;
 	GpioDataRegs.GPASET.bit.GPIO29 = 1;
+
+	// Increment the global timestamp counter
+	global_timestamp_counter++;
 
     ISRStartTimestamp = CpuTimer2Regs.TIM.all;
 
