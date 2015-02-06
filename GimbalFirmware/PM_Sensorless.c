@@ -297,7 +297,8 @@ MotorDriveParms motor_drive_parms = {
     _IQ(0.0),                       // Iq setpoint
     0,                              // Current calibration timer
     0,                              // Pre-init timer
-    0                               // Fault revive counter
+    0,                              // Fault revive counter
+    FALSE                           // Motor drive initialized
 };
 
 Uint8 unused = FALSE;
@@ -471,7 +472,8 @@ void main(void)
 	ECap1Regs.CAP4 = SYSTEM_FREQUENCY*1000000*T/2;  //  Set Compare Value
 
     // Initialize ADC module
-    ADC_MACRO();
+    //ADC_MACRO();
+	init_adc();
 
     board_hw_id = GetBoardHWID();
 
@@ -564,8 +566,6 @@ void main(void)
 		}
 	}
 	our_version.branch = *GitBranch;
-
-	axis_parms.enable_flag = FALSE;
 
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
@@ -789,8 +789,12 @@ void A2(void) // SPARE (not used)
 	//-------------------
 }
 
-int enable_counts = 0;
-int enable_counts_max = 1667;
+int standalone_enable_counts = 0;
+int standalone_enable_counts_max = 2667;
+Uint16 standalone_enabled = FALSE;
+
+int init_counts = 0;
+int init_counts_max = 333;
 
 //-----------------------------------------
 void A3(void) // SPARE (not used)
@@ -799,19 +803,32 @@ void A3(void) // SPARE (not used)
     // Need to call the gopro interface state machine periodically
     gp_interface_state_machine();
 
-#ifdef AZ_TEST
-	if (1) {
-#else
-	if (board_hw_id == EL) {
-#endif
-		// Wait 1s before enabling the gimbal
-		if (axis_parms.enable_flag == FALSE) {
-			if (enable_counts++ >= enable_counts_max) {
-				enable_counts = 0;
-				axis_parms.enable_flag = TRUE;
+    // Initialize the system after 1s
+    // TODO: We shouldn't need to delay to do this, but there's some sort of startup
+    // sequencing issue that makes the init not work if we enable as soon as we start
+    // Need to figure out what it is and fix it
+    if (board_hw_id == AZ) {
+        if (!axis_parms.enable_flag) {
+            if (init_counts++ >= init_counts_max) {
+                init_counts = 0;
+                axis_parms.enable_flag = TRUE;
+            }
+        }
+    }
+
+#ifdef STANDALONE_MODE
+    // If we're operating in standalone mode, enable the gimbal after 5s
+	if (board_hw_id == AZ) {
+		if (!standalone_enabled) {
+			if (standalone_enable_counts++ >= standalone_enable_counts_max) {
+			    standalone_enabled = TRUE;
+				standalone_enable_counts = 0;
+				cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
+				EnableAZAxis();
 			}
 		}
 	}
+#endif
 
 	//-----------------
 	//the next time CpuTimer0 'counter' reaches Period value go to A1
@@ -1028,13 +1045,13 @@ int mavlink_heartbeat_counter = 0;
 void C3(void) // Read temperature and handle stopping motor on receipt of fault messages
 //-----------------------------------------
 {
-	DegreesC = ((((long)((AdcResult.ADCRESULT5 - (long)TempOffset*33/30) * (long)TempSlope*33/30))>>14) + 1)>>1;
+	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset*33/30) * (long)TempSlope*33/30))>>14) + 1)>>1;
 
-	DcBusVoltage = AdcResult.ADCRESULT3; // DC Bus voltage meas.
+	DcBusVoltage = AdcResult.ADCRESULT14; // DC Bus voltage meas.
 
 	// software start of conversion for temperature measurement and Bus Voltage Measurement
-	AdcRegs.ADCSOCFRC1.bit.SOC5 = 1;
-	AdcRegs.ADCSOCFRC1.bit.SOC3 = 1;
+	AdcRegs.ADCSOCFRC1.bit.SOC14 = 1;
+	AdcRegs.ADCSOCFRC1.bit.SOC15 = 1;
 
 	// TODO: Add a new graceful stop routine if it's necessary
 	/*
@@ -1507,7 +1524,7 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
 
 static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)
 {
-    encoder_parms->raw_theta = AdcResult.ADCRESULT6;
+    encoder_parms->raw_theta = AdcResult.ADCRESULT5;
     if (encoder_parms->raw_theta < 0) {
         encoder_parms->raw_theta += ANALOG_POT_MECH_DIVIDER;
     } else if (encoder_parms->raw_theta > ANALOG_POT_MECH_DIVIDER) {
@@ -1645,7 +1662,7 @@ static void MainISRwork(void)
         // ------------------------------------------------------------------------------
 #ifdef F2806x_DEVICE_H
         motor_drive_parms.clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-motor_drive_parms.cal_offset_A)*2); // Phase A curr.
-        motor_drive_parms.clarke_xform_parms.Bs=(((AdcResult.ADCRESULT2)*0.00024414-motor_drive_parms.cal_offset_B)*2); // Phase B curr.
+        motor_drive_parms.clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-motor_drive_parms.cal_offset_B)*2); // Phase B curr.
 #endif                                                         // ((ADCmeas(q12)/2^12)-0.5)*2
 
 #ifdef DSP2803x_DEVICE_H
@@ -1908,6 +1925,20 @@ Uint16 GetEnableFlag(void)
 Uint16 GetAxisParmsLoaded(void)
 {
     return axis_parms.all_init_params_recvd;
+}
+
+void EnableAZAxis(void)
+{
+    if (motor_drive_parms.md_initialized) {
+        motor_drive_parms.motor_drive_state = STATE_RUNNING;
+    }
+}
+
+void RelaxAZAxis(void)
+{
+    if (motor_drive_parms.md_initialized) {
+        motor_drive_parms.motor_drive_state = STATE_DISABLED;
+    }
 }
 
 //===========================================================================

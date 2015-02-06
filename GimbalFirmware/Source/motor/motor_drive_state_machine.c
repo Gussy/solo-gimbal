@@ -87,9 +87,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // Enable periodic transmission of the BIT CAN message
             axis_parms->BIT_heartbeat_enable = TRUE;
 
-            // If we're the EL board, transmit an enable message to the other boards
-            if (GetBoardHWID() == EL) {
-                cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
+            // If we're the AZ board, transmit an init message to the other boards
+            if (GetBoardHWID() == AZ) {
+                cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
             }
 
             //TODO: Temporarily sequencing the initialization of the different axes
@@ -180,7 +180,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             switch (md_parms->motor_drive_state) {
             case STATE_COMMAND_AZ_INIT:
-                cand_tx_command(CAND_ID_AZ, CAND_CMD_ENABLE);
+                cand_tx_command(CAND_ID_AZ, CAND_CMD_INIT);
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AZ_INIT;
                 break;
 
@@ -191,7 +191,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 break;
 
             case STATE_COMMAND_ROLL_INIT:
-                cand_tx_command(CAND_ID_ROLL, CAND_CMD_ENABLE);
+                cand_tx_command(CAND_ID_ROLL, CAND_CMD_INIT);
                 md_parms->motor_drive_state = STATE_WAIT_FOR_ROLL_INIT;
                 break;
 
@@ -288,9 +288,11 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                         pos_loop_stage_1->el_avg,
                         pos_loop_stage_1->rl_avg);
 
-                // Now we're ready to move to the running state
+                // Now we're ready to move to the disabled state
+                // We wait for a command to move to the running state
                 cb_parms->enabled = TRUE;
-                md_parms->motor_drive_state = STATE_RUNNING;
+                md_parms->md_initialized = TRUE;
+                md_parms->motor_drive_state = STATE_DISABLED;
                 axis_parms->blink_state = BLINK_READY;
             } else {
                 // Send a zero torque command to the other axes to generate an encoder response
