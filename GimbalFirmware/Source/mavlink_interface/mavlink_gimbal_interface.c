@@ -401,7 +401,7 @@ static void handle_gimbal_control(mavlink_message_t* received_msg)
         gyro_offsets[Z_AXIS] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_x, (float)INT16_MIN, (float)INT16_MAX));
 
         cand_tx_multi_param(CAND_ID_EL, rate_cmd_pids, rate_cmds, 3);
-        cand_tx_multi_param(CAND_ID_EL, gyro_offset_pids, gyro_offsets, 3);
+        //cand_tx_multi_param(CAND_ID_EL, gyro_offset_pids, gyro_offsets, 3);
 
         // The first time we get a rate command, we want to enable the gimbal axes (we start out disabled)
         if (!rate_cmd_received) {
