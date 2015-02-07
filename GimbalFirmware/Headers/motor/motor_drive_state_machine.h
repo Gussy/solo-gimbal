@@ -54,6 +54,7 @@ typedef struct {
     Uint32 current_cal_timer;
     Uint32 pre_init_timer;
     Uint32 fault_revive_counter;
+    Uint16 md_initialized;
 } MotorDriveParms;
 
 void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set, RunningAvgFilterParms* pos_loop_stage_1, RunningAvgFilterParms* pos_loop_stage_2, AveragePowerFilterParms* pf_parms, LoadAxisParmsStateInfo* load_ap_state_info);

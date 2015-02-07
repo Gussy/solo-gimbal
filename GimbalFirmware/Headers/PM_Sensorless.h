@@ -174,6 +174,8 @@ int16 CorrectEncoderError(int16 raw_error);
 interrupt void MainISR(void);
 interrupt void GyroIntISR(void);
 void power_down_motor(void);
+void EnableAZAxis(void);
+void RelaxAZAxis(void);
 
 extern Uint32 global_timestamp_counter;
 

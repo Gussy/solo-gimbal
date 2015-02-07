@@ -35,10 +35,11 @@ void HomingCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* enco
             cb_parms->axes_homed[GetBoardHWID()] = TRUE;
             if (GetBoardHWID() == EL) {
                 // If we're the EL board, we need to wait for the other axes to indicate that they've finished homing before
-                // we enable the rate loops.  Otherwise, we can just start running our own torque loop
+                // we enable the rate loops.  Otherwise, we move to the disabled state and wait for a command to set us to actively running
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
             } else {
-                md_parms->motor_drive_state = STATE_RUNNING;
+                md_parms->md_initialized = TRUE;
+                md_parms->motor_drive_state = STATE_DISABLED;
                 axis_parms->blink_state = BLINK_READY;
             }
 #else
@@ -276,7 +277,9 @@ void HomingCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* enco
                     if (GetBoardHWID() == EL) { // EL axis is control board
                         md_parms->motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
                     } else {
-                        md_parms->motor_drive_state = STATE_RUNNING;
+                        // Move to disabled state, and wait for a command to move to the running state
+                        md_parms->md_initialized = TRUE;
+                        md_parms->motor_drive_state = STATE_DISABLED;
                         axis_parms->blink_state = BLINK_READY;
                     }
                 }

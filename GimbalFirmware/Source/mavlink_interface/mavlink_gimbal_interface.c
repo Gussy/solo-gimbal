@@ -43,6 +43,8 @@ float latest_gyro_telemetry[3] = {0, 0, 0};
 float latest_accel_telemetry[3] = {0, 0, 0};
 Uint16 telem_received = 0;
 
+Uint16 rate_cmd_received = FALSE;
+
 float targets[3] = { 0, 0, 0 };
 
 MavlinkProcessingState mavlink_state = MAVLINK_STATE_PARSE_INPUT;
@@ -232,7 +234,7 @@ void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_enco
 
 void receive_gyro_az_telemetry(int32 az_gyro)
 {
-    latest_gyro_telemetry[AZ] = GYRO_FORMAT_TO_RAD_S(az_gyro);
+    latest_gyro_telemetry[AZ] = GYRO_FORMAT_TO_RAD_S(az_gyro) / 1000.0;
 
     telem_received |= GYRO_AZ_TELEM_RECEIVED;
 
@@ -245,7 +247,7 @@ void receive_gyro_az_telemetry(int32 az_gyro)
 
 void receive_gyro_el_telemetry(int32 el_gyro)
 {
-    latest_gyro_telemetry[EL] = GYRO_FORMAT_TO_RAD_S(el_gyro);
+    latest_gyro_telemetry[EL] = GYRO_FORMAT_TO_RAD_S(el_gyro) / 1000.0;
 
     telem_received |= GYRO_EL_TELEM_RECEIVED;
 
@@ -258,7 +260,7 @@ void receive_gyro_el_telemetry(int32 el_gyro)
 
 void receive_gyro_rl_telemetry(int32 rl_gyro)
 {
-    latest_gyro_telemetry[ROLL] = GYRO_FORMAT_TO_RAD_S(rl_gyro);
+    latest_gyro_telemetry[ROLL] = GYRO_FORMAT_TO_RAD_S(rl_gyro) / 1000.0;
 
     telem_received |= GYRO_RL_TELEM_RECEIVED;
 
@@ -399,7 +401,16 @@ static void handle_gimbal_control(mavlink_message_t* received_msg)
         gyro_offsets[Z_AXIS] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_x, (float)INT16_MIN, (float)INT16_MAX));
 
         cand_tx_multi_param(CAND_ID_EL, rate_cmd_pids, rate_cmds, 3);
-        //cand_tx_multi_param(CAND_ID_EL, gyro_offset_pids, gyro_offsets, 3);
+        cand_tx_multi_param(CAND_ID_EL, gyro_offset_pids, gyro_offsets, 3);
+
+        // The first time we get a rate command, we want to enable the gimbal axes (we start out disabled)
+        if (!rate_cmd_received) {
+            // Enable the other two axes
+            cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
+            // Enable ourselves
+            EnableAZAxis();
+            rate_cmd_received = TRUE;
+        }
     }
 }
 
