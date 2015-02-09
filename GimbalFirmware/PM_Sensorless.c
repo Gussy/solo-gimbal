@@ -184,7 +184,8 @@ AxisParms axis_parms = {
     0,                      // BIT Heartbeat decimate
     FALSE,                  // All init params received
     {FALSE, FALSE, FALSE},  // Other axis heartbeats received
-    {FALSE, FALSE, FALSE}   // Other axis init params received
+    {FALSE, FALSE, FALSE},  // Other axis init params received
+    0                       // Other axis init retry counter
 };
 
 ControlBoardParms control_board_parms = {
@@ -214,7 +215,9 @@ ControlBoardParms control_board_parms = {
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
-    LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KP,    // Load axis parms state
+    0,                                          // Current param to load
+    0,                                          // Total params to load (initialized in init function)
+    REQUEST_RETRY_PERIOD,                       // Request retry counter
     0x0000,                                     // Init param received flags 1
     0x0000,                                     // Init param received flags 2
     0x0000,                                     // Init param received flags 3
@@ -430,6 +433,11 @@ void main(void)
 	cand_init();
 
 	init_param_set();
+
+	// Only El and Roll load parameters over CAN
+	if ((board_hw_id == EL) || (board_hw_id == ROLL)) {
+	    InitAxisParmsLoader(&load_ap_state_info);
+	}
     // Only used if running from FLASH
     // Note that the variable FLASH is defined by the compiler
     // (see TwoChannelBuck.pjt file)
@@ -474,8 +482,6 @@ void main(void)
     // Initialize ADC module
     //ADC_MACRO();
 	init_adc();
-
-    board_hw_id = GetBoardHWID();
 
     if (board_hw_id == EL) {
         // Initialize Gyro
@@ -566,6 +572,10 @@ void main(void)
 		}
 	}
 	our_version.branch = *GitBranch;
+
+	if (board_hw_id == AZ) {
+	    axis_parms.enable_flag = TRUE;
+	}
 
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
@@ -802,19 +812,6 @@ void A3(void) // SPARE (not used)
 {
     // Need to call the gopro interface state machine periodically
     gp_interface_state_machine();
-
-    // Initialize the system after 1s
-    // TODO: We shouldn't need to delay to do this, but there's some sort of startup
-    // sequencing issue that makes the init not work if we enable as soon as we start
-    // Need to figure out what it is and fix it
-    if (board_hw_id == AZ) {
-        if (!axis_parms.enable_flag) {
-            if (init_counts++ >= init_counts_max) {
-                init_counts = 0;
-                axis_parms.enable_flag = TRUE;
-            }
-        }
-    }
 
 #ifdef STANDALONE_MODE
     // If we're operating in standalone mode, enable the gimbal after 5s
@@ -1844,18 +1841,7 @@ static void MainISRwork(void)
         } else {
         	RateLoopElapsedTime = (mSec50 - RateLoopEndTimestamp) + RateLoopStartTimestamp;
         }
-
-
     }
-
-    //TODO: Remove this if new gimbal feedback code works
-    /*
-	if ((board_hw_id == AZ) && (++feedback_decimator == 100)) {
-		send_mavlink_gimbal_feedback();
-		feedback_decimator = 0;
-	}
-	*/
-
 
     ISREndTimestamp = CpuTimer2Regs.TIM.all;
 

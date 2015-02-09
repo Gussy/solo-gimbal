@@ -474,6 +474,18 @@ void send_mavlink_debug_data(DebugData* debug_data) {
 	send_mavlink_message(&debug_msg);
 }
 
+void send_mavlink_statustext(char* message)
+{
+    static mavlink_message_t status_msg;
+    mavlink_msg_statustext_pack(MAVLINK_GIMBAL_SYSID,
+            MAV_COMP_ID_GIMBAL,
+            &status_msg,
+            MAV_SEVERITY_DEBUG,
+            message);
+
+    send_mavlink_message(&status_msg);
+}
+
 void send_mavlink_message(mavlink_message_t* msg) {
 	uint16_t message_len = mavlink_msg_to_send_buffer(message_buffer, msg);
 

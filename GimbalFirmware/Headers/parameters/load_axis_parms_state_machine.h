@@ -11,6 +11,13 @@
 #include "PeripheralHeaderIncludes.h"
 #include "PM_Sensorless.h"
 #include "hardware/HWSpecific.h"
+#include "can/cand_BitFields.h"
+
+#define TOTAL_LOADABLE_PARAMS 30
+#define EL_PARAMS_TO_LOAD 30
+#define RL_PARAMS_TO_LOAD 18
+// The request retry period is in ticks of the main torque loop update rate (currently 10kHz)
+#define REQUEST_RETRY_PERIOD 1000
 
 #define ALL_INIT_PARAMS_RECVD_1 0x0FFF
 #define ALL_INIT_PARAMS_RECVD_2 0x003F
@@ -65,30 +72,23 @@ typedef enum {
     INIT_PARAM_GYRO_OFFSET_RL_RECVD = 0x4000
 } InitParamRecvdFlags3;
 
-typedef enum {
-    LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KP,
-    LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KI,
-    LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KD,
-    LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_SLOPE,
-    LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_INTERCEPT,
-    LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_HOME_OFFSET,
-    LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_EL,
-    LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_AZ,
-    LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_ROLL,
-    LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_EL,
-    LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_AZ,
-    LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_RL,
-    LOAD_AXIS_PARMS_STATE_REQUEST_GYRO_OFFSETS
-} InitAxisParmsState;
+typedef struct {
+    CAND_ParameterID request_param;
+    Uint16* recvd_flags_loc;
+    Uint16 recvd_flag_mask;
+} LoadParamEntry;
 
 typedef struct {
-    InitAxisParmsState load_axis_parms_state;
+    int current_param_to_load;
+    int total_params_to_load;
+    int request_retry_counter;
     Uint16 init_param_recvd_flags_1;
     Uint16 init_param_recvd_flags_2;
     Uint16 init_param_recvd_flags_3;
     Uint16 axis_parms_load_complete;
 } LoadAxisParmsStateInfo;
 
+void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info);
 void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* init_parms_state_info);
 
 #endif /* INIT_AXIS_PARMS_STATE_MACHINE_H_ */

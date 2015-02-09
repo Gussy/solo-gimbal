@@ -119,6 +119,7 @@ typedef struct {
     Uint16 all_init_params_recvd;
     Uint16 other_axis_hb_recvd[AXIS_CNT];
     Uint16 other_axis_init_params_recvd[AXIS_CNT];
+    int other_axis_enable_retry_counter;
 } AxisParms;
 
 typedef struct {
