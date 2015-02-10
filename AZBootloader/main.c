@@ -572,6 +572,8 @@ Uint32 MAVLINK_Flash()
 	FLASH_ST FlashStatus = {0};
 	Uint16  Status;
 	Uint16  *Flash_ptr = (Uint16 *)0x3DC000;     // Pointer to a location in flash
+	Uint16 blink_state = 0;
+    Uint16 blink_counter = 20;
 
 	memset(&msg,0,sizeof(msg));
 	memset(&status,0,sizeof(status));
@@ -659,6 +661,19 @@ Uint32 MAVLINK_Flash()
 				}
 			}
 		}
+
+		// If we're here, we've timed out and are about to send another mavlink request for a boot image
+		// Toggle the LED in here to show that we're doing something
+        if (++blink_counter >= 20) {
+            if (blink_state == 0) {
+                GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
+                blink_state = 1;
+            } else {
+                GpioDataRegs.GPASET.bit.GPIO7 = 1;
+                blink_state = 0;
+            }
+            blink_counter = 0;
+        }
 	}
 	// reset?
 	return 0;
@@ -840,54 +855,59 @@ void DeviceInit()
 
 	SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 1;    // ADC
 
-	// Configure the hardware ID pins first.  This is done out of order because some of the
-	// pins are configured differently depending on which board we're dealing with
-	//--------------------------------------------------------------------------------------
-	//  GPIO-20 - PIN FUNCTION = ID Pin 0
-	   GpioCtrlRegs.GPAMUX2.bit.GPIO20 = 0;    // 0=GPIO,  1=EQEP1A,  2=MDXA,  3=COMP1OUT
-	   GpioCtrlRegs.GPADIR.bit.GPIO20 = 0;     // 1=OUTput,  0=INput
-	   GpioCtrlRegs.GPAPUD.bit.GPIO20 = 0;                // Enable internal pullups
-	//  GpioDataRegs.GPACLEAR.bit.GPIO20 = 1;   // uncomment if --> Set Low initially
-	//  GpioDataRegs.GPASET.bit.GPIO20 = 1;     // uncomment if --> Set High initially
-	//--------------------------------------------------------------------------------------
-	//  GPIO-21 - PIN FUNCTION = ID Pin 1
-	   GpioCtrlRegs.GPAMUX2.bit.GPIO21 = 0;    // 0=GPIO,  1=EQEP1B,  2=MDRA,  3=COMP2OUT
-	   GpioCtrlRegs.GPADIR.bit.GPIO21 = 0;     // 1=OUTput,  0=INput
-	   GpioCtrlRegs.GPAPUD.bit.GPIO21 = 0;                // Enable internal pullups
-	//  GpioDataRegs.GPACLEAR.bit.GPIO21 = 1;   // uncomment if --> Set Low initially
-	//  GpioDataRegs.GPASET.bit.GPIO21 = 1;     // uncomment if --> Set High initially
-	//--------------------------------------------------------------------------------------
+    // Configure the hardware ID pins first.  This is done out of order because some of the
+    // pins are configured differently depending on which board we're dealing with
+    //--------------------------------------------------------------------------------------
+    //  GPIO-20 - PIN FUNCTION = ID Pin 0
+        GpioCtrlRegs.GPAMUX2.bit.GPIO20 = 0;    // 0=GPIO,  1=EQEP1A,  2=MDXA,  3=COMP1OUT
+        GpioCtrlRegs.GPADIR.bit.GPIO20 = 0;     // 1=OUTput,  0=INput
+        GpioCtrlRegs.GPAPUD.bit.GPIO20 = 0;     // Enable internal pullups
+    //  GpioDataRegs.GPACLEAR.bit.GPIO20 = 1;   // uncomment if --> Set Low initially
+    //  GpioDataRegs.GPASET.bit.GPIO20 = 1;     // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
+    //  GPIO-21 - PIN FUNCTION = ID Pin 1
+        GpioCtrlRegs.GPAMUX2.bit.GPIO21 = 0;    // 0=GPIO,  1=EQEP1B,  2=MDRA,  3=COMP2OUT
+        GpioCtrlRegs.GPADIR.bit.GPIO21 = 0;     // 1=OUTput,  0=INput
+        GpioCtrlRegs.GPAPUD.bit.GPIO21 = 0;     // Enable internal pullups
+    //  GpioDataRegs.GPACLEAR.bit.GPIO21 = 1;   // uncomment if --> Set Low initially
+    //  GpioDataRegs.GPASET.bit.GPIO21 = 1;     // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
     // SCI-B is used for MAVLink communication with the parent system
-        SysCtrlRegs.PCLKCR0.bit.SCIAENCLK = 0;   // SCI-A
+        SysCtrlRegs.PCLKCR0.bit.SCIAENCLK = 0;  // SCI-A
         SysCtrlRegs.PCLKCR0.bit.SCIBENCLK = 1;	// SCI-B
-	// If this is the AZ board, GPIOs 16, 17, 18 and 19 get configured as SCI pins
-	//--------------------------------------------------------------------------------------
-	//  GPIO-16 - PIN FUNCTION = RTS in from copter
-		GpioCtrlRegs.GPAMUX2.bit.GPIO16 = 0;    // 0=GPIO, 1=SPISIMOA, 2=Resv CAN-B, 3=TZ2n
-		GpioCtrlRegs.GPADIR.bit.GPIO16 = 0;     // 1=OUTput,  0=INput
-	//  GpioDataRegs.GPACLEAR.bit.GPIO16 = 1;   // uncomment if --> Set Low initially
-	//  GpioDataRegs.GPASET.bit.GPIO16 = 1;     // uncomment if --> Set High initially
-	//--------------------------------------------------------------------------------------
-	//  GPIO-17 - PIN FUNCTION = CTS out to copter
-		GpioCtrlRegs.GPAMUX2.bit.GPIO17 = 0;    // 0=GPIO, 1=SPISOMIA, 2=Resv CAN-B, 3=TZ3n
-		GpioCtrlRegs.GPADIR.bit.GPIO17 = 1;     // 1=OUTput,  0=INput
-		GpioDataRegs.GPACLEAR.bit.GPIO17 = 1;   // uncomment if --> Set Low initially
-	//  GpioDataRegs.GPASET.bit.GPIO17 = 1;     // uncomment if --> Set High initially
-	//--------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------
-	//  GPIO-18 - PIN FUNCTION = Tx to copter
-		GpioCtrlRegs.GPAMUX2.bit.GPIO18 = 2;    // 0=GPIO, 1=SPICLKA, 2=SCITXDB, 3=XCLKOUT
-	//  GpioCtrlRegs.GPADIR.bit.GPIO18 = 0;     // 1=OUTput,  0=INput
-	//  GpioDataRegs.GPACLEAR.bit.GPIO18 = 1;   // uncomment if --> Set Low initially
-	//  GpioDataRegs.GPASET.bit.GPIO18 = 1;     // uncomment if --> Set High initially
-	//--------------------------------------------------------------------------------------
-	//  GPIO-19 - PIN FUNCTION = Rx from copter
-		GpioCtrlRegs.GPAMUX2.bit.GPIO19 = 2;    // 0=GPIO, 1=SPISTEA, 2=SCIRXDB, 3=ECAP1
-	//  GpioCtrlRegs.GPADIR.bit.GPIO19 = 1;     // 1=OUTput,  0=INput
-	//  GpioDataRegs.GPACLEAR.bit.GPIO19 = 1;   // uncomment if --> Set Low initially
-	//  GpioDataRegs.GPASET.bit.GPIO19 = 1;     // uncomment if --> Set High initially
-	//--------------------------------------------------------------------------------------
-		EDIS;
+    // If this is the AZ board, GPIOs 16, 17, 18 and 19 get configured as SCI pins
+    //--------------------------------------------------------------------------------------
+    //  GPIO-16 - PIN FUNCTION = RTS in from copter
+        GpioCtrlRegs.GPAMUX2.bit.GPIO16 = 0;    // 0=GPIO, 1=SPISIMOA, 2=Resv CAN-B, 3=TZ2n
+        GpioCtrlRegs.GPADIR.bit.GPIO16 = 0;     // 1=OUTput,  0=INput
+    //  GpioDataRegs.GPACLEAR.bit.GPIO16 = 1;   // uncomment if --> Set Low initially
+    //  GpioDataRegs.GPASET.bit.GPIO16 = 1;     // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
+    //  GPIO-17 - PIN FUNCTION = CTS out to copter
+        GpioCtrlRegs.GPAMUX2.bit.GPIO17 = 0;    // 0=GPIO, 1=SPISOMIA, 2=Resv CAN-B, 3=TZ3n
+        GpioCtrlRegs.GPADIR.bit.GPIO17 = 1;     // 1=OUTput,  0=INput
+        GpioDataRegs.GPACLEAR.bit.GPIO17 = 1;   // uncomment if --> Set Low initially
+    //  GpioDataRegs.GPASET.bit.GPIO17 = 1;     // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
+    //  GPIO-7 - PIN FUNCTION = User LED (Active Low)
+        GpioCtrlRegs.GPAMUX1.bit.GPIO7 = 0;     // 0=GPIO, 1=EPWM4B, 2=SCIRXDA, 3=ECAP2
+        GpioCtrlRegs.GPADIR.bit.GPIO7 = 1;      // 1=OUTput,  0=INput
+    //  GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;    // uncomment if --> Set Low initially
+        GpioDataRegs.GPASET.bit.GPIO7 = 1;      // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
+    //  GPIO-18 - PIN FUNCTION = Tx to copter
+        GpioCtrlRegs.GPAMUX2.bit.GPIO18 = 2;    // 0=GPIO, 1=SPICLKA, 2=SCITXDB, 3=XCLKOUT
+    //  GpioCtrlRegs.GPADIR.bit.GPIO18 = 0;     // 1=OUTput,  0=INput
+    //  GpioDataRegs.GPACLEAR.bit.GPIO18 = 1;   // uncomment if --> Set Low initially
+    //  GpioDataRegs.GPASET.bit.GPIO18 = 1;     // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
+    //  GPIO-19 - PIN FUNCTION = Rx from copter
+        GpioCtrlRegs.GPAMUX2.bit.GPIO19 = 2;    // 0=GPIO, 1=SPISTEA, 2=SCIRXDB, 3=ECAP1
+    //  GpioCtrlRegs.GPADIR.bit.GPIO19 = 1;     // 1=OUTput,  0=INput
+    //  GpioDataRegs.GPACLEAR.bit.GPIO19 = 1;   // uncomment if --> Set Low initially
+    //  GpioDataRegs.GPASET.bit.GPIO19 = 1;     // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
+    EDIS;
 
 }
 
