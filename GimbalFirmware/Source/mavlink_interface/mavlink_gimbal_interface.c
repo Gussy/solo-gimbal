@@ -429,9 +429,9 @@ void send_mavlink_gimbal_feedback() {
 			latest_gyro_telemetry[ROLL],
 			latest_gyro_telemetry[EL],
 			latest_gyro_telemetry[AZ],
+			latest_encoder_telemetry[AZ],
 			latest_encoder_telemetry[ROLL],
-			latest_encoder_telemetry[EL],
-			latest_encoder_telemetry[AZ]);
+			latest_encoder_telemetry[EL]);
 	send_mavlink_message(&feedback_msg);
 }
 
