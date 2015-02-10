@@ -381,10 +381,10 @@ static void handle_gimbal_control(mavlink_message_t* received_msg)
 
         //TODO: Make the axis mapping more robust and less confusing
         // Gyro X rate
-        rate_cmds[AZ] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratez, (float)INT16_MIN, (float)INT16_MAX));
+        rate_cmds[EL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratez, (float)INT16_MIN, (float)INT16_MAX));
 
         // Gyro Y rate
-        rate_cmds[EL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratey, (float)INT16_MIN, (float)INT16_MAX));
+        rate_cmds[AZ] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratey, (float)INT16_MIN, (float)INT16_MAX));
 
         // Gyro Z rate
         rate_cmds[ROLL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratex, (float)INT16_MIN, (float)INT16_MAX));
