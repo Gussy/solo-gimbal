@@ -38,7 +38,7 @@ float pitch = 0.0;
 float yaw = 0.0;
 
 // Encoder, Gyro, and Accelerometer telemetry
-int16 latest_encoder_telemetry[3] = {0, 0, 0};
+float latest_encoder_telemetry[3] = {0, 0, 0};
 float latest_gyro_telemetry[3] = {0, 0, 0};
 float latest_accel_telemetry[3] = {0, 0, 0};
 Uint16 telem_received = 0;
@@ -219,9 +219,9 @@ static void process_mavlink_input() {
 
 void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder)
 {
-    latest_encoder_telemetry[AZ] = az_encoder;
-    latest_encoder_telemetry[EL] = el_encoder;
-    latest_encoder_telemetry[ROLL] = rl_encoder;
+    latest_encoder_telemetry[AZ] = ENCODER_FORMAT_TO_RAD(az_encoder);
+    latest_encoder_telemetry[EL] = ENCODER_FORMAT_TO_RAD(el_encoder);
+    latest_encoder_telemetry[ROLL] = ENCODER_FORMAT_TO_RAD(rl_encoder);
 
     telem_received |= ENCODER_TELEM_RECEIVED;
 
@@ -375,9 +375,7 @@ static void handle_gimbal_control(mavlink_message_t* received_msg)
     // Make sure the message was for us.  If it was, send the various parameters over CAN
     if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         CAND_ParameterID rate_cmd_pids[3] = {CAND_PID_RATE_CMD_AZ, CAND_PID_RATE_CMD_EL, CAND_PID_RATE_CMD_RL};
-        CAND_ParameterID gyro_offset_pids[3] = {CAND_PID_GYRO_OFFSET_X_AXIS, CAND_PID_GYRO_OFFSET_Y_AXIS, CAND_PID_GYRO_OFFSET_Z_AXIS};
         Uint32 rate_cmds[3] = {0, 0, 0};
-        Uint32 gyro_offsets[3] = {0, 0, 0};
 
         // Copter mapping is X roll, Y el, Z az
 
@@ -391,17 +389,7 @@ static void handle_gimbal_control(mavlink_message_t* received_msg)
         // Gyro Z rate
         rate_cmds[ROLL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratex, (float)INT16_MIN, (float)INT16_MAX));
 
-        // Gyro X offset
-        gyro_offsets[X_AXIS] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_z, (float)INT16_MIN, (float)INT16_MAX));
-
-        // Gyro Y offset
-        gyro_offsets[Y_AXIS] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_y, (float)INT16_MIN, (float)INT16_MAX));
-
-        // Gyro Z offset
-        gyro_offsets[Z_AXIS] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.gyro_cal_x, (float)INT16_MIN, (float)INT16_MAX));
-
         cand_tx_multi_param(CAND_ID_EL, rate_cmd_pids, rate_cmds, 3);
-        //cand_tx_multi_param(CAND_ID_EL, gyro_offset_pids, gyro_offsets, 3);
 
         // The first time we get a rate command, we want to enable the gimbal axes (we start out disabled)
         if (!rate_cmd_received) {
