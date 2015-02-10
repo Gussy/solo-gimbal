@@ -49,7 +49,7 @@ void InitGyro()
     DELAY_US(INTER_COMMAND_DELAY);
 
     // Put the accelerometers into standby mode (aren't using them for now)
-    SpiWriteReg8Bit(&gyro_spi_desc, MPU_PWR_MGMT_2_REG, ACCEL_X_STBY | ACCEL_Y_STBY | ACCEL_Z_STBY);
+    //SpiWriteReg8Bit(&gyro_spi_desc, MPU_PWR_MGMT_2_REG, ACCEL_X_STBY | ACCEL_Y_STBY | ACCEL_Z_STBY);
 
     DELAY_US(INTER_COMMAND_DELAY);
 
@@ -65,6 +65,11 @@ void InitGyro()
 
     // Select gyro 500 deg/s full scale range
     SpiWriteReg8Bit(&gyro_spi_desc, MPU_GYRO_CONFIG_REG, GYRO_FS_500);
+
+    DELAY_US(INTER_COMMAND_DELAY);
+
+    // Select accelerometer 4G full scale range
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_ACCEL_CONFIG_REG, ACCEL_FS_4G);
 
     DELAY_US(INTER_COMMAND_DELAY);
 
@@ -133,6 +138,51 @@ void ReadGyro(int16* gyro_x, int16* gyro_y, int16* gyro_z)
     *gyro_x = (int16)(((response1 << 8) & 0xFF00) | ((response2 >> 8) & 0x00FF));
     *gyro_y = (int16)(((response2 << 8) & 0xFF00) | ((response3 >> 8) & 0x00FF));
     *gyro_z = (int16)(((response3 << 8) & 0xFF00) | ((response4 >> 8) & 0x00FF));
+
+    return;
+}
+
+void ReadAccel(int16* accel_x, int16* accel_y, int16* accel_z)
+{
+    Uint16 response1 = 0;
+    Uint16 response2 = 0;
+    Uint16 response3 = 0;
+    Uint16 response4 = 0;
+
+    // Take the slave select line low to begin the transaction
+    // NOTE: It's important to read all of these registers in one transaction
+    // to ensure that all data comes from the same sample (the MPU-6K guarantees
+    // this by returning results from a shadow register set that is only updated
+    // when the SPI interface is idle)
+    SSAssert(&gyro_spi_desc);
+
+    // Need at least 8ns set up time
+    DELAY_US(1);
+
+    // Perform the burst read of the accelerometer registers
+
+    // Read accelerometer x high byte
+    response1 = SpiSendRecvAddressedReg(&gyro_spi_desc, MPU_ACCEL_XOUT_H_REG, 0x00, SPI_READ);
+
+    // Read accelerometer x low byte and accelerometer y high byte
+    response2 = SpiSendRecvAddressedReg(&gyro_spi_desc, 0x00, 0x00, SPI_READ);
+
+    // Read accelerometer y low byte and accelerometer z high byte
+    response3 = SpiSendRecvAddressedReg(&gyro_spi_desc, 0x00, 0x00, SPI_READ);
+
+    // Read accelerometer z low byte (and 1 byte of garbage)
+    response4 = SpiSendRecvAddressedReg(&gyro_spi_desc, 0x00, 0x00, SPI_READ);
+
+    // Need at least 500ns hold time
+    DELAY_US(1);
+
+    // Take the slave select line high to complete the transaction
+    SSDeassert(&gyro_spi_desc);
+
+    // Unpack and return the results
+    *accel_x = (int16)(((response1 << 8) & 0xFF00) | ((response2 >> 8) & 0x00FF));
+    *accel_y = (int16)(((response2 << 8) & 0xFF00) | ((response3 >> 8) & 0x00FF));
+    *accel_z = (int16)(((response3 << 8) & 0xFF00) | ((response4 >> 8) & 0x00FF));
 
     return;
 }

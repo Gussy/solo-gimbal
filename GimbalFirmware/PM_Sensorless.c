@@ -193,6 +193,7 @@ ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Corrected gyro readings
     {0, 0, 0},                                              // Gyro offsets
     {0, 0, 0},                                              // Integrated raw gyro readings
+    {0, 0, 0},                                              // Integrated raw accelerometer readings
     {0, 0, 0},                                              // Encoder readings
     {0, 0, 0},                                              // Motor torques
     {0, 0, 0},                                              // Unfiltered position errors
@@ -209,7 +210,7 @@ ControlBoardParms control_board_parms = {
     0,                                                      // 2nd stage position loop decimation counter
     {0, 0, 0},                                              // Tuning rate inject
     {0, 0, 0},                                              // Rate command inject
-    READ_GYRO_PASS_1,                                       // Rate loop pass
+    READ_GYRO_PASS,                                         // Rate loop pass
     FALSE,                                                  // Initialized
     FALSE                                                   // Enabled
 };
@@ -1830,7 +1831,7 @@ static void MainISRwork(void)
         RunRateLoops(&control_board_parms, param_set, &pos_loop_filter_parms_stage_1, &pos_loop_filter_parms_stage_2, &balance_proc_parms);
 
         // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
-        if (control_board_parms.rate_loop_pass == READ_GYRO_PASS_1) {
+        if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
         	GyroDataReadyFlag = FALSE;
         }
 
@@ -1853,6 +1854,25 @@ static void MainISRwork(void)
 
     if (ISRElapsedTime > MaxISRElapsedTime) {
         MaxISRElapsedTime = ISRElapsedTime;
+    }
+
+    static int debug_output_decimation = 0;
+    static int max_time_reset_counter = 0;
+    if (board_hw_id == EL) {
+        if (++debug_output_decimation >= 10000) {
+            debug_output_decimation = 0;
+            Uint8 debug_info[4];
+            debug_info[0] = (MaxISRElapsedTime >> 8) & 0x000000FF;
+            debug_info[1] = (MaxISRElapsedTime & 0x000000FF);
+            debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
+            debug_info[3] = (MissedInterrupts & 0x000000FF);
+            //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
+
+            if (++max_time_reset_counter >= 5) {
+                max_time_reset_counter = 0;
+                MaxISRElapsedTime = 0;
+            }
+        }
     }
 
     // TODO: Testing timing

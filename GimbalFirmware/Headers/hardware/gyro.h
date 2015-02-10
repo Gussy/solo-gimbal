@@ -13,6 +13,7 @@
 
 void InitGyro();
 void ReadGyro(int16* gyro_x, int16* gyro_y, int16* gyro_z);
+void ReadAccel(int16* accel_x, int16* accel_y, int16* accel_z);
 Uint32 ReadGyroPass1();
 Uint32 ReadGyroPass2();
 //Uint8 ReadGyroIntStatus();
@@ -21,10 +22,17 @@ Uint32 ReadGyroPass2();
 #define MPU_SMPRT_DIV_REG 0x19
 #define MPU_CONFIG_REG 0x1A
 #define MPU_GYRO_CONFIG_REG 0x1B
+#define MPU_ACCEL_CONFIG_REG 0x1C
 #define MPU_FIFO_EN_REG 0x23
 #define MPU_INT_PIN_CFG_REG 0x37
 #define MPU_INT_ENABLE_REG 0x38
 #define MPU_INT_STATUS_REG 0x3A
+#define MPU_ACCEL_XOUT_H_REG 0x3B
+#define MPU_ACCEL_XOUT_L_REG 0x3C
+#define MPU_ACCEL_YOUT_H_REG 0x3D
+#define MPU_ACCEL_YOUT_L_REG 0x3E
+#define MPU_ACCEL_ZOUT_H_REG 0x3F
+#define MPU_ACCEL_ZOUT_L_REG 0x40
 #define MPU_GYRO_XOUT_H_REG 0x43
 #define MPU_GYRO_XOUT_L_REG 0x44
 #define MPU_GYRO_YOUT_H_REG 0x45
@@ -62,6 +70,14 @@ Uint32 ReadGyroPass2();
 #define LPF_5 (0x05) // Gyro: 1kHz sampling frequency, 10 Hz bandwidth Accel: 1kHz sampling frequency, 10 Hz bandwidth
 #define LPF_6 (0x06) // Gyro: 1kHz sampling frequency, 5 Hz bandwidth Accel: 1kHz sampling frequency, 5 Hz bandwidth
 
+// ACCEL_CONFIG register settings
+#define ACCEL_X_SELF_TEST (0x01 << 7)
+#define ACCEL_Y_SELF_TEST (0x01 << 6)
+#define ACCEL_Z_SELF_TEST (0x01 << 5)
+#define ACCEL_FS_2G (0x00 << 3)
+#define ACCEL_FS_4G (0x01 << 3)
+#define ACCEL_FS_8G (0x02 << 3)
+#define ACCEL_FS_16G (0x03 << 3)
 
 // GYRO_CONFIG register settings
 #define GYRO_X_SELF_TEST (0x01 << 7)
