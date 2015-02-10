@@ -49,7 +49,6 @@ void init_uart()
     UART_SCI_PORT.SCIHBAUD = 0;
     UART_SCI_PORT.SCILBAUD = 10;
 
-
     // Configure SCI peripheral to free-run when the processor is suspended (debugging at a breakpoint)
     UART_SCI_PORT.SCIPRI.bit.SOFT = 0;
     UART_SCI_PORT.SCIPRI.bit.FREE = 1;
