@@ -273,8 +273,7 @@ void receive_gyro_rl_telemetry(int32 rl_gyro)
 
 void receive_accel_az_telemetry(int32 az_accel)
 {
-    // TODO: Convert to m/s here
-    latest_accel_telemetry[AZ] = az_accel;
+    latest_accel_telemetry[AZ] = ACCEL_FORMAT_TO_M_S_S(az_accel) / 1000.0;
 
     telem_received |= ACCEL_AZ_TELEM_RECEIVED;
 
@@ -287,8 +286,7 @@ void receive_accel_az_telemetry(int32 az_accel)
 
 void receive_accel_el_telemetry(int32 el_accel)
 {
-    // TODO: Convert to m/s here
-    latest_accel_telemetry[EL] = el_accel;
+    latest_accel_telemetry[EL] = ACCEL_FORMAT_TO_M_S_S(el_accel) / 1000.0;
 
     telem_received |= ACCEL_EL_TELEM_RECEIVED;
 
@@ -301,8 +299,7 @@ void receive_accel_el_telemetry(int32 el_accel)
 
 void receive_accel_rl_telemetry(int32 rl_accel)
 {
-    // TODO: Convert to m/s here
-    latest_accel_telemetry[ROLL] = rl_accel;
+    latest_accel_telemetry[ROLL] = ACCEL_FORMAT_TO_M_S_S(rl_accel) / 1000.0;
 
     telem_received |= ACCEL_RL_TELEM_RECEIVED;
 

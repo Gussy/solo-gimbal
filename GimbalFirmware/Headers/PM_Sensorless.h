@@ -67,8 +67,7 @@ typedef enum {
 
 typedef enum {
     READ_GYRO_PASS,
-    READ_GYRO_PASS_1,
-    READ_GYRO_PASS_2,
+    READ_ACCEL_PASS,
     KINEMATICS_PASS,
     ERROR_AZ_PASS,
     ERROR_EL_PASS,
@@ -127,6 +126,7 @@ typedef struct {
     int16 corrected_gyro_readings[AXIS_CNT];
     int16 gyro_offsets[AXIS_CNT];
     int32 integrated_raw_gyro_readings[AXIS_CNT];
+    int32 integrated_raw_accel_readings[AXIS_CNT];
     int16 encoder_readings[AXIS_CNT];
     int16 motor_torques[AXIS_CNT];
     int16 unfiltered_position_errors[AXIS_CNT];

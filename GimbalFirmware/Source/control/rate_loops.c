@@ -29,6 +29,7 @@ Uint16 telemetry_decimation_count = 0;
 void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFilterParms* pos_loop_stage_1, RunningAvgFilterParms* pos_loop_stage_2, BalanceProcedureParms* bal_proc_parms)
 {
     static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
+    static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
     static Uint32 gyro_data_pass_1 = 0;
     static Uint32 gyro_data_pass_2 = 0;
 
@@ -37,36 +38,21 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
 #endif
 
     switch (cb_parms->rate_loop_pass) {
-    case READ_GYRO_PASS_1:
-        gyro_read_1_start = CpuTimer2Regs.TIM.all;
-        gyro_data_pass_1 = ReadGyroPass1();
-        gyro_read_1_end = CpuTimer2Regs.TIM.all;
-        if (gyro_read_1_end < gyro_read_1_start) {
-            gyro_read_1_elapsed_time = gyro_read_1_start - gyro_read_1_end;
-        } else {
-            gyro_read_1_elapsed_time = (mSec50 - gyro_read_1_end) + gyro_read_1_start;
-        }
-        cb_parms->rate_loop_pass = READ_GYRO_PASS_2;
+    case READ_GYRO_PASS:
+        ReadGyro(&(raw_gyro_readings[GyroAxisMap[X_AXIS]]), &(raw_gyro_readings[GyroAxisMap[Y_AXIS]]), &(raw_gyro_readings[GyroAxisMap[Z_AXIS]]));
+        cb_parms->rate_loop_pass = READ_ACCEL_PASS;
         break;
 
-    case READ_GYRO_PASS_2:
-        gyro_read_2_start = CpuTimer2Regs.TIM.all;
-        gyro_data_pass_2 = ReadGyroPass2();
-        gyro_read_2_end = CpuTimer2Regs.TIM.all;
-        if (gyro_read_2_end < gyro_read_2_start) {
-            gyro_read_2_elapsed_time = gyro_read_2_start - gyro_read_2_end;
-        } else {
-            gyro_read_2_elapsed_time = (mSec50 - gyro_read_2_end) + gyro_read_2_start;
-        }
-        gyro_read_total_elapsed_time = gyro_read_1_elapsed_time + gyro_read_2_elapsed_time;
+    case READ_ACCEL_PASS:
+        ReadAccel(&(raw_accel_readings[GyroAxisMap[X_AXIS]]), &(raw_accel_readings[GyroAxisMap[Y_AXIS]]), &(raw_accel_readings[GyroAxisMap[Z_AXIS]]));
         cb_parms->rate_loop_pass = KINEMATICS_PASS;
         break;
 
     case KINEMATICS_PASS:
         // Unpack the gyro data into the correct axes, and apply the gyro offsets
-        raw_gyro_readings[GyroAxisMap[X_AXIS]] = (int16)(((gyro_data_pass_1 >> 8) & 0x0000FFFF) - cb_parms->gyro_offsets[X_AXIS]);
-        raw_gyro_readings[GyroAxisMap[Y_AXIS]] = (int16)((((gyro_data_pass_1 << 8) & 0x0000FF00) | ((gyro_data_pass_2 >> 16) & 0x000000FF)) - cb_parms->gyro_offsets[Y_AXIS]);
-        raw_gyro_readings[GyroAxisMap[Z_AXIS]] = (int16)((gyro_data_pass_2 & 0x0000FFFF) - cb_parms->gyro_offsets[Z_AXIS]);
+        raw_gyro_readings[GyroAxisMap[X_AXIS]] -= cb_parms->gyro_offsets[X_AXIS];
+        raw_gyro_readings[GyroAxisMap[Y_AXIS]] -= cb_parms->gyro_offsets[Y_AXIS];
+        raw_gyro_readings[GyroAxisMap[Z_AXIS]] -= cb_parms->gyro_offsets[Z_AXIS];
 
         // If the system anaylzer is enabled, output the new value here
 #ifdef ENABLE_RATE_LOOP_TUNING
@@ -84,6 +70,11 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         cb_parms->integrated_raw_gyro_readings[AZ] += cb_parms->gyro_readings[AZ];
         cb_parms->integrated_raw_gyro_readings[EL] += cb_parms->gyro_readings[EL];
         cb_parms->integrated_raw_gyro_readings[ROLL] += cb_parms->gyro_readings[ROLL];
+
+        // Do the 10-cycle integration of the raw accelerometer readings for the 100Hz accelerometer telemetry
+        cb_parms->integrated_raw_accel_readings[AZ] += raw_accel_readings[AZ];
+        cb_parms->integrated_raw_accel_readings[EL] += raw_accel_readings[EL];
+        cb_parms->integrated_raw_accel_readings[ROLL] += raw_accel_readings[ROLL];
 
         // Do gyro kinematics correction
         do_gyro_correction(&(cb_parms->gyro_readings[0]), &(cb_parms->encoder_readings[0]), &(cb_parms->corrected_gyro_readings[0]));
@@ -409,18 +400,23 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             if (++telemetry_decimation_count >= TELEMETRY_DECIMATION_LIMIT) {
                 SendEncoderTelemetry(cb_parms->encoder_readings[AZ], cb_parms->encoder_readings[EL], cb_parms->encoder_readings[ROLL]);
                 SendGyroTelemetry(cb_parms->integrated_raw_gyro_readings[AZ], cb_parms->integrated_raw_gyro_readings[EL], cb_parms->integrated_raw_gyro_readings[ROLL]);
-                SendAccelTelemetry(0, 0, 0); // TODO: Add actual accel values here when we're reading them
+                SendAccelTelemetry(cb_parms->integrated_raw_accel_readings[AZ], cb_parms->integrated_raw_accel_readings[EL], cb_parms->integrated_raw_accel_readings[ROLL]);
 
                 // Zero out the gyro integrators for the next cycle
                 cb_parms->integrated_raw_gyro_readings[AZ] = 0;
                 cb_parms->integrated_raw_gyro_readings[EL] = 0;
                 cb_parms->integrated_raw_gyro_readings[ROLL] = 0;
 
+                // Zero out the accel integrators for the next cycle
+                cb_parms->integrated_raw_accel_readings[AZ] = 0;
+                cb_parms->integrated_raw_accel_readings[EL] = 0;
+                cb_parms->integrated_raw_accel_readings[ROLL] = 0;
+
                 telemetry_decimation_count = 0;
             }
 
             // We've completed one full rate loop iteration, so on the next pass go back to the beginning
-            cb_parms->rate_loop_pass = READ_GYRO_PASS_1;
+            cb_parms->rate_loop_pass = READ_GYRO_PASS;
             break;
     }
 }
