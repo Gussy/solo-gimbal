@@ -34,9 +34,12 @@ typedef struct {
 #define ALL_TELEM_RECEIVED 0x007F
 
 #define GYRO_FULL_SCALE_DEG_S (500.0)
+#define ENCODER_FULL_SCALE (5000.0)
 
 #define DEG_TO_RAD(deg) ((deg) * (M_PI / 180.0))
 #define RAD_TO_DEG(rad) ((rad) * (180.0 / M_PI))
+
+#define ENCODER_FORMAT_TO_RAD(encoder) (M_PI * (float)(encoder) / ENCODER_FULL_SCALE)
 
 #define GYRO_FORMAT_TO_RAD_S(gyro) DEG_TO_RAD((((float)(gyro) / (float)INT_MAX) * GYRO_FULL_SCALE_DEG_S))
 #define RAD_S_TO_GYRO_FORMAT(rad) (RAD_TO_DEG((float)rad) * (((float)INT_MAX) / GYRO_FULL_SCALE_DEG_S))
