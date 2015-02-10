@@ -12,173 +12,159 @@
 #include "hardware/device_init.h"
 #include "PM_Sensorless-Settings.h"
 
+LoadParamEntry params_to_load[TOTAL_LOADABLE_PARAMS];
+
+void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info)
+{
+    // Populate the entries in the parameter load table
+    params_to_load[0].request_param = CAND_PID_TORQUE_KP;
+    params_to_load[0].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
+    params_to_load[0].recvd_flag_mask = INIT_PARAM_TORQUE_PID_KP_RECVD;
+
+    params_to_load[1].request_param = CAND_PID_TORQUE_KI;
+    params_to_load[1].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
+    params_to_load[1].recvd_flag_mask = INIT_PARAM_TORQUE_PID_KI_RECVD;
+
+    params_to_load[2].request_param = CAND_PID_TORQUE_KD;
+    params_to_load[2].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
+    params_to_load[2].recvd_flag_mask = INIT_PARAM_TORQUE_PID_KD_RECVD;
+
+    params_to_load[3].request_param = CAND_PID_COMMUTATION_CALIBRATION_SLOPE;
+    params_to_load[3].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
+    params_to_load[3].recvd_flag_mask = INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD;
+
+    params_to_load[4].request_param = CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT;
+    params_to_load[4].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
+    params_to_load[4].recvd_flag_mask = INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD;
+
+    params_to_load[5].request_param = CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET;
+    params_to_load[5].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
+    params_to_load[5].recvd_flag_mask = INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD;
+
+    params_to_load[6].request_param = CAND_PID_RATE_EL_P;
+    params_to_load[6].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[6].recvd_flag_mask = INIT_PARAM_RATE_PID_EL_P_RECVD;
+
+    params_to_load[7].request_param = CAND_PID_RATE_EL_I;
+    params_to_load[7].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[7].recvd_flag_mask = INIT_PARAM_RATE_PID_EL_I_RECVD;
+
+    params_to_load[8].request_param = CAND_PID_RATE_EL_D;
+    params_to_load[8].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[8].recvd_flag_mask = INIT_PARAM_RATE_PID_EL_D_RECVD;
+
+    params_to_load[9].request_param = CAND_PID_RATE_EL_WINDUP;
+    params_to_load[9].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[9].recvd_flag_mask = INIT_PARAM_RATE_PID_EL_WINDUP_RECVD;
+
+    params_to_load[10].request_param = CAND_PID_RATE_AZ_P;
+    params_to_load[10].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[10].recvd_flag_mask = INIT_PARAM_RATE_PID_AZ_P_RECVD;
+
+    params_to_load[11].request_param = CAND_PID_RATE_AZ_I;
+    params_to_load[11].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[11].recvd_flag_mask = INIT_PARAM_RATE_PID_AZ_I_RECVD;
+
+    params_to_load[12].request_param = CAND_PID_RATE_AZ_D;
+    params_to_load[12].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[12].recvd_flag_mask = INIT_PARAM_RATE_PID_AZ_D_RECVD;
+
+    params_to_load[13].request_param = CAND_PID_RATE_AZ_WINDUP;
+    params_to_load[13].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[13].recvd_flag_mask = INIT_PARAM_RATE_PID_AZ_WINDUP_RECVD;
+
+    params_to_load[14].request_param = CAND_PID_RATE_RL_P;
+    params_to_load[14].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[14].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_P_RECVD;
+
+    params_to_load[15].request_param = CAND_PID_RATE_RL_I;
+    params_to_load[15].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[15].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_I_RECVD;
+
+    params_to_load[16].request_param = CAND_PID_RATE_RL_D;
+    params_to_load[16].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[16].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_D_RECVD;
+
+    params_to_load[17].request_param = CAND_PID_RATE_RL_WINDUP;
+    params_to_load[17].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
+    params_to_load[17].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_WINDUP_RECVD;
+
+    params_to_load[18].request_param = CAND_PID_POS_EL_P;
+    params_to_load[18].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[18].recvd_flag_mask = INIT_PARAM_POS_PID_EL_P_RECVD;
+
+    params_to_load[19].request_param = CAND_PID_POS_EL_I;
+    params_to_load[19].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[19].recvd_flag_mask = INIT_PARAM_POS_PID_EL_I_RECVD;
+
+    params_to_load[20].request_param = CAND_PID_POS_EL_D;
+    params_to_load[20].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[20].recvd_flag_mask = INIT_PARAM_POS_PID_EL_D_RECVD;
+
+    params_to_load[21].request_param = CAND_PID_POS_EL_WINDUP;
+    params_to_load[21].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[21].recvd_flag_mask = INIT_PARAM_POS_PID_EL_WINDUP_RECVD;
+
+    params_to_load[22].request_param = CAND_PID_POS_AZ_P;
+    params_to_load[22].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[22].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_P_RECVD;
+
+    params_to_load[23].request_param = CAND_PID_POS_AZ_I;
+    params_to_load[23].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[23].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_I_RECVD;
+
+    params_to_load[24].request_param = CAND_PID_POS_AZ_D;
+    params_to_load[24].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[24].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_D_RECVD;
+
+    params_to_load[25].request_param = CAND_PID_POS_AZ_WINDUP;
+    params_to_load[25].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[25].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_WINDUP_RECVD;
+
+    params_to_load[26].request_param = CAND_PID_POS_RL_P;
+    params_to_load[26].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[26].recvd_flag_mask = INIT_PARAM_POS_PID_RL_P_RECVD;
+
+    params_to_load[27].request_param = CAND_PID_POS_RL_I;
+    params_to_load[27].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[27].recvd_flag_mask = INIT_PARAM_POS_PID_RL_I_RECVD;
+
+    params_to_load[28].request_param = CAND_PID_POS_RL_D;
+    params_to_load[28].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[28].recvd_flag_mask = INIT_PARAM_POS_PID_RL_D_RECVD;
+
+    params_to_load[29].request_param = CAND_PID_POS_RL_WINDUP;
+    params_to_load[29].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[29].recvd_flag_mask = INIT_PARAM_POS_PID_RL_WINDUP_RECVD;
+
+    if (GetBoardHWID() == EL) {
+        load_parms_state_info->total_params_to_load = EL_PARAMS_TO_LOAD;
+    } else if (GetBoardHWID() == ROLL) {
+        load_parms_state_info->total_params_to_load = RL_PARAMS_TO_LOAD;
+    }
+    // AZ doesn't load parameters over CAN
+}
+
 void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 {
-    // If we've received the current parameter we're requesting, go on to asking for the next parameter we need.
-    // The parameter received flags are updated in can_message_processor.c when the parameter responses come in
-    switch(load_parms_state_info->load_axis_parms_state) {
-        case LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KP:
-            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_TORQUE_PID_KP_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KI;
-            } else {
-                cand_tx_request(CAND_ID_AZ, CAND_PID_TORQUE_KP); // All parameter requests go to the AZ board
+    if (load_parms_state_info->current_param_to_load < load_parms_state_info->total_params_to_load) {
+        LoadParamEntry* current_param_entry = &(params_to_load[load_parms_state_info->current_param_to_load]);
+
+        // Check to see if we've received the current parameter we're asking for
+        if (*(current_param_entry->recvd_flags_loc) & current_param_entry->recvd_flag_mask) {
+            // We've received the parameter we're currently asking for, so increment the index of the parameter we're looking for
+            load_parms_state_info->current_param_to_load++;
+            // Preload the request retry counter so we immediately ask for the next parameter
+            load_parms_state_info->request_retry_counter = REQUEST_RETRY_PERIOD;
+        } else {
+            if (load_parms_state_info->request_retry_counter++ >= REQUEST_RETRY_PERIOD) {
+                // We haven't received the parameter we're currently asking for, so ask again
+                cand_tx_request(CAND_ID_AZ, current_param_entry->request_param); // All parameter requests go to the AZ board
+                load_parms_state_info->request_retry_counter = 0;
             }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KI:
-            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_TORQUE_PID_KI_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KD;
-            } else {
-                cand_tx_request(CAND_ID_AZ, CAND_PID_TORQUE_KI); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_TORQUE_KD:
-            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_TORQUE_PID_KD_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_SLOPE;
-            } else {
-                cand_tx_request(CAND_ID_AZ, CAND_PID_TORQUE_KD); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_SLOPE:
-            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_INTERCEPT;
-            } else {
-                cand_tx_request(CAND_ID_AZ, CAND_PID_COMMUTATION_CALIBRATION_SLOPE); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_INTERCEPT:
-            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_HOME_OFFSET;
-            } else {
-                cand_tx_request(CAND_ID_AZ, CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_COMMUTATION_CALIBRATION_HOME_OFFSET:
-            if (load_parms_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD) {
-                if (GetBoardHWID() == EL) {
-                    // If we're the EL axis, we need to request all of the rate loop PID params
-                    load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_EL;
-                } else {
-                    // Otherwise (we're the roll axis, AZ doesn't request parameters), we've received all the parameters we need, so we signal being done
-                    load_parms_state_info->axis_parms_load_complete = TRUE;
-                }
-            } else {
-                cand_tx_request(CAND_ID_AZ, CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_EL:
-            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_EL_RATE_PID_INIT_PARAMS_RECVD) == ALL_EL_RATE_PID_INIT_PARAMS_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_AZ;
-            } else {
-                // For rate loop pid params, request all 4 of them for an axis at once
-                CAND_ParameterID request_params[4];
-                request_params[0] = CAND_PID_RATE_EL_P;
-                request_params[1] = CAND_PID_RATE_EL_I;
-                request_params[2] = CAND_PID_RATE_EL_D;
-                request_params[3] = CAND_PID_RATE_EL_WINDUP;
-
-                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_AZ:
-            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_AZ_RATE_PID_INIT_PARAMS_RECVD) == ALL_AZ_RATE_PID_INIT_PARAMS_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_ROLL;
-            } else {
-                // For rate loop pid params, request all 4 of them for an axis at once
-                CAND_ParameterID request_params[4];
-                request_params[0] = CAND_PID_RATE_AZ_P;
-                request_params[1] = CAND_PID_RATE_AZ_I;
-                request_params[2] = CAND_PID_RATE_AZ_D;
-                request_params[3] = CAND_PID_RATE_AZ_WINDUP;
-
-                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_RATE_PID_ROLL:
-            if ((load_parms_state_info->init_param_recvd_flags_1 & ALL_ROLL_RATE_PID_INIT_PARAMS_RECVD) == ALL_ROLL_RATE_PID_INIT_PARAMS_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_EL;
-            } else {
-                // For rate loop pid params, request all 4 of them for an axis at once
-                CAND_ParameterID request_params[4];
-                request_params[0] = CAND_PID_RATE_RL_P;
-                request_params[1] = CAND_PID_RATE_RL_I;
-                request_params[2] = CAND_PID_RATE_RL_D;
-                request_params[3] = CAND_PID_RATE_RL_WINDUP;
-
-                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_EL:
-            if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_EL_POS_PID_INIT_PARAMS_RECVD) == ALL_EL_POS_PID_INIT_PARAMS_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_AZ;
-            } else {
-                // For position loop pid params, request all 4 of them for an axis at once
-                CAND_ParameterID request_params[4];
-                request_params[0] = CAND_PID_POS_EL_P;
-                request_params[1] = CAND_PID_POS_EL_I;
-                request_params[2] = CAND_PID_POS_EL_D;
-                request_params[3] = CAND_PID_POS_EL_WINDUP;
-
-                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_AZ:
-            if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_AZ_POS_PID_INIT_PARAMS_RECVD) == ALL_AZ_POS_PID_INIT_PARAMS_RECVD) {
-                load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_RL;
-            } else {
-                // For position loop pid params, request all 4 of them for an axis at once
-                CAND_ParameterID request_params[4];
-                request_params[0] = CAND_PID_POS_AZ_P;
-                request_params[1] = CAND_PID_POS_AZ_I;
-                request_params[2] = CAND_PID_POS_AZ_D;
-                request_params[3] = CAND_PID_POS_AZ_WINDUP;
-
-                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
-            }
-            break;
-
-        case LOAD_AXIS_PARMS_STATE_REQUEST_POS_PID_RL:
-            if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_RL_POS_PID_INIT_PARAMS_RECVD) == ALL_RL_POS_PID_INIT_PARAMS_RECVD) {
-                //load_parms_state_info->load_axis_parms_state = LOAD_AXIS_PARMS_STATE_REQUEST_GYRO_OFFSETS;
-                // We've now received all of the parameters we're looking for, so signal being done
-                load_parms_state_info->axis_parms_load_complete = TRUE;
-            } else {
-                // For position loop pid params, request all 4 of them for an axis at once
-                CAND_ParameterID request_params[4];
-                request_params[0] = CAND_PID_POS_RL_P;
-                request_params[1] = CAND_PID_POS_RL_I;
-                request_params[2] = CAND_PID_POS_RL_D;
-                request_params[3] = CAND_PID_POS_RL_WINDUP;
-
-                cand_tx_multi_request(CAND_ID_AZ, request_params, 4); // All parameter requests go to the AZ board
-            }
-            break;
-
-        //TODO: Remove this or fix it to work with the new 16-bit parameters
-        /*
-        case LOAD_AXIS_PARMS_STATE_REQUEST_GYRO_OFFSETS:
-            if ((load_parms_state_info->init_param_recvd_flags_3 & ALL_GYRO_OFFSET_INIT_PARAMS_RECVD) == ALL_GYRO_OFFSET_INIT_PARAMS_RECVD) {
-                // We've now received all of the parameters we're looking for, so signal being done
-                load_parms_state_info->axis_parms_load_complete = TRUE;
-            } else {
-                // For gyro offsets, request all 3 of them at once
-                CAND_ParameterID request_params[3];
-                request_params[0] = CAND_PID_GYRO_OFFSET_EL;
-                request_params[1] = CAND_PID_GYRO_OFFSET_AZ;
-                request_params[2] = CAND_PID_GYRO_OFFSET_RL;
-
-                cand_tx_multi_request(CAND_ID_AZ, request_params, 3); // All parameter requests go to the AZ board
-            }
-            break;
-        */
+        }
+    } else {
+        // If we've received all of the parameters in the parameter request list, we're done loading parameters
+        load_parms_state_info->axis_parms_load_complete = TRUE;
     }
 }

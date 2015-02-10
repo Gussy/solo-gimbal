@@ -53,6 +53,7 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_gimbal_feedback();
 void send_mavlink_debug_data(DebugData* debug_data);
 void send_mavlink_gopro_response(GPCmdResponse* response);
+void send_mavlink_statustext(char* message);
 void send_mavlink_message(mavlink_message_t* msg);
 
 void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);

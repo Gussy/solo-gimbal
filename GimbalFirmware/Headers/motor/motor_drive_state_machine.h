@@ -15,10 +15,13 @@
 
 #define PRE_INIT_TIME_MS 2000
 #define FAULT_REVIVE_TIME_MS 5000
+// Other axis init retry count is in units of ticks of the main torque loop (which in this case is 10kHz)
+#define OTHER_AXIS_INIT_RETRY_COUNT_MAX 1000
 
 typedef enum {
     STATE_PRE_INIT,
     STATE_INIT,
+    STATE_WAIT_FOR_AXIS_HEARTBEATS,
     STATE_LOAD_OWN_INIT_PARAMS,
     STATE_REQUEST_AXIS_INIT_PARAMS,
     STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED,

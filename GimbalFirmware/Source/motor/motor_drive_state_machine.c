@@ -14,10 +14,13 @@
 #include "motor/commutation_calibration_state_machine.h"
 #include "motor/homing_calibration_state_machine.h"
 #include "control/PID.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "parameters/flash_params.h"
 #include "PeripheralHeaderIncludes.h"
 
 #include <string.h>
+
+static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set);
 
 CommutationCalibrationParms cc_parms = {
     COMMUTATION_CALIBRATION_STATE_INIT,     // Commutation calibration state
@@ -90,6 +93,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // If we're the AZ board, transmit an init message to the other boards
             if (GetBoardHWID() == AZ) {
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
+                axis_parms->other_axis_hb_recvd[AZ] = TRUE;
             }
 
             //TODO: Temporarily sequencing the initialization of the different axes
@@ -109,12 +113,32 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             axis_parms->blink_state = BLINK_INIT;
 
             if (GetBoardHWID() == AZ) {
-                // If we're the AZ board, we first have to load our own parameters from flash, then transmit parameters
-                // to the other axes.
-                md_parms->motor_drive_state = STATE_LOAD_OWN_INIT_PARAMS;
+                // If we're the AZ board, we first have to wait to hear from the other axes, then load our own parameters from flash,
+                // then transmit parameters to the other axes.
+                md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_HEARTBEATS;
             } else {
                 // If we're EL or ROLL, we have to request our parameters from the AZ board
                 md_parms->motor_drive_state = STATE_REQUEST_AXIS_INIT_PARAMS;
+            }
+            break;
+
+        case STATE_WAIT_FOR_AXIS_HEARTBEATS:
+            // Wait to receive a heartbeat from all of the axes before continuing on with initialization.  If we haven't heard
+            // from all of the axes after a certain amount of time, re-send the init to all axes
+            if (axis_parms->other_axis_hb_recvd[EL] && axis_parms->other_axis_hb_recvd[AZ] && axis_parms->other_axis_hb_recvd[ROLL]) {
+                md_parms->motor_drive_state = STATE_LOAD_OWN_INIT_PARAMS;
+            } else {
+                if (++axis_parms->other_axis_enable_retry_counter >= OTHER_AXIS_INIT_RETRY_COUNT_MAX) {
+                    if (!axis_parms->other_axis_hb_recvd[EL]) {
+                        cand_tx_command(CAND_ID_EL, CAND_CMD_INIT);
+                    }
+
+                    if (!axis_parms->other_axis_hb_recvd[ROLL]) {
+                        cand_tx_command(CAND_ID_ROLL, CAND_CMD_INIT);
+                    }
+
+                    axis_parms->other_axis_enable_retry_counter = 0;
+                }
             }
             break;
 
@@ -311,29 +335,17 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // If new current command from CAN bus get it.
             if (*param_set[CAND_PID_TORQUE].sema) {
-                // If we're the EL board, we update our own encoder readings.  Else, we send them over CAN
-                // We're accumulating encoder readings at 10kHz, and sending them out at 1kHz, so we divide by 10
-                // to average the accumulated values
-                if (GetBoardHWID() == EL) {
-                    cb_parms->encoder_readings[EL] = encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated;
-                    //cb_parms->encoder_readings[EL] = encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2];
-                    cb_parms->encoder_value_received[EL] = TRUE;
-                } else {
-                    CBSendEncoder(encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated);
-                    //CBSendEncoder(encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2]);
-                }
-                // Reset the encoder accumulator and accumulator sample counter
-                encoder_parms->virtual_counts_accumulator = 0;
-                encoder_parms->virtual_counts_accumulated = 0;
-                // Reset the median history array
-                memset(&(encoder_parms->encoder_median_history[0]), INT16_MAX, ENCODER_MEDIAN_HISTORY_SIZE * sizeof(int16));
-
-                md_parms->iq_ref = ((int16) param_set[CAND_PID_TORQUE].param) / 32767.0;
-                *param_set[CAND_PID_TORQUE].sema = FALSE;
+                update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms, param_set);
             }
             break;
 
         case STATE_DISABLED:
+            // If we're disabled, we should still send out our encoder values if we get a torque command.  We ignore the actual torque command,
+            // but other things still expect to get updated encoder readings if they send torque commands
+            if (*param_set[CAND_PID_TORQUE].sema) {
+                update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms, param_set);
+            }
+
             // Set park transformation angle to 0
             md_parms->park_xform_parms.Angle = 0;
 
@@ -359,4 +371,27 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 #endif
             break;
         }
+}
+
+static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set)
+{
+    // If we're the EL board, we update our own encoder readings.  Else, we send them over CAN
+    // We're accumulating encoder readings at 10kHz, and sending them out at 1kHz, so we divide by 10
+    // to average the accumulated values
+    if (GetBoardHWID() == EL) {
+        cb_parms->encoder_readings[EL] = encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated;
+        //cb_parms->encoder_readings[EL] = encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2];
+        cb_parms->encoder_value_received[EL] = TRUE;
+    } else {
+        CBSendEncoder(encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated);
+        //CBSendEncoder(encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2]);
+    }
+    // Reset the encoder accumulator and accumulator sample counter
+    encoder_parms->virtual_counts_accumulator = 0;
+    encoder_parms->virtual_counts_accumulated = 0;
+    // Reset the median history array
+    memset(&(encoder_parms->encoder_median_history[0]), INT16_MAX, ENCODER_MEDIAN_HISTORY_SIZE * sizeof(int16));
+
+    md_parms->iq_ref = ((int16) param_set[CAND_PID_TORQUE].param) / 32767.0;
+    *param_set[CAND_PID_TORQUE].sema = FALSE;
 }
