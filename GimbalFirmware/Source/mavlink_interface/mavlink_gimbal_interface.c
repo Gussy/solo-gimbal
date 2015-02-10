@@ -420,7 +420,7 @@ void send_mavlink_gimbal_feedback() {
 			0,
 			0,
 			feedback_id++,
-			latest_accel_telemetry[ROLL],
+			-latest_accel_telemetry[ROLL],
 			latest_accel_telemetry[EL],
 			latest_accel_telemetry[AZ],
 			latest_gyro_telemetry[ROLL],
