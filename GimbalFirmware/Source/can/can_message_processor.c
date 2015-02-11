@@ -45,13 +45,21 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
     case CAND_RX_FAULT:
         // Remember the last fault from each axis
         cb_parms->last_axis_fault[msg.sender_id] = msg.fault_code;
-        // Put us into fault mode (disables current to the motor)
+        // Based on the type of fault, either put us into the correct fault mode (disables current to the motor), or just send the MAVLink fault message
 #ifndef AZ_TEST
-        md_parms->motor_drive_state = STATE_FAULT;
+        switch (msg.fault_type) {
+            case CAND_FAULT_TYPE_RECOVERABLE:
+                md_parms->motor_drive_state = STATE_RECOVERABLE_FAULT;
+                break;
+
+            case CAND_FAULT_TYPE_UNRECOVERABLE:
+                md_parms->motor_drive_state = STATE_UNRECOVERABLE_FAULT;
+                break;
+        }
 #endif
         // If we're the AZ axis, we need to send a MAVLink fault message to the copter
         if (GetBoardHWID() == AZ) {
-            send_mavlink_axis_error(msg.sender_id, msg.fault_code);
+            send_mavlink_axis_error(msg.sender_id, msg.fault_code, msg.fault_type);
         }
 
         fault_cnt++;
@@ -101,7 +109,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             break;
 
         default:
-            AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
+            AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
             break;
         }
         cmd_cnt++;
@@ -637,7 +645,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             */
 
             default:
-                AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER, FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
+                AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
                 break;
             }
             msg.param_request_cnt--;

@@ -438,7 +438,7 @@ void main(void)
 	        // Rough approximation of 1-second of busy waiting, doesn't need to be super accurate
 	        if (++can_init_fault_message_resend_counter >= 0x7B124) {
 	            can_init_fault_message_resend_counter = 0;
-	            AxisFault(CAND_FAULT_UNKNOWN_AXIS_ID, FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+	            AxisFault(CAND_FAULT_UNKNOWN_AXIS_ID, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
 	        }
 	    }
 	}
@@ -1169,7 +1169,7 @@ interrupt void GyroIntISR(void)
 interrupt void MotorDriverFaultIntISR()
 {
     // Process the motor drive fault
-    AxisFault(CAND_FAULT_MOTOR_DRIVER_FAULT, FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+    AxisFault(CAND_FAULT_MOTOR_DRIVER_FAULT, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
 
     // TODO: May want to have some sort of recovery code here
     // Some motor driver faults need the motor driver chip to be
@@ -1699,7 +1699,7 @@ static void MainISRwork(void)
         // If the average power has exceeded the preset limit on either phase a or b, error out this axis
         if (check_average_power_over_limit(&power_filter_parms)) {
             reset_average_power_filter(&power_filter_parms);
-            AxisFault(CAND_FAULT_OVER_CURRENT, FAULT_TYPE_RECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+            AxisFault(CAND_FAULT_OVER_CURRENT, CAND_FAULT_TYPE_RECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
         }
 #endif
 

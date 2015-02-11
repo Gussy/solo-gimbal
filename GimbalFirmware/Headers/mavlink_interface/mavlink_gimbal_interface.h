@@ -60,7 +60,7 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_gimbal_feedback();
 void send_mavlink_debug_data(DebugData* debug_data);
 void send_mavlink_gopro_response(GPCmdResponse* response);
-void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault);
+void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code, CAND_FaultType fault_type);
 void send_mavlink_statustext(char* message, MAV_SEVERITY severity);
 void send_mavlink_message(mavlink_message_t* msg);
 

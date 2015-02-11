@@ -305,9 +305,10 @@ CAND_Result cand_rx( struct cand_message * msg )
 			case CAND_MID_FAULT:
 			{
 				// All fault msgs are broadcast, so no destination check
-				msg->sender_id = (CAND_SenderID) sid.fault.s_id;
+				msg->sender_id = (CAND_SenderID)sid.fault.s_id;
 
-				msg->fault_code = (CAND_FaultCode) sid.fault.fault_code;
+				msg->fault_code = (CAND_FaultCode)sid.fault.fault_code;
+				msg->fault_type = (CAND_FaultType)sid.fault.fault_type;
 
 				ret = CAND_RX_FAULT;
 			}
@@ -868,7 +869,7 @@ CAND_Result cand_tx_command(CAND_DestinationID did, CAND_Command cmd)
     return cand_tx(sid, NULL, 0);
 }
 
-CAND_Result cand_tx_fault( CAND_FaultCode fault_code )
+CAND_Result cand_tx_fault(CAND_FaultCode fault_code, CAND_FaultType fault_type)
 {
 	CAND_SID sid;
 
@@ -876,6 +877,7 @@ CAND_Result cand_tx_fault( CAND_FaultCode fault_code )
 	sid.all.m_id            = CAND_MID_FAULT;     //000 0000 0100
 	sid.fault.s_id 			= CAND_GetSenderID();
 	sid.fault.fault_code    = fault_code;
+	sid.fault.fault_type    = fault_type;
 
 	return cand_tx(sid, NULL, 0);
 }

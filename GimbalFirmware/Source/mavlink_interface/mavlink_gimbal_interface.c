@@ -461,7 +461,7 @@ void send_mavlink_debug_data(DebugData* debug_data) {
 	send_mavlink_message(&debug_msg);
 }
 
-void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault)
+void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code, CAND_FaultType fault_type)
 {
     char* axis_str = "Unknown";
     switch (axis) {
@@ -480,7 +480,7 @@ void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault)
 
     char* fault_str = "None";
 
-    switch (fault) {
+    switch (fault_code) {
         case CAND_FAULT_CALIBRATING_POT:
             fault_str = "Calibrating Encoder";
             break;
@@ -510,9 +510,24 @@ void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault)
             break;
     }
 
+    MAV_SEVERITY severity = MAV_SEVERITY_ENUM_END;
+    switch (fault_type) {
+        case CAND_FAULT_TYPE_INFO:
+            severity = MAV_SEVERITY_INFO;
+            break;
+
+        case CAND_FAULT_TYPE_RECOVERABLE:
+            severity = MAV_SEVERITY_ALERT;
+            break;
+
+        case CAND_FAULT_TYPE_UNRECOVERABLE:
+            severity = MAV_SEVERITY_CRITICAL;
+            break;
+    }
+
     char error_msg[100];
     snprintf(error_msg, 100, "Axis %s indicated fault: %s", axis_str, fault_str);
-    send_mavlink_statustext(error_msg, MAV_SEVERITY_CRITICAL);
+    send_mavlink_statustext(error_msg, severity);
 }
 
 void send_mavlink_statustext(char* message, MAV_SEVERITY severity)

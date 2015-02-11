@@ -31,8 +31,9 @@ typedef union {
     } all;
     // Fault Messages
     struct {
-		unsigned fault_code:7;  // Fault code, see enum CAND_fault_code
-		unsigned s_id:2;        // Sender ID = bXX see enum CAND_sender_id
+        unsigned fault_type:2;  // Fault type, see enum CAND_FaultType
+		unsigned fault_code:5;  // Fault code, see enum CAND_FaultCode
+		unsigned s_id:2;        // Sender ID = bXX see enum CAND_SenderID
 		unsigned m_id:2;        // Message ID = b00
         unsigned :16;
         unsigned :5;
@@ -105,6 +106,7 @@ struct cand_message {
     uint8_t extended_param[7];
 
     CAND_FaultCode  fault_code;
+    CAND_FaultType  fault_type;
 
     CAND_SenderID	sender_id;
     CAND_Command	command;
@@ -125,7 +127,7 @@ CAND_Result cand_tx(CAND_SID sid, uint8_t* p_data, uint8_t p_data_size);
 CAND_Result cand_rx( struct cand_message * msg );
 CAND_Result cand_tx_response( CAND_DestinationID did, CAND_ParameterID pid, Uint32 val );
 CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid, Uint32 *val, uint8_t resp_cnt );
-CAND_Result cand_tx_fault( CAND_FaultCode fault_code );
+CAND_Result cand_tx_fault(CAND_FaultCode fault_code, CAND_FaultType fault_type);
 CAND_Result cand_tx_request(CAND_DestinationID did, CAND_ParameterID pid);
 CAND_Result cand_tx_multi_request(CAND_DestinationID did, CAND_ParameterID* pids, uint8_t request_cnt);
 CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, Uint32* param, Uint8 param_cnt);
