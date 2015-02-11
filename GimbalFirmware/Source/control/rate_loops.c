@@ -17,14 +17,10 @@ static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_en
 static void SendGyroTelemetry(int32 az_gyro, int32 el_gyro, int32 rl_gyro);
 static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
 
-Uint32 gyro_read_1_start = 0;
-Uint32 gyro_read_1_end = 0;
-Uint32 gyro_read_1_elapsed_time = 0;
-Uint32 gyro_read_2_start = 0;
-Uint32 gyro_read_2_end = 0;
-Uint32 gyro_read_2_elapsed_time = 0;
-Uint32 gyro_read_total_elapsed_time = 0;
 Uint16 telemetry_decimation_count = 0;
+
+int position_loop_deadband_counts = 10;
+int position_loop_deadband_hysteresis = 100;
 
 void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFilterParms* pos_loop_stage_1, RunningAvgFilterParms* pos_loop_stage_2, BalanceProcedureParms* bal_proc_parms)
 {
