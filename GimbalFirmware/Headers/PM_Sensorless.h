@@ -166,14 +166,16 @@ typedef union {
 
 #define IndexTimeOutLimit 268
 
+interrupt void MainISR(void);
+interrupt void GyroIntISR(void);
+interrupt void MotorDriverFaultIntISR();
+
 int GetIndexTimeOut(void);
 int GetAxisHomed(void);
 Uint16 GetEnableFlag(void);
 Uint16 GetAxisParmsLoaded(void);
 int16 CorrectEncoderError(int16 raw_error);
-interrupt void MainISR(void);
-interrupt void GyroIntISR(void);
-interrupt void MotorDriverFaultIntISR();
+void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
 void power_down_motor(void);
 void EnableAZAxis(void);
 void RelaxAZAxis(void);

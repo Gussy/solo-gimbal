@@ -30,8 +30,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
 {
     static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
     static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
-    static Uint32 gyro_data_pass_1 = 0;
-    static Uint32 gyro_data_pass_2 = 0;
 
 #ifdef TEST_MAX_TORQUE
     static int16 DigbyCount;

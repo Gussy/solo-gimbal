@@ -38,6 +38,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "control/rate_loops.h"
 #include "parameters/load_axis_parms_state_machine.h"
 #include "helpers/fault_handling.h"
+#include "motor/motor_commutation.h"
 
 #include <math.h>
 #include <string.h>
@@ -46,7 +47,6 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #define USE_SYS_ANALYZER
 
 // Prototype statements for functions found within this file.
-static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
 static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms);
 void DeviceInit();
 void MemCopy();
@@ -107,20 +107,14 @@ Uint8 feedback_decimator;
 
 Uint32 IsrTicker = 0;
 Uint32 GyroISRTicker = 0;
-Uint32 ISRStartTimestamp = 0;
-Uint32 ISREndTimestamp = 0;
-Uint32 ISRElapsedTime = 0;
+Uint16 GyroISRTime = 0;
 Uint32 RateLoopStartTimestamp = 0;
 Uint32 RateLoopEndTimestamp = 0;
 Uint32 RateLoopElapsedTime = 0;
-Uint32 MaxISRElapsedTime = 0;
-Uint32 MaxGyroReadElapsedTime = 0;
-Uint32 TorqueLoopEndTime = 0;
-Uint32 TorqueLoopElapsedTime = 0;
-Uint32 MaxTorqueLoopElapsedTime = 0;
-Uint16 GyroISRTime = 0;
-Uint8 GyroIntStatus = 0;
-Uint8 GyroIntStatus2 = 0;
+Uint32 MainWorkStartTimestamp = 0;
+Uint32 MainWorkEndTimestamp = 0;
+Uint32 MainWorkElapsedTime = 0;
+Uint32 MaxMainWorkElapsedTime = 0;
 Uint16 BackTicker = 0;
 Uint32 debug_output_decimation_count = 0;
 
@@ -140,8 +134,6 @@ Uint8 gracefulstop_count = 0;
 Uint16 IndexTimeOut = 0;
 
 #define ANALOG_POT_MECH_DIVIDER 4096.0 // Resolution of 10-bit ADC
-#define CURRENT_LIMIT_HOMING 0.5
-#define CURRENT_LIMIT 0.25 // ADB - Roughly 0.5A at +/- 1.75A full scale
 
 BalanceProcedureParms balance_proc_parms = {
     // Balance angle setpoints
@@ -406,8 +398,6 @@ Uint16 gp_cmd_sent = 0;
 Uint16 gp_cmd_wait = 0;
 Uint16 gp_cmd_num = 0;
 
-static void MainISRwork(void);
-
 Uint32 MissedInterrupts = 0;
 
 Uint32 can_init_fault_message_resend_counter = 0;
@@ -619,17 +609,90 @@ void main(void)
 		if (board_hw_id == AZ) {
 		    mavlink_state_machine();
 		}
-		{
-			static Uint32 OldIsrTicker = 0;
-			if (OldIsrTicker != IsrTicker) {
-				if (OldIsrTicker != (IsrTicker-1)) MissedInterrupts++;
-				OldIsrTicker = IsrTicker;
-				MainISRwork();
-			}
-		}
+
+		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
+
+		// If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
+        static Uint32 OldIsrTicker = 0;
+        if (OldIsrTicker != IsrTicker) {
+            if (OldIsrTicker != (IsrTicker-1)) {
+                MissedInterrupts++;
+            }
+            OldIsrTicker = IsrTicker;
+
+            // Increment the global timestamp counter
+            global_timestamp_counter++;
+
+            MotorCommutationLoop(&control_board_parms,
+                    &axis_parms,
+                    &motor_drive_parms,
+                    &encoder_parms,
+                    param_set,
+                    &pos_loop_filter_parms_stage_1,
+                    &pos_loop_filter_parms_stage_2,
+                    &power_filter_parms,
+                    &load_ap_state_info,
+                    &balance_proc_parms);
+        }
+
+        // If we're the elevation board, check to see if we need to run the rate loops
+        if (board_hw_id == EL) {
+            // If there is new gyro data to be processed, and all axes have been homed (the rate loop has been enabled), run the rate loops
+            if ((GyroDataReadyFlag == TRUE) && (control_board_parms.enabled == TRUE)) {
+
+                RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
+
+                RunRateLoops(&control_board_parms, param_set, &pos_loop_filter_parms_stage_1, &pos_loop_filter_parms_stage_2, &balance_proc_parms);
+
+                // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
+                if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
+                    GyroDataReadyFlag = FALSE;
+                }
+
+                RateLoopEndTimestamp = CpuTimer2Regs.TIM.all;
+
+                if (RateLoopEndTimestamp < RateLoopStartTimestamp) {
+                    RateLoopElapsedTime = RateLoopStartTimestamp - RateLoopEndTimestamp;
+                } else {
+                    RateLoopElapsedTime = (mSec50 - RateLoopEndTimestamp) + RateLoopStartTimestamp;
+                }
+            }
+        }
 
 		// Update any parameters that have changed due to CAN messages
 		ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms);
+
+		// Measure total main work timing
+		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;
+
+        if (MainWorkEndTimestamp < MainWorkStartTimestamp) {
+            MainWorkElapsedTime = MainWorkStartTimestamp - MainWorkEndTimestamp;
+        } else {
+            MainWorkElapsedTime = (mSec50 - MainWorkEndTimestamp) + MainWorkStartTimestamp;
+        }
+
+        if (MainWorkElapsedTime > MaxMainWorkElapsedTime) {
+            MaxMainWorkElapsedTime = MainWorkElapsedTime;
+        }
+
+        static int debug_output_decimation = 0;
+        static int max_time_reset_counter = 0;
+        if (board_hw_id == EL) {
+            if (++debug_output_decimation >= 10000) {
+                debug_output_decimation = 0;
+                Uint8 debug_info[4];
+                debug_info[0] = (MaxMainWorkElapsedTime >> 8) & 0x000000FF;
+                debug_info[1] = (MaxMainWorkElapsedTime & 0x000000FF);
+                debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
+                debug_info[3] = (MissedInterrupts & 0x000000FF);
+                //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
+
+                if (++max_time_reset_counter >= 5) {
+                    max_time_reset_counter = 0;
+                    MaxMainWorkElapsedTime = 0;
+                }
+            }
+        }
 	}
 } //END MAIN CODE
 
@@ -1060,20 +1123,6 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 	// software start of conversion for temperature measurement and Bus Voltage Measurement
 	AdcRegs.ADCSOCFRC1.bit.SOC14 = 1;
 	AdcRegs.ADCSOCFRC1.bit.SOC15 = 1;
-
-	// TODO: Add a new graceful stop routine if it's necessary
-	/*
-	//Graceful stop routine when a fault from another board occurs.
-	if (gracefulstop == 1 & gracefulstop_count < 34) {
-		if (gracefulstop_count == 33) {
-			mode = MODE_DEFAULT;
-		} else {
-			motor_drive_parms.iq_ref = 0;
-			mode = MODE_CURRENT;
-		}
-		gracefulstop_count ++;
-	}
-	*/
 
 	if (board_hw_id == AZ) {
 		// If we're the AZ axis, send the MAVLink heartbeat message at (roughly) 1Hz
@@ -1543,7 +1592,7 @@ static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms
     }
 }
 
-static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)
+void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)
 {
     encoder_parms->raw_theta = AdcResult.ADCRESULT5;
     if (encoder_parms->raw_theta < 0) {
@@ -1649,259 +1698,6 @@ interrupt void MainISR(void)
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
 #endif
 
-}
-
-static void MainISRwork(void)
-{
-    // TODO: Measuring timing
-    GpioDataRegs.GPASET.bit.GPIO28 = 1;
-	GpioDataRegs.GPASET.bit.GPIO29 = 1;
-
-	// Increment the global timestamp counter
-	global_timestamp_counter++;
-
-    ISRStartTimestamp = CpuTimer2Regs.TIM.all;
-
-    if (axis_parms.run_motor) {
-        // Do the encoder calculations no matter what state we're in (we care in a bunch of states, so no reason to duplicate the work)
-        UpdateEncoderReadings(&encoder_parms, &control_board_parms);
-
-        // Run the motor drive state machine to compute the correct inputs to the Park transform and Id and Iq PID controllers
-        MotorDriveStateMachine(&axis_parms,
-                &control_board_parms,
-                &motor_drive_parms,
-                &encoder_parms,
-                param_set,
-                &pos_loop_filter_parms_stage_1,
-                &pos_loop_filter_parms_stage_2,
-                &power_filter_parms,
-                &load_ap_state_info);
-
-        // ------------------------------------------------------------------------------
-        //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).
-        //  Connect inputs of the CLARKE module and call the clarke transformation macro
-        // ------------------------------------------------------------------------------
-#ifdef F2806x_DEVICE_H
-        motor_drive_parms.clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-motor_drive_parms.cal_offset_A)*2); // Phase A curr.
-        motor_drive_parms.clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-motor_drive_parms.cal_offset_B)*2); // Phase B curr.
-#endif                                                         // ((ADCmeas(q12)/2^12)-0.5)*2
-
-#ifdef DSP2803x_DEVICE_H
-        motor_drive_parms.clarke_xform_parms.As=-(_IQ15toIQ((AdcResult.ADCRESULT1<<3)-motor_drive_parms.cal_offset_A)<<1);
-        motor_drive_parms.clarke_xform_parms.Bs=-(_IQ15toIQ((AdcResult.ADCRESULT2<<3)-motor_drive_parms.cal_offset_B)<<1);
-#endif
-
-#ifdef USE_AVERAGE_POWER_FILTER
-        // Run an iteration of the average power filter
-        // Scale -1 to +1 current to +/- full scale current, since power filter expects current in amps
-        run_average_power_filter(&power_filter_parms, motor_drive_parms.pid_iq.term.Ref * MAX_CURRENT);
-
-        // If the average power has exceeded the preset limit on either phase a or b, error out this axis
-        if (check_average_power_over_limit(&power_filter_parms)) {
-            reset_average_power_filter(&power_filter_parms);
-            AxisFault(CAND_FAULT_OVER_CURRENT, CAND_FAULT_TYPE_RECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
-        }
-#endif
-
-        CLARKE_MACRO(motor_drive_parms.clarke_xform_parms)
-
-        // ------------------------------------------------------------------------------
-        //  Connect inputs of the PARK module and call the park trans. macro
-        // ------------------------------------------------------------------------------
-        motor_drive_parms.park_xform_parms.Alpha = motor_drive_parms.clarke_xform_parms.Alpha;
-        motor_drive_parms.park_xform_parms.Beta = motor_drive_parms.clarke_xform_parms.Beta;
-        // Park transformation angle is set in MotorDriveStateMachine, according to the current motor state
-        motor_drive_parms.park_xform_parms.Sine = _IQsinPU(motor_drive_parms.park_xform_parms.Angle);
-        motor_drive_parms.park_xform_parms.Cosine = _IQcosPU(motor_drive_parms.park_xform_parms.Angle);
-
-        PARK_MACRO(motor_drive_parms.park_xform_parms)
-
-        // ------------------------------------------------------------------------------
-        //    Connect inputs of the id PID controller and call the PID controller macro
-        // ------------------------------------------------------------------------------
-        // Limit the requested current to prevent burning up the motor
-#ifndef USE_AVERAGE_POWER_FILTER
-        if (motor_drive_parms.motor_drive_state == STATE_HOMING) {
-            // TODO: Temp for testing, allow higher currents during homing routine
-            if (motor_drive_parms.pid_id.term.Ref > CURRENT_LIMIT_HOMING) {
-                motor_drive_parms.pid_id.term.Ref = CURRENT_LIMIT_HOMING;
-            } else if (motor_drive_parms.pid_id.term.Ref < -CURRENT_LIMIT_HOMING) {
-                motor_drive_parms.pid_id.term.Ref = -CURRENT_LIMIT_HOMING;
-            }
-        } else {
-            if (motor_drive_parms.pid_id.term.Ref > CURRENT_LIMIT) {
-                motor_drive_parms.pid_id.term.Ref = CURRENT_LIMIT;
-            } else if (motor_drive_parms.pid_id.term.Ref < -CURRENT_LIMIT) {
-                motor_drive_parms.pid_id.term.Ref = -CURRENT_LIMIT;
-            }
-        }
-#endif
-        motor_drive_parms.pid_id.term.Fbk = motor_drive_parms.park_xform_parms.Ds;
-        PID_GR_MACRO(motor_drive_parms.pid_id)
-
-        // ------------------------------------------------------------------------------
-        //    Connect inputs of the iq PID controller and call the PID controller macro
-        // ------------------------------------------------------------------------------
-        // Limit the requested current to prevent burning up the motor
-#ifndef USE_AVERAGE_POWER_FILTER
-        if (motor_drive_parms.motor_drive_state == STATE_HOMING) {
-            // TODO: Temp for testing, allow higher currents during homing routine
-            if (motor_drive_parms.pid_iq.term.Ref > CURRENT_LIMIT_HOMING) {
-                motor_drive_parms.pid_iq.term.Ref = CURRENT_LIMIT_HOMING;
-            } else if (motor_drive_parms.pid_iq.term.Ref < -CURRENT_LIMIT_HOMING) {
-                motor_drive_parms.pid_iq.term.Ref = -CURRENT_LIMIT_HOMING;
-            }
-        } else {
-            if (motor_drive_parms.pid_iq.term.Ref > CURRENT_LIMIT) {
-                motor_drive_parms.pid_iq.term.Ref = CURRENT_LIMIT;
-            } else if (motor_drive_parms.pid_iq.term.Ref < -CURRENT_LIMIT) {
-                motor_drive_parms.pid_iq.term.Ref = -CURRENT_LIMIT;
-            }
-        }
-#endif
-        motor_drive_parms.pid_iq.term.Fbk = motor_drive_parms.park_xform_parms.Qs;
-        PID_GR_MACRO(motor_drive_parms.pid_iq)
-
-        // ------------------------------------------------------------------------------
-        //  Connect inputs of the INV_PARK module and call the inverse park trans. macro
-        // ------------------------------------------------------------------------------
-        motor_drive_parms.ipark_xform_parms.Qs = motor_drive_parms.pid_iq.term.Out;
-        motor_drive_parms.ipark_xform_parms.Ds = motor_drive_parms.pid_id.term.Out;
-        motor_drive_parms.ipark_xform_parms.Sine = motor_drive_parms.park_xform_parms.Sine;
-        motor_drive_parms.ipark_xform_parms.Cosine = motor_drive_parms.park_xform_parms.Cosine;
-        IPARK_MACRO(motor_drive_parms.ipark_xform_parms)
-
-        // ------------------------------------------------------------------------------
-        //  Connect inputs of the SVGEN_DQ module and call the space-vector gen. macro
-        // ------------------------------------------------------------------------------
-        motor_drive_parms.svgen_parms.Ualpha = motor_drive_parms.ipark_xform_parms.Alpha;
-        motor_drive_parms.svgen_parms.Ubeta = motor_drive_parms.ipark_xform_parms.Beta;
-        SVGEN_MACRO(motor_drive_parms.svgen_parms)
-
-        // ------------------------------------------------------------------------------
-        //  Connect inputs of the PWM_DRV module and call the PWM signal generation macro
-        // ------------------------------------------------------------------------------
-        motor_drive_parms.pwm_gen_parms.MfuncC1 = _IQtoQ15(motor_drive_parms.svgen_parms.Ta);
-        motor_drive_parms.pwm_gen_parms.MfuncC2 = _IQtoQ15(motor_drive_parms.svgen_parms.Tb);
-        motor_drive_parms.pwm_gen_parms.MfuncC3 = _IQtoQ15(motor_drive_parms.svgen_parms.Tc);
-        PWM_MACRO(motor_drive_parms.pwm_gen_parms);
-
-        // Calculate the new PWM compare values
-
-        //Check that the return is not negative
-        if (motor_drive_parms.pwm_gen_parms.PWM1out < 0) {
-            motor_drive_parms.pwm_gen_parms.PWM1out = 0;
-        }
-        if (motor_drive_parms.pwm_gen_parms.PWM2out < 0) {
-            motor_drive_parms.pwm_gen_parms.PWM2out = 0;
-        }
-        if (motor_drive_parms.pwm_gen_parms.PWM3out < 0) {
-            motor_drive_parms.pwm_gen_parms.PWM3out = 0;
-        }
-
-        //Set ADC sample point on pwm1 output to avoid switching transients
-        if (motor_drive_parms.pwm_gen_parms.PWM1out < motor_drive_parms.pwm_gen_parms.PeriodMax/4) {
-            EPwm1Regs.CMPB = motor_drive_parms.pwm_gen_parms.PeriodMax/2;
-        } else if (motor_drive_parms.pwm_gen_parms.PWM1out > motor_drive_parms.pwm_gen_parms.PeriodMax/4 + 10) {
-            EPwm1Regs.CMPB = motor_drive_parms.pwm_gen_parms.PeriodMax/8;
-        }
-
-        //Set ADC sample point on pwm2 output to avoid switching transients
-        if (motor_drive_parms.pwm_gen_parms.PWM2out < motor_drive_parms.pwm_gen_parms.PeriodMax/4) {
-            EPwm2Regs.CMPB = motor_drive_parms.pwm_gen_parms.PeriodMax/2;
-        } else if (motor_drive_parms.pwm_gen_parms.PWM2out > motor_drive_parms.pwm_gen_parms.PeriodMax/4 + 10) {
-            EPwm2Regs.CMPB = motor_drive_parms.pwm_gen_parms.PeriodMax/8;
-        }
-
-
-        if (motor_drive_parms.motor_drive_state == STATE_CALIBRATING_CURRENT_MEASUREMENTS) { // SPECIAL CASE: set all PWM outputs to 0 for Current measurement offset calibration
-            EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
-            EPwm2Regs.CMPA.half.CMPA=0; // PWM 2A - PhaseB
-            EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
-        } else if (0) { // TODO: For testing, disable motor outputs on EL and ROLL
-            EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
-            EPwm2Regs.CMPA.half.CMPA=0; // PWM 2A - PhaseB
-            EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
-        } else { // Otherwise, set PWM outputs appropriately
-            EPwm1Regs.CMPA.half.CMPA=motor_drive_parms.pwm_gen_parms.PWM1out;  // PWM 1A - PhaseA
-            EPwm2Regs.CMPA.half.CMPA=motor_drive_parms.pwm_gen_parms.PWM2out;  // PWM 2A - PhaseB
-            EPwm3Regs.CMPA.half.CMPA=motor_drive_parms.pwm_gen_parms.PWM3out;  // PWM 3A - PhaseC
-        }
-
-#ifdef ENABLE_CURRENT_TOGGLE
-#ifdef USE_SYS_ANALYZER
-        SystemAnalyzerSendReceive((int16)(*SysAnalyzerDataFloatPtr * 32768.0));
-#endif
-#endif
-    }
-
-    TorqueLoopEndTime = CpuTimer2Regs.TIM.all;
-
-    if (TorqueLoopEndTime < ISRStartTimestamp) {
-		TorqueLoopElapsedTime = ISRStartTimestamp - TorqueLoopEndTime;
-	} else {
-		TorqueLoopElapsedTime = (mSec50 - TorqueLoopEndTime) + ISRStartTimestamp;
-	}
-
-    if (TorqueLoopElapsedTime > MaxTorqueLoopElapsedTime) {
-    	MaxTorqueLoopElapsedTime = TorqueLoopElapsedTime;
-    }
-
-    // If there is new gyro data to be processed, and all axes have been homed (the rate loop has been enabled), run the rate loops
-    if ((GyroDataReadyFlag == TRUE) && (control_board_parms.enabled == TRUE)) {
-
-    	RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
-
-        RunRateLoops(&control_board_parms, param_set, &pos_loop_filter_parms_stage_1, &pos_loop_filter_parms_stage_2, &balance_proc_parms);
-
-        // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
-        if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
-        	GyroDataReadyFlag = FALSE;
-        }
-
-        RateLoopEndTimestamp = CpuTimer2Regs.TIM.all;
-
-        if (RateLoopEndTimestamp < RateLoopStartTimestamp) {
-        	RateLoopElapsedTime = RateLoopStartTimestamp - RateLoopEndTimestamp;
-        } else {
-        	RateLoopElapsedTime = (mSec50 - RateLoopEndTimestamp) + RateLoopStartTimestamp;
-        }
-    }
-
-    ISREndTimestamp = CpuTimer2Regs.TIM.all;
-
-    if (ISREndTimestamp < ISRStartTimestamp) {
-    	ISRElapsedTime = ISRStartTimestamp - ISREndTimestamp;
-    } else {
-    	ISRElapsedTime = (mSec50 - ISREndTimestamp) + ISRStartTimestamp;
-    }
-
-    if (ISRElapsedTime > MaxISRElapsedTime) {
-        MaxISRElapsedTime = ISRElapsedTime;
-    }
-
-    static int debug_output_decimation = 0;
-    static int max_time_reset_counter = 0;
-    if (board_hw_id == EL) {
-        if (++debug_output_decimation >= 10000) {
-            debug_output_decimation = 0;
-            Uint8 debug_info[4];
-            debug_info[0] = (MaxISRElapsedTime >> 8) & 0x000000FF;
-            debug_info[1] = (MaxISRElapsedTime & 0x000000FF);
-            debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
-            debug_info[3] = (MissedInterrupts & 0x000000FF);
-            //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
-
-            if (++max_time_reset_counter >= 5) {
-                max_time_reset_counter = 0;
-                MaxISRElapsedTime = 0;
-            }
-        }
-    }
-
-    // TODO: Testing timing
-    GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
-    GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
 }
 
 void power_down_motor()
