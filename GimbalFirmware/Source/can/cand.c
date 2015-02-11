@@ -234,32 +234,20 @@ static int ECanRx( struct MBOX* inbox )
 	return 0;
 }
 
-CAND_Result cand_init( void )
+CAND_Result cand_init(void)
 {
-#if !defined(FORCE_CAN_ID_TO_AZ) && !defined(FORCE_CAN_ID_TO_EL) && !defined(FORCE_CAN_ID_TO_ROLL)
-	//Initialize ID GPIO
-	//GpioCtrlRegs.GPAPUD.bit.GPIO3 = 1;		//disable internal pullups (pulled up externally by switch)
-	//GpioCtrlRegs.GPBPUD.bit.GPIO34 = 1;
-
-	//GpioCtrlRegs.GPAMUX1.bit.GPIO3 = 0;		//TODO: lookup, make sure mux 0 = gpio
-	//GpioCtrlRegs.GPBMUX1.bit.GPIO34 = 0;		//TODO: lookup
-#endif
-
     // Make sure that the board hw id pins are pulled correctly.  The ID all axes isn't a valid
     // id for a single axis to have (it's used for broadcast to all axes).  If this is the board hw id,
     // send out a fault message to indicate the bad board ID
 	if (CAND_GetSenderID() == CAND_ID_ALL_AXES) {
-		cand_tx_fault(CAND_FAULT_UNKNOWN_AXIS_ID);
+	    return CAND_INIT_BAD_HW_ID;
+	} else {
+	    return CAND_SUCCESS;
 	}
-
-	return CAND_SUCCESS;
 }
 
-CAND_SenderID CAND_GetSenderID( void )
+CAND_SenderID CAND_GetSenderID(void)
 {
-	//Read system jumpers to know whoami
-	int sw = GetBoardHWID();
-
 #ifdef FORCE_CAN_ID_TO_AZ
     return CAND_ID_AZ;
 #endif
@@ -270,7 +258,7 @@ CAND_SenderID CAND_GetSenderID( void )
     return CAND_ID_ROLL;
 #endif
 
-    switch (sw) {
+    switch (GetBoardHWID()) {
     	case 0:
     	    return CAND_ID_EL;
 

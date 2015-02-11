@@ -16,6 +16,7 @@
 #include "control/PID.h"
 #include "gopro/gopro_interface.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
+#include "helpers/fault_handling.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -48,6 +49,11 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 #ifndef AZ_TEST
         md_parms->motor_drive_state = STATE_FAULT;
 #endif
+        // If we're the AZ axis, we need to send a MAVLink fault message to the copter
+        if (GetBoardHWID() == AZ) {
+            send_mavlink_axis_error(msg.sender_id, msg.fault_code);
+        }
+
         fault_cnt++;
         break;
 
@@ -95,7 +101,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             break;
 
         default:
-            AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND);
+            AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
             break;
         }
         cmd_cnt++;
@@ -188,7 +194,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         Uint16 missed_interrupts = (((Uint16)msg.extended_param[2] << 8) & 0xFF00) |
                                 ((Uint16)msg.extended_param[3] & 0x00FF);
                         snprintf(debug_msg, 50, "Max Time: %d, Missed Intr: %d", max_loop_time, missed_interrupts);
-                        send_mavlink_statustext(debug_msg);
+                        send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                     }
                         break;
                 }
@@ -631,7 +637,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             */
 
             default:
-                AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER);
+                AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER, FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
                 break;
             }
             msg.param_request_cnt--;

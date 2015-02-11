@@ -8,6 +8,7 @@
 #include "motor/homing_calibration_state_machine.h"
 #include "hardware/HWSpecific.h"
 #include "hardware/device_init.h"
+#include "helpers/fault_handling.h"
 
 _iq IdRefLockHoming = _IQ(0.18); // 0.5A if 2.75A max scale is correct
 
@@ -175,8 +176,7 @@ void HomingCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* enco
                         hc_parms->next_homing_state = HOMING_STATE_TAKE_CALIBRATION_POINT_1;
                     } else {
                         // We're unable to calibrate the pot correctly, so transmit an error and go to the fault state
-                        AxisFault(CAND_FAULT_CALIBRATING_POT);
-                        md_parms->motor_drive_state = STATE_FAULT;
+                        AxisFault(CAND_FAULT_CALIBRATING_POT, FAULT_TYPE_UNRECOVERABLE, cb_parms, md_parms, axis_parms);
                     }
                 } else {
                     // If we've moved close enough to what we expect, compute the final calibration line
@@ -288,8 +288,7 @@ void HomingCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* enco
                 hc_parms->find_stop_step++;
                 if (hc_parms->find_stop_step > HOMING_MAX_STOP_SEARCH_STEPS) {
                     // Don't try to find stops indefinitely.  If we've exceeded the maximum number of search steps, error out
-                    AxisFault(CAND_FAULT_FIND_STOP_TIMEOUT);
-                    md_parms->motor_drive_state = STATE_FAULT;
+                    AxisFault(CAND_FAULT_FIND_STOP_TIMEOUT, FAULT_TYPE_UNRECOVERABLE, cb_parms, md_parms, axis_parms);
                 } else {
                     if (hc_parms->ramp_cntl.TargetValue == 1.0) {
                         hc_parms->ramp_cntl.SetpointValue = 0.0;

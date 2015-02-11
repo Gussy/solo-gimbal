@@ -15,8 +15,6 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 =================================================================================  */
 
 #include "PM_Sensorless.h"
-
-// Include header files used in the main function
 #include "PM_Sensorless-Settings.h"
 #include "PeripheralHeaderIncludes.h"
 #include "hardware/device_init.h"
@@ -39,6 +37,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "motor/motor_drive_state_machine.h"
 #include "control/rate_loops.h"
 #include "parameters/load_axis_parms_state_machine.h"
+#include "helpers/fault_handling.h"
 
 #include <math.h>
 #include <string.h>
@@ -411,6 +410,8 @@ static void MainISRwork(void);
 
 Uint32 MissedInterrupts = 0;
 
+Uint32 can_init_fault_message_resend_counter = 0;
+
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
@@ -431,7 +432,16 @@ void main(void)
 #endif
 	// Initialize CAN peripheral, and CAND backend
 	ECanInit();
-	cand_init();
+	if (cand_init() != CAND_SUCCESS) {
+	    // If the CAN module didn't initialize, we busy wait here forever and send an error message at roughly 1Hz
+	    while (1) {
+	        // Rough approximation of 1-second of busy waiting, doesn't need to be super accurate
+	        if (++can_init_fault_message_resend_counter >= 0x7B124) {
+	            can_init_fault_message_resend_counter = 0;
+	            AxisFault(CAND_FAULT_UNKNOWN_AXIS_ID, FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+	        }
+	    }
+	}
 
 	init_param_set();
 
@@ -1156,6 +1166,19 @@ interrupt void GyroIntISR(void)
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
 
+interrupt void MotorDriverFaultIntISR()
+{
+    // Process the motor drive fault
+    AxisFault(CAND_FAULT_MOTOR_DRIVER_FAULT, FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+
+    // TODO: May want to have some sort of recovery code here
+    // Some motor driver faults need the motor driver chip to be
+    // reset to clear the fault
+
+    // Acknowledge interrupt to receive more interrupts from PIE group 1
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
+}
+
 int position_loop_deadband_counts = 10;
 int position_loop_deadband_hysteresis = 100;
 
@@ -1675,7 +1698,8 @@ static void MainISRwork(void)
 
         // If the average power has exceeded the preset limit on either phase a or b, error out this axis
         if (check_average_power_over_limit(&power_filter_parms)) {
-            AxisFault(CAND_FAULT_OVER_CURRENT);
+            reset_average_power_filter(&power_filter_parms);
+            AxisFault(CAND_FAULT_OVER_CURRENT, FAULT_TYPE_RECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
         }
 #endif
 
@@ -1896,21 +1920,6 @@ int16 CorrectEncoderError(int16 raw_error)
     } else {
         return raw_error;
     }
-}
-
-void AxisFault(CAND_FaultCode fault_code)
-{
-    // Remember our own last fault code
-    control_board_parms.last_axis_fault[board_hw_id] = fault_code;
-
-    // Put ourselves into fault mode (this stops driving current to the motor)
-    motor_drive_parms.motor_drive_state = STATE_FAULT;
-
-    // Indicate the error with the blink state
-    axis_parms.blink_state = BLINK_ERROR;
-
-    // Transmit this fault to the rest of the system
-    cand_tx_fault(fault_code);
 }
 
 int GetIndexTimeOut(void)
