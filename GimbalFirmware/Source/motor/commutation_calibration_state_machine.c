@@ -9,6 +9,7 @@
 #include "can/cand.h"
 #include "hardware/device_init.h"
 #include "parameters/flash_params.h"
+#include "helpers/fault_handling.h"
 
 static void calc_slope_intercept(CommutationCalibrationParms* cc_parms, int start, int end, float *slope, float *intercept)
 {
