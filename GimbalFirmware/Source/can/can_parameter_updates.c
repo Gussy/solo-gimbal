@@ -146,124 +146,124 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     // Check for updated position loop PID params
     if (*(param_set[CAND_PID_POS_EL_P].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[EL].integralCumulative = 0.0;
-        pos_pid_loop_float[EL].errorPrevious = 0.0;
+        //pos_pid_loop_float[EL].integralCumulative = 0.0;
+        //pos_pid_loop_float[EL].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_EL_P].param;
-        pos_pid_loop_float[EL].gainP = float_converter.float_val;
+        //pos_pid_loop_float[EL].gainP = float_converter.float_val;
         *(param_set[CAND_PID_POS_EL_P].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_EL_I].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[EL].integralCumulative = 0.0;
-        pos_pid_loop_float[EL].errorPrevious = 0.0;
+        //pos_pid_loop_float[EL].integralCumulative = 0.0;
+        //pos_pid_loop_float[EL].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_EL_I].param;
-        pos_pid_loop_float[EL].gainI = float_converter.float_val;
+        //pos_pid_loop_float[EL].gainI = float_converter.float_val;
         *(param_set[CAND_PID_POS_EL_I].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_EL_D].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[EL].integralCumulative = 0.0;
-        pos_pid_loop_float[EL].errorPrevious = 0.0;
+        //pos_pid_loop_float[EL].integralCumulative = 0.0;
+        //pos_pid_loop_float[EL].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_EL_D].param;
-        pos_pid_loop_float[EL].gainD = float_converter.float_val;
+        //pos_pid_loop_float[EL].gainD = float_converter.float_val;
         *(param_set[CAND_PID_POS_EL_D].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_EL_WINDUP].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[EL].integralCumulative = 0.0;
-        pos_pid_loop_float[EL].errorPrevious = 0.0;
+        //pos_pid_loop_float[EL].integralCumulative = 0.0;
+        //pos_pid_loop_float[EL].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_EL_WINDUP].param;
-        pos_pid_loop_float[EL].integralMax = float_converter.float_val;
-        pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
+        //pos_pid_loop_float[EL].integralMax = float_converter.float_val;
+        //pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
         *(param_set[CAND_PID_POS_EL_WINDUP].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_AZ_P].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[AZ].integralCumulative = 0.0;
-        pos_pid_loop_float[AZ].errorPrevious = 0.0;
+        //pos_pid_loop_float[AZ].integralCumulative = 0.0;
+        //pos_pid_loop_float[AZ].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_AZ_P].param;
-        pos_pid_loop_float[AZ].gainP = float_converter.float_val;
+        //pos_pid_loop_float[AZ].gainP = float_converter.float_val;
         *(param_set[CAND_PID_POS_AZ_P].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_AZ_I].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[AZ].integralCumulative = 0.0;
-        pos_pid_loop_float[AZ].errorPrevious = 0.0;
+        //pos_pid_loop_float[AZ].integralCumulative = 0.0;
+        //pos_pid_loop_float[AZ].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_AZ_I].param;
-        pos_pid_loop_float[AZ].gainI = float_converter.float_val;
+        //pos_pid_loop_float[AZ].gainI = float_converter.float_val;
         *(param_set[CAND_PID_POS_AZ_I].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_AZ_D].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[AZ].integralCumulative = 0.0;
-        pos_pid_loop_float[AZ].errorPrevious = 0.0;
+        //pos_pid_loop_float[AZ].integralCumulative = 0.0;
+        //pos_pid_loop_float[AZ].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_AZ_D].param;
-        pos_pid_loop_float[AZ].gainD = float_converter.float_val;
+        //pos_pid_loop_float[AZ].gainD = float_converter.float_val;
         *(param_set[CAND_PID_POS_AZ_D].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_AZ_WINDUP].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[AZ].integralCumulative = 0.0;
-        pos_pid_loop_float[AZ].errorPrevious = 0.0;
+        //pos_pid_loop_float[AZ].integralCumulative = 0.0;
+        //pos_pid_loop_float[AZ].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_AZ_WINDUP].param;
-        pos_pid_loop_float[AZ].integralMax = float_converter.float_val;
-        pos_pid_loop_float[AZ].integralMin = -float_converter.float_val;
+        //pos_pid_loop_float[AZ].integralMax = float_converter.float_val;
+        //pos_pid_loop_float[AZ].integralMin = -float_converter.float_val;
         *(param_set[CAND_PID_POS_AZ_WINDUP].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_RL_P].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
-        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
+        //pos_pid_loop_float[ROLL].integralCumulative = 0.0;
+        //pos_pid_loop_float[ROLL].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_RL_P].param;
-        pos_pid_loop_float[ROLL].gainP = float_converter.float_val;
+        //pos_pid_loop_float[ROLL].gainP = float_converter.float_val;
         *(param_set[CAND_PID_POS_RL_P].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_RL_I].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
-        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
+        //pos_pid_loop_float[ROLL].integralCumulative = 0.0;
+        //pos_pid_loop_float[ROLL].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_RL_I].param;
-        pos_pid_loop_float[ROLL].gainI = float_converter.float_val;
+        //pos_pid_loop_float[ROLL].gainI = float_converter.float_val;
         *(param_set[CAND_PID_POS_RL_I].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_RL_D].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
-        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
+        //pos_pid_loop_float[ROLL].integralCumulative = 0.0;
+        //pos_pid_loop_float[ROLL].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_RL_D].param;
-        pos_pid_loop_float[ROLL].gainD = float_converter.float_val;
+        //pos_pid_loop_float[ROLL].gainD = float_converter.float_val;
         *(param_set[CAND_PID_POS_RL_D].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_POS_RL_WINDUP].sema) == TRUE) {
         // Dump the integrator and differentiator
-        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
-        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
+        //pos_pid_loop_float[ROLL].integralCumulative = 0.0;
+        //pos_pid_loop_float[ROLL].errorPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_POS_RL_WINDUP].param;
-        pos_pid_loop_float[ROLL].integralMax = float_converter.float_val;
-        pos_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
+        //pos_pid_loop_float[ROLL].integralMax = float_converter.float_val;
+        //pos_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
         *(param_set[CAND_PID_POS_RL_WINDUP].sema) = FALSE;
     }
 
