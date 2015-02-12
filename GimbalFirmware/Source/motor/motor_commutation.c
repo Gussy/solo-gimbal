@@ -9,6 +9,7 @@
 #include "PM_Sensorless-Settings.h"
 #include "motor/motor_drive_state_machine.h"
 #include "helpers/fault_handling.h"
+#include "hardware/encoder.h"
 #include "motor/motor_commutation.h"
 
 Uint32 TorqueLoopStartTime = 0;

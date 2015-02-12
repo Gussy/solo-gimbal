@@ -175,7 +175,6 @@ int GetAxisHomed(void);
 Uint16 GetEnableFlag(void);
 Uint16 GetAxisParmsLoaded(void);
 int16 CorrectEncoderError(int16 raw_error);
-void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
 void power_down_motor(void);
 void EnableAZAxis(void);
 void RelaxAZAxis(void);
