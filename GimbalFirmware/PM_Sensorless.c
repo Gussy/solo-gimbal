@@ -654,8 +654,8 @@ void main(void)
             }
         }
 
-		// Update any parameters that have changed due to CAN messages
-		ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms);
+        // Update any parameters that have changed due to CAN messages
+        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms);
 
 		// Measure total main work timing
 		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;
@@ -668,25 +668,6 @@ void main(void)
 
         if (MainWorkElapsedTime > MaxMainWorkElapsedTime) {
             MaxMainWorkElapsedTime = MainWorkElapsedTime;
-        }
-
-        static int debug_output_decimation = 0;
-        static int max_time_reset_counter = 0;
-        if (board_hw_id == EL) {
-            if (++debug_output_decimation >= 10000) {
-                debug_output_decimation = 0;
-                Uint8 debug_info[4];
-                debug_info[0] = (MaxMainWorkElapsedTime >> 8) & 0x000000FF;
-                debug_info[1] = (MaxMainWorkElapsedTime & 0x000000FF);
-                debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
-                debug_info[3] = (MissedInterrupts & 0x000000FF);
-                //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
-
-                if (++max_time_reset_counter >= 5) {
-                    max_time_reset_counter = 0;
-                    MaxMainWorkElapsedTime = 0;
-                }
-            }
         }
 	}
 } //END MAIN CODE
@@ -1095,6 +1076,26 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
             cand_tx_multi_response(CAND_ID_AZ, pids, response_buffer, 2);
         }
 	}
+
+	// Debug messages for monitoring of loop timing
+	static int debug_output_decimation = 0;
+    static int max_time_reset_counter = 0;
+    if (board_hw_id == EL) {
+        if (++debug_output_decimation >= 7) {
+            debug_output_decimation = 0;
+            Uint8 debug_info[4];
+            debug_info[0] = (MaxMainWorkElapsedTime >> 8) & 0x000000FF;
+            debug_info[1] = (MaxMainWorkElapsedTime & 0x000000FF);
+            debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
+            debug_info[3] = (MissedInterrupts & 0x000000FF);
+            cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
+
+            if (++max_time_reset_counter >= 5) {
+                max_time_reset_counter = 0;
+                MaxMainWorkElapsedTime = 0;
+            }
+        }
+    }
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
 	C_Task_Ptr = &C3;	
