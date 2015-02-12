@@ -1088,7 +1088,7 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
             debug_info[1] = (MaxMainWorkElapsedTime & 0x000000FF);
             debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
             debug_info[3] = (MissedInterrupts & 0x000000FF);
-            cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
+            //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
 
             if (++max_time_reset_counter >= 5) {
                 max_time_reset_counter = 0;
