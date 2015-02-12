@@ -277,7 +277,7 @@ void DeviceInit(void)
 //  GPIO-13 - PIN FUNCTION = PWM Fault Interrupt Line, Active Low
 	GpioCtrlRegs.GPAMUX1.bit.GPIO13 = 0;	// 0=GPIO,  1=TZ2,  2=Resv,  3=SPISOMIB
 	GpioCtrlRegs.GPADIR.bit.GPIO13 = 0;		// 1=OUTput,  0=INput
-	GpioCtrlRegs.GPAPUD.bit.GPIO13 = 1;                // Disable pullup for now, determine if it needs to be enabled
+	GpioCtrlRegs.GPAPUD.bit.GPIO13 = 1;     // Disable internal pullup, this signal is externally pulled up
 //	GpioDataRegs.GPACLEAR.bit.GPIO13 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO13 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
@@ -547,63 +547,81 @@ void DeviceInit(void)
 	EDIS;	// Disable register access
 }
 
-// NOTE: The results of this function are not valid until after the appropriate GPIO pins have been configured
-// This happens early in the DeviceInit function, but for safety, this function should not be called by code outside
-// of this file until after DeviceInit has returned
-Uint8 GetBoardHWID()
-{
-    return (GpioDataRegs.GPADAT.bit.GPIO20 | (GpioDataRegs.GPADAT.bit.GPIO21<<1));
-}
-
 void InitInterrupts()
 {
-    EALLOW; // This is needed to write to EALLOW protected registers
+    // *******************************************
+    // Configure interrupts that apply to all axes
+    // *******************************************
+    EALLOW;
     PieVectTable.ECAP1_INT = &MainISR; // Main ISR is driven from ECAP1 timer
-    PieVectTable.XINT1 = &GyroIntISR; // Gyro ISR is driven from external interrupt 1
-    PieVectTable.SCIRXINTB = &uart_rx_isr; // Uart RX ISR is driven from SCI-B receive
-    PieVectTable.SCITXINTB = &uart_tx_isr; // Uart TX ISR is driven from SCI-B transmit
-    PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx fifo interrupts are handled by the same ISR
-    PieVectTable.I2CINT1A = &i2c_int_a_isr; // All non-fifo I2C interrupts are handled by the same ISR
+    PieVectTable.XINT2 = &MotorDriverFaultIntISR; // Motor driver fault is driven from external interrupt 2
     EDIS;
 
     // Enable PIE group 4 interrupt 1 for ECAP1_INT (for main 10kHz loop)
     PieCtrlRegs.PIEIER4.bit.INTx1 = 1;
-    // Enable PIE group 1 interrupt 4 for XINT1 (for gyro interrupt line)
-    PieCtrlRegs.PIEIER1.bit.INTx4 = 1;
-    // Enable PIE group 9 interrupt 3 for SCI-B rx
-    PieCtrlRegs.PIEIER9.bit.INTx3 = 1;
-    // Enable PIE group 9 interrupt 4 for SCI-B tx
-    PieCtrlRegs.PIEIER9.bit.INTx4 = 1;
-    // Enable PIE group 8 interrupt 2 for I2C FIFO interrupts
-    PieCtrlRegs.PIEIER8.bit.INTx2 = 1;
-    // Enable PIE group 8 interrupt 1 for Regular I2C interrupts (the only one we're currently using is addressed as slave (AAS))
-    PieCtrlRegs.PIEIER8.bit.INTx1 = 1;
+    // Enable PIE group 1 interrupt 5 for XINT2 (for motor driver fault line)
+    PieCtrlRegs.PIEIER1.bit.INTx5 = 1;
 
     // Configure and enable ECAP1 (for main 10KHz loop)
     ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = 0x1;  //Enable ECAP1 Period Match interrupt
     ECap1Regs.ECCLR.bit.CTR_EQ_PRD1 = 0x1; //Clear any existing interrupts
 
-    // Configure and enable XINT1 (for gyro interrupt line)
+    // Configure and enable XINT2 (for motor driver fault line)
     EALLOW;
-    GpioIntRegs.GPIOXINT1SEL.bit.GPIOSEL = 12; // Select GPIO 12 as the XINT1 source
+    GpioIntRegs.GPIOXINT2SEL.bit.GPIOSEL = 13; // Select GPIO 13 as the XINT2 source
     EDIS;
-    XIntruptRegs.XINT1CR.bit.POLARITY = 0x01; // Interrupt on rising edge
-    XIntruptRegs.XINT1CR.bit.ENABLE = 1; // Enable interrupt
+    XIntruptRegs.XINT2CR.bit.POLARITY = 0x00; // Interrupt on falling edge
+    XIntruptRegs.XINT2CR.bit.ENABLE = 1; // Enable interrupt
 
     // Enable CPU INT4 for ECAP1_INT:
     IER |= M_INT4;
-    // Only enable gyro interrupt for the EL board
-    // Only enable I2C interrupts for the EL board
-    if (GetBoardHWID() == EL) {
-        // Enable CPU INT1 for XINT1
-        IER |= M_INT1;
-        // Enable CPU INT8 for I2C FIFO and I2C addressed as slave (AAS)
-        IER |= M_INT8;
-    }
-    // Only enable UART interrupt for the AZ board
+    // Enable CPU INT1 for XINT1 and XINT2
+    IER |= M_INT1;
+
+    // ******************************************
+    // Configure interrupts that only apply to AZ
+    // ******************************************
     if (GetBoardHWID() == AZ) {
+        EALLOW;
+        PieVectTable.SCIRXINTB = &uart_rx_isr; // Uart RX ISR is driven from SCI-B receive
+        PieVectTable.SCITXINTB = &uart_tx_isr; // Uart TX ISR is driven from SCI-B transmit
+        EDIS;
+
+        // Enable PIE group 9 interrupt 3 for SCI-B rx
+        PieCtrlRegs.PIEIER9.bit.INTx3 = 1;
+        // Enable PIE group 9 interrupt 4 for SCI-B tx
+        PieCtrlRegs.PIEIER9.bit.INTx4 = 1;
+
         // Enable CPU INT9 for SCI-B
         IER |= M_INT9;
+    }
+
+    // ******************************************
+    // Configure interrupts that only apply to EL
+    // ******************************************
+    if (GetBoardHWID() == EL) {
+        EALLOW;
+        PieVectTable.XINT1 = &GyroIntISR; // Gyro ISR is driven from external interrupt 1
+        PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx fifo interrupts are handled by the same ISR
+        PieVectTable.I2CINT1A = &i2c_int_a_isr; // All non-fifo I2C interrupts are handled by the same ISR
+        EDIS;
+
+        // Enable PIE group 1 interrupt 4 for XINT1 (for gyro interrupt line)
+        PieCtrlRegs.PIEIER1.bit.INTx4 = 1;
+        // Enable PIE group 8 interrupt 2 for I2C FIFO interrupts
+        PieCtrlRegs.PIEIER8.bit.INTx2 = 1;
+        // Enable PIE group 8 interrupt 1 for Regular I2C interrupts (the only one we're currently using is addressed as slave (AAS))
+        PieCtrlRegs.PIEIER8.bit.INTx1 = 1;
+
+        // Configure and enable XINT1 (for gyro interrupt line)
+        EALLOW;
+        GpioIntRegs.GPIOXINT1SEL.bit.GPIOSEL = 12; // Select GPIO 12 as the XINT1 source
+        EDIS;
+        XIntruptRegs.XINT1CR.bit.POLARITY = 0x01; // Interrupt on rising edge
+        XIntruptRegs.XINT1CR.bit.ENABLE = 1; // Enable interrupt
+
+        // Enable CPU INT8 for I2C FIFO and I2C addressed as slave (AAS)
+        IER |= M_INT8;
     }
 
     // Enable global Interrupts and higher priority real-time debug events:

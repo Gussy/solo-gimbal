@@ -15,8 +15,6 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 =================================================================================  */
 
 #include "PM_Sensorless.h"
-
-// Include header files used in the main function
 #include "PM_Sensorless-Settings.h"
 #include "PeripheralHeaderIncludes.h"
 #include "hardware/device_init.h"
@@ -39,6 +37,10 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "motor/motor_drive_state_machine.h"
 #include "control/rate_loops.h"
 #include "parameters/load_axis_parms_state_machine.h"
+#include "helpers/fault_handling.h"
+#include "motor/motor_commutation.h"
+#include "can/can_parameter_updates.h"
+#include "hardware/encoder.h"
 
 #include <math.h>
 #include <string.h>
@@ -47,8 +49,6 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #define USE_SYS_ANALYZER
 
 // Prototype statements for functions found within this file.
-static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
-static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms);
 void DeviceInit();
 void MemCopy();
 void InitFlash();
@@ -108,22 +108,15 @@ Uint8 feedback_decimator;
 
 Uint32 IsrTicker = 0;
 Uint32 GyroISRTicker = 0;
-Uint32 ISRStartTimestamp = 0;
-Uint32 ISREndTimestamp = 0;
-Uint32 ISRElapsedTime = 0;
+Uint16 GyroISRTime = 0;
 Uint32 RateLoopStartTimestamp = 0;
 Uint32 RateLoopEndTimestamp = 0;
 Uint32 RateLoopElapsedTime = 0;
-Uint32 MaxISRElapsedTime = 0;
-Uint32 MaxGyroReadElapsedTime = 0;
-Uint32 TorqueLoopEndTime = 0;
-Uint32 TorqueLoopElapsedTime = 0;
-Uint32 MaxTorqueLoopElapsedTime = 0;
-Uint16 GyroISRTime = 0;
-Uint8 GyroIntStatus = 0;
-Uint8 GyroIntStatus2 = 0;
+Uint32 MainWorkStartTimestamp = 0;
+Uint32 MainWorkEndTimestamp = 0;
+Uint32 MainWorkElapsedTime = 0;
+Uint32 MaxMainWorkElapsedTime = 0;
 Uint16 BackTicker = 0;
-Uint32 debug_output_decimation_count = 0;
 
 int16* SysAnalyzerDataPtr = NULL;
 float* SysAnalyzerDataFloatPtr = NULL;
@@ -135,14 +128,7 @@ volatile Uint8 GyroDataReadyFlag = FALSE;
 Uint8 GyroDataOverflowLatch = FALSE;
 Uint32 GyroDataOverflowCount = 0;
 
-Uint8 gracefulstop = 0;
-Uint8 gracefulstop_count = 0;
-
 Uint16 IndexTimeOut = 0;
-
-#define ANALOG_POT_MECH_DIVIDER 4096.0 // Resolution of 10-bit ADC
-#define CURRENT_LIMIT_HOMING 0.5
-#define CURRENT_LIMIT 0.25 // ADB - Roughly 0.5A at +/- 1.75A full scale
 
 BalanceProcedureParms balance_proc_parms = {
     // Balance angle setpoints
@@ -407,9 +393,9 @@ Uint16 gp_cmd_sent = 0;
 Uint16 gp_cmd_wait = 0;
 Uint16 gp_cmd_num = 0;
 
-static void MainISRwork(void);
-
 Uint32 MissedInterrupts = 0;
+
+Uint32 can_init_fault_message_resend_counter = 0;
 
 void main(void)
 {
@@ -431,7 +417,16 @@ void main(void)
 #endif
 	// Initialize CAN peripheral, and CAND backend
 	ECanInit();
-	cand_init();
+	if (cand_init() != CAND_SUCCESS) {
+	    // If the CAN module didn't initialize, we busy wait here forever and send an error message at roughly 1Hz
+	    while (1) {
+	        // Rough approximation of 1-second of busy waiting, doesn't need to be super accurate
+	        if (++can_init_fault_message_resend_counter >= 0x7B124) {
+	            can_init_fault_message_resend_counter = 0;
+	            AxisFault(CAND_FAULT_UNKNOWN_AXIS_ID, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+	        }
+	    }
+	}
 
 	init_param_set();
 
@@ -609,17 +604,71 @@ void main(void)
 		if (board_hw_id == AZ) {
 		    mavlink_state_machine();
 		}
-		{
-			static Uint32 OldIsrTicker = 0;
-			if (OldIsrTicker != IsrTicker) {
-				if (OldIsrTicker != (IsrTicker-1)) MissedInterrupts++;
-				OldIsrTicker = IsrTicker;
-				MainISRwork();
-			}
-		}
 
-		// Update any parameters that have changed due to CAN messages
-		ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms);
+		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
+
+		// If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
+        static Uint32 OldIsrTicker = 0;
+        if (OldIsrTicker != IsrTicker) {
+            if (OldIsrTicker != (IsrTicker-1)) {
+                MissedInterrupts++;
+            }
+            OldIsrTicker = IsrTicker;
+
+            // Increment the global timestamp counter
+            global_timestamp_counter++;
+
+            MotorCommutationLoop(&control_board_parms,
+                    &axis_parms,
+                    &motor_drive_parms,
+                    &encoder_parms,
+                    param_set,
+                    &pos_loop_filter_parms_stage_1,
+                    &pos_loop_filter_parms_stage_2,
+                    &power_filter_parms,
+                    &load_ap_state_info,
+                    &balance_proc_parms);
+        }
+
+        // If we're the elevation board, check to see if we need to run the rate loops
+        if (board_hw_id == EL) {
+            // If there is new gyro data to be processed, and all axes have been homed (the rate loop has been enabled), run the rate loops
+            if ((GyroDataReadyFlag == TRUE) && (control_board_parms.enabled == TRUE)) {
+
+                RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
+
+                RunRateLoops(&control_board_parms, param_set, &pos_loop_filter_parms_stage_1, &pos_loop_filter_parms_stage_2, &balance_proc_parms);
+
+                // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
+                if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
+                    GyroDataReadyFlag = FALSE;
+                }
+
+                RateLoopEndTimestamp = CpuTimer2Regs.TIM.all;
+
+                if (RateLoopEndTimestamp < RateLoopStartTimestamp) {
+                    RateLoopElapsedTime = RateLoopStartTimestamp - RateLoopEndTimestamp;
+                } else {
+                    RateLoopElapsedTime = (mSec50 - RateLoopEndTimestamp) + RateLoopStartTimestamp;
+                }
+            }
+        }
+
+        // Update any parameters that have changed due to CAN messages
+        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms);
+
+		// Measure total main work timing
+		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;
+
+        if (MainWorkEndTimestamp < MainWorkStartTimestamp) {
+            MainWorkElapsedTime = MainWorkStartTimestamp - MainWorkEndTimestamp;
+        } else {
+            MainWorkElapsedTime = (mSec50 - MainWorkEndTimestamp) + MainWorkStartTimestamp;
+        }
+
+        if (MainWorkElapsedTime > MaxMainWorkElapsedTime) {
+            MaxMainWorkElapsedTime = MainWorkElapsedTime;
+        }
 	}
 } //END MAIN CODE
 
@@ -1028,6 +1077,26 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
         }
 	}
 
+	// Debug messages for monitoring of loop timing
+	static int debug_output_decimation = 0;
+    static int max_time_reset_counter = 0;
+    if (board_hw_id == EL) {
+        if (++debug_output_decimation >= 7) {
+            debug_output_decimation = 0;
+            Uint8 debug_info[4];
+            debug_info[0] = (MaxMainWorkElapsedTime >> 8) & 0x000000FF;
+            debug_info[1] = (MaxMainWorkElapsedTime & 0x000000FF);
+            debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
+            debug_info[3] = (MissedInterrupts & 0x000000FF);
+            //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
+
+            if (++max_time_reset_counter >= 5) {
+                max_time_reset_counter = 0;
+                MaxMainWorkElapsedTime = 0;
+            }
+        }
+    }
+
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
 	C_Task_Ptr = &C3;	
 	//-----------------
@@ -1050,20 +1119,6 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 	// software start of conversion for temperature measurement and Bus Voltage Measurement
 	AdcRegs.ADCSOCFRC1.bit.SOC14 = 1;
 	AdcRegs.ADCSOCFRC1.bit.SOC15 = 1;
-
-	// TODO: Add a new graceful stop routine if it's necessary
-	/*
-	//Graceful stop routine when a fault from another board occurs.
-	if (gracefulstop == 1 & gracefulstop_count < 34) {
-		if (gracefulstop_count == 33) {
-			mode = MODE_DEFAULT;
-		} else {
-			motor_drive_parms.iq_ref = 0;
-			mode = MODE_CURRENT;
-		}
-		gracefulstop_count ++;
-	}
-	*/
 
 	if (board_hw_id == AZ) {
 		// If we're the AZ axis, send the MAVLink heartbeat message at (roughly) 1Hz
@@ -1156,457 +1211,17 @@ interrupt void GyroIntISR(void)
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
 
-int position_loop_deadband_counts = 10;
-int position_loop_deadband_hysteresis = 100;
-
-int16 rate_cmds_received[3];
-
-static void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms)
+interrupt void MotorDriverFaultIntISR()
 {
-    IntOrFloat float_converter;
-    // Check for updated rate loop PID params
-    if (*(param_set[CAND_PID_RATE_EL_P].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[EL].integralCumulative = 0.0;
-        rate_pid_loop_float[EL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_P].param;
-        rate_pid_loop_float[EL].gainP = float_converter.float_val;
-        *(param_set[CAND_PID_RATE_EL_P].sema) = FALSE;
-    }
+    // Process the motor drive fault
+    AxisFault(CAND_FAULT_MOTOR_DRIVER_FAULT, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
 
-    if (*(param_set[CAND_PID_RATE_EL_I].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[EL].integralCumulative = 0.0;
-        rate_pid_loop_float[EL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_I].param;
-        rate_pid_loop_float[EL].gainI = float_converter.float_val;
-        *(param_set[CAND_PID_RATE_EL_I].sema) = FALSE;
-    }
+    // TODO: May want to have some sort of recovery code here
+    // Some motor driver faults need the motor driver chip to be
+    // reset to clear the fault
 
-    if (*(param_set[CAND_PID_RATE_EL_D].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[EL].integralCumulative = 0.0;
-        rate_pid_loop_float[EL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_D].param;
-        rate_pid_loop_float[EL].gainD = float_converter.float_val;
-        *(param_set[CAND_PID_RATE_EL_D].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_RATE_EL_WINDUP].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[EL].integralCumulative = 0.0;
-        rate_pid_loop_float[EL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_WINDUP].param;
-        rate_pid_loop_float[EL].integralMax = float_converter.float_val;
-        rate_pid_loop_float[EL].integralMin = -float_converter.float_val;
-        *(param_set[CAND_PID_RATE_EL_WINDUP].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_RATE_AZ_P].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[AZ].integralCumulative = 0.0;
-        rate_pid_loop_float[AZ].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_P].param;
-        rate_pid_loop_float[AZ].gainP = float_converter.float_val;
-        *(param_set[CAND_PID_RATE_AZ_P].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_RATE_AZ_I].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[AZ].integralCumulative = 0.0;
-        rate_pid_loop_float[AZ].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_I].param;
-        rate_pid_loop_float[AZ].gainI = float_converter.float_val;
-        *(param_set[CAND_PID_RATE_AZ_I].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_RATE_AZ_D].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[AZ].integralCumulative = 0.0;
-        rate_pid_loop_float[AZ].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_D].param;
-        rate_pid_loop_float[AZ].gainD = float_converter.float_val;
-        *(param_set[CAND_PID_RATE_AZ_D].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_RATE_AZ_WINDUP].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[AZ].integralCumulative = 0.0;
-        rate_pid_loop_float[AZ].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_WINDUP].param;
-        rate_pid_loop_float[AZ].integralMax = float_converter.float_val;
-        rate_pid_loop_float[AZ].integralMin = -float_converter.float_val;
-        *(param_set[CAND_PID_RATE_AZ_WINDUP].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_RATE_RL_P].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
-        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_P].param;
-        rate_pid_loop_float[ROLL].gainP = float_converter.float_val;
-        *(param_set[CAND_PID_RATE_RL_P].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_RATE_RL_I].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
-        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_I].param;
-        rate_pid_loop_float[ROLL].gainI = float_converter.float_val;
-        *(param_set[CAND_PID_RATE_RL_I].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_RATE_RL_D].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
-        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_D].param;
-        rate_pid_loop_float[ROLL].gainD = float_converter.float_val;
-        *(param_set[CAND_PID_RATE_RL_D].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_RATE_RL_WINDUP].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        rate_pid_loop_float[ROLL].integralCumulative = 0.0;
-        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_WINDUP].param;
-        rate_pid_loop_float[ROLL].integralMax = float_converter.float_val;
-        rate_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
-        *(param_set[CAND_PID_RATE_RL_WINDUP].sema) = FALSE;
-    }
-
-    // Check for updated position loop PID params
-    if (*(param_set[CAND_PID_POS_EL_P].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[EL].integralCumulative = 0.0;
-        pos_pid_loop_float[EL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_EL_P].param;
-        pos_pid_loop_float[EL].gainP = float_converter.float_val;
-        *(param_set[CAND_PID_POS_EL_P].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_EL_I].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[EL].integralCumulative = 0.0;
-        pos_pid_loop_float[EL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_EL_I].param;
-        pos_pid_loop_float[EL].gainI = float_converter.float_val;
-        *(param_set[CAND_PID_POS_EL_I].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_EL_D].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[EL].integralCumulative = 0.0;
-        pos_pid_loop_float[EL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_EL_D].param;
-        pos_pid_loop_float[EL].gainD = float_converter.float_val;
-        *(param_set[CAND_PID_POS_EL_D].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_EL_WINDUP].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[EL].integralCumulative = 0.0;
-        pos_pid_loop_float[EL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_EL_WINDUP].param;
-        pos_pid_loop_float[EL].integralMax = float_converter.float_val;
-        pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
-        *(param_set[CAND_PID_POS_EL_WINDUP].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_AZ_P].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[AZ].integralCumulative = 0.0;
-        pos_pid_loop_float[AZ].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_AZ_P].param;
-        pos_pid_loop_float[AZ].gainP = float_converter.float_val;
-        *(param_set[CAND_PID_POS_AZ_P].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_AZ_I].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[AZ].integralCumulative = 0.0;
-        pos_pid_loop_float[AZ].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_AZ_I].param;
-        pos_pid_loop_float[AZ].gainI = float_converter.float_val;
-        *(param_set[CAND_PID_POS_AZ_I].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_AZ_D].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[AZ].integralCumulative = 0.0;
-        pos_pid_loop_float[AZ].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_AZ_D].param;
-        pos_pid_loop_float[AZ].gainD = float_converter.float_val;
-        *(param_set[CAND_PID_POS_AZ_D].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_AZ_WINDUP].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[AZ].integralCumulative = 0.0;
-        pos_pid_loop_float[AZ].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_AZ_WINDUP].param;
-        pos_pid_loop_float[AZ].integralMax = float_converter.float_val;
-        pos_pid_loop_float[AZ].integralMin = -float_converter.float_val;
-        *(param_set[CAND_PID_POS_AZ_WINDUP].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_RL_P].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
-        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_RL_P].param;
-        pos_pid_loop_float[ROLL].gainP = float_converter.float_val;
-        *(param_set[CAND_PID_POS_RL_P].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_RL_I].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
-        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_RL_I].param;
-        pos_pid_loop_float[ROLL].gainI = float_converter.float_val;
-        *(param_set[CAND_PID_POS_RL_I].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_RL_D].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
-        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_RL_D].param;
-        pos_pid_loop_float[ROLL].gainD = float_converter.float_val;
-        *(param_set[CAND_PID_POS_RL_D].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_POS_RL_WINDUP].sema) == TRUE) {
-        // Dump the integrator and differentiator
-        pos_pid_loop_float[ROLL].integralCumulative = 0.0;
-        pos_pid_loop_float[ROLL].errorPrevious = 0.0;
-        // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_POS_RL_WINDUP].param;
-        pos_pid_loop_float[ROLL].integralMax = float_converter.float_val;
-        pos_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
-        *(param_set[CAND_PID_POS_RL_WINDUP].sema) = FALSE;
-    }
-
-    if ((*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE)) {
-        if (*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) {
-            debug_data->debug_1 = param_set[CAND_PID_DEBUG_1].param;
-            *(param_set[CAND_PID_DEBUG_1].sema) = FALSE;
-        }
-
-        if (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) {
-            debug_data->debug_2 = param_set[CAND_PID_DEBUG_2].param;
-            *(param_set[CAND_PID_DEBUG_2].sema) = FALSE;
-        }
-
-        if (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE) {
-            debug_data->debug_3 = param_set[CAND_PID_DEBUG_3].param;
-            *(param_set[CAND_PID_DEBUG_3].sema) = FALSE;
-        }
-
-        // If any of the debug data changed, send the debug mavlink message
-        if (debug_output_decimation_count++ > 9) {
-            debug_output_decimation_count = 0;
-            send_mavlink_debug_data(debug_data);
-        }
-    }
-
-#ifdef ENABLE_BALANCE_PROCEDURE
-    if (*(param_set[CAND_PID_BALANCE_AXIS].sema) == TRUE) {
-        // Convert and set the new axis
-        IntOrFloat float_converter;
-        float_converter.uint32_val = param_set[CAND_PID_BALANCE_AXIS].param;
-        GimbalAxis new_axis = (GimbalAxis)float_converter.float_val;
-        balance_proc_parms->balance_axis = new_axis;
-
-        // Also reset the direction, step, and time counters when we get a new axis, so we begin
-        // at the start of the balance procedure for the new axis
-        balance_proc_parms->balance_angle_counter = 0;
-        balance_proc_parms->current_balance_angle_index = 0;
-        balance_proc_parms->current_direction = 0;
-
-        // Also update the target angle here so we immediately snap to the new position on the new axis
-        cb_parms->angle_targets[balance_proc_parms->balance_axis] = balance_proc_parms->balance_angles[balance_proc_parms->balance_axis][balance_proc_parms->current_balance_angle_index];
-
-        *(param_set[CAND_PID_BALANCE_AXIS].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_BALANCE_STEP_DURATION].sema) == TRUE) {
-        // Convert and update the new counter max
-        IntOrFloat float_converter;
-        float_converter.uint32_val = param_set[CAND_PID_BALANCE_STEP_DURATION].param;
-        balance_proc_parms->balance_angle_counter_max = (int)(float_converter.float_val / 150.0); // The counter gets incremented every 150ms, and the parameter comes in as ms
-
-        *(param_set[CAND_PID_BALANCE_STEP_DURATION].sema) = FALSE;
-    }
-#endif
-
-    // There are several sets of parameters that only make sense if we're the elevation board,
-    // such as rate commands, gyro offsets, and gopro commands
-    if (board_hw_id == EL) {
-        // Check for new rate commands from the copter
-        if ((*(param_set[CAND_PID_RATE_CMD_AZ].sema) == TRUE) || (*(param_set[CAND_PID_RATE_CMD_EL].sema) == TRUE) || (*(param_set[CAND_PID_RATE_CMD_RL].sema) == TRUE)) {
-            if (*(param_set[CAND_PID_RATE_CMD_AZ].sema) == TRUE) {
-                rate_cmds_received[AZ] = (int16)param_set[CAND_PID_RATE_CMD_AZ].param;
-                *(param_set[CAND_PID_RATE_CMD_AZ].sema) = FALSE;
-            }
-
-            if (*(param_set[CAND_PID_RATE_CMD_EL].sema) == TRUE) {
-                rate_cmds_received[EL] = (int16)param_set[CAND_PID_RATE_CMD_EL].param;
-                *(param_set[CAND_PID_RATE_CMD_EL].sema) = FALSE;
-            }
-
-            if (*(param_set[CAND_PID_RATE_CMD_RL].sema) == TRUE) {
-                rate_cmds_received[ROLL] = (int16)param_set[CAND_PID_RATE_CMD_RL].param;
-                *(param_set[CAND_PID_RATE_CMD_RL].sema) = FALSE;
-            }
-
-            // If any of the rate commands have been updated, run the kinematics transform and update the transformed rate commands
-            // (NOTE: in practice, all 3 rate commands should be updated at the same time, since the parameter updates come in the same message)
-            do_gyro_correction(rate_cmds_received, cb_parms->encoder_readings, cb_parms->rate_cmd_inject);
-        }
-
-        // Check for new gyro offsets from the copter
-        if (*(param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema) == TRUE) {
-            cb_parms->gyro_offsets[X_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_X_AXIS].param;
-            *(param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema) = FALSE;
-        }
-
-        if (*(param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema) == TRUE) {
-            cb_parms->gyro_offsets[Y_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].param;
-            *(param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema) = FALSE;
-        }
-
-        if (*(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) == TRUE) {
-            cb_parms->gyro_offsets[Z_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].param;
-            *(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) = FALSE;
-        }
-
-        // Check for any new GoPro commands
-        if (*(param_set[CAND_PID_GP_CMD].sema) == TRUE) {
-            // Extract the GoPro command and parameter from the CAN parameter
-            GPCmd cmd;
-            cmd.cmd[0] = (param_set[CAND_PID_GP_CMD].param >> 24) & 0x000000FF;
-            cmd.cmd[1] = (param_set[CAND_PID_GP_CMD].param >> 16) & 0x000000FF;
-            cmd.cmd_parm = (param_set[CAND_PID_GP_CMD].param >> 8) & 0x000000FF;
-            gp_send_command(&cmd);
-
-            *(param_set[CAND_PID_GP_CMD].sema) = FALSE;
-        }
-    }
-}
-
-static void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)
-{
-    encoder_parms->raw_theta = AdcResult.ADCRESULT5;
-    if (encoder_parms->raw_theta < 0) {
-        encoder_parms->raw_theta += ANALOG_POT_MECH_DIVIDER;
-    } else if (encoder_parms->raw_theta > ANALOG_POT_MECH_DIVIDER) {
-        encoder_parms->raw_theta -= ANALOG_POT_MECH_DIVIDER;
-    }
-
-    // AZ axis motor is mounted opposite of the encoder relative to the other two axes, so we need to invert it here if we're AZ
-#if (HW_REV == 1)
-    if (board_hw_id == AZ) {
-#elif (HW_REV == 2)
-    // On new hardware, EL is also flipped relative to what it was on the old hardware
-    if ((board_hw_id == AZ) || (board_hw_id == EL)) {
-#endif
-        encoder_parms->raw_theta = ANALOG_POT_MECH_DIVIDER - encoder_parms->raw_theta;
-    }
-
-    encoder_parms->mech_theta = ((float)encoder_parms->raw_theta) / ANALOG_POT_MECH_DIVIDER;
-    encoder_parms->corrected_mech_theta = (encoder_parms->mech_theta - encoder_parms->calibration_intercept) / encoder_parms->calibration_slope;
-    encoder_parms->elec_theta = encoder_parms->corrected_mech_theta - floor(encoder_parms->corrected_mech_theta);
-
-#ifdef ENABLE_CURRENT_TOGGLE
-    // Keep track of max and min corrected thetas seen
-    if (encoder_parms->corrected_mech_theta > CurrentThetaMax) {
-        CurrentThetaMax = encoder_parms->corrected_mech_theta;
-    }
-    if (encoder_parms->corrected_mech_theta < CurrentThetaMin) {
-        CurrentThetaMin = encoder_parms->corrected_mech_theta;
-    }
-#endif
-
-    // Calculate the emulated encoder value to communicate back to the control board
-    encoder_parms->virtual_counts = (encoder_parms->mech_theta * ((float)ENCODER_COUNTS_PER_REV)) - encoder_parms->virtual_counts_offset;
-
-    // Invert the encoder reading if necessary to make sure it counts up in the right direction
-    // This is necessary for the kinematics math to work properly
-    if (EncoderSignMap[board_hw_id] < 0) {
-        encoder_parms->virtual_counts = ENCODER_COUNTS_PER_REV - encoder_parms->virtual_counts;
-    }
-
-    // Convert the virtual counts to be symmetric around 0
-    if (encoder_parms->virtual_counts < -(ENCODER_COUNTS_PER_REV / 2)) {
-        encoder_parms->virtual_counts += ENCODER_COUNTS_PER_REV;
-    } else if (encoder_parms->virtual_counts >= (ENCODER_COUNTS_PER_REV / 2)) {
-        encoder_parms->virtual_counts -= ENCODER_COUNTS_PER_REV;
-    }
-
-    // Accumulate the virtual counts at the torque loop rate (10kHz), which will then be averaged to be sent out
-    // at the rate loop rate (1kHz)
-    encoder_parms->virtual_counts_accumulator += encoder_parms->virtual_counts;
-    encoder_parms->virtual_counts_accumulated++;
-
-    /*
-    // Run a median filter on the encoder values.
-    int i;
-    int j;
-    for (i = 0; i < ENCODER_MEDIAN_HISTORY_SIZE; i++) {
-        // Iterate over the median history until we find a value that's larger than the current value we're trying to insert
-        // When we find a larger value in the median history, that's the position the new value should be put into to keep the
-        // median history sorted from smallest to largest.  Then, we need to shift the entire median history past the insertion index
-        // left by one to keep the array sorted.  We only keep half of the expected median history, because there's no point storing the
-        // upper half of the list because the median can't be there
-        if (encoder_parms->virtual_counts < encoder_parms->encoder_median_history[i]) {
-            int16 old_value = 0;
-            int16 new_value = encoder_parms->virtual_counts;
-            for (j = i; j < ENCODER_MEDIAN_HISTORY_SIZE; j++) {
-                old_value = encoder_parms->encoder_median_history[j];
-                encoder_parms->encoder_median_history[j] = new_value;
-                new_value = old_value;
-            }
-
-            // Once we've inserted the new value and shifted the list, we can break out of the outer loop
-            break;
-        }
-    }
-
-    // Keep track of how many virtual encoder values we've accumulated since the last request for virtual encoder values,
-    // so we can pick the right index in the median history array
-    encoder_parms->virtual_counts_accumulated++;
-    */
-
-    // We've received our own encoder value, so indicate as such
-    if (!cb_parms->encoder_value_received[EL]) {
-        cb_parms->encoder_value_received[EL] = TRUE;
-    }
+    // Acknowledge interrupt to receive more interrupts from PIE group 1
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
 
 // MainISR
@@ -1628,258 +1243,6 @@ interrupt void MainISR(void)
 
 }
 
-static void MainISRwork(void)
-{
-    // TODO: Measuring timing
-    GpioDataRegs.GPASET.bit.GPIO28 = 1;
-	GpioDataRegs.GPASET.bit.GPIO29 = 1;
-
-	// Increment the global timestamp counter
-	global_timestamp_counter++;
-
-    ISRStartTimestamp = CpuTimer2Regs.TIM.all;
-
-    if (axis_parms.run_motor) {
-        // Do the encoder calculations no matter what state we're in (we care in a bunch of states, so no reason to duplicate the work)
-        UpdateEncoderReadings(&encoder_parms, &control_board_parms);
-
-        // Run the motor drive state machine to compute the correct inputs to the Park transform and Id and Iq PID controllers
-        MotorDriveStateMachine(&axis_parms,
-                &control_board_parms,
-                &motor_drive_parms,
-                &encoder_parms,
-                param_set,
-                &pos_loop_filter_parms_stage_1,
-                &pos_loop_filter_parms_stage_2,
-                &power_filter_parms,
-                &load_ap_state_info);
-
-        // ------------------------------------------------------------------------------
-        //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).
-        //  Connect inputs of the CLARKE module and call the clarke transformation macro
-        // ------------------------------------------------------------------------------
-#ifdef F2806x_DEVICE_H
-        motor_drive_parms.clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-motor_drive_parms.cal_offset_A)*2); // Phase A curr.
-        motor_drive_parms.clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-motor_drive_parms.cal_offset_B)*2); // Phase B curr.
-#endif                                                         // ((ADCmeas(q12)/2^12)-0.5)*2
-
-#ifdef DSP2803x_DEVICE_H
-        motor_drive_parms.clarke_xform_parms.As=-(_IQ15toIQ((AdcResult.ADCRESULT1<<3)-motor_drive_parms.cal_offset_A)<<1);
-        motor_drive_parms.clarke_xform_parms.Bs=-(_IQ15toIQ((AdcResult.ADCRESULT2<<3)-motor_drive_parms.cal_offset_B)<<1);
-#endif
-
-#ifdef USE_AVERAGE_POWER_FILTER
-        // Run an iteration of the average power filter
-        // Scale -1 to +1 current to +/- full scale current, since power filter expects current in amps
-        run_average_power_filter(&power_filter_parms, motor_drive_parms.pid_iq.term.Ref * MAX_CURRENT);
-
-        // If the average power has exceeded the preset limit on either phase a or b, error out this axis
-        if (check_average_power_over_limit(&power_filter_parms)) {
-            AxisFault(CAND_FAULT_OVER_CURRENT);
-        }
-#endif
-
-        CLARKE_MACRO(motor_drive_parms.clarke_xform_parms)
-
-        // ------------------------------------------------------------------------------
-        //  Connect inputs of the PARK module and call the park trans. macro
-        // ------------------------------------------------------------------------------
-        motor_drive_parms.park_xform_parms.Alpha = motor_drive_parms.clarke_xform_parms.Alpha;
-        motor_drive_parms.park_xform_parms.Beta = motor_drive_parms.clarke_xform_parms.Beta;
-        // Park transformation angle is set in MotorDriveStateMachine, according to the current motor state
-        motor_drive_parms.park_xform_parms.Sine = _IQsinPU(motor_drive_parms.park_xform_parms.Angle);
-        motor_drive_parms.park_xform_parms.Cosine = _IQcosPU(motor_drive_parms.park_xform_parms.Angle);
-
-        PARK_MACRO(motor_drive_parms.park_xform_parms)
-
-        // ------------------------------------------------------------------------------
-        //    Connect inputs of the id PID controller and call the PID controller macro
-        // ------------------------------------------------------------------------------
-        // Limit the requested current to prevent burning up the motor
-#ifndef USE_AVERAGE_POWER_FILTER
-        if (motor_drive_parms.motor_drive_state == STATE_HOMING) {
-            // TODO: Temp for testing, allow higher currents during homing routine
-            if (motor_drive_parms.pid_id.term.Ref > CURRENT_LIMIT_HOMING) {
-                motor_drive_parms.pid_id.term.Ref = CURRENT_LIMIT_HOMING;
-            } else if (motor_drive_parms.pid_id.term.Ref < -CURRENT_LIMIT_HOMING) {
-                motor_drive_parms.pid_id.term.Ref = -CURRENT_LIMIT_HOMING;
-            }
-        } else {
-            if (motor_drive_parms.pid_id.term.Ref > CURRENT_LIMIT) {
-                motor_drive_parms.pid_id.term.Ref = CURRENT_LIMIT;
-            } else if (motor_drive_parms.pid_id.term.Ref < -CURRENT_LIMIT) {
-                motor_drive_parms.pid_id.term.Ref = -CURRENT_LIMIT;
-            }
-        }
-#endif
-        motor_drive_parms.pid_id.term.Fbk = motor_drive_parms.park_xform_parms.Ds;
-        PID_GR_MACRO(motor_drive_parms.pid_id)
-
-        // ------------------------------------------------------------------------------
-        //    Connect inputs of the iq PID controller and call the PID controller macro
-        // ------------------------------------------------------------------------------
-        // Limit the requested current to prevent burning up the motor
-#ifndef USE_AVERAGE_POWER_FILTER
-        if (motor_drive_parms.motor_drive_state == STATE_HOMING) {
-            // TODO: Temp for testing, allow higher currents during homing routine
-            if (motor_drive_parms.pid_iq.term.Ref > CURRENT_LIMIT_HOMING) {
-                motor_drive_parms.pid_iq.term.Ref = CURRENT_LIMIT_HOMING;
-            } else if (motor_drive_parms.pid_iq.term.Ref < -CURRENT_LIMIT_HOMING) {
-                motor_drive_parms.pid_iq.term.Ref = -CURRENT_LIMIT_HOMING;
-            }
-        } else {
-            if (motor_drive_parms.pid_iq.term.Ref > CURRENT_LIMIT) {
-                motor_drive_parms.pid_iq.term.Ref = CURRENT_LIMIT;
-            } else if (motor_drive_parms.pid_iq.term.Ref < -CURRENT_LIMIT) {
-                motor_drive_parms.pid_iq.term.Ref = -CURRENT_LIMIT;
-            }
-        }
-#endif
-        motor_drive_parms.pid_iq.term.Fbk = motor_drive_parms.park_xform_parms.Qs;
-        PID_GR_MACRO(motor_drive_parms.pid_iq)
-
-        // ------------------------------------------------------------------------------
-        //  Connect inputs of the INV_PARK module and call the inverse park trans. macro
-        // ------------------------------------------------------------------------------
-        motor_drive_parms.ipark_xform_parms.Qs = motor_drive_parms.pid_iq.term.Out;
-        motor_drive_parms.ipark_xform_parms.Ds = motor_drive_parms.pid_id.term.Out;
-        motor_drive_parms.ipark_xform_parms.Sine = motor_drive_parms.park_xform_parms.Sine;
-        motor_drive_parms.ipark_xform_parms.Cosine = motor_drive_parms.park_xform_parms.Cosine;
-        IPARK_MACRO(motor_drive_parms.ipark_xform_parms)
-
-        // ------------------------------------------------------------------------------
-        //  Connect inputs of the SVGEN_DQ module and call the space-vector gen. macro
-        // ------------------------------------------------------------------------------
-        motor_drive_parms.svgen_parms.Ualpha = motor_drive_parms.ipark_xform_parms.Alpha;
-        motor_drive_parms.svgen_parms.Ubeta = motor_drive_parms.ipark_xform_parms.Beta;
-        SVGEN_MACRO(motor_drive_parms.svgen_parms)
-
-        // ------------------------------------------------------------------------------
-        //  Connect inputs of the PWM_DRV module and call the PWM signal generation macro
-        // ------------------------------------------------------------------------------
-        motor_drive_parms.pwm_gen_parms.MfuncC1 = _IQtoQ15(motor_drive_parms.svgen_parms.Ta);
-        motor_drive_parms.pwm_gen_parms.MfuncC2 = _IQtoQ15(motor_drive_parms.svgen_parms.Tb);
-        motor_drive_parms.pwm_gen_parms.MfuncC3 = _IQtoQ15(motor_drive_parms.svgen_parms.Tc);
-        PWM_MACRO(motor_drive_parms.pwm_gen_parms);
-
-        // Calculate the new PWM compare values
-
-        //Check that the return is not negative
-        if (motor_drive_parms.pwm_gen_parms.PWM1out < 0) {
-            motor_drive_parms.pwm_gen_parms.PWM1out = 0;
-        }
-        if (motor_drive_parms.pwm_gen_parms.PWM2out < 0) {
-            motor_drive_parms.pwm_gen_parms.PWM2out = 0;
-        }
-        if (motor_drive_parms.pwm_gen_parms.PWM3out < 0) {
-            motor_drive_parms.pwm_gen_parms.PWM3out = 0;
-        }
-
-        //Set ADC sample point on pwm1 output to avoid switching transients
-        if (motor_drive_parms.pwm_gen_parms.PWM1out < motor_drive_parms.pwm_gen_parms.PeriodMax/4) {
-            EPwm1Regs.CMPB = motor_drive_parms.pwm_gen_parms.PeriodMax/2;
-        } else if (motor_drive_parms.pwm_gen_parms.PWM1out > motor_drive_parms.pwm_gen_parms.PeriodMax/4 + 10) {
-            EPwm1Regs.CMPB = motor_drive_parms.pwm_gen_parms.PeriodMax/8;
-        }
-
-        //Set ADC sample point on pwm2 output to avoid switching transients
-        if (motor_drive_parms.pwm_gen_parms.PWM2out < motor_drive_parms.pwm_gen_parms.PeriodMax/4) {
-            EPwm2Regs.CMPB = motor_drive_parms.pwm_gen_parms.PeriodMax/2;
-        } else if (motor_drive_parms.pwm_gen_parms.PWM2out > motor_drive_parms.pwm_gen_parms.PeriodMax/4 + 10) {
-            EPwm2Regs.CMPB = motor_drive_parms.pwm_gen_parms.PeriodMax/8;
-        }
-
-
-        if (motor_drive_parms.motor_drive_state == STATE_CALIBRATING_CURRENT_MEASUREMENTS) { // SPECIAL CASE: set all PWM outputs to 0 for Current measurement offset calibration
-            EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
-            EPwm2Regs.CMPA.half.CMPA=0; // PWM 2A - PhaseB
-            EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
-        } else if (0) { // TODO: For testing, disable motor outputs on EL and ROLL
-            EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
-            EPwm2Regs.CMPA.half.CMPA=0; // PWM 2A - PhaseB
-            EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
-        } else { // Otherwise, set PWM outputs appropriately
-            EPwm1Regs.CMPA.half.CMPA=motor_drive_parms.pwm_gen_parms.PWM1out;  // PWM 1A - PhaseA
-            EPwm2Regs.CMPA.half.CMPA=motor_drive_parms.pwm_gen_parms.PWM2out;  // PWM 2A - PhaseB
-            EPwm3Regs.CMPA.half.CMPA=motor_drive_parms.pwm_gen_parms.PWM3out;  // PWM 3A - PhaseC
-        }
-
-#ifdef ENABLE_CURRENT_TOGGLE
-#ifdef USE_SYS_ANALYZER
-        SystemAnalyzerSendReceive((int16)(*SysAnalyzerDataFloatPtr * 32768.0));
-#endif
-#endif
-    }
-
-    TorqueLoopEndTime = CpuTimer2Regs.TIM.all;
-
-    if (TorqueLoopEndTime < ISRStartTimestamp) {
-		TorqueLoopElapsedTime = ISRStartTimestamp - TorqueLoopEndTime;
-	} else {
-		TorqueLoopElapsedTime = (mSec50 - TorqueLoopEndTime) + ISRStartTimestamp;
-	}
-
-    if (TorqueLoopElapsedTime > MaxTorqueLoopElapsedTime) {
-    	MaxTorqueLoopElapsedTime = TorqueLoopElapsedTime;
-    }
-
-    // If there is new gyro data to be processed, and all axes have been homed (the rate loop has been enabled), run the rate loops
-    if ((GyroDataReadyFlag == TRUE) && (control_board_parms.enabled == TRUE)) {
-
-    	RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
-
-        RunRateLoops(&control_board_parms, param_set, &pos_loop_filter_parms_stage_1, &pos_loop_filter_parms_stage_2, &balance_proc_parms);
-
-        // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
-        if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
-        	GyroDataReadyFlag = FALSE;
-        }
-
-        RateLoopEndTimestamp = CpuTimer2Regs.TIM.all;
-
-        if (RateLoopEndTimestamp < RateLoopStartTimestamp) {
-        	RateLoopElapsedTime = RateLoopStartTimestamp - RateLoopEndTimestamp;
-        } else {
-        	RateLoopElapsedTime = (mSec50 - RateLoopEndTimestamp) + RateLoopStartTimestamp;
-        }
-    }
-
-    ISREndTimestamp = CpuTimer2Regs.TIM.all;
-
-    if (ISREndTimestamp < ISRStartTimestamp) {
-    	ISRElapsedTime = ISRStartTimestamp - ISREndTimestamp;
-    } else {
-    	ISRElapsedTime = (mSec50 - ISREndTimestamp) + ISRStartTimestamp;
-    }
-
-    if (ISRElapsedTime > MaxISRElapsedTime) {
-        MaxISRElapsedTime = ISRElapsedTime;
-    }
-
-    static int debug_output_decimation = 0;
-    static int max_time_reset_counter = 0;
-    if (board_hw_id == EL) {
-        if (++debug_output_decimation >= 10000) {
-            debug_output_decimation = 0;
-            Uint8 debug_info[4];
-            debug_info[0] = (MaxISRElapsedTime >> 8) & 0x000000FF;
-            debug_info[1] = (MaxISRElapsedTime & 0x000000FF);
-            debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
-            debug_info[3] = (MissedInterrupts & 0x000000FF);
-            //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
-
-            if (++max_time_reset_counter >= 5) {
-                max_time_reset_counter = 0;
-                MaxISRElapsedTime = 0;
-            }
-        }
-    }
-
-    // TODO: Testing timing
-    GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
-    GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
-}
-
 void power_down_motor()
 {
     EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
@@ -1896,21 +1259,6 @@ int16 CorrectEncoderError(int16 raw_error)
     } else {
         return raw_error;
     }
-}
-
-void AxisFault(CAND_FaultCode fault_code)
-{
-    // Remember our own last fault code
-    control_board_parms.last_axis_fault[board_hw_id] = fault_code;
-
-    // Put ourselves into fault mode (this stops driving current to the motor)
-    motor_drive_parms.motor_drive_state = STATE_FAULT;
-
-    // Indicate the error with the blink state
-    axis_parms.blink_state = BLINK_ERROR;
-
-    // Transmit this fault to the rest of the system
-    cand_tx_fault(fault_code);
 }
 
 int GetIndexTimeOut(void)

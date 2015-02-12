@@ -15,6 +15,8 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "gopro/gopro_interface.h"
 
+#include <stdio.h>
+
 static void process_mavlink_input();
 static void send_mavlink_request_stream();
 static void handle_attitude(mavlink_message_t* received_msg);
@@ -459,13 +461,82 @@ void send_mavlink_debug_data(DebugData* debug_data) {
 	send_mavlink_message(&debug_msg);
 }
 
-void send_mavlink_statustext(char* message)
+void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code, CAND_FaultType fault_type)
+{
+    char* axis_str = "Unknown";
+    switch (axis) {
+        case CAND_ID_AZ:
+            axis_str = "Yaw";
+            break;
+
+        case CAND_ID_EL:
+            axis_str = "Pitch";
+            break;
+
+        case CAND_ID_ROLL:
+            axis_str = "Roll";
+            break;
+    }
+
+    char* fault_str = "None";
+
+    switch (fault_code) {
+        case CAND_FAULT_CALIBRATING_POT:
+            fault_str = "Calibrating Encoder";
+            break;
+
+        case CAND_FAULT_FIND_STOP_TIMEOUT:
+            fault_str = "Timeout while finding mechanical stop";
+            break;
+
+        case CAND_FAULT_UNSUPPORTED_COMMAND:
+            fault_str = "Received unsupported command";
+            break;
+
+        case CAND_FAULT_UNSUPPORTED_PARAMETER:
+            fault_str = "Received unsupported parameter";
+            break;
+
+        case CAND_FAULT_UNKNOWN_AXIS_ID:
+            fault_str = "Unable to determine axis ID";
+            break;
+
+        case CAND_FAULT_OVER_CURRENT:
+            fault_str = "Over current";
+            break;
+
+        case CAND_FAULT_MOTOR_DRIVER_FAULT:
+            fault_str = "Motor driver fault";
+            break;
+    }
+
+    MAV_SEVERITY severity = MAV_SEVERITY_ENUM_END;
+    switch (fault_type) {
+        case CAND_FAULT_TYPE_INFO:
+            severity = MAV_SEVERITY_INFO;
+            break;
+
+        case CAND_FAULT_TYPE_RECOVERABLE:
+            severity = MAV_SEVERITY_ALERT;
+            break;
+
+        case CAND_FAULT_TYPE_UNRECOVERABLE:
+            severity = MAV_SEVERITY_CRITICAL;
+            break;
+    }
+
+    char error_msg[100];
+    snprintf(error_msg, 100, "Axis %s indicated fault: %s", axis_str, fault_str);
+    send_mavlink_statustext(error_msg, severity);
+}
+
+void send_mavlink_statustext(char* message, MAV_SEVERITY severity)
 {
     static mavlink_message_t status_msg;
     mavlink_msg_statustext_pack(MAVLINK_GIMBAL_SYSID,
             MAV_COMP_ID_GIMBAL,
             &status_msg,
-            MAV_SEVERITY_DEBUG,
+            severity,
             message);
 
     send_mavlink_message(&status_msg);

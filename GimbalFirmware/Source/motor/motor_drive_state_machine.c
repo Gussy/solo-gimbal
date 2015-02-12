@@ -257,7 +257,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         		((GetBoardHWID() == ROLL)&&((cb_parms->axes_homed[EL])))||
         		((GetBoardHWID() == EL)))
 #endif
-        		CommutationCalibrationStateMachine(md_parms, encoder_parms, axis_parms, &cc_parms);
+        		CommutationCalibrationStateMachine(md_parms, encoder_parms, axis_parms, &cc_parms, cb_parms);
             break;
 
         case STATE_HOMING:
@@ -354,7 +354,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.term.Ref = 0;
             break;
 
-        case STATE_FAULT:
+        case STATE_RECOVERABLE_FAULT:
             // Set park transformation angle to 0
             md_parms->park_xform_parms.Angle = 0;
 
@@ -362,13 +362,21 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_id.term.Ref = 0;
             md_parms->pid_iq.term.Ref = 0;
 
-#ifdef AUTO_REVIVE_FROM_FAULT
             if (md_parms->fault_revive_counter++ > (((Uint32)ISR_FREQUENCY) * ((Uint32)FAULT_REVIVE_TIME_MS))) {
                 md_parms->fault_revive_counter = 0;
                 reset_average_power_filter(pf_parms);
+                axis_parms->blink_state = BLINK_READY;
                 md_parms->motor_drive_state = STATE_RUNNING;
             }
-#endif
+            break;
+
+        case STATE_UNRECOVERABLE_FAULT:
+            // Set park transformation angle to 0
+            md_parms->park_xform_parms.Angle = 0;
+
+            // Request 0 current on both id and iq
+            md_parms->pid_id.term.Ref = 0;
+            md_parms->pid_iq.term.Ref = 0;
             break;
         }
 }

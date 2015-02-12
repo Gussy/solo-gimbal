@@ -234,32 +234,20 @@ static int ECanRx( struct MBOX* inbox )
 	return 0;
 }
 
-CAND_Result cand_init( void )
+CAND_Result cand_init(void)
 {
-#if !defined(FORCE_CAN_ID_TO_AZ) && !defined(FORCE_CAN_ID_TO_EL) && !defined(FORCE_CAN_ID_TO_ROLL)
-	//Initialize ID GPIO
-	//GpioCtrlRegs.GPAPUD.bit.GPIO3 = 1;		//disable internal pullups (pulled up externally by switch)
-	//GpioCtrlRegs.GPBPUD.bit.GPIO34 = 1;
-
-	//GpioCtrlRegs.GPAMUX1.bit.GPIO3 = 0;		//TODO: lookup, make sure mux 0 = gpio
-	//GpioCtrlRegs.GPBMUX1.bit.GPIO34 = 0;		//TODO: lookup
-#endif
-
     // Make sure that the board hw id pins are pulled correctly.  The ID all axes isn't a valid
     // id for a single axis to have (it's used for broadcast to all axes).  If this is the board hw id,
     // send out a fault message to indicate the bad board ID
 	if (CAND_GetSenderID() == CAND_ID_ALL_AXES) {
-		cand_tx_fault(CAND_FAULT_UNKNOWN_AXIS_ID);
+	    return CAND_INIT_BAD_HW_ID;
+	} else {
+	    return CAND_SUCCESS;
 	}
-
-	return CAND_SUCCESS;
 }
 
-CAND_SenderID CAND_GetSenderID( void )
+CAND_SenderID CAND_GetSenderID(void)
 {
-	//Read system jumpers to know whoami
-	int sw = GetBoardHWID();
-
 #ifdef FORCE_CAN_ID_TO_AZ
     return CAND_ID_AZ;
 #endif
@@ -270,7 +258,7 @@ CAND_SenderID CAND_GetSenderID( void )
     return CAND_ID_ROLL;
 #endif
 
-    switch (sw) {
+    switch (GetBoardHWID()) {
     	case 0:
     	    return CAND_ID_EL;
 
@@ -317,9 +305,10 @@ CAND_Result cand_rx( struct cand_message * msg )
 			case CAND_MID_FAULT:
 			{
 				// All fault msgs are broadcast, so no destination check
-				msg->sender_id = (CAND_SenderID) sid.fault.s_id;
+				msg->sender_id = (CAND_SenderID)sid.fault.s_id;
 
-				msg->fault_code = (CAND_FaultCode) sid.fault.fault_code;
+				msg->fault_code = (CAND_FaultCode)sid.fault.fault_code;
+				msg->fault_type = (CAND_FaultType)sid.fault.fault_type;
 
 				ret = CAND_RX_FAULT;
 			}
@@ -880,7 +869,7 @@ CAND_Result cand_tx_command(CAND_DestinationID did, CAND_Command cmd)
     return cand_tx(sid, NULL, 0);
 }
 
-CAND_Result cand_tx_fault( CAND_FaultCode fault_code )
+CAND_Result cand_tx_fault(CAND_FaultCode fault_code, CAND_FaultType fault_type)
 {
 	CAND_SID sid;
 
@@ -888,6 +877,7 @@ CAND_Result cand_tx_fault( CAND_FaultCode fault_code )
 	sid.all.m_id            = CAND_MID_FAULT;     //000 0000 0100
 	sid.fault.s_id 			= CAND_GetSenderID();
 	sid.fault.fault_code    = fault_code;
+	sid.fault.fault_type    = fault_type;
 
 	return cand_tx(sid, NULL, 0);
 }

@@ -37,7 +37,8 @@ typedef enum {
     STATE_RUNNING,
     STATE_DISABLED,
     STATE_SANDSTORM,
-    STATE_FAULT
+    STATE_RECOVERABLE_FAULT,
+    STATE_UNRECOVERABLE_FAULT
 } MotorDriveState;
 
 typedef struct {

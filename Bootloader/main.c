@@ -148,6 +148,8 @@ Uint16 CAN_GetWordData()
    Uint16 byteData;
    Uint16 wait_time = 0;
    Uint16 tenths_of_seconds = 0;
+   Uint16 blink_state = 0;
+   Uint16 blink_counter = 5;
 
    wordData = 0x0000;
    byteData = 0x0000;
@@ -165,6 +167,18 @@ Uint16 CAN_GetWordData()
 				   ECanaMboxes.MBOX2.MDL.byte.BYTE1 = 0x01;   // MS byte
 				   ECanaRegs.CANTRS.all = (1ul<<2);	// "writing 0 has no effect", previously queued boxes will stay queued
 				   ECanaRegs.CANTA.all = (1ul<<2);		// "writing 0 has no effect", clears pending interrupt, open for our tx
+
+				   // Toggle the LED in here to show that we're doing something
+				   if (++blink_counter >= 5) {
+                       if (blink_state == 0) {
+                           GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
+                           blink_state = 1;
+                       } else {
+                           GpioDataRegs.GPASET.bit.GPIO7 = 1;
+                           blink_state = 0;
+                       }
+                       blink_counter = 0;
+				   }
 			   }
 		   }
 	   }
@@ -386,26 +400,37 @@ void DeviceInit()
 	// 0x3 =  15	MHz		(3)
 	// 0x2 =  10	MHz		(2)
 
-		PLLset( 0x8 );	// choose from options above
+    PLLset( 0x8 );	// choose from options above
 
-		// Configure the hardware ID pins first.  This is done out of order because some of the
-		// pins are configured differently depending on which board we're dealing with
-		//--------------------------------------------------------------------------------------
-		//  GPIO-20 - PIN FUNCTION = ID Pin 0
-		   GpioCtrlRegs.GPAMUX2.bit.GPIO20 = 0;    // 0=GPIO,  1=EQEP1A,  2=MDXA,  3=COMP1OUT
-		   GpioCtrlRegs.GPADIR.bit.GPIO20 = 0;     // 1=OUTput,  0=INput
-		   GpioCtrlRegs.GPAPUD.bit.GPIO20 = 0;                // Enable internal pullups
-		//  GpioDataRegs.GPACLEAR.bit.GPIO20 = 1;   // uncomment if --> Set Low initially
-		//  GpioDataRegs.GPASET.bit.GPIO20 = 1;     // uncomment if --> Set High initially
-		//--------------------------------------------------------------------------------------
-		//  GPIO-21 - PIN FUNCTION = ID Pin 1
-		   GpioCtrlRegs.GPAMUX2.bit.GPIO21 = 0;    // 0=GPIO,  1=EQEP1B,  2=MDRA,  3=COMP2OUT
-		   GpioCtrlRegs.GPADIR.bit.GPIO21 = 0;     // 1=OUTput,  0=INput
-		   GpioCtrlRegs.GPAPUD.bit.GPIO21 = 0;                // Enable internal pullups
-		//  GpioDataRegs.GPACLEAR.bit.GPIO21 = 1;   // uncomment if --> Set Low initially
-		//  GpioDataRegs.GPASET.bit.GPIO21 = 1;     // uncomment if --> Set High initially
-		//--------------------------------------------------------------------------------------
+    // GPIO Config registers are EALLOW protected
 
+    EALLOW;
+
+    // Configure the hardware ID pins first.  This is done out of order because some of the
+    // pins are configured differently depending on which board we're dealing with
+    //--------------------------------------------------------------------------------------
+    //  GPIO-20 - PIN FUNCTION = ID Pin 0
+        GpioCtrlRegs.GPAMUX2.bit.GPIO20 = 0;    // 0=GPIO,  1=EQEP1A,  2=MDXA,  3=COMP1OUT
+        GpioCtrlRegs.GPADIR.bit.GPIO20 = 0;     // 1=OUTput,  0=INput
+        GpioCtrlRegs.GPAPUD.bit.GPIO20 = 0;     // Enable internal pullups
+    //  GpioDataRegs.GPACLEAR.bit.GPIO20 = 1;   // uncomment if --> Set Low initially
+    //  GpioDataRegs.GPASET.bit.GPIO20 = 1;     // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
+    //  GPIO-21 - PIN FUNCTION = ID Pin 1
+        GpioCtrlRegs.GPAMUX2.bit.GPIO21 = 0;    // 0=GPIO,  1=EQEP1B,  2=MDRA,  3=COMP2OUT
+        GpioCtrlRegs.GPADIR.bit.GPIO21 = 0;     // 1=OUTput,  0=INput
+        GpioCtrlRegs.GPAPUD.bit.GPIO21 = 0;     // Enable internal pullups
+    //  GpioDataRegs.GPACLEAR.bit.GPIO21 = 1;   // uncomment if --> Set Low initially
+    //  GpioDataRegs.GPASET.bit.GPIO21 = 1;     // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
+    //  GPIO-7 - PIN FUNCTION = User LED (Active Low)
+        GpioCtrlRegs.GPAMUX1.bit.GPIO7 = 0;    // 0=GPIO, 1=EPWM4B, 2=SCIRXDA, 3=ECAP2
+        GpioCtrlRegs.GPADIR.bit.GPIO7 = 1;    // 1=OUTput,  0=INput
+    //  GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;  // uncomment if --> Set Low initially
+        GpioDataRegs.GPASET.bit.GPIO7 = 1;    // uncomment if --> Set High initially
+    //--------------------------------------------------------------------------------------
+
+    EDIS;
 }
 
 Uint32 SelectBootMode()
