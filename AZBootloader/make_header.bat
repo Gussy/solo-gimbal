@@ -1,5 +1,6 @@
 cd ..
 del data.h
-C:\ti\ccsv5\tools\compiler\c2000_6.2.0\bin\hex2000.exe "H:\Repos\3DRobotics\git\3DRGimbal\GimbalFirmware\F2806x_RAM\PM_Sensorless_F2806x.out" -o data.hh -boot -gpio8 -a 
-Z:\Software\Perl\bin\perl.exe make_header.pl
+C:\ti\ccsv6\tools\compiler\c2000_6.2.10\bin\hex2000.exe "C:\Users\angus_000\Google Drive\Gimbal\solo-gimbal-aes\GimbalFirmware\F2806x_RAM\PM_Sensorless_F2806x.out" -o data.hh -boot -gpio8 -a 
+C:\Perl64\bin\perl.exe make_header.pl
 del data.hh
+pause
