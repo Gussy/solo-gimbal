@@ -44,9 +44,9 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
 
     case KINEMATICS_PASS:
         // Unpack the gyro data into the correct axes, and apply the gyro offsets
-        raw_gyro_readings[GyroAxisMap[X_AXIS]] -= cb_parms->gyro_offsets[X_AXIS];
-        raw_gyro_readings[GyroAxisMap[Y_AXIS]] -= cb_parms->gyro_offsets[Y_AXIS];
-        raw_gyro_readings[GyroAxisMap[Z_AXIS]] -= cb_parms->gyro_offsets[Z_AXIS];
+        raw_gyro_readings[GyroAxisMap[X_AXIS]] -= (cb_parms->gyro_offsets[X_AXIS] + cb_parms->gyro_calibration_offsets[GyroAxisMap[X_AXIS]]);
+        raw_gyro_readings[GyroAxisMap[Y_AXIS]] -= (cb_parms->gyro_offsets[Y_AXIS] + cb_parms->gyro_calibration_offsets[GyroAxisMap[Y_AXIS]]);
+        raw_gyro_readings[GyroAxisMap[Z_AXIS]] -= (cb_parms->gyro_offsets[Z_AXIS] + cb_parms->gyro_calibration_offsets[GyroAxisMap[Z_AXIS]]);
 
         // If the system anaylzer is enabled, output the new value here
 #ifdef ENABLE_RATE_LOOP_TUNING
@@ -376,6 +376,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             }
 
 #endif
+
+            //SendDebug1ToAz(cb_parms->encoder_readings[ROLL], cb_parms->axis_errors[ROLL], cb_parms->motor_torques[ROLL]);
 
 #ifndef ENABLE_CURRENT_TOGGLE
             // Send out motor torques

@@ -178,6 +178,7 @@ ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Gyro readings
     {0, 0, 0},                                              // Corrected gyro readings
     {0, 0, 0},                                              // Gyro offsets
+    {0, 0, 0},                                              // Gyro calibration offsets
     {0, 0, 0},                                              // Integrated raw gyro readings
     {0, 0, 0},                                              // Integrated raw accelerometer readings
     {0, 0, 0},                                              // Encoder readings
@@ -323,6 +324,9 @@ Uint8 pos_pid_rl_windup_flag = FALSE;
 Uint8 gyro_offset_x_flag = FALSE;
 Uint8 gyro_offset_y_flag = FALSE;
 Uint8 gyro_offset_z_flag = FALSE;
+Uint8 gyro_offset_az_flag = FALSE;
+Uint8 gyro_offset_el_flag = FALSE;
+Uint8 gyro_offset_rl_flag = FALSE;
 Uint8 rate_cmd_az_flag = FALSE;
 Uint8 rate_cmd_el_flag = FALSE;
 Uint8 rate_cmd_rl_flag = FALSE;
@@ -378,6 +382,9 @@ void init_param_set(void)
     param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema = &gyro_offset_x_flag;
     param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema = &gyro_offset_y_flag;
     param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema = &gyro_offset_z_flag;
+    param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
+    param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
+    param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
     param_set[CAND_PID_RATE_CMD_AZ].sema = &rate_cmd_az_flag;
     param_set[CAND_PID_RATE_CMD_EL].sema = &rate_cmd_el_flag;
     param_set[CAND_PID_RATE_CMD_RL].sema = &rate_cmd_rl_flag;
@@ -655,7 +662,7 @@ void main(void)
         }
 
         // Update any parameters that have changed due to CAN messages
-        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms);
+        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms, &encoder_parms);
 
 		// Measure total main work timing
 		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;

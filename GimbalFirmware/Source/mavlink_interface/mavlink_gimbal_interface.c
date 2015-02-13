@@ -80,6 +80,7 @@ void mavlink_state_machine() {
 		}
 		break;
 	}
+
 	if (attitude_received) {
 		static int16 pos[3] = { 0, 0, 0 };
 		CAND_ParameterID pids[3] = { CAND_PID_TARGET_ANGLES_AZ,
