@@ -214,7 +214,10 @@ LoadAxisParmsStateInfo load_ap_state_info = {
 
 MavlinkGimbalInfo mavlink_gimbal_info = {
     MAV_STATE_UNINIT,                   // System status for heartbeat message
-    MAV_MODE_GIMBAL_UNINITIALIZED       // Custom mode for heartbeat message
+    MAV_MODE_GIMBAL_UNINITIALIZED,      // Custom mode for heartbeat message
+    MAVLINK_STATE_PARSE_INPUT,          // MAVLink state machine current state
+    0,                                  // Rate command timeout counter
+    FALSE                               // Gimbal enabled
 };
 
 DebugData debug_data = {
@@ -609,7 +612,7 @@ void main(void)
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
 		if (board_hw_id == AZ) {
-		    mavlink_state_machine();
+		    mavlink_state_machine(&mavlink_gimbal_info);
 		}
 
 		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
@@ -849,6 +852,19 @@ void A2(void) // SPARE (not used)
         }
     }
 #endif
+
+    // If we miss more than 10 rate commands in a row (roughly 100ms),
+    // disable the gimbal axes.  They'll be re-enabled when we get a new
+    // rate command
+    if (mavlink_gimbal_info.gimbal_active) {
+        if (++mavlink_gimbal_info.rate_cmd_timeout_counter >= 33) {
+            // Disable the other two axes
+            cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
+            // Disable ourselves
+            RelaxAZAxis();
+            mavlink_gimbal_info.gimbal_active = FALSE;
+        }
+    }
 
 	//-------------------
 	//the next time CpuTimer0 'counter' reaches Period value go to A3

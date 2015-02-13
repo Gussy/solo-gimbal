@@ -21,6 +21,9 @@ typedef enum {
 typedef struct {
 	MAV_STATE mav_state;
 	MAV_MODE_GIMBAL mav_mode;
+	MavlinkProcessingState mavlink_processing_state;
+	int rate_cmd_timeout_counter;
+	Uint16 gimbal_active;
 } MavlinkGimbalInfo;
 
 #define GYRO_AZ_TELEM_RECEIVED 0x0001
@@ -55,7 +58,7 @@ typedef struct {
 #define MAVLINK_HEARTBEAT_PERIOD 6
 
 void init_mavlink();
-void mavlink_state_machine();
+void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info);
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_gimbal_feedback();
 void send_mavlink_debug_data(DebugData* debug_data);

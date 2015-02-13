@@ -75,6 +75,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
         case CAND_CMD_ENABLE:
             if (md_parms->md_initialized) {
+                axis_parms->enable_flag = TRUE;
                 md_parms->motor_drive_state = STATE_RUNNING;
             }
             break;
