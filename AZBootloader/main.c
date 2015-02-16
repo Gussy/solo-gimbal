@@ -49,6 +49,7 @@ Uint16 endRam;
 
 #define STATUS_LED_ON() 	{GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;}
 #define STATUS_LED_OFF() 	{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
+#define STATUS_LED_TOGGLE() {GpioDataRegs.GPATOGGLE.bit.GPIO7 = 1;}
 
 #define MAVLINK_SYSTEM_ID 50
 #define MAVLINK_COMPONENT_ID 230
@@ -512,8 +513,7 @@ Uint32 MAVLINK_Flash()
 	FLASH_ST FlashStatus = {0};
 	Uint16  Status;
 	Uint16  *Flash_ptr = (Uint16 *)0x3DC000;     // Pointer to a location in flash
-	Uint16 blink_state = 0;
-    Uint16 blink_counter = 20;
+    Uint16 blink_counter = 0;
 
 	memset(&msg, 0, sizeof(msg));
 	memset(&status, 0, sizeof(status));
@@ -524,8 +524,6 @@ Uint32 MAVLINK_Flash()
 	EALLOW;
 	Flash_CPUScaleFactor = SCALE_FACTOR;
 	EDIS;
-
-	STATUS_LED_ON();
 
 	// wait for an image to arrive over mavlink serial
 	while(1) {
@@ -577,16 +575,26 @@ Uint32 MAVLINK_Flash()
 												    (buffer[j*2+0]);
 									}
 								}
+
+								// Fast toggle the LED 
+								STATUS_LED_TOGGLE();
+
 								if(seq == 0) {
 									Example_CsmUnlock();
 
 									/* don't erase SECTOR A */
 									Status = Flash_Erase(SECTORB, &FlashStatus);
+									STATUS_LED_TOGGLE();
 									Status = Flash_Erase(SECTORC, &FlashStatus);
+									STATUS_LED_TOGGLE();
 									Status = Flash_Erase(SECTORD, &FlashStatus);
+									STATUS_LED_TOGGLE();
 									Status = Flash_Erase(SECTORE, &FlashStatus);
+									STATUS_LED_TOGGLE();
 									Status = Flash_Erase(SECTORF, &FlashStatus);
+									STATUS_LED_TOGGLE();
 									Status = Flash_Erase(SECTORG, &FlashStatus);
+									STATUS_LED_TOGGLE();
 									/* don't erase SECTOR H */
 									// write data to flash
 									Flash_Program(Flash_ptr, (Uint16 *)buffer, DATA_SIZE/2, &FlashStatus);
@@ -623,14 +631,8 @@ Uint32 MAVLINK_Flash()
 
 		// If we're here, we've timed out and are about to send another mavlink request for a boot image
 		// Toggle the LED in here to show that we're doing something
-        if (++blink_counter >= 20) {
-            if (blink_state == 0) {
-                GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
-                blink_state = 1;
-            } else {
-                GpioDataRegs.GPASET.bit.GPIO7 = 1;
-                blink_state = 0;
-            }
+        if (++blink_counter >= 2) {
+            STATUS_LED_TOGGLE();
             blink_counter = 0;
         }
 	}
