@@ -380,13 +380,13 @@ static void handle_gimbal_control(mavlink_message_t* received_msg)
 
         //TODO: Make the axis mapping more robust and less confusing
         // Gyro X rate
-        rate_cmds[EL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratez, (float)INT16_MIN, (float)INT16_MAX));
+        rate_cmds[EL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.demanded_rate_z, (float)INT16_MIN, (float)INT16_MAX));
 
         // Gyro Y rate
-        rate_cmds[AZ] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratey, (float)INT16_MIN, (float)INT16_MAX));
+        rate_cmds[AZ] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.demanded_rate_y, (float)INT16_MIN, (float)INT16_MAX));
 
         // Gyro Z rate
-        rate_cmds[ROLL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.ratex, (float)INT16_MIN, (float)INT16_MAX));
+        rate_cmds[ROLL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.demanded_rate_x, (float)INT16_MIN, (float)INT16_MAX));
 
         cand_tx_multi_param(CAND_ID_EL, rate_cmd_pids, rate_cmds, 3);
 
@@ -416,21 +416,22 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
 
 void send_mavlink_gimbal_feedback() {
 	static mavlink_message_t feedback_msg;
+
 	// Copter mapping is X roll, Y el, Z az
-	mavlink_msg_gimbal_feedback_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
+	mavlink_msg_gimbal_report_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL,
 			&feedback_msg,
 			0,
 			0,
-			feedback_id++,
-			-latest_accel_telemetry[ROLL],
-			latest_accel_telemetry[EL],
-			latest_accel_telemetry[AZ],
+			0.01f,
 			latest_gyro_telemetry[ROLL],
 			latest_gyro_telemetry[EL],
 			latest_gyro_telemetry[AZ],
-			latest_encoder_telemetry[AZ],
+			-latest_accel_telemetry[ROLL],
+			latest_accel_telemetry[EL],
+			latest_accel_telemetry[AZ],
 			latest_encoder_telemetry[ROLL],
-			latest_encoder_telemetry[EL]);
+			latest_encoder_telemetry[EL],
+			latest_encoder_telemetry[AZ]);
 	send_mavlink_message(&feedback_msg);
 }
 
