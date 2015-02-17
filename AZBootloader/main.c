@@ -47,16 +47,20 @@ void  WatchDogEnable(void);
 #pragma    DATA_SECTION(endRam,".endmem");
 Uint16 endRam;
 
-#define STATUS_LED_ON() 	{GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;}
-#define STATUS_LED_OFF() 	{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
-#define STATUS_LED_TOGGLE() {GpioDataRegs.GPATOGGLE.bit.GPIO7 = 1;}
+#define STATUS_LED_ON()				{GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;}
+#define STATUS_LED_OFF()			{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
+#define STATUS_LED_TOGGLE()			{GpioDataRegs.GPATOGGLE.bit.GPIO7 = 1;}
 
-#define MAVLINK_SYSTEM_ID 50
-#define MAVLINK_COMPONENT_ID 230
+#define MAVLINK_SYSTEM_ID			50
+#define MAVLINK_COMPONENT_ID 		230
 
 // Max payload of MAVLINK_MSG_ID_ENCAPSULATED_DATA message is 253 Bytes
 // Must be an even number or the uint8_t[] to uint16_t[] conversion will fail
-#define ENCAPSULATED_DATA_LENGTH 252
+#define ENCAPSULATED_DATA_LENGTH 	252
+
+#define MAIN_APPLICATION_ADDRESS	0x3DC000
+
+#define BOOTLOADER_KEY_VALUE_8BIT	0x08AA
 
 void CAN_Init()
 {
@@ -285,8 +289,8 @@ int verify_data_checksum(void)
    // Asign GetWordData to the CAN-A version of the
    // function.  GetWordData is a pointer to a function.
    GetWordData = read_Data;
-   if (GetWordData() != 0x08AA) return 0;
-   calculated_checksum = crc32_add(0x08AA, calculated_checksum);
+   if (GetWordData() != BOOTLOADER_KEY_VALUE_8BIT) return 0;
+   calculated_checksum = crc32_add(BOOTLOADER_KEY_VALUE_8BIT, calculated_checksum);
 
    Uint16 i;
    // Read and discard the 8 reserved words.
@@ -448,7 +452,8 @@ int send_serial_port(unsigned char *data, unsigned int size)
 #pragma    DATA_SECTION(buffer,"DMARAML5");
 mavlink_message_t msg, inmsg;
 mavlink_status_t status;
-unsigned char buffer[300];
+#define BUFFER_LENGTH	300
+unsigned char buffer[BUFFER_LENGTH];
 
 #if 0
 uint16_t mavlink_msg_request_encapsulated_data_pack(uint8_t system_id,
@@ -516,7 +521,7 @@ Uint32 MAVLINK_Flash()
 	Uint16 seq = 0, length, last_seq = 0;
 	FLASH_ST FlashStatus = {0};
 	Uint16  Status;
-	Uint16  *Flash_ptr = (Uint16 *)0x3DC000;     // Pointer to a location in flash
+	Uint16  *Flash_ptr = (Uint16 *)MAIN_APPLICATION_ADDRESS;     // Pointer to a location in flash
     Uint16 blink_counter = 0;
     int idx1 = 0;
     Uint16 idx2 = 0;
@@ -554,8 +559,8 @@ Uint32 MAVLINK_Flash()
 		while(getting_messages) {
 			int read_size = 0;
 			// read the serial port, and if I get no messages, timeout
-			memset(buffer, 0, sizeof(buffer[0])*300);
-			if((read_size = read_serial_port(buffer, 300)) == 0) {
+			memset(buffer, 0, sizeof(buffer[0])*BUFFER_LENGTH);
+			if((read_size = read_serial_port(buffer, BUFFER_LENGTH)) == 0) {
 				getting_messages = 0;
 				memset(&msg, 0, sizeof(msg));
 				memset(&status, 0, sizeof(status));
@@ -666,7 +671,7 @@ Uint32 CAN_Boot()
 
    // If the KeyValue was invalid, abort the load
    // and return the flash entry point.
-   if(GetWordData() != 0x08AA) return FLASH_ENTRY_POINT;
+   if(GetWordData() != BOOTLOADER_KEY_VALUE_8BIT) return FLASH_ENTRY_POINT;
 
    ReadReservedFn();
 
