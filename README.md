@@ -1,7 +1,7 @@
 # Solo Gimbal - AES
 AES gimbal software for C2000 uC
 
-# Development
+## Development
 Download and install the following softwares:
 * [controlSUITE](http://www.ti.com/tool/controlsuite)
 * [Code Composer Studio](http://www.ti.com/tool/ccstudio)
@@ -44,9 +44,16 @@ typedef long double     float64;
 
 ### For "GitHub for Windows" users
 Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin\```
+
 1. Right-Click on My Computer
 2. Click Advanced System Settings
 3. Click Environment Variables
 4. Under System Variables find the path variable and click edit
 5. Add the path to gits bin and cmd at the end of the string (like this: ```;C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin;C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\cmd```)
 6. In the project properties, show advanced options, edit the ```GitDescribe``` configuration, change the ```Location``` to  ```C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin\sh.exe```
+
+## Building bootloadable images
+
+1. Run the build in Code Composer as normal.
+2. Run ```GimbalFirmware\make_header.bat``` to convert ```.out``` into ```.bin``` hex file
+3. (todo: package binary file up with python loading script)
