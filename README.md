@@ -52,8 +52,19 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 5. Add the path to gits bin and cmd at the end of the string (like this: ```;C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin;C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\cmd```)
 6. In the project properties, show advanced options, edit the ```GitDescribe``` configuration, change the ```Location``` to  ```C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin\sh.exe```
 
-## Building bootloadable images
+## Building
 
-1. Run the build in Code Composer as normal.
-2. Run ```GimbalFirmware\make_header.bat``` to convert ```.out``` into ```.bin``` hex file
-3. (todo: package binary file up with python loading script)
+### GimbalFirmware
+
+1. Build the ```GimbalFirmware``` project using Code Composer Studio.
+2. (add steps for flashing GimbalFirmware only...?)
+
+### AZBootloader
+
+1. Build the ```GimbalFirmware``` project using Code Composer Studio.
+2. Run ```AZBootloader\make_header.bat``` to convert the GimbalFirmware hex file into a ```data.h``` header file to be included with the AZBootloader.
+3. Build the ```AZBootloader``` project using Code Composer Studio and flash to hardware using the XDS510 JTAG Emulator.
+
+### Bootloader (CAN Bootstrapper)
+
+1. (todo)
