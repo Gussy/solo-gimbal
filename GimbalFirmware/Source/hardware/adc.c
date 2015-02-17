@@ -9,6 +9,8 @@
 #include "PeripheralHeaderIncludes.h"
 #include "f2806/f2806xileg_vdc_PM.h"
 
+#define Device_cal (void   (*)(void))0x3D7C80
+
 void init_adc()
 {
     ADC_DELAY_US(ADC_usDELAY);
@@ -17,6 +19,9 @@ void init_adc()
     asm(" NOP ");
 
     EALLOW;
+
+    (*Device_cal)();                      // Auto-calibrate from TI OTP
+
     AdcRegs.ADCCTL1.bit.ADCBGPWD   = 1; // Power up band gap
 
     ADC_DELAY_US(ADC_usDELAY); // Delay before powering up rest of ADC

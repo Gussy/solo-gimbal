@@ -166,8 +166,6 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_POS_PID_ROLL_I_MAX].float_data_ptr = &(flash_params.pos_pid_windup[ROLL]);
 */
 
-    //TODO: Either remove these or fix them to work with 16-bit parameters
-    /*
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].param_id, "GYRO_OFF_YAW", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].can_parameter_id = CAND_PID_GYRO_OFFSET_AZ;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_YAW].can_parameter_destination_axis = CAND_ID_EL;
@@ -185,7 +183,6 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].can_parameter_destination_axis = CAND_ID_EL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].param_type = MAV_PARAM_TYPE_REAL32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].float_data_ptr = &(flash_params.gyro_offsets[ROLL]);
-    */
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].param_id, "CC_YAW_SLOPE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].can_parameter_id = CAND_PID_COMMUTATION_CALIBRATION_SLOPE;

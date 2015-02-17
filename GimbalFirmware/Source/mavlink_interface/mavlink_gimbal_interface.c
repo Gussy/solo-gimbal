@@ -24,7 +24,7 @@ static void handle_mount_control(mavlink_message_t* received_msg);
 static void handle_gopro_power_on(mavlink_message_t* received_msg);
 static void handle_gopro_power_off(mavlink_message_t* received_msg);
 static void handle_gopro_command(mavlink_message_t* received_msg);
-static void handle_gimbal_control(mavlink_message_t* received_msg);
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
 
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
@@ -45,11 +45,7 @@ float latest_gyro_telemetry[3] = {0, 0, 0};
 float latest_accel_telemetry[3] = {0, 0, 0};
 Uint16 telem_received = 0;
 
-Uint16 rate_cmd_received = FALSE;
-
 float targets[3] = { 0, 0, 0 };
-
-MavlinkProcessingState mavlink_state = MAVLINK_STATE_PARSE_INPUT;
 
 int last_parameter_sent = 0;
 
@@ -67,19 +63,20 @@ DebugData attitude_debug_data = {
 	0
 };
 
-void mavlink_state_machine() {
-	switch (mavlink_state) {
+void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info) {
+	switch (mavlink_info->mavlink_processing_state) {
 	case MAVLINK_STATE_PARSE_INPUT:
-		process_mavlink_input();
+		process_mavlink_input(mavlink_info);
 		break;
 
 	case MAVLINK_STATE_SEND_PARAM_LIST:
 		send_gimbal_param(last_parameter_sent++);
 		if (last_parameter_sent >= MAVLINK_GIMBAL_PARAM_MAX) {
-			mavlink_state = MAVLINK_STATE_PARSE_INPUT;
+		    mavlink_info->mavlink_processing_state = MAVLINK_STATE_PARSE_INPUT;
 		}
 		break;
 	}
+
 	if (attitude_received) {
 		static int16 pos[3] = { 0, 0, 0 };
 		CAND_ParameterID pids[3] = { CAND_PID_TARGET_ANGLES_AZ,
@@ -158,7 +155,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 	}
 }
 
-static void process_mavlink_input() {
+static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info) {
 	static mavlink_message_t received_msg;
 	mavlink_status_t parse_status;
 
@@ -174,7 +171,7 @@ static void process_mavlink_input() {
 
 			case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
 				last_parameter_sent = 0;
-				mavlink_state = MAVLINK_STATE_SEND_PARAM_LIST;
+				mavlink_info->mavlink_processing_state = MAVLINK_STATE_SEND_PARAM_LIST;
 				break;
 
 			case MAVLINK_MSG_ID_PARAM_SET:
@@ -207,7 +204,7 @@ static void process_mavlink_input() {
 				break;
 
 			case MAVLINK_MSG_ID_GIMBAL_CONTROL:
-			    handle_gimbal_control(&received_msg);
+			    handle_gimbal_control(&received_msg, mavlink_info);
 			    break;
 
 			default: {
@@ -366,7 +363,7 @@ static void handle_gopro_command(mavlink_message_t* received_msg)
     }
 }
 
-static void handle_gimbal_control(mavlink_message_t* received_msg)
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info)
 {
     mavlink_gimbal_control_t decoded_msg;
     mavlink_msg_gimbal_control_decode(received_msg, &decoded_msg);
@@ -390,13 +387,16 @@ static void handle_gimbal_control(mavlink_message_t* received_msg)
 
         cand_tx_multi_param(CAND_ID_EL, rate_cmd_pids, rate_cmds, 3);
 
-        // The first time we get a rate command, we want to enable the gimbal axes (we start out disabled)
-        if (!rate_cmd_received) {
+        // If we've received a rate command, reset the rate command timeout counter
+        mavlink_info->rate_cmd_timeout_counter = 0;
+
+        // If the gimbal is not enabled, we want to enable it when we receive a rate command (we start out disabled)
+        if (!(mavlink_info->gimbal_active)) {
             // Enable the other two axes
             cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
             // Enable ourselves
             EnableAZAxis();
-            rate_cmd_received = TRUE;
+            mavlink_info->gimbal_active = TRUE;
         }
     }
 }

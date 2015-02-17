@@ -178,6 +178,7 @@ ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Gyro readings
     {0, 0, 0},                                              // Corrected gyro readings
     {0, 0, 0},                                              // Gyro offsets
+    {0, 0, 0},                                              // Gyro calibration offsets
     {0, 0, 0},                                              // Integrated raw gyro readings
     {0, 0, 0},                                              // Integrated raw accelerometer readings
     {0, 0, 0},                                              // Encoder readings
@@ -213,7 +214,10 @@ LoadAxisParmsStateInfo load_ap_state_info = {
 
 MavlinkGimbalInfo mavlink_gimbal_info = {
     MAV_STATE_UNINIT,                   // System status for heartbeat message
-    MAV_MODE_GIMBAL_UNINITIALIZED       // Custom mode for heartbeat message
+    MAV_MODE_GIMBAL_UNINITIALIZED,      // Custom mode for heartbeat message
+    MAVLINK_STATE_PARSE_INPUT,          // MAVLink state machine current state
+    0,                                  // Rate command timeout counter
+    FALSE                               // Gimbal enabled
 };
 
 DebugData debug_data = {
@@ -323,6 +327,9 @@ Uint8 pos_pid_rl_windup_flag = FALSE;
 Uint8 gyro_offset_x_flag = FALSE;
 Uint8 gyro_offset_y_flag = FALSE;
 Uint8 gyro_offset_z_flag = FALSE;
+Uint8 gyro_offset_az_flag = FALSE;
+Uint8 gyro_offset_el_flag = FALSE;
+Uint8 gyro_offset_rl_flag = FALSE;
 Uint8 rate_cmd_az_flag = FALSE;
 Uint8 rate_cmd_el_flag = FALSE;
 Uint8 rate_cmd_rl_flag = FALSE;
@@ -378,6 +385,9 @@ void init_param_set(void)
     param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema = &gyro_offset_x_flag;
     param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema = &gyro_offset_y_flag;
     param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema = &gyro_offset_z_flag;
+    param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
+    param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
+    param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
     param_set[CAND_PID_RATE_CMD_AZ].sema = &rate_cmd_az_flag;
     param_set[CAND_PID_RATE_CMD_EL].sema = &rate_cmd_el_flag;
     param_set[CAND_PID_RATE_CMD_RL].sema = &rate_cmd_rl_flag;
@@ -602,7 +612,7 @@ void main(void)
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
 		if (board_hw_id == AZ) {
-		    mavlink_state_machine();
+		    mavlink_state_machine(&mavlink_gimbal_info);
 		}
 
 		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
@@ -655,7 +665,7 @@ void main(void)
         }
 
         // Update any parameters that have changed due to CAN messages
-        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms);
+        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms, &encoder_parms);
 
 		// Measure total main work timing
 		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;
@@ -842,6 +852,19 @@ void A2(void) // SPARE (not used)
         }
     }
 #endif
+
+    // If we miss more than 10 rate commands in a row (roughly 100ms),
+    // disable the gimbal axes.  They'll be re-enabled when we get a new
+    // rate command
+    if (mavlink_gimbal_info.gimbal_active) {
+        if (++mavlink_gimbal_info.rate_cmd_timeout_counter >= 33) {
+            // Disable the other two axes
+            cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
+            // Disable ourselves
+            RelaxAZAxis();
+            mavlink_gimbal_info.gimbal_active = FALSE;
+        }
+    }
 
 	//-------------------
 	//the next time CpuTimer0 'counter' reaches Period value go to A3

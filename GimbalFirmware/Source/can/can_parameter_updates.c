@@ -11,12 +11,14 @@
 #include "control/PID.h"
 #include "hardware/device_init.h"
 #include "gopro/gopro_interface.h"
+#include "control/gyro_kinematics_correction.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "can/can_parameter_updates.h"
 
 int16 rate_cmds_received[3];
 Uint32 debug_output_decimation_count = 0;
 
-void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms)
+void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms, EncoderParms* encoder_parms)
 {
     IntOrFloat float_converter;
     // Check for updated rate loop PID params
@@ -359,6 +361,37 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
         if (*(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) == TRUE) {
             cb_parms->gyro_offsets[Z_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].param;
             *(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) = FALSE;
+        }
+
+        // Check for new gyro calibration offsets
+        if (*(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) == TRUE) {
+            // Dump the integrator and differentiator
+            rate_pid_loop_float[AZ].integralCumulative = 0.0;
+            rate_pid_loop_float[AZ].errorPrevious = 0.0;
+
+            float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_AZ].param;
+            cb_parms->gyro_calibration_offsets[AZ] = (int16)float_converter.float_val;
+            *(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_GYRO_OFFSET_EL].sema) == TRUE) {
+            // Dump the integrator and differentiator
+            rate_pid_loop_float[EL].integralCumulative = 0.0;
+            rate_pid_loop_float[EL].errorPrevious = 0.0;
+
+            float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_EL].param;
+            cb_parms->gyro_calibration_offsets[EL] = (int16)float_converter.float_val;
+            *(param_set[CAND_PID_GYRO_OFFSET_EL].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_GYRO_OFFSET_RL].sema) == TRUE) {
+            // Dump the integrator and differentiator
+            rate_pid_loop_float[ROLL].integralCumulative = 0.0;
+            rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+
+            float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_RL].param;
+            cb_parms->gyro_calibration_offsets[ROLL] = (int16)float_converter.float_val;
+            *(param_set[CAND_PID_GYRO_OFFSET_RL].sema) = FALSE;
         }
 
         // Check for any new GoPro commands
