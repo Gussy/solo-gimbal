@@ -54,6 +54,10 @@ Uint16 endRam;
 #define MAVLINK_SYSTEM_ID 50
 #define MAVLINK_COMPONENT_ID 230
 
+// Max payload of MAVLINK_MSG_ID_ENCAPSULATED_DATA message is 253 Bytes
+// Must be an even number or the uint8_t[] to uint16_t[] conversion will fail
+#define ENCAPSULATED_DATA_LENGTH 252
+
 void CAN_Init()
 {
 
@@ -260,7 +264,7 @@ Uint16 read_Data()
 	extern const unsigned short DATA[];
 	Uint16 retval = 0;
 	retval = DATA[location++];
-	//retval = ((retval & 0xFF00)>>8)|((retval & 0x00FF)<<8);
+	retval = ((retval & 0xFF00)>>8)|((retval & 0x00FF)<<8);
 	return retval;
 }
 
@@ -318,7 +322,7 @@ int verify_data_checksum(void)
        calculated_checksum = crc32_add(BlockHeader.DestAddr&0xFFFF,calculated_checksum);
        for(i = 1; i <= BlockHeader.BlockSize; i++)
        {
-     	  extern Uint16 endRam;
+          extern Uint16 endRam;
           wordData = (*GetWordData)();
           calculated_checksum = crc32_add(wordData,calculated_checksum);
        }
@@ -413,6 +417,8 @@ int read_serial_port(unsigned char *data, unsigned int max_size)
 		}
 
 		// @todo: handle timeout here
+		// bytes_read == 0 --> timeout after 65535 cycles
+		// bytes_read > 0  --> timeout after 256 cycles
 		timeout++;
 		if (((bytes_read == 0)&&(timeout >= 0xFFFF))||
 			((bytes_read > 0)&&(timeout > 0x100))) {
@@ -504,8 +510,6 @@ static Uint16 Example_CsmUnlock()
 
 }
 
-#define DATA_SIZE 250
-
 Uint32 MAVLINK_Flash()
 {
 	int getting_messages = 0;
@@ -514,6 +518,8 @@ Uint32 MAVLINK_Flash()
 	Uint16  Status;
 	Uint16  *Flash_ptr = (Uint16 *)0x3DC000;     // Pointer to a location in flash
     Uint16 blink_counter = 0;
+    int idx1 = 0;
+    Uint16 idx2 = 0;
 
 	memset(&msg, 0, sizeof(msg));
 	memset(&status, 0, sizeof(status));
@@ -537,7 +543,7 @@ Uint32 MAVLINK_Flash()
 			seq /* width */,
 			0 /*uint16_t height*/,
 			0 /*uint16_t packets*/,
-			DATA_SIZE /*uint8_t payload*/,
+			ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/,
 			0 /*uint8_t jpg_quality*/
 		);
 
@@ -556,10 +562,9 @@ Uint32 MAVLINK_Flash()
 				memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer[0]));
 				memset(&m_mavlink_status, 0, sizeof(m_mavlink_status[0]));
 			} else {
-				int i;
 				getting_messages = 1;
-				for(i = 0; i < read_size; i++) {
-					if(mavlink_parse_char(MAVLINK_COMM_0, buffer[i]&0xFF, &inmsg, &status)) {
+				for(idx1 = 0; idx1 < read_size; idx1++) {
+					if(mavlink_parse_char(MAVLINK_COMM_0, buffer[idx1]&0xFF, &inmsg, &status)) {
 						if((inmsg.sysid == MAVLINK_SYSTEM_ID)&&
 							(inmsg.compid == MAVLINK_COMPONENT_ID)&&
 							(inmsg.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA)) {
@@ -567,18 +572,18 @@ Uint32 MAVLINK_Flash()
 								seq = mavlink_msg_encapsulated_data_get_seqnr(&inmsg);
 								mavlink_msg_encapsulated_data_get_data(&inmsg, buffer);
 								getting_messages = 0;
-								// fix the buffer...
-								{
-									int j;
-									for (j = 0; j < DATA_SIZE/2; j++) {
-										buffer[j] = (buffer[j*2+1]<<8)|
-												    (buffer[j*2+0]);
-									}
+
+								// Convert the uint8_t[] into a uint16_t[]
+								// 16bit words are sent as LSB byte then MSB byte
+								for (idx2 = 0; idx2 < ENCAPSULATED_DATA_LENGTH/2; idx2++) {
+									buffer[idx2] = (buffer[idx2*2+1]<<8)|
+												   (buffer[idx2*2+0]);
 								}
 
-								// Fast toggle the LED 
+								// Fast toggle the LED
 								STATUS_LED_TOGGLE();
 
+								// Unlock and erase flash with first packet
 								if(seq == 0) {
 									Example_CsmUnlock();
 
@@ -596,18 +601,18 @@ Uint32 MAVLINK_Flash()
 									Status = Flash_Erase(SECTORG, &FlashStatus);
 									STATUS_LED_TOGGLE();
 									/* don't erase SECTOR H */
+
 									// write data to flash
-									Flash_Program(Flash_ptr, (Uint16 *)buffer, DATA_SIZE/2, &FlashStatus);
-									Flash_ptr += DATA_SIZE/2;
+									Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
+									Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
 									seq++;
 								} else if(seq == (last_seq+1)) {
 									// write data to flash
-									Flash_Program(Flash_ptr, (Uint16 *)buffer, DATA_SIZE/2, &FlashStatus);
-									Flash_ptr += DATA_SIZE/2;
+									Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
+									Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
 									last_seq = seq;
 									seq++;
 								}
-							} else {
 							}
 						} else if((inmsg.sysid == MAVLINK_SYSTEM_ID) &&
 								(inmsg.compid == MAVLINK_COMPONENT_ID) &&
