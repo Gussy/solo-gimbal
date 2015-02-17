@@ -44,8 +44,6 @@ def wait_handshake(m):
 #         else:
 #             print(msg)
 
-
-
 def load_binary(filename):
     '''load binary image file into a byte array'''
     with open(filename, "rb") as f:
@@ -80,6 +78,10 @@ def main():
             # Calculate the window of data to send
             start_idx = sequence_number*payload_length
             end_idx = (sequence_number+1)*payload_length
+
+            # Clamp the end index from overflowing
+            if(end_idx > len(binary)):
+                end_idx = len(binary)
 
             # Slice the binary image
             data = binary[start_idx:end_idx]
