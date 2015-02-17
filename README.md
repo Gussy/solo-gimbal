@@ -68,3 +68,9 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 ### Bootloader (CAN Bootstrapper)
 
 1. (todo)
+
+## Using MAVLink Bootloader
+
+1. Build the ```GimbalFirmware``` project using Code Composer Studio.
+2. Run ```GimbalFirmware\make_header.bat``` to generate the Gimbal.bin file.
+3. Run the Python ```Tools\loadfw.py``` script (eg. ```python loadfw.py ..\GimbalFirmware\Gimbal.bin```).
