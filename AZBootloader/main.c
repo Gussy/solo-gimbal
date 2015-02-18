@@ -255,7 +255,6 @@ static void reset_datapointer(void) {
 
 Uint16 read_Data_and_Send()
 {
-	extern const unsigned short DATA[];
 	Uint16 retval = 0;
 	retval = DATA[location++];
 	retval = ((retval & 0xFF00)>>8)|((retval & 0x00FF)<<8);
@@ -265,7 +264,6 @@ Uint16 read_Data_and_Send()
 
 Uint16 read_Data()
 {
-	extern const unsigned short DATA[];
 	Uint16 retval = 0;
 	retval = DATA[location++];
 	retval = ((retval & 0xFF00)>>8)|((retval & 0x00FF)<<8);

@@ -28,7 +28,7 @@ def write_data_header(filename, data):
 	with open(filename, 'w') as f:
 		# Write out the standard header
 		f.write("#pragma	DATA_SECTION(DATA,\".dlcode\");\n")
-		f.write("const unsigned short DATA[] = {\n")
+		f.write("extern const unsigned short DATA[] = {\n")
 		
 		for i in range(len(data)):
 			f.write("\t")

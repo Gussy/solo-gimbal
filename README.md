@@ -73,4 +73,4 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 
 1. Build the ```GimbalFirmware``` project using Code Composer Studio.
 2. Run ```GimbalFirmware\make_header.bat``` to generate the Gimbal.bin file.
-3. Run the Python ```Tools\loadfw.py``` script (eg. ```python loadfw.py ..\GimbalFirmware\Gimbal.bin```).
+3. Run the Python ```Tools\loadfw.py``` script (eg. ```python loadfw.py ..\GimbalFirmware\F2806x_RAM\PM_Sensorless_F2806x.hex```).
