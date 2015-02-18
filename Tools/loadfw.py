@@ -109,8 +109,12 @@ def main():
 
     # Loop until we are finished, TODO: timeout
     while(finished == False):
+        # Wait for target to reset into bootloader mode
         msg = wait_handshake(mavserial)
         if(msg == None):
+            # Signal the target to reset into bootloader mode
+            link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
+
             # Handshake timed out
             sys.stdout.write('.')
         else:
@@ -141,6 +145,7 @@ def main():
 
             sys.stdout.write("!")
 
+    # Send an "end of transmission" signal to the target, to cause a target reset
     link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
     print(" OK")
 
