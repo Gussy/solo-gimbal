@@ -4,6 +4,8 @@
 #include "can/cand.h"
 #include "PM_Sensorless.h"
 #include "hardware/HWSpecific.h"
+#include "mavlink_interface/gimbal_mavlink.h"
+#include "hardware/device_init.h"
 
 #include <string.h>
 
@@ -89,6 +91,23 @@ void MDBRequestBIT(CAND_DestinationID did)
     Uint8 payload = CAND_PID_BIT;
 
     cand_tx(sid, &payload, 1);
+}
+
+void CANSendCalibrationProgress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status)
+{
+    Uint8 params[2];
+    params[0] = progress;
+    params[1] = calibration_status;
+
+    switch (GetBoardHWID()) {
+    case EL:
+        cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_CALIBRATION_PROGRESS_EL, params, 2);
+        break;
+
+    case ROLL:
+        cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_CALIBRATION_PROGRESS_RL, params, 2);
+        break;
+    }
 }
 
 void IFBSendVersionV2( DavinciVersion* v )

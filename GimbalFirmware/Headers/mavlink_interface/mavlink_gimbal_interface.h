@@ -65,6 +65,7 @@ void send_mavlink_debug_data(DebugData* debug_data);
 void send_mavlink_gopro_response(GPCmdResponse* response);
 void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code, CAND_FaultType fault_type);
 void send_mavlink_statustext(char* message, MAV_SEVERITY severity);
+void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status);
 void send_mavlink_message(mavlink_message_t* msg);
 
 void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);

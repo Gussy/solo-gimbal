@@ -1852,6 +1852,95 @@ static void mavlink_test_gopro_response(uint8_t system_id, uint8_t component_id,
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
 
+static void mavlink_test_gimbal_axis_calibration_progress(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
+{
+	mavlink_message_t msg;
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        uint16_t i;
+	mavlink_gimbal_axis_calibration_progress_t packet_in = {
+		5,72,139
+    };
+	mavlink_gimbal_axis_calibration_progress_t packet1, packet2;
+        memset(&packet1, 0, sizeof(packet1));
+        	packet1.calibration_axis = packet_in.calibration_axis;
+        	packet1.calibration_progress = packet_in.calibration_progress;
+        	packet1.calibration_status = packet_in.calibration_status;
+        
+        
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_gimbal_axis_calibration_progress_encode(system_id, component_id, &msg, &packet1);
+	mavlink_msg_gimbal_axis_calibration_progress_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_gimbal_axis_calibration_progress_pack(system_id, component_id, &msg , packet1.calibration_axis , packet1.calibration_progress , packet1.calibration_status );
+	mavlink_msg_gimbal_axis_calibration_progress_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_gimbal_axis_calibration_progress_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.calibration_axis , packet1.calibration_progress , packet1.calibration_status );
+	mavlink_msg_gimbal_axis_calibration_progress_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+        mavlink_msg_to_send_buffer(buffer, &msg);
+        for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
+        	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
+        }
+	mavlink_msg_gimbal_axis_calibration_progress_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+        
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_gimbal_axis_calibration_progress_send(MAVLINK_COMM_1 , packet1.calibration_axis , packet1.calibration_progress , packet1.calibration_status );
+	mavlink_msg_gimbal_axis_calibration_progress_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+}
+
+static void mavlink_test_reset_gimbal(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
+{
+	mavlink_message_t msg;
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        uint16_t i;
+	mavlink_reset_gimbal_t packet_in = {
+		5,72
+    };
+	mavlink_reset_gimbal_t packet1, packet2;
+        memset(&packet1, 0, sizeof(packet1));
+        	packet1.target_system = packet_in.target_system;
+        	packet1.target_component = packet_in.target_component;
+        
+        
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_reset_gimbal_encode(system_id, component_id, &msg, &packet1);
+	mavlink_msg_reset_gimbal_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_reset_gimbal_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component );
+	mavlink_msg_reset_gimbal_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_reset_gimbal_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component );
+	mavlink_msg_reset_gimbal_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+        mavlink_msg_to_send_buffer(buffer, &msg);
+        for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
+        	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
+        }
+	mavlink_msg_reset_gimbal_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+        
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_reset_gimbal_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component );
+	mavlink_msg_reset_gimbal_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+}
+
 static void mavlink_test_ardupilotmega(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
 {
 	mavlink_test_sensor_offsets(system_id, component_id, last_msg);
@@ -1892,6 +1981,8 @@ static void mavlink_test_ardupilotmega(uint8_t system_id, uint8_t component_id, 
 	mavlink_test_gopro_power_off(system_id, component_id, last_msg);
 	mavlink_test_gopro_command(system_id, component_id, last_msg);
 	mavlink_test_gopro_response(system_id, component_id, last_msg);
+	mavlink_test_gimbal_axis_calibration_progress(system_id, component_id, last_msg);
+	mavlink_test_reset_gimbal(system_id, component_id, last_msg);
 }
 
 #ifdef __cplusplus

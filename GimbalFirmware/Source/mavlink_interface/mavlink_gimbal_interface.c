@@ -24,6 +24,8 @@ static void handle_mount_control(mavlink_message_t* received_msg);
 static void handle_gopro_power_on(mavlink_message_t* received_msg);
 static void handle_gopro_power_off(mavlink_message_t* received_msg);
 static void handle_gopro_command(mavlink_message_t* received_msg);
+static void handle_data_transmission_handshake(mavlink_message_t *msg);
+static void handle_reset_gimbal(mavlink_message_t* received_msg);
 static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
 
 mavlink_system_t mavlink_system;
@@ -174,6 +176,10 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info) {
 				mavlink_info->mavlink_processing_state = MAVLINK_STATE_SEND_PARAM_LIST;
 				break;
 
+			case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
+			    handle_param_read(&received_msg);
+			    break;
+
 			case MAVLINK_MSG_ID_PARAM_SET:
 				handle_param_set(&received_msg);
 				break;
@@ -205,6 +211,10 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info) {
 
 			case MAVLINK_MSG_ID_GIMBAL_CONTROL:
 			    handle_gimbal_control(&received_msg, mavlink_info);
+			    break;
+
+			case MAVLINK_MSG_ID_RESET_GIMBAL:
+			    handle_reset_gimbal(&received_msg);
 			    break;
 
 			default: {
@@ -401,6 +411,31 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
     }
 }
 
+static void handle_reset_gimbal(mavlink_message_t* received_msg)
+{
+    mavlink_reset_gimbal_t decoded_msg;
+    mavlink_msg_reset_gimbal_decode(received_msg, &decoded_msg);
+
+    // Make sure the message is for us
+    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+        // stop this axis
+        RelaxAZAxis();
+        power_down_motor();
+
+        // stop the other axes
+        cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
+
+        // reset other axes
+        cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
+
+        // reset this axes
+        extern void WDogEnable(void);
+        WDogEnable();
+        while(1)
+        {}
+    }
+}
+
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
     static mavlink_message_t heartbeat_msg;
     mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID,
@@ -540,6 +575,19 @@ void send_mavlink_statustext(char* message, MAV_SEVERITY severity)
             message);
 
     send_mavlink_message(&status_msg);
+}
+
+void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status)
+{
+    static mavlink_message_t calibration_progress_msg;
+    mavlink_msg_gimbal_axis_calibration_progress_pack(MAVLINK_GIMBAL_SYSID,
+            MAV_COMP_ID_GIMBAL,
+            &calibration_progress_msg,
+            axis,
+            progress,
+            calibration_status);
+
+    send_mavlink_message(&calibration_progress_msg);
 }
 
 void send_mavlink_message(mavlink_message_t* msg) {
