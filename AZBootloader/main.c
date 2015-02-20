@@ -404,17 +404,17 @@ void setup_serial_port()
 	ScibRegs.SCICTL1.bit.RXENA = 1;
 	ScibRegs.SCICTL1.bit.TXENA = 1;
 
+	/*
 	// Set initial baud rate to 115200
 	// Baud Rate Register = (LSPCLK (20 MHz) / (Baud Rate * 8)) - 1
 	// For 115200, BRR = 20.701, set BRR to 21 for 113636 effective baud rate, for 1.3% deviation from nominal baud rate
 	ScibRegs.SCIHBAUD = 0;
 	ScibRegs.SCILBAUD = 21;
-	/*
+	*/
 	// Set initial baud rate to 230400
 	// For 230400, BRR = 9.851, set BRR to 10 for 227272 effective baud rate, for 1.36% deviation from nominal baud rate
 	ScibRegs.SCIHBAUD = 0;
 	ScibRegs.SCILBAUD = 10;
-	*/
 
 	// Configure SCI peripheral to free-run when the processor is suspended (debugging at a breakpoint)
 	ScibRegs.SCIPRI.bit.SOFT = 0;
