@@ -31,19 +31,6 @@ def wait_handshake(m):
             return msg
     return None
 
-# def show_messages(m):
-#     '''show incoming mavlink messages'''
-#     while True:
-#         msg = m.recv_match(blocking=True)
-#         if not msg:
-#             return
-#         if msg.get_type() == "BAD_DATA":
-#             if mavutil.all_printable(msg.data):
-#                 sys.stdout.write(msg.data)
-#                 sys.stdout.flush()
-#         else:
-#             print(msg)
-
 def load_binary(filename):
     '''Load binary image file into a byte array'''
     with open(filename, "rb") as f:
@@ -88,12 +75,13 @@ def append_checksum(binary):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("binary", help="application binary file load")
+    parser.add_argument("binary", help="Application binary file load")
+    parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
     args = parser.parse_args()
 
     # Open the serial port
     mavserial = mavutil.mavserial(
-        device = serialport,
+        device = args.port,
         baud = baudrate
     )
     link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
