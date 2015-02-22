@@ -1,7 +1,7 @@
 # Solo Gimbal - AES
 AES gimbal software for C2000 uC
 
-# Development
+## Development
 Download and install the following softwares:
 * [controlSUITE](http://www.ti.com/tool/controlsuite)
 * [Code Composer Studio](http://www.ti.com/tool/ccstudio)
@@ -44,9 +44,33 @@ typedef long double     float64;
 
 ### For "GitHub for Windows" users
 Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin\```
+
 1. Right-Click on My Computer
 2. Click Advanced System Settings
 3. Click Environment Variables
 4. Under System Variables find the path variable and click edit
 5. Add the path to gits bin and cmd at the end of the string (like this: ```;C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin;C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\cmd```)
 6. In the project properties, show advanced options, edit the ```GitDescribe``` configuration, change the ```Location``` to  ```C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin\sh.exe```
+
+## Building
+
+### GimbalFirmware
+
+1. Build the ```GimbalFirmware``` project using Code Composer Studio.
+2. (add steps for flashing GimbalFirmware only...?)
+
+### AZBootloader
+
+1. Build the ```GimbalFirmware``` project using Code Composer Studio.
+2. Run ```AZBootloader\make_header.bat``` to convert the GimbalFirmware hex file into a ```data.h``` header file to be included with the AZBootloader.
+3. Build the ```AZBootloader``` project using Code Composer Studio and flash to hardware using the XDS510 JTAG Emulator.
+
+### Bootloader (CAN Bootstrapper)
+
+1. (todo)
+
+## Using MAVLink Bootloader
+
+1. Build the ```GimbalFirmware``` project using Code Composer Studio.
+2. Run ```GimbalFirmware\make_header.bat``` to generate the Gimbal.bin file.
+3. Run the Python ```Tools\loadfw.py``` script (eg. ```python loadfw.py ..\GimbalFirmware\F2806x_RAM\PM_Sensorless_F2806x.hex```).
