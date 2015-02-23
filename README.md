@@ -61,7 +61,8 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 
 ### AZBootloader
 
-1. Build the ```AZBootloader``` project using Code Composer Studio and flash to hardware using the XDS510 JTAG Emulator. During this process ```GimbalFirmware``` will be built to generate the application ```data.h``` payload to include with the ```AZBootloader```.
+1. Build the ```GimbalFirmware``` project using Code Composer Studio.
+2. Build the ```AZBootloader``` project using Code Composer Studio and flash to hardware using the XDS510 JTAG Emulator. During this process ```GimbalFirmware``` will be built to generate the application ```data.h``` payload to include with the ```AZBootloader```.
 
 ### Bootloader (CAN Bootstrapper)
 
@@ -71,3 +72,16 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 
 1. Build the ```GimbalFirmware``` project using Code Composer Studio.
 2. Run the Python ```Tools\loadfw.py``` script (eg. ```python Tools\loadfw.py --port="COM7" GimbalFirmware\F2806x_RAM\PM_Sensorless_F2806x.hex```).
+
+# LED Patterns
+
+## User LED (1 per board)
+
+* Fast (3Hz) - No Comms
+* Slow (0.8Hz) - Init
+* Solid - Ready
+* Error - Fast (3Hz), Pause after 3 cycles
+
+## Beacon LED (Camera Carriage Board)
+
+Currently cyces between R/G/B.
