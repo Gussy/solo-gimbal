@@ -60,6 +60,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         cb_parms->gyro_readings[EL] = (raw_gyro_readings[EL] * GyroSignMap[EL]);
         cb_parms->gyro_readings[ROLL] = (raw_gyro_readings[ROLL] * GyroSignMap[ROLL]);
 
+        //SendDebug1ToAz(cb_parms->encoder_readings[AZ], cb_parms->encoder_readings[EL], cb_parms->encoder_readings[ROLL]);
+
         // Do the 10-cycle integration of the raw gyro readings for the 100Hz gyro telemetry
         cb_parms->integrated_raw_gyro_readings[AZ] += cb_parms->gyro_readings[AZ];
         cb_parms->integrated_raw_gyro_readings[EL] += cb_parms->gyro_readings[EL];
