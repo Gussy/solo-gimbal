@@ -153,6 +153,13 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 		// reset
 		extern void WDogEnable(void);
 		WDogEnable();
+		
+		EALLOW;
+		// Cause a device reset by writing incorrect values into WDCHK
+		SysCtrlRegs.WDCR = 0x0010;
+		EDIS;
+
+		// This should never be reached.
 		while(1);
 	}
 }

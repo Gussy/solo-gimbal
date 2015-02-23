@@ -97,7 +97,14 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         		power_down_motor();
         		// enable watchdog and wait until it goes off
         		WDogEnable();
-        		while (1);
+
+                EALLOW;
+                // Cause a device reset by writing incorrect values into WDCHK
+                SysCtrlRegs.WDCR = 0x0010;
+                EDIS;
+
+                // This should never be reached.
+                while(1);
         	}
         	break;
 
