@@ -25,7 +25,6 @@
 #define MAVLINK_C2000 1
 #endif
 
-#include "version.h"
 #include "common.h"
 
 #endif // MAVLINK_H

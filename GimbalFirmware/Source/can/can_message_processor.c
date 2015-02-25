@@ -961,7 +961,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_P_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[EL].gainP = float_converter.float_val;
+                        //pos_pid_loop_float[EL].gainP = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_P_RECVD;
                     }
                     break;
@@ -972,7 +972,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_I_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[EL].gainI = float_converter.float_val;
+                        //pos_pid_loop_float[EL].gainI = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_I_RECVD;
                     }
                     break;
@@ -983,7 +983,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_D_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[EL].gainD = float_converter.float_val;
+                        //pos_pid_loop_float[EL].gainD = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_D_RECVD;
                     }
                     break;
@@ -994,8 +994,8 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_WINDUP_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[EL].integralMax = float_converter.float_val;
-                        pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
+                        //pos_pid_loop_float[EL].integralMax = float_converter.float_val;
+                        //pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_WINDUP_RECVD;
                     }
                     break;
@@ -1006,7 +1006,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_AZ_P_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[AZ].gainP = float_converter.float_val;
+                        //pos_pid_loop_float[AZ].gainP = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_AZ_P_RECVD;
                     }
                     break;
@@ -1017,7 +1017,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_AZ_I_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[AZ].gainI = float_converter.float_val;
+                        //pos_pid_loop_float[AZ].gainI = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_AZ_I_RECVD;
                     }
                     break;
@@ -1028,7 +1028,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_AZ_D_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[AZ].gainD = float_converter.float_val;
+                        //pos_pid_loop_float[AZ].gainD = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_AZ_D_RECVD;
                     }
                     break;
@@ -1039,8 +1039,8 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_AZ_WINDUP_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[AZ].integralMax = float_converter.float_val;
-                        pos_pid_loop_float[AZ].integralMin = -float_converter.float_val;
+                        //pos_pid_loop_float[AZ].integralMax = float_converter.float_val;
+                        //pos_pid_loop_float[AZ].integralMin = -float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_AZ_WINDUP_RECVD;
                     }
                     break;
@@ -1051,7 +1051,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_RL_P_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[ROLL].gainP = float_converter.float_val;
+                        //pos_pid_loop_float[ROLL].gainP = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_RL_P_RECVD;
                     }
                     break;
@@ -1062,7 +1062,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_RL_I_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[ROLL].gainI = float_converter.float_val;
+                        //pos_pid_loop_float[ROLL].gainI = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_RL_I_RECVD;
                     }
                     break;
@@ -1073,7 +1073,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_RL_D_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[ROLL].gainD = float_converter.float_val;
+                        //pos_pid_loop_float[ROLL].gainD = float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_RL_D_RECVD;
                     }
                     break;
@@ -1084,8 +1084,8 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_RL_WINDUP_RECVD)) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        pos_pid_loop_float[ROLL].integralMax = float_converter.float_val;
-                        pos_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
+                        //pos_pid_loop_float[ROLL].integralMax = float_converter.float_val;
+                        //pos_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_RL_WINDUP_RECVD;
                     }
                     break;
