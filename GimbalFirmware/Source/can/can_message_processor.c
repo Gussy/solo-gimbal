@@ -227,11 +227,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                             Uint8 calibration_progress = msg.extended_param[0] & 0x00FF;
                             GIMBAL_AXIS_CALIBRATION_STATUS calibration_status = (GIMBAL_AXIS_CALIBRATION_STATUS)(msg.extended_param[1] & 0x00FF);
                             send_mavlink_calibration_progress(calibration_progress, GIMBAL_AXIS_ROLL, calibration_status);
-                            /*
-                            char debug_msg[50];
-                            snprintf(debug_msg, 50, "Sent cal status %d", calibration_status);
-                            send_mavlink_statustext(debug_msg, MAV_SEVERITY_CRITICAL);
-                            */
                         }
                         break;
                 }

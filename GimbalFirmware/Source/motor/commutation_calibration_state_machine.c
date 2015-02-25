@@ -62,15 +62,6 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         	// If we're here, we need to calibrate this axis, so send the status message
         	send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS);
 
-        	//TODO: Temp, for testing
-        	/*
-        	if (GetBoardHWID() == ROLL) {
-        	    send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_FAILED);
-        	    AxisFault(CAND_FAULT_CALIBRATING_POT, CAND_FAULT_TYPE_UNRECOVERABLE, cb_parms, md_parms, axis_parms);
-                break;
-        	}
-        	*/
-
             // Set up the ramp control macro for locking to the first electrical 0
             md_parms->park_xform_parms.Angle = 0;//cc_parms->ramp_cntl.TargetValue =
             cc_parms->ramp_cntl.SetpointValue = 0;
