@@ -328,6 +328,31 @@ void handle_param_set(mavlink_message_t* received_msg)
     }
 }
 
+void handle_param_read(mavlink_message_t* received_msg)
+{
+    mavlink_param_request_read_t decoded_msg;
+    mavlink_msg_param_request_read_decode(received_msg, &decoded_msg);
+
+    // First check if the parameter was requested by index
+    if ((decoded_msg.param_index >= 0) && (decoded_msg.param_index < MAVLINK_GIMBAL_PARAM_MAX)) {
+        send_gimbal_param(decoded_msg.param_index);
+    } else {
+        // Search the onboard param list for the param id being requested
+        int param_found = -1;
+        int i;
+        for(i = 0; i < MAVLINK_GIMBAL_PARAM_MAX; i++) {
+            if (strncmp(decoded_msg.param_id, gimbal_params[i].param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN) == 0) {
+                param_found = i;
+                break;
+            }
+        }
+
+        if (param_found >= 0) {
+            send_gimbal_param(param_found);
+        }
+    }
+}
+
 void send_gimbal_param(int param_num)
 {
     GimbalMavlinkParameter* param = &(gimbal_params[param_num]);

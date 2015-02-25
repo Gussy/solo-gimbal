@@ -97,7 +97,14 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         		power_down_motor();
         		// enable watchdog and wait until it goes off
         		WDogEnable();
-        		while (1);
+
+                EALLOW;
+                // Cause a device reset by writing incorrect values into WDCHK
+                SysCtrlRegs.WDCR = 0x0010;
+                EDIS;
+
+                // This should never be reached.
+                while(1);
         	}
         	break;
 
@@ -205,6 +212,22 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         snprintf(debug_msg, 50, "Max Time: %d, Missed Intr: %d", max_loop_time, missed_interrupts);
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                     }
+                    break;
+
+                    case CAND_EPID_CALIBRATION_PROGRESS_EL:
+                        if (msg.extended_param_length == 2) {
+                            Uint8 calibration_progress = msg.extended_param[0] & 0x00FF;
+                            GIMBAL_AXIS_CALIBRATION_STATUS calibration_status = (GIMBAL_AXIS_CALIBRATION_STATUS)(msg.extended_param[1] & 0x00FF);
+                            send_mavlink_calibration_progress(calibration_progress, GIMBAL_AXIS_PITCH, calibration_status);
+                        }
+                        break;
+
+                    case CAND_EPID_CALIBRATION_PROGRESS_RL:
+                        if (msg.extended_param_length == 2) {
+                            Uint8 calibration_progress = msg.extended_param[0] & 0x00FF;
+                            GIMBAL_AXIS_CALIBRATION_STATUS calibration_status = (GIMBAL_AXIS_CALIBRATION_STATUS)(msg.extended_param[1] & 0x00FF);
+                            send_mavlink_calibration_progress(calibration_progress, GIMBAL_AXIS_ROLL, calibration_status);
+                        }
                         break;
                 }
             } else {

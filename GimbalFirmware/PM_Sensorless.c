@@ -45,6 +45,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define USE_SYS_ANALYZER
 
@@ -341,9 +342,6 @@ Uint8 balance_step_duration_flag = FALSE;
 
 ParamSet param_set[CAND_PID_LAST];
 
-// Software version descriptor (for version reporting)
-DavinciVersion our_version;
-
 void init_param_set(void)
 {
 	int i;
@@ -554,34 +552,20 @@ void main(void)
 	TempOffset = getTempOffset();
 	TempSlope = getTempSlope();
 
-	InitInterrupts();
-
-	// Parse version
-	if (GitTag && *GitTag == 'v') {
-		int in[3];
-		char str[100];
-		strncpy( str, GitTag, 50);
-		sscanf( str, "v%d.%d.%d", &in[0], &in[1], &in[2]);
-		our_version.major = in[0];
-		our_version.minor = in[1];
-		our_version.rev = in[2];
-	} else {
-		our_version.major = our_version.minor = our_version.rev = 0xff;
-	}
-
-	if (GitVersionString && *GitVersionString == 'v') {
-		int len = strlen(GitVersionString);
-		if( strcmp((GitVersionString+len-5),"dirty") == 0 ) {
-			our_version.dirty = 1;
-		} else {
-			our_version.dirty = 0;
-		}
-	}
-	our_version.branch = *GitBranch;
-
 	if (board_hw_id == AZ) {
+	    // Parse version
+        Uint32 version_number = 0x00000000;
+        version_number |= (((Uint32)atoi(GitVersionMajor) << 24) & 0xFF000000);
+        version_number |= (((Uint32)atoi(GitVersionMinor) << 16) & 0x00FF0000);
+        version_number |= (((Uint32)atoi(GitVersionRevision) << 8) & 0x0000FF00);
+        version_number |= ((Uint32)atoi(GitCommit) & 0x0000007F);
+        version_number |= strstr(GitVersionString, "dirty") ? (0x1 << 7) : 0x00;
+        flash_params.sys_swver = version_number;
+
 	    axis_parms.enable_flag = TRUE;
 	}
+
+    InitInterrupts();
 
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop

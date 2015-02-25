@@ -72,6 +72,7 @@ void ECanInit( void )        // Initialize eCAN-A module
     // HECC mode also enables time-stamping feature
     ECanaShadow.CANMC.all = ECanaRegs.CANMC.all;
     ECanaShadow.CANMC.bit.SCB = 1;
+    ECanaShadow.CANMC.bit.SUSP = 1; // Set peripheral to free run while processor is halted at a breakpoint
     ECanaRegs.CANMC.all = ECanaShadow.CANMC.all;
 
 	// Disable Mailboxes
@@ -79,6 +80,9 @@ void ECanInit( void )        // Initialize eCAN-A module
 
 	ECanaRegs.CANMD.all  = 0xffffffff<<CAN_TX_MBOX_CNT;	///< Boxes 0-15 are Tx, 16-31 Rx, (1 = rx)
 	//ECanaRegs.CANMD.all  = 0xFFFF0000;						///< Boxes 0-15 are Tx, 16-31 Rx, (1 = rx)
+
+	// Configure overwrite protection for all rx mailboxes
+	ECanaRegs.CANOPC.all = 0xFFFFFFFF << CAN_TX_MBOX_CNT; // 1 = overwrite protection
 
 	// Setup Rx Mailboxes
 	for( i=16; i<32; i++ ){
@@ -178,28 +182,28 @@ static int ECanTx( struct MBOX* outbox )
 	static uint8_t can_tx_mbox = 0;
 	volatile struct MBOX *mptr;
 
-	//get next output box
-	mptr = &ECanaMboxes.MBOX0+can_tx_mbox;
+    //get next output box
+    mptr = &ECanaMboxes.MBOX0+can_tx_mbox;
 
-	//ECanaRegs.CANME.all &= ~((0x00000001ul)<<can_tx_mbox) //didnt work, mmk, then i'll make a shadow?
-	unsigned long temp = ECanaRegs.CANME.all;
-	temp  &= ~((0x00000001ul)<<can_tx_mbox);
+    //ECanaRegs.CANME.all &= ~((0x00000001ul)<<can_tx_mbox) //didnt work, mmk, then i'll make a shadow?
+    unsigned long temp = ECanaRegs.CANME.all;
+    temp  &= ~((0x00000001ul)<<can_tx_mbox);
 
-	ECanaRegs.CANME.all = temp;
+    ECanaRegs.CANME.all = temp;
 
-	mptr->MDH = outbox->MDH;
-	mptr->MDL = outbox->MDL;
-	mptr->MSGCTRL = outbox->MSGCTRL;
-	mptr->MSGID = outbox->MSGID;
+    mptr->MDH = outbox->MDH;
+    mptr->MDL = outbox->MDL;
+    mptr->MSGCTRL = outbox->MSGCTRL;
+    mptr->MSGID = outbox->MSGID;
 
-	temp |= (1ul<<can_tx_mbox);
-	ECanaRegs.CANME.all = temp;
-	ECanaRegs.CANTRS.all = (1ul<<can_tx_mbox);	// "writing 0 has no effect", previously queued boxes will stay queued
-	ECanaRegs.CANTA.all = (1ul<<can_tx_mbox);		// "writing 0 has no effect", clears pending interrupt, open for our tx
+    temp |= (1ul<<can_tx_mbox);
+    ECanaRegs.CANME.all = temp;
+    ECanaRegs.CANTRS.all = (1ul<<can_tx_mbox);	// "writing 0 has no effect", previously queued boxes will stay queued
+    ECanaRegs.CANTA.all = (1ul<<can_tx_mbox);		// "writing 0 has no effect", clears pending interrupt, open for our tx
 
-	if (++can_tx_mbox >= CAN_TX_MBOX_CNT) {
-		can_tx_mbox = 0;
-	}
+    if (++can_tx_mbox >= CAN_TX_MBOX_CNT) {
+        can_tx_mbox = 0;
+    }
 
 	return 0;
 }

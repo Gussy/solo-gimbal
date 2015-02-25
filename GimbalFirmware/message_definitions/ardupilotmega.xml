@@ -118,19 +118,49 @@
     <!-- Gimbal payload enumerations -->
 	<enum name="MAV_MODE_GIMBAL">
 		<entry name="MAV_MODE_GIMBAL_UNINITIALIZED" value="0">
-			<description>Gimbal is powered on but has not received an initialize command from the host vehicle</description>
+			<description>Gimbal is powered on but has not started initializing yet</description>
 		</entry>
-		<entry name="MAV_MODE_GIMBAL_HOMING" value="1">
-			<description>Gimbal is currently executing its homing routine</description>
+		<entry name="MAV_MODE_GIMBAL_CALIBRATING_PITCH" value="1">
+			<description>Gimbal is currently running calibration on the pitch axis</description>
 		</entry>
-		<entry name="MAV_MODE_GIMBAL_STABILIZED_RATE" value="2">
-			<description>Gimbal is actively stabilizing, taking rate commands</description>
+		<entry name="MAV_MODE_GIMBAL_CALIBRATING_ROLL" value="2">
+			<description>Gimbal is currently running calibration on the roll axis</description>
 		</entry>
-		<entry name="MAV_MODE_GIMBAL_STABILIZED_ANGLE" value="3">
-			<description>Gimbal is actively stabilizing, taking angle target commands</description>
+		<entry name="MAV_MODE_GIMBAL_CALIBRATING_YAW" value="3">
+			<description>Gimbal is currently running calibration on the yaw axis</description>
 		</entry>
-		<entry name="MAV_MODE_GIMBAL_FAULT" value="4">
-			<description>Gimbal has experienced a fault, and is currently in limp mode</description>
+		<entry name="MAV_MODE_GIMBAL_INITIALIZED" value="4">
+			<description>Gimbal has finished calibrating and initializing, but is relaxed pending reception of first rate command from copter</description>
+		</entry>
+		<entry name="MAV_MODE_GIMBAL_ACTIVE" value="5">
+			<description>Gimbal is actively stabilizing</description>
+		</entry>
+		<entry name="MAV_MODE_GIMBAL_RATE_CMD_TIMEOUT" value="6">
+			<description>Gimbal is relaxed because it missed more than 10 expected rate command messages in a row.  Gimbal will move back to active mode when it receives a new rate command</description>
+		</entry>
+	</enum>
+	
+	<enum name="GIMBAL_AXIS">
+		<entry name="GIMBAL_AXIS_YAW" value="0">
+			<description>Gimbal yaw axis</description>
+		</entry>
+		<entry name="GIMBAL_AXIS_PITCH" value="1">
+			<description>Gimbal pitch axis</description>
+		</entry>
+		<entry name="GIMBAL_AXIS_ROLL" value="2">
+			<description>Gimbal roll axis</description>
+		</entry> 
+	</enum>
+	
+	<enum name="GIMBAL_AXIS_CALIBRATION_STATUS">
+		<entry name="GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS" value="0">
+			<description>Axis calibration is in progress</description>
+		</entry>
+		<entry name="GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED" value="1">
+			<description>Axis calibration succeeded</description>
+		</entry>
+		<entry name="GIMBAL_AXIS_CALIBRATION_STATUS_FAILED" value="2">
+			<description>Axis calibration failed</description>
 		</entry>
 	</enum>
 	
@@ -599,7 +629,24 @@
         <description>Request the autopilot version from the system/component.</description>
         <field type="uint8_t" name="target_system">System ID</field>
         <field type="uint8_t" name="target_component">Component ID</field>
-    </message>
+    </message>	
+	
+	<message name="RESET_GIMBAL" id="190">
+		<description>
+			Causes the gimbal to reset and boot as if it was just powered on
+		</description>
+		<field name="target_system" type="uint8_t">System ID</field>
+		<field name="target_component" type="uint8_t">Component ID</field>
+	</message>
     
+	<message name="GIMBAL_AXIS_CALIBRATION_PROGRESS" id="191">
+		<description>
+			Reports progress and success or failure of gimbal axis calibration procedure
+		</description>
+		<field name="calibration_axis" type="uint8_t" enum="GIMBAL_AXIS">Which gimbal axis we're reporting calibration progress for</field>
+		<field name="calibration_progress" type="uint8_t">The current calibration progress for this axis, 0x64=100%</field>
+		<field name="calibration_status" type="uint8_t" enum="GIMBAL_AXIS_CALIBRATION_STATUS">The status of the running calibration</field>
+	</message>
+
      </messages>
 </mavlink>

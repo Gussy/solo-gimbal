@@ -10,6 +10,11 @@
 #include "hardware/device_init.h"
 #include "parameters/flash_params.h"
 #include "helpers/fault_handling.h"
+#include "mavlink_interface/gimbal_mavlink.h"
+#include "can/cb.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
+
+static void send_calibration_progress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status);
 
 static void calc_slope_intercept(CommutationCalibrationParms* cc_parms, int start, int end, float *slope, float *intercept)
 {
@@ -34,6 +39,8 @@ static void calc_slope_intercept(CommutationCalibrationParms* cc_parms, int star
 
 _iq IdRefLockCommutationCalibration = _IQ(0.18); // 0.5A if 2.75A max scale is correct
 
+Uint8 calibration_progress = 0;
+
 void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* encoder_parms, AxisParms* axis_parms, CommutationCalibrationParms* cc_parms, ControlBoardParms* cb_parms)
 {
 	static float last_position;
@@ -46,8 +53,15 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         	// don't calibrate if we got slope set already
         	if (encoder_parms->calibration_slope != 0) {
     		    md_parms->motor_drive_state = STATE_HOMING;
+
+    		    // If we already have calibration parameters, immediately send complete status
+    		    send_calibration_progress(100, GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED);
     		    break;
         	}
+
+        	// If we're here, we need to calibrate this axis, so send the status message
+        	send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS);
+
             // Set up the ramp control macro for locking to the first electrical 0
             md_parms->park_xform_parms.Angle = 0;//cc_parms->ramp_cntl.TargetValue =
             cc_parms->ramp_cntl.SetpointValue = 0;
@@ -83,7 +97,14 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
             if (cc_parms->ramp_cntl.EqualFlag == 0) {
             	break;
             }
+
             if (cc_parms->settling_timer++ > (((Uint32)ISR_FREQUENCY) * ((Uint32)COMMUTATION_CALIBRATION_HARDSTOP_SETTLING_TIME_MS))) {
+                calibration_progress += 1;
+                if (calibration_progress > 45) {
+                    calibration_progress = 45;
+                }
+                send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS);
+
                 cc_parms->settling_timer = 0;
                 if (fabs(new_position - encoder_parms->mech_theta) > 0.0005) {
                 	new_position = encoder_parms->mech_theta;
@@ -100,6 +121,9 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 		                if (cc_parms->ramp_cntl.TargetValue > 1.0) cc_parms->ramp_cntl.TargetValue = 1.0;
 		                cc_parms->current_iteration = 0;
 						hardstop = 0;
+
+						calibration_progress = 45;
+						send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS);
 	                    break;
                 	}
                 } else {
@@ -112,6 +136,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 cc_parms->ramp_cntl.EqualFlag = 0;
             }
         	break;
+
         case COMMUTATION_CALIBRATION_STATE_MOVE_UP_FROM_HARDSTOP:
             RC_MACRO(cc_parms->ramp_cntl)
             md_parms->pid_id.term.Ref = IdRefLockCommutationCalibration;
@@ -123,6 +148,12 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
             	break;
             }
             if (cc_parms->settling_timer++ > (((Uint32)ISR_FREQUENCY) * ((Uint32)COMMUTATION_CALIBRATION_SETTLING_TIME_MS))) {
+                calibration_progress += 1;
+                if (calibration_progress > 90) {
+                    calibration_progress = 90;
+                }
+                send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS);
+
                 cc_parms->settling_timer = 0;
                 if (fabs(new_position - encoder_parms->mech_theta) > 0.0005) {
                 	new_position = encoder_parms->mech_theta;
@@ -136,7 +167,11 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 		if (cc_parms->current_iteration > 16) {
                 			calc_slope_intercept(cc_parms,2,cc_parms->current_iteration-3,&AxisCalibrationSlopes[GetBoardHWID()],&AxisCalibrationIntercepts[GetBoardHWID()]);
     						cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_TEST;
+
+    						calibration_progress = 90;
+    						send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS);
                 		} else {
+                		    send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_FAILED);
                 			AxisFault(CAND_FAULT_CALIBRATING_POT, CAND_FAULT_TYPE_UNRECOVERABLE, cb_parms, md_parms, axis_parms);
                 		}
 		                cc_parms->current_iteration = 0;
@@ -303,6 +338,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
             cc_parms->ramp_cntl.SetpointValue = cc_parms->ramp_cntl.TargetValue;
             cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_COMPLETE;
         	break;
+
         case COMMUTATION_CALIBRATION_STATE_TEST_MOVE:
             RC_MACRO(cc_parms->ramp_cntl)
             md_parms->pid_id.term.Ref = IdRefLockCommutationCalibration;
@@ -315,8 +351,10 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_TEST_CHECK_POS;
             }
         	break;
+
         case COMMUTATION_CALIBRATION_STATE_TEST_CHECK_POS:
         	break;
+
         case COMMUTATION_CALIBRATION_STATE_COMPLETE:
 		    encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
 		    encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
@@ -332,7 +370,19 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         		flash_params.AxisCalibrationIntercepts[AZ] = encoder_parms->calibration_intercept;
         		write_flash();
 		    }
+
+		    calibration_progress = 100;
+		    send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED);
 		    break;
 
+    }
+}
+
+static void send_calibration_progress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status)
+{
+    if (GetBoardHWID() == AZ) {
+        send_mavlink_calibration_progress(progress, GIMBAL_AXIS_YAW, calibration_status);
+    } else {
+        CANSendCalibrationProgress(progress, calibration_status);
     }
 }
