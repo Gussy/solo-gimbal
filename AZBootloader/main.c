@@ -62,6 +62,10 @@ Uint16 endRam;
 
 #define BOOTLOADER_KEY_VALUE_8BIT	0x08AA
 
+#define BOOTLOADER_VERSION_MAJOR	0x01
+#define BOOTLOADER_VERSION_MINOR	0x00
+#define BOOTLOADER_VERSION			((BOOTLOADER_VERSION_MAJOR << 8) | BOOTLOADER_VERSION_MINOR)
+
 void CAN_Init()
 {
 
@@ -550,7 +554,7 @@ Uint32 MAVLINK_Flash()
 			MAVLINK_TYPE_UINT16_T,
 			0 /* size */,
 			seq /* width */,
-			0 /*uint16_t height*/,
+			BOOTLOADER_VERSION /*uint16_t height*/,
 			0 /*uint16_t packets*/,
 			ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/,
 			0 /*uint8_t jpg_quality*/
