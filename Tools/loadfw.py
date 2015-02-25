@@ -15,8 +15,6 @@ MAVLINK_COMPONENT_ID = 230
 
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
-# TODO: Add these as arguments instead of being hardcoded
-serialport = "COM7"
 baudrate = 230400
 
 def wait_handshake(m):
