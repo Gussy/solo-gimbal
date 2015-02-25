@@ -109,6 +109,12 @@ def main():
             sequence_number = msg.width
             payload_length = msg.payload
 
+            # Print the bootloader version on the first data handshake
+            if sequence_number == 0:
+                version_major = (msg.height >> 8) & 0xff
+                version_minor = msg.height & 0xff
+                sys.stdout.write(' (BL Ver %i.%i) ' % (version_major, version_minor))
+
             # Calculate the window of data to send
             start_idx = sequence_number*payload_length
             end_idx = (sequence_number+1)*payload_length
