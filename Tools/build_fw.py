@@ -22,12 +22,18 @@ firmware_extension = "ax"
 # Parse commandline arguments
 parser = argparse.ArgumentParser(description="Firmware generator for the Axon Gimbal.")
 parser.add_argument("--board_revision", required=True, action="store", help="set the board revision required")
+parser.add_argument("--release", help="name of the release")
 parser.add_argument("--image", required=True, action="store", help="the firmware image")
 parser.add_argument("--outdir", help="image output directory")
 args = parser.parse_args()
 
 # Object to hold the packged info
 desc = {}
+
+# Empty release name
+desc['release'] = ""
+if args.release != None:
+	desc['release']	= str(args.release)
 
 # Get the current git info
 cmd = " ".join(["git", "describe", "--tags", "--dirty"])
