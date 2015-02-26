@@ -13,6 +13,8 @@
 #include "mavlink_interface/gimbal_mavlink.h"
 #include "gopro/gopro_interface.h"
 #include "control/gyro_kinematics_correction.h"
+#include "motor/motor_drive_state_machine.h"
+#include "parameters/load_axis_parms_state_machine.h"
 
 typedef enum {
 	MAVLINK_STATE_PARSE_INPUT, MAVLINK_STATE_SEND_PARAM_LIST
@@ -58,7 +60,7 @@ typedef struct {
 #define MAVLINK_HEARTBEAT_PERIOD 6
 
 void init_mavlink();
-void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info);
+void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_gimbal_feedback();
 void send_mavlink_debug_data(DebugData* debug_data);
@@ -66,6 +68,7 @@ void send_mavlink_gopro_response(GPCmdResponse* response);
 void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code, CAND_FaultType fault_type);
 void send_mavlink_statustext(char* message, MAV_SEVERITY severity);
 void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status);
+void send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS result);
 void send_mavlink_message(mavlink_message_t* msg);
 
 void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);

@@ -153,6 +153,8 @@ EncoderParms encoder_parms = {
     0,              // Virtual counts offset
     0,              // Virtual counts accumulator
     0,              // Virtual counts accumulated
+    0,              // Home offset calibration accumulator
+    0,              // Home offset calibration samples accumulated
     {0},            // Encoder median history
     0.0,            // Mechanical theta
     0.0,            // Corrected mechanical theta
@@ -591,12 +593,12 @@ void main(void)
 
 		// Process and respond to any waiting CAN messages
 		if (EnableCAN) {
-		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, param_set, &load_ap_state_info);
+		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, &encoder_parms, param_set, &load_ap_state_info);
 		}
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
 		if (board_hw_id == AZ) {
-		    mavlink_state_machine(&mavlink_gimbal_info);
+		    mavlink_state_machine(&mavlink_gimbal_info, &motor_drive_parms, &encoder_parms, &load_ap_state_info);
 		}
 
 		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;

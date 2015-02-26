@@ -30,7 +30,7 @@ void WDogEnable(void)
     EDIS;
 }
 
-void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info)
+void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, EncoderParms* encoder_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info)
 {
     static int fault_cnt = 0;
     static int cmd_cnt = 0;
@@ -114,6 +114,15 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
         case CAND_CMD_GOPRO_OFF:
             gp_request_power_off();
+            break;
+
+        case CAND_CMD_SET_HOME_OFFSETS:
+            // Zero out the home offsets accumulator and sample counter
+            encoder_parms->home_offset_calibration_accumulator = 0;
+            encoder_parms->home_offset_calibration_samples_accumulated = 0;
+
+            // Transition to the calibrate home offsets state, which will do the actual home offset calibration
+            md_parms->motor_drive_state = STATE_CALIBRATE_HOME_OFFSETS;
             break;
 
         default:
@@ -812,11 +821,31 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     break;
 
                 case CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET:
-                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
-                    // of getting multiple responses for the same parameter)
-                    if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD)) {
-                        AxisHomePositions[GetBoardHWID()] = (float)(msg.param_response[msg.param_response_cnt - 1]);
-                        load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD;
+
+                    if (GetBoardHWID() == AZ) {
+                        // If we're AZ, we're receiving this parameter as part of a home-offset calibration
+                        if ((load_ap_state_info->init_param_recvd_flags_2 & ALL_NEW_HOME_OFFSETS_RECVD) != ALL_NEW_HOME_OFFSETS_RECVD) {
+                            switch (msg.sender_id) {
+                                case CAND_ID_EL:
+                                    flash_params.AxisHomePositions[EL] = (int16)msg.param_response[msg.param_response_cnt - 1];
+                                    load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_NEW_EL_HOME_OFFSET_RECVD;
+                                    break;
+
+                                case CAND_ID_ROLL:
+                                    flash_params.AxisHomePositions[ROLL] = (int16)msg.param_response[msg.param_response_cnt - 1];
+                                    load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_NEW_RL_HOME_OFFSET_RECVD;
+                                    break;
+                            }
+                        }
+                    } else {
+                        // If we're not AZ, we're receiving this parameter as part of the initial boot-time parameters load
+
+                        // Only load the parameter once (because we request parameters until we get them, there's a possibility
+                        // of getting multiple responses for the same parameter)
+                        if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD)) {
+                            AxisHomePositions[GetBoardHWID()] = (float)(msg.param_response[msg.param_response_cnt - 1]);
+                            load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD;
+                        }
                     }
                     break;
 

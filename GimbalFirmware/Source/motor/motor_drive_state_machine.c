@@ -60,20 +60,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         LoadAxisParmsStateInfo* load_ap_state_info)
 {
     switch (md_parms->motor_drive_state) {
-        case STATE_PRE_INIT:
-            // Set park transformation angle to 0
-            md_parms->park_xform_parms.Angle = 0;
-
-            // Drive id and iq to 0 (not driving the motor)
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = 0;
-
-            md_parms->pre_init_timer++;
-            if (md_parms->pre_init_timer > (((Uint32)ISR_FREQUENCY) * ((Uint32)PRE_INIT_TIME_MS))) {
-                md_parms->motor_drive_state = STATE_INIT;
-            }
-            break;
-
         case STATE_INIT:
             md_parms->current_cal_timer = 0;
 
@@ -334,6 +320,57 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // If new current command from CAN bus get it.
             if (*param_set[CAND_PID_TORQUE].sema) {
                 update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms, param_set);
+            }
+            break;
+
+        case STATE_CALIBRATE_HOME_OFFSETS:
+            // Set park transformation angle to 0
+            md_parms->park_xform_parms.Angle = 0;
+
+            // Request 0 current on both id and iq
+            md_parms->pid_id.term.Ref = 0;
+            md_parms->pid_iq.term.Ref = 0;
+
+            // Accumulate virtual counts without the offset applied to measure a new offset
+            encoder_parms->home_offset_calibration_accumulator += (int32)(encoder_parms->mech_theta * ((float)ENCODER_COUNTS_PER_REV));
+            encoder_parms->home_offset_calibration_samples_accumulated++;
+            if (encoder_parms->home_offset_calibration_samples_accumulated >= HOME_OFFSET_CALIBRATION_NUM_SAMPLES) {
+                // Update our local home offset with the newly calculated value
+                encoder_parms->virtual_counts_offset = encoder_parms->home_offset_calibration_accumulator / encoder_parms->home_offset_calibration_samples_accumulated;
+
+                if ((GetBoardHWID() == EL) || (GetBoardHWID() == ROLL)) {
+                    // If we're the elevation or roll board, we need to send our updated value to the azimuth board so it can be committed to flash
+                    cand_tx_response(CAND_ID_AZ, CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET, encoder_parms->virtual_counts_offset);
+                    // We're done now, so we can go back to the disabled state
+                    md_parms->motor_drive_state = STATE_DISABLED;
+                } else {
+                    // If we're the azimuth board, we can update the flash parameters directly
+                    flash_params.AxisHomePositions[AZ] = encoder_parms->virtual_counts_offset;
+
+                    // We also need to wait for the other two axes to send us their new home offsets before we can commit all of the new parameters to flash
+                    md_parms->motor_drive_state = STATE_WAIT_FOR_OTHER_AXIS_HOME_OFFSETS;
+                }
+            }
+            break;
+
+        case STATE_WAIT_FOR_OTHER_AXIS_HOME_OFFSETS:
+            // Set park transformation angle to 0
+            md_parms->park_xform_parms.Angle = 0;
+
+            // Request 0 current on both id and iq
+            md_parms->pid_id.term.Ref = 0;
+            md_parms->pid_iq.term.Ref = 0;
+
+            if ((load_ap_state_info->init_param_recvd_flags_2 & ALL_NEW_HOME_OFFSETS_RECVD) == ALL_NEW_HOME_OFFSETS_RECVD) {
+                // If we've received the new home offsets from the other boards (and if we're in this state, we know we've calculated our own),
+                // commit the newly calculated offsets to flash
+                write_flash();
+
+                // Send a done message over MAVLink
+                send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED);
+
+                // Return to the disabled state
+                md_parms->motor_drive_state = STATE_DISABLED;
             }
             break;
 

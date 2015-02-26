@@ -642,6 +642,21 @@
 		<field name="target_system" type="uint8_t">System ID</field>
 		<field name="target_component" type="uint8_t">Component ID</field>
 	</message>
+	
+	<message name="SET_HOME_OFFSETS" id="191">
+		<description>
+			Instructs the gimbal to set its current position as its new home position.  Will primarily be used for factory calibration
+		</description>
+		<field name="target_system" type="uint8_t">System ID</field>
+		<field name="target_component" type="uint8_t">Component ID</field>
+	</message>
+	
+	<message name="HOME_OFFSET_CALIBRATION_RESULT" id="192">
+		<description>
+			Sent by the gimbal after it receives a SET_HOME_OFFSETS message to indicate the result of the home offset calibration
+		</description>
+		<field name="calibration_result" type="uint8_t" enum="GIMBAL_AXIS_CALIBRATION_STATUS">The result of the home offset calibration</field>
+	</message>
 
      </messages>
 </mavlink>

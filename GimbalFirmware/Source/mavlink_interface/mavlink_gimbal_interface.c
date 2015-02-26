@@ -12,12 +12,14 @@
 #include "can/cand_BitFields.h"
 #include "hardware/uart.h"
 #include "parameters/mavlink_parameter_interface.h"
+#include "parameters/load_axis_parms_state_machine.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
+#include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
 
 #include <stdio.h>
 
-static void process_mavlink_input();
+static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void send_mavlink_request_stream();
 static void handle_attitude(mavlink_message_t* received_msg);
 static void handle_mount_control(mavlink_message_t* received_msg);
@@ -27,6 +29,7 @@ static void handle_gopro_command(mavlink_message_t* received_msg);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal(mavlink_message_t* received_msg);
 static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
+static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
@@ -65,10 +68,10 @@ DebugData attitude_debug_data = {
 	0
 };
 
-void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info) {
+void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
 	switch (mavlink_info->mavlink_processing_state) {
 	case MAVLINK_STATE_PARSE_INPUT:
-		process_mavlink_input(mavlink_info);
+		process_mavlink_input(mavlink_info, md_parms, encoder_parms, load_ap_state_info);
 		break;
 
 	case MAVLINK_STATE_SEND_PARAM_LIST:
@@ -164,7 +167,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 	}
 }
 
-static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info) {
+static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
 	static mavlink_message_t received_msg;
 	mavlink_status_t parse_status;
 
@@ -222,6 +225,10 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info) {
 
 			case MAVLINK_MSG_ID_RESET_GIMBAL:
 			    handle_reset_gimbal(&received_msg);
+			    break;
+
+			case MAVLINK_MSG_ID_SET_HOME_OFFSETS:
+			    handle_set_home_offsets(md_parms, encoder_parms, load_ap_state_info);
 			    break;
 
 			default: {
@@ -443,6 +450,22 @@ static void handle_reset_gimbal(mavlink_message_t* received_msg)
     }
 }
 
+static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info)
+{
+    // Reset the flags used to indicate when the other axes have recalibrated their own home offsets
+    load_ap_state_info->init_param_recvd_flags_2 &= ~ALL_NEW_HOME_OFFSETS_RECVD;
+
+    // Zero out our own home offset accumulator and sample counter
+    encoder_parms->home_offset_calibration_accumulator = 0;
+    encoder_parms->home_offset_calibration_samples_accumulated = 0;
+
+    // Command the other axes to start calibrating their home offsets
+    cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_SET_HOME_OFFSETS);
+
+    // Start calibrating our own home offset
+    md_parms->motor_drive_state = STATE_CALIBRATE_HOME_OFFSETS;
+}
+
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
     static mavlink_message_t heartbeat_msg;
     mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID,
@@ -595,6 +618,17 @@ void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis, GIMBAL_
             calibration_status);
 
     send_mavlink_message(&calibration_progress_msg);
+}
+
+void send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS result)
+{
+    static mavlink_message_t home_offset_cal_result_msg;
+    mavlink_msg_home_offset_calibration_result_pack(MAVLINK_GIMBAL_SYSID,
+            MAV_COMP_ID_GIMBAL,
+            &home_offset_cal_result_msg,
+            result);
+
+    send_mavlink_message(&home_offset_cal_result_msg);
 }
 
 void send_mavlink_message(mavlink_message_t* msg) {
