@@ -496,6 +496,8 @@ static void handle_set_factory_params(mavlink_message_t* msg)
         flash_params.assy_time = assy_time;
         flash_params.ser_num = decoded_msg.serial_number;
         write_flash();
+        // Indicate that we've loaded the new parameters
+        send_mavlink_factory_parameters_loaded();
     }
 }
 
@@ -663,6 +665,16 @@ void send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS 
             result);
 
     send_mavlink_message(&home_offset_cal_result_msg);
+}
+
+void send_mavlink_factory_parameters_loaded()
+{
+    static mavlink_message_t factory_params_loaded_msg;
+    mavlink_msg_factory_parameters_loaded_pack(MAVLINK_GIMBAL_SYSID,
+            MAV_COMP_ID_GIMBAL,
+            &factory_params_loaded_msg,
+            0);
+    send_mavlink_message(&factory_params_loaded_msg);
 }
 
 void send_mavlink_message(mavlink_message_t* msg) {

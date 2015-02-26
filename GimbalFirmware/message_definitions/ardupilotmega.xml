@@ -685,7 +685,10 @@
 	</message>
 	
 	<message name="FACTORY_PARAMETERS_LOADED" id="195">
-		
+		<description>
+			Sent by the gimbal after the factory parameters are successfully loaded, to inform the factory software that the load is complete
+		</description>
+		<field name="dummy" type="uint8_t">Dummy field because mavgen doesn't allow messages with no fields</field>
 	</message>
 
      </messages>
