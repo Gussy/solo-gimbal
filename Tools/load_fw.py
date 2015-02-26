@@ -7,6 +7,7 @@ Utility for loading firmware into the 3DR Gimbal.
 """
 
 import sys, signal, argparse
+import base64, json, zlib
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import common as mavlink
 
@@ -29,10 +30,12 @@ def wait_handshake(m):
             return msg
     return None
 
-def load_binary(filename):
-    '''Load binary image file into a byte array'''
-    with open(filename, "rb") as f:
-        return bytearray(f.read())
+def load_firmware(filename):
+    '''Load the image from the JSON firmware file into a byte array'''
+    with open(filename, "r") as f:
+        desc = json.load(f)
+
+        return bytearray(zlib.decompress(base64.b64decode(desc['image'])))
 
 def bytearray_to_wordarray(data):
     '''Converts an 8-bit byte array into a 16-bit word array'''
@@ -86,7 +89,7 @@ def main():
 
     # Load the binary image into a byte array
     print("Application binary: %s" % args.binary)
-    hexfile = load_binary(args.binary)
+    hexfile = load_firmware(args.binary)
     binary = append_checksum(hexfile)
 
     # Wait for a handshake from the gimbal which contains the payload length

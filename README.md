@@ -6,6 +6,9 @@ Download and install the following softwares:
 * [controlSUITE](http://www.ti.com/tool/controlsuite)
 * [Code Composer Studio](http://www.ti.com/tool/ccstudio)
 
+### Requirements
+* [Python](https://www.python.org/) must be installed and on the system PATH environment variable
+
 Import the project into CCS via ```File>Import>C/C++>CCS Projects```, and browse for the root source folder
 
 The active configuration should be FLASH. For that go to ```Project>Properties=>CCS General=>Manage Active Configurations``` select the FLASH option and click on ```Set Active```
@@ -71,7 +74,14 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 ## Using MAVLink Bootloader
 
 1. Build the ```GimbalFirmware``` project using Code Composer Studio.
-2. Run the Python ```Tools\loadfw.py``` script (eg. ```python Tools\loadfw.py --port="COM7" GimbalFirmware\F2806x_RAM\PM_Sensorless_F2806x.hex```).
+2. Run the Python ```Tools\load_fw.py``` script (eg. ```python Tools\load_fw.py --port="COM7" Releases\gimbal_firmware_0.8.0.ax```).
+
+## Creating a release
+1. Build the ```GimbalFirmware``` project using Code Composer Studio.
+2. Tag the release using git and [SemVer](http://semver.org/) (eg ```git tag v1.0.5```)
+3. Make a firmware release package using ```Tools\make_release.bat``` or ```Tools\make_release.sh``` (If the hardware revision has changed, update it in the ```Tools\make_release.*``` files)
+4. Commit the firmware release and push it to GitHub
+5. Use the GitHub release tool to publish a new release (using the latest file in ```Releases```)
 
 # LED Patterns
 
