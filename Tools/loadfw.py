@@ -15,8 +15,6 @@ MAVLINK_COMPONENT_ID = 230
 
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
-# TODO: Add these as arguments instead of being hardcoded
-serialport = "COM7"
 baudrate = 230400
 
 def wait_handshake(m):
@@ -93,6 +91,7 @@ def main():
 
     # Wait for a handshake from the gimbal which contains the payload length
     sys.stdout.write("Uploading firmware to gimbal ")
+    sys.stdout.flush()
     finished = False
 
     # Loop until we are finished, TODO: timeout
@@ -105,9 +104,17 @@ def main():
 
             # Handshake timed out
             sys.stdout.write('.')
+            sys.stdout.flush()
         else:
             sequence_number = msg.width
             payload_length = msg.payload
+
+            # Print the bootloader version on the first data handshake
+            if sequence_number == 0:
+                version_major = (msg.height >> 8) & 0xff
+                version_minor = msg.height & 0xff
+                sys.stdout.write(' (BL Ver %i.%i) ' % (version_major, version_minor))
+                sys.stdout.flush()
 
             # Calculate the window of data to send
             start_idx = sequence_number*payload_length
@@ -132,6 +139,7 @@ def main():
                 finished = True
 
             sys.stdout.write("!")
+            sys.stdout.flush()
 
     # Send an "end of transmission" signal to the target, to cause a target reset
     link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)

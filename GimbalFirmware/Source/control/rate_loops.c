@@ -19,9 +19,6 @@ static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
 
 Uint16 telemetry_decimation_count = 0;
 
-int position_loop_deadband_counts = 10;
-int position_loop_deadband_hysteresis = 100;
-
 void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFilterParms* pos_loop_stage_1, RunningAvgFilterParms* pos_loop_stage_2, BalanceProcedureParms* bal_proc_parms)
 {
     static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
@@ -110,205 +107,22 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         break;
 
         case ERROR_AZ_PASS:
-#if defined(ENABLE_BALANCE_PROCEDURE)
-            if (bal_proc_parms->balance_axis == AZ) {
-                cb_parms->axis_errors[AZ] = CorrectEncoderError(cb_parms->angle_targets[AZ] - cb_parms->encoder_readings[AZ]);
-                cb_parms->axis_errors[EL] = 0;
-                cb_parms->axis_errors[ROLL] = 0;
-            }
-#elif defined(ENABLE_RATE_LOOP_TUNING)
-            cb_parms->axis_errors[AZ] = cb_parms->tuning_rate_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
-#else
-#if (POSITION_LOOP_TYPE == 0)
-            cb_parms->axis_errors[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->unfiltered_position_errors[AZ] - cb_parms->corrected_gyro_readings[AZ]);
-#elif (POSITION_LOOP_TYPE == 1)
-            if (cb_parms->unfiltered_position_errors[AZ] > (position_loop_deadband_counts + cb_parms->position_deadband_hysteresis_positive[AZ])) {
-                // We're outside the deadband in the positive direction, so both rate and position errors are taken into account
-                cb_parms->axis_errors[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->filtered_position_errors[AZ]) - cb_parms->corrected_gyro_readings[AZ];
-
-                // Keep track of which side of the deadband we are for hysteresis
-                cb_parms->out_of_position_deadband_positive[AZ] = TRUE;
-                cb_parms->out_of_position_deadband_negative[AZ] = FALSE;
-
-                // Clear all hysteresis (since we're out of the deadband)
-                cb_parms->position_deadband_hysteresis_positive[AZ] = 0;
-                cb_parms->position_deadband_hysteresis_negative[AZ] = 0;
-            } else if (cb_parms->unfiltered_position_errors[AZ] < (-position_loop_deadband_counts + cb_parms->position_deadband_hysteresis_negative[AZ])) {
-                // We're outside the deadband in the negative direction, so both rate and position errors are taken into account
-                cb_parms->axis_errors[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->filtered_position_errors[AZ]) - cb_parms->corrected_gyro_readings[AZ];
-
-                // Keep track of which side of the deadband we are for hysteresis
-                cb_parms->out_of_position_deadband_positive[AZ] = FALSE;
-                cb_parms->out_of_position_deadband_negative[AZ] = TRUE;
-
-                // Clear all hysteresis (since we're out of the deadband)
-                cb_parms->position_deadband_hysteresis_positive[AZ] = 0;
-                cb_parms->position_deadband_hysteresis_negative[AZ] = 0;
-            } else {
-                // We're in the deadband
-
-                // If we've just entered the deadband for this axis, clear the position loop PID history (so it starts from scratch the next time we go out of the deadband)
-                if (cb_parms->out_of_position_deadband_positive[AZ] || cb_parms->out_of_position_deadband_negative[AZ]) {
-                    ClearPIDHistory_Float(PID_DATA_POSITION_LOOP, AZ);
-
-                    // Also flush the running average pipeline to the target position value
-                    flush_running_avg_pipeline(&(pos_loop_filter_parms_stage_2), AZ, cb_parms->angle_targets[AZ]);
-
-                    // Depending on which side of the deadband we just entered from, update the hysteresis offsets
-                    if (cb_parms->out_of_position_deadband_positive[AZ]) {
-                        cb_parms->position_deadband_hysteresis_positive[AZ] = position_loop_deadband_hysteresis;
-                        cb_parms->out_of_position_deadband_positive[AZ] = FALSE;
-                    } else {
-                        cb_parms->position_deadband_hysteresis_negative[AZ] = -position_loop_deadband_hysteresis;
-                        cb_parms->out_of_position_deadband_negative[AZ] = FALSE;
-                    }
-                }
-
-                // We're in the deadband, so only rate errors are taken into account
-                cb_parms->axis_errors[AZ] = -cb_parms->corrected_gyro_readings[AZ];
-            }
-#elif (POSITION_LOOP_TYPE == 2)
-            cb_parms->axis_errors[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->unfiltered_position_errors[AZ]) - cb_parms->corrected_gyro_readings[AZ];
-#else
             cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
-#endif
-#endif
+
             // Set up the next rate loop pass to be the el error computation pass
             cb_parms->rate_loop_pass = ERROR_EL_PASS;
             break;
 
         case ERROR_EL_PASS:
-#if defined(ENABLE_BALANCE_PROCEDURE)
-            if (bal_proc_parms->balance_axis == EL) {
-                cb_parms->axis_errors[EL] = CorrectEncoderError(cb_parms->angle_targets[EL] - cb_parms->encoder_readings[EL]);
-                cb_parms->axis_errors[AZ] = 0;
-                cb_parms->axis_errors[ROLL] = 0;
-            }
-#elif defined(ENABLE_RATE_LOOP_TUNING)
-            cb_parms->axis_errors[EL] = cb_parms->tuning_rate_inject[EL] - cb_parms->corrected_gyro_readings[EL];
-#else
-#if (POSITION_LOOP_TYPE == 0)
-            cb_parms->axis_errors[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->unfiltered_position_errors[EL] - cb_parms->corrected_gyro_readings[EL]);
-#elif (POSITION_LOOP_TYPE == 1)
-            if (cb_parms->unfiltered_position_errors[EL] > (position_loop_deadband_counts + cb_parms->position_deadband_hysteresis_positive[EL])) {
-                // We're outside the deadband in the positive direction, so both rate and position errors are taken into account
-                cb_parms->axis_errors[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->filtered_position_errors[EL]) - cb_parms->corrected_gyro_readings[EL];
-
-                // Keep track of which side of the deadband we are for hysteresis
-                cb_parms->out_of_position_deadband_positive[EL] = TRUE;
-                cb_parms->out_of_position_deadband_negative[EL] = FALSE;
-
-                // Clear all hysteresis (since we're out of the deadband)
-                cb_parms->position_deadband_hysteresis_positive[EL] = 0;
-                cb_parms->position_deadband_hysteresis_negative[EL] = 0;
-            } else if (cb_parms->unfiltered_position_errors[EL] < (-position_loop_deadband_counts + cb_parms->position_deadband_hysteresis_negative[EL])) {
-                // We're outside the deadband in the negative direction, so both rate and position errors are taken into account
-                cb_parms->axis_errors[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->filtered_position_errors[EL]) - cb_parms->corrected_gyro_readings[EL];
-
-                // Keep track of which side of the deadband we are for hysteresis
-                cb_parms->out_of_position_deadband_positive[EL] = FALSE;
-                cb_parms->out_of_position_deadband_negative[EL] = TRUE;
-
-                // Clear all hysteresis (since we're out of the deadband)
-                cb_parms->position_deadband_hysteresis_positive[EL] = 0;
-                cb_parms->position_deadband_hysteresis_negative[EL] = 0;
-            } else {
-                // We're in the deadband
-
-                // If we've just entered the deadband for this axis, clear the position loop PID history (so it starts from scratch the next time we go out of the deadband)
-                if (cb_parms->out_of_position_deadband_positive[EL] || cb_parms->out_of_position_deadband_negative[EL]) {
-                    ClearPIDHistory_Float(PID_DATA_POSITION_LOOP, EL);
-
-                    // Also flush the running average pipeline to the target position value
-                    flush_running_avg_pipeline(&(pos_loop_filter_parms_stage_2), EL, cb_parms->angle_targets[EL]);
-
-                    // Depending on which side of the deadband we just entered from, update the hysteresis offsets
-                    if (cb_parms->out_of_position_deadband_positive[EL]) {
-                        cb_parms->position_deadband_hysteresis_positive[EL] = position_loop_deadband_hysteresis;
-                        cb_parms->out_of_position_deadband_positive[EL] = FALSE;
-                    } else {
-                        cb_parms->position_deadband_hysteresis_negative[EL] = -position_loop_deadband_hysteresis;
-                        cb_parms->out_of_position_deadband_negative[EL] = FALSE;
-                    }
-                }
-
-                // We're in the deadband, so only rate errors are taken into account
-                cb_parms->axis_errors[EL] = -cb_parms->corrected_gyro_readings[EL];
-            }
-#elif (POSITION_LOOP_TYPE == 2)
-            cb_parms->axis_errors[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->unfiltered_position_errors[EL]) - cb_parms->corrected_gyro_readings[EL];
-#else
             cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject[EL] - cb_parms->corrected_gyro_readings[EL];
-#endif
-#endif
+
             // Set up the next rate loop pass to be the roll error computation pass
             cb_parms->rate_loop_pass = ERROR_ROLL_PASS;
             break;
 
         case ERROR_ROLL_PASS:
-#if defined(ENABLE_BALANCE_PROCEDURE)
-            if (bal_proc_parms->balance_axis == ROLL) {
-                cb_parms->axis_errors[ROLL] = CorrectEncoderError(cb_parms->angle_targets[ROLL] - cb_parms->encoder_readings[ROLL]);
-                cb_parms->axis_errors[AZ] = 0;
-                cb_parms->axis_errors[EL] = 0;
-            }
-#elif defined(ENABLE_RATE_LOOP_TUNING)
-            cb_parms->axis_errors[ROLL] = cb_parms->tuning_rate_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
-#else
-#if (POSITION_LOOP_TYPE == 0)
-            cb_parms->axis_errors[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->unfiltered_position_errors[ROLL] - cb_parms->corrected_gyro_readings[ROLL]);
-#elif (POSITION_LOOP_TYPE == 1)
-            if (cb_parms->unfiltered_position_errors[ROLL] > (position_loop_deadband_counts + cb_parms->position_deadband_hysteresis_positive[ROLL])) {
-                // We're outside the deadband in the positive direction, so both rate and position errors are taken into account
-                cb_parms->axis_errors[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->filtered_position_errors[ROLL]) - cb_parms->corrected_gyro_readings[ROLL];
-
-                // Keep track of which side of the deadband we are for hysteresis
-                cb_parms->out_of_position_deadband_positive[ROLL] = TRUE;
-                cb_parms->out_of_position_deadband_negative[ROLL] = FALSE;
-
-                // Clear all hysteresis (since we're out of the deadband)
-                cb_parms->position_deadband_hysteresis_positive[ROLL] = 0;
-                cb_parms->position_deadband_hysteresis_negative[ROLL] = 0;
-            } else if (cb_parms->unfiltered_position_errors[ROLL] < (-position_loop_deadband_counts + cb_parms->position_deadband_hysteresis_negative[ROLL])) {
-                // We're outside the deadband in the negative direction, so both rate and position errors are taken into account
-                cb_parms->axis_errors[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->filtered_position_errors[ROLL]) - cb_parms->corrected_gyro_readings[ROLL];
-
-                // Keep track of which side of the deadband we are for hysteresis
-                cb_parms->out_of_position_deadband_positive[ROLL] = FALSE;
-                cb_parms->out_of_position_deadband_negative[ROLL] = TRUE;
-
-                // Clear all hysteresis (since we're out of the deadband)
-                cb_parms->position_deadband_hysteresis_positive[ROLL] = 0;
-                cb_parms->position_deadband_hysteresis_negative[ROLL] = 0;
-            } else {
-                // We're in the deadband
-
-                // If we've just entered the deadband for this axis, clear the position loop PID history (so it starts from scratch the next time we go out of the deadband)
-                if (cb_parms->out_of_position_deadband_positive[ROLL] || cb_parms->out_of_position_deadband_negative[ROLL]) {
-                    ClearPIDHistory_Float(PID_DATA_POSITION_LOOP, ROLL);
-
-                    // Also flush the running average pipeline to the target position value
-                    flush_running_avg_pipeline(&(pos_loop_filter_parms_stage_2), ROLL, cb_parms->angle_targets[ROLL]);
-
-                    // Depending on which side of the deadband we just entered from, update the hysteresis offsets
-                    if (cb_parms->out_of_position_deadband_positive[ROLL]) {
-                        cb_parms->position_deadband_hysteresis_positive[ROLL] = position_loop_deadband_hysteresis;
-                        cb_parms->out_of_position_deadband_positive[ROLL] = FALSE;
-                    } else {
-                        cb_parms->position_deadband_hysteresis_negative[ROLL] = -position_loop_deadband_hysteresis;
-                        cb_parms->out_of_position_deadband_negative[ROLL] = FALSE;
-                    }
-                }
-
-                // We're in the deadband, so only rate errors are taken into account
-                cb_parms->axis_errors[ROLL] = -cb_parms->corrected_gyro_readings[ROLL];
-            }
-#elif (POSITION_LOOP_TYPE == 2)
-            cb_parms->axis_errors[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->unfiltered_position_errors[ROLL]) - cb_parms->corrected_gyro_readings[ROLL];
-#else
             cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
-#endif
-#endif
+
             // Set up the next rate loop pass to be the torque command output pass
             cb_parms->rate_loop_pass = TORQUE_OUT_PASS;
             break;
@@ -319,17 +133,14 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             //cb_parms->motor_torques[AZ] = UpdatePID(AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
             //cb_parms->motor_torques[EL] = UpdatePID(EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
             //cb_parms->motor_torques[ROLL] = UpdatePID(ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
+
             // Floating point PID code
             // Run the rate loop PID unless we're in balance procedure mode, then run the position loop PID
-#ifndef ENABLE_BALANCE_PROCEDURE
 
             // Compute the new motor torque commands
-            cb_parms->motor_torques[AZ] = UpdatePID_Float(PID_DATA_RATE_LOOP, AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
-            cb_parms->motor_torques[EL] = UpdatePID_Float(PID_DATA_RATE_LOOP, EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
-            cb_parms->motor_torques[ROLL] = UpdatePID_Float(PID_DATA_RATE_LOOP, ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
-
-            //SendDebug1ToAz(el_pos_error, cb_parms->unfiltered_position_errors[EL], (int16_t)(pos_pid_loop_float[EL].integralCumulative + 0.5));
-            //SendDebug1ToAz(cb_parms->unfiltered_position_errors[AZ], cb_parms->unfiltered_position_errors[EL], cb_parms->unfiltered_position_errors[ROLL]);
+            cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
+            cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
+            cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
 
             // For AZ, we need to inject extra torque if we're getting close to either of the stops (because we have limited mechanical travel on AZ, and we
             // don't want to rail up against the stop).  To do this, outside of a deadband in the middle of travel, we linearly increase an extra torque injection
@@ -352,47 +163,12 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
 
             cb_parms->motor_torques[AZ] = az_torque;
 
-#else
-            cb_parms->motor_torques[AZ] = UpdatePID_Float(PID_DATA_POSITION_LOOP, AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
-            cb_parms->motor_torques[EL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
-            cb_parms->motor_torques[ROLL] = UpdatePID_Float(PID_DATA_POSITION_LOOP, ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
-#endif
-#ifdef TEST_MAX_TORQUE
-            // Torque command with DIGBY STEPS
-            DigbyCount++;
-            if (DigbyCount < 10000) {
-                // do nothing
-            } else if (DigbyCount < 15000) {
-                //Toggle max torque
-                if ((DigbyCount >> 7) & 0x0001) {
-                    // Max positive for 1/8s
-                    //cb_parms->motor_torques[EL] = OUTPUT_LIMIT_UPPER_FLOAT;
-                    cb_parms->motor_torques[EL] = 5000;
-                } else {
-                    // Max negative for 1/8s
-                    //cb_parms->motor_torques[EL] = OUTPUT_LIMIT_LOWER_FLOAT;
-                    cb_parms->motor_torques[EL] = -5000;
-                }
-            } else {
-                DigbyCount = 0;
-            }
-
-#endif
-
-            //SendDebug1ToAz(cb_parms->encoder_readings[ROLL], cb_parms->axis_errors[ROLL], cb_parms->motor_torques[ROLL]);
-
-#ifndef ENABLE_CURRENT_TOGGLE
             // Send out motor torques
             MDBSendTorques(cb_parms->motor_torques[AZ], cb_parms->motor_torques[ROLL]);
-            //TODO: Start with just testing AZ
-            //MDBSendTorques(0, 0);
 
             // Also update our own torque (fake like we got a value over CAN)
             param_set[CAND_PID_TORQUE].param = cb_parms->motor_torques[EL];
-            //TODO: Zero out EL torque for testing
-            //param_set[CAND_PID_TORQUE].param = 0;
             *param_set[CAND_PID_TORQUE].sema = TRUE;
-#endif
 
             // Send encoder, gyro, and accelerometer telemetry at a decimated rate of 100Hz
             if (++telemetry_decimation_count >= TELEMETRY_DECIMATION_LIMIT) {

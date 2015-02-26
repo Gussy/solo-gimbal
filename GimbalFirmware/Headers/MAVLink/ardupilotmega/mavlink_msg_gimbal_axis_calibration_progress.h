@@ -4,7 +4,7 @@
 #include "protocol_c2000.h"
 #endif
 
-#define MAVLINK_MSG_ID_GIMBAL_AXIS_CALIBRATION_PROGRESS 189
+#define MAVLINK_MSG_ID_GIMBAL_AXIS_CALIBRATION_PROGRESS 191
 
 typedef struct __mavlink_gimbal_axis_calibration_progress_t
 {
@@ -14,10 +14,10 @@ typedef struct __mavlink_gimbal_axis_calibration_progress_t
 } mavlink_gimbal_axis_calibration_progress_t;
 
 #define MAVLINK_MSG_ID_GIMBAL_AXIS_CALIBRATION_PROGRESS_LEN 3
-#define MAVLINK_MSG_ID_189_LEN 3
+#define MAVLINK_MSG_ID_191_LEN 3
 
 #define MAVLINK_MSG_ID_GIMBAL_AXIS_CALIBRATION_PROGRESS_CRC 128
-#define MAVLINK_MSG_ID_189_CRC 128
+#define MAVLINK_MSG_ID_191_CRC 128
 
 
 

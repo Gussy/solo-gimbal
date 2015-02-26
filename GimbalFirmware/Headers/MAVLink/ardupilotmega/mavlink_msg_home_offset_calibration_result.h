@@ -4,7 +4,7 @@
 #include "protocol_c2000.h"
 #endif
 
-#define MAVLINK_MSG_ID_HOME_OFFSET_CALIBRATION_RESULT 192
+#define MAVLINK_MSG_ID_HOME_OFFSET_CALIBRATION_RESULT 193
 
 typedef struct __mavlink_home_offset_calibration_result_t
 {
@@ -12,10 +12,10 @@ typedef struct __mavlink_home_offset_calibration_result_t
 } mavlink_home_offset_calibration_result_t;
 
 #define MAVLINK_MSG_ID_HOME_OFFSET_CALIBRATION_RESULT_LEN 1
-#define MAVLINK_MSG_ID_192_LEN 1
+#define MAVLINK_MSG_ID_193_LEN 1
 
 #define MAVLINK_MSG_ID_HOME_OFFSET_CALIBRATION_RESULT_CRC 10
-#define MAVLINK_MSG_ID_192_CRC 10
+#define MAVLINK_MSG_ID_193_CRC 10
 
 
 

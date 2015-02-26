@@ -4,7 +4,7 @@
 #include "protocol_c2000.h"
 #endif
 
-#define MAVLINK_MSG_ID_SET_HOME_OFFSETS 191
+#define MAVLINK_MSG_ID_SET_HOME_OFFSETS 192
 
 typedef struct __mavlink_set_home_offsets_t
 {
@@ -13,10 +13,10 @@ typedef struct __mavlink_set_home_offsets_t
 } mavlink_set_home_offsets_t;
 
 #define MAVLINK_MSG_ID_SET_HOME_OFFSETS_LEN 2
-#define MAVLINK_MSG_ID_191_LEN 2
+#define MAVLINK_MSG_ID_192_LEN 2
 
 #define MAVLINK_MSG_ID_SET_HOME_OFFSETS_CRC 46
-#define MAVLINK_MSG_ID_191_CRC 46
+#define MAVLINK_MSG_ID_192_CRC 46
 
 
 

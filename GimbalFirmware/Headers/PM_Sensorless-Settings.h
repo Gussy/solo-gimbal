@@ -13,13 +13,8 @@ Incremental Build Level control file.
 =================================================================================  */
 #ifndef PROJ_SETTINGS_H
 
-//#define ENABLE_BALANCE_PROCEDURE
-//#define ENABLE_CURRENT_TOGGLE
-//#define ENABLE_RATE_LOOP_TUNING
-//#define STANDALONE_MODE
 #define USE_AVERAGE_POWER_FILTER
 #define ENABLE_AXIS_CALIBRATION_PROCEDURE
-#define POSITION_LOOP_TYPE 3 // 0 = basic position loop, 1 = advanced position loop, 2 = simple single pid, 3 = EKF position loop closed on copter (no gimbal position loop)
 
 #ifndef TRUE
 #define FALSE 0
