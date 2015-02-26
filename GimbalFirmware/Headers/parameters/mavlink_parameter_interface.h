@@ -29,6 +29,9 @@ typedef enum {
     MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_PITCH,
     MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL,
     MAVLINK_GIMBAL_PARAM_SYSID_SWVER,
+    MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_DATE,
+    MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_TIME,
+    MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUMBER,
     MAVLINK_GIMBAL_PARAM_SERIAL_BAUD,
     MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE,
     MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT,
@@ -47,6 +50,11 @@ typedef enum {
     MAVLINK_GIMBAL_PARAM_MAX
 } GimbalMavlinkParameterID;
 
+typedef enum {
+    GIMBAL_PARAM_READ_WRITE,
+    GIMBAL_PARAM_READ_ONLY
+} GimbalParameterAccessType;
+
 //NOTE: I'm not using the MAVLink library's mavlink_param_union_t, because the C2000 compiler does not support anonymous unions
 //It was easier just to add this custom version here than to modify the MAVLink library
 typedef union {
@@ -60,6 +68,7 @@ typedef struct {
     uint32_t* uint32_data_ptr;
     CAND_ParameterID can_parameter_id;
     CAND_DestinationID can_parameter_destination_axis;
+    GimbalParameterAccessType access_type;
     char param_id[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1];
 } GimbalMavlinkParameter;
 

@@ -662,6 +662,31 @@
 		</description>
 		<field name="calibration_result" type="uint8_t" enum="GIMBAL_AXIS_CALIBRATION_STATUS">The result of the home offset calibration</field>
 	</message>
+	
+	<message name="SET_FACTORY_PARAMETERS" id="194">
+		<description>
+			Set factory configuration parameters (such as assembly date and time, and serial number).  This is only intended to be used
+			during manufacture, not by end users, so it is protected by a simple checksum of sorts (this won't stop anybody determined,
+			it's mostly just to keep the average user from trying to modify these values.  This will need to be revisited if that isn't
+			adequate.
+		</description>
+	 	<field name="target_system" type="uint8_t">System ID</field>
+		<field name="target_component" type="uint8_t">Component ID</field>
+		<field name="magic_1" type="uint32_t">Magic number 1 for validation</field>
+		<field name="magic_2" type="uint32_t">Magic number 2 for validation</field>
+		<field name="magic_3" type="uint32_t">Magic number 3 for validation</field>
+		<field name="assembly_year" type="uint16_t">Assembly Date Year</field>
+		<field name="assembly_month" type="uint8_t">Assembly Date Month</field>
+		<field name="assembly_day" type="uint8_t">Assembly Date Day</field>
+		<field name="assembly_hour" type="uint8_t">Assembly Time Hour</field>
+		<field name="assembly_minute" type="uint8_t">Assembly Time Minute</field>
+		<field name="assembly_second" type="uint8_t">Assembly Time Second</field>
+		<field name="serial_number" type="uint32_t">Unit Serial Number</field>
+	</message>
+	
+	<message name="FACTORY_PARAMETERS_LOADED" id="195">
+		
+	</message>
 
      </messages>
 </mavlink>

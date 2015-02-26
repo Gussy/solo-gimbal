@@ -13,6 +13,7 @@
 #include "hardware/uart.h"
 #include "parameters/mavlink_parameter_interface.h"
 #include "parameters/load_axis_parms_state_machine.h"
+#include "parameters/flash_params.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
@@ -30,6 +31,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal(mavlink_message_t* received_msg);
 static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
 static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
+static void handle_set_factory_params(mavlink_message_t* msg);
 
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
@@ -229,6 +231,10 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDrivePar
 
 			case MAVLINK_MSG_ID_SET_HOME_OFFSETS:
 			    handle_set_home_offsets(md_parms, encoder_parms, load_ap_state_info);
+			    break;
+
+			case MAVLINK_MSG_ID_SET_FACTORY_PARAMETERS:
+			    handle_set_factory_params(&received_msg);
 			    break;
 
 			default: {
@@ -464,6 +470,33 @@ static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* enc
 
     // Start calibrating our own home offset
     md_parms->motor_drive_state = STATE_CALIBRATE_HOME_OFFSETS;
+}
+
+static void handle_set_factory_params(mavlink_message_t* msg)
+{
+    mavlink_set_factory_parameters_t decoded_msg;
+    mavlink_msg_set_factory_parameters_decode(msg, &decoded_msg);
+
+    // Compose the assembly date and assembly time into the internal 32-bit format
+    Uint32 assy_date = 0;
+    Uint32 assy_time = 0;
+    assy_date |= ((Uint32)decoded_msg.assembly_year << 16);
+    assy_date |= ((Uint32)decoded_msg.assembly_month << 8);
+    assy_date |= ((Uint32)decoded_msg.assembly_day);
+    assy_time |= ((Uint32)decoded_msg.assembly_hour << 24);
+    assy_time |= ((Uint32)decoded_msg.assembly_minute << 16);
+    assy_time |= ((Uint32)decoded_msg.assembly_second << 8);
+
+    // Compute the "checksums" using the 3 magic numbers to determine if this is a valid factory parameter set
+    if (((assy_date + decoded_msg.magic_1) == FACTORY_PARAM_CHECK_MAGIC_1) &&
+        ((assy_time + decoded_msg.magic_2) == FACTORY_PARAM_CHECK_MAGIC_2) &&
+        ((decoded_msg.serial_number + decoded_msg.magic_3) == FACTORY_PARAM_CHECK_MAGIC_3)) {
+        // This means the parameters are valid and we can go ahead and set them.  Otherwise, we just ignore the parameters
+        flash_params.assy_date = assy_date;
+        flash_params.assy_time = assy_time;
+        flash_params.ser_num = decoded_msg.serial_number;
+        write_flash();
+    }
 }
 
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {

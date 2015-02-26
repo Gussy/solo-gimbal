@@ -90,132 +90,20 @@ extern Uint16 PRG_key7;
 #define	 EDIS	asm(" EDIS")
 #define  DINT   asm(" setc INTM")
 
-// TODO: This is temporary for development purposes until we start loading the calibration parameters in flash
-#define PROTOTYPE_HW 2 // 1 is old hardware, prototype Arthur has, 2 is new hardware, prototype Aaron has
-
-#if (PROTOTYPE_HW == 1)
 struct flash_param_struct_0000 flash_params =
 {
     0x0000,                     // Flash Struct ID
     0,                          // Board ID
     0,                          // Other ID
-    0x0000,                     // Software version number TODO: populate this from git version info
+    0x00000000,                 // Software version number, loaded from compiled in version information at boot time
+    0x00000000,                 // Assembly date
+    0x00000000,                 // Assembly time
+    0x00000000,                 // Serial number
     115,                        // Mavlink baud rate
-    // Axis calibration slopes
-    {
-        0.127,      // EL
-        0.1267,     // AZ
-        0.1274,     // ROLL
-    },
-    // Axis calibration intercepts
-    {
-        0.3801,     // EL
-        0.4128,     // AZ
-        0.43,       // ROLL
-    },
-    // Axis home positions
-    {
-        5135,   // EL
-        4696,   // AZ
-        4319,   // ROLL
-    },
-    // Rate PID P gains
-    {
-        2.5,    // EL
-        2.0,    // AZ
-        5.0     // ROLL
-    },
-    // Rate PID I gains
-    {
-        0.25,   // EL
-        0.5,    // AZ
-        0.5     // ROLL
-    },
-    // Rate PID D gains
-    {
-        0.0,    // EL
-        1.0,    // AZ
-        0.0     // ROLL
-    },
-    // Rate PID windup limits
-    {
-        32768.0,// EL
-        32768.0,// AZ
-        32768.0 // ROLL
-    },
-    // Position PID P gains
-    {
-        5.0, // EL
-        5.0, // AZ
-        5.0  // ROLL
-    },
-    // Position PID I gains
-    {
-        0.0, // EL
-        0.0, // AZ
-        0.0  // ROLL
-    },
-    // Position PID D gains
-    {
-        0.0, // EL
-        0.0, // AZ
-        0.0  // ROLL
-    },
-    // Position PID windup limits
-    {
-        2000.0, // EL
-        2000.0, // AZ
-        2000.0  // ROLL
-    },
-    // Gyro offsets
-    {
-        0.0, // EL
-        0.0, // AZ
-        0.0  // ROLL
-    },
-    // Torque Loop PID Kp
-    {
-        0.8,    // EL
-        0.8,    // AZ
-        0.8     // ROLL
-    },
-    // Torque Loop PID Ki
-    {
-        0.75,   // EL
-        0.75,   // AZ
-        0.75    // ROLL
-    },
-    // Torque Loop PID Kd
-    {
-        0.0,    // EL
-        0.0,    // AZ
-        0.0     // ROLL
-    },
-    0.0,           // Balance axis (only used when balance mode is compiled in)
-    20000.0        // Balance step time in ms (only used when balance mode is compiled in)
-};
-#elif (PROTOTYPE_HW == 2)
-struct flash_param_struct_0000 flash_params =
-{
-    0x0000,                     // Flash Struct ID
-    0,                          // Board ID
-    0,                          // Other ID
-    0x00000000,                 // Software version number TODO: populate this from git version info
-    115,                        // Mavlink baud rate
-#if 0
-    // Axis calibration slopes
-    {
-        0.126, //0.0,        // EL
-        0.1247, //0.0,       // AZ
-        0.1245  //0.0        // ROLL
-    },
-    // Axis calibration intercepts
-    {
-        0.4536, //0.0,      // EL
-        0.3718, //0.0,      // AZ
-        0.4079  //0.0       // ROLL
-    },
-#else
+    // ***************************************************************
+    // NOTE: These differ per gimbal, and are loaded from flash at boot
+    // time, so we default these to 0 here to force and auto-calibration
+    // if there are no previously saved
     // Axis calibration slopes
     {
         0.0,       // EL
@@ -228,7 +116,7 @@ struct flash_param_struct_0000 flash_params =
         0.0,      // AZ
         0.0       // ROLL
     },
-#endif
+    // ***************************************************************
     // Axis home positions
     {
         5090,      // EL
@@ -310,7 +198,6 @@ struct flash_param_struct_0000 flash_params =
     0.0,           // Balance axis (only used when balance mode is compiled in)
     20000.0        // Balance step time in ms (only used when balance mode is compiled in)
 };
-#endif
 
 
 static int verify_checksum(Uint16 *start_addr)
