@@ -74,7 +74,7 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 ## Using MAVLink Bootloader
 
 1. Build the ```GimbalFirmware``` project using Code Composer Studio.
-2. Run the Python ```Tools\loadfw.py``` script (eg. ```python Tools\loadfw.py --port="COM7" GimbalFirmware\F2806x_RAM\PM_Sensorless_F2806x.hex```).
+2. Run the Python ```Tools\load_fw.py``` script (eg. ```python Tools\loadfw.py --port="COM7" GimbalFirmware\F2806x_RAM\PM_Sensorless_F2806x.hex```).
 
 ## Creating a release
 1. Build the ```GimbalFirmware``` project using Code Composer Studio.
