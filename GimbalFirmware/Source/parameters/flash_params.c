@@ -15,6 +15,8 @@
 
 #include "F2806x_SysCtrl.h"
 
+#include "version.h"
+
 
 /*--- Callback function.  Function specified by defining Flash_CallbackPtr */
 void MyCallbackFunction(void);
@@ -90,12 +92,14 @@ extern Uint16 PRG_key7;
 #define	 EDIS	asm(" EDIS")
 #define  DINT   asm(" setc INTM")
 
+#define SW_VERSION ((unsigned long int)GitVersionMajorInt << 16) | (GitVersionMinorInt << 8) | GitVersionRevisionInt
+
 struct flash_param_struct_0000 flash_params =
 {
     0x0000,                     // Flash Struct ID
     0,                          // Board ID
     0,                          // Other ID
-    0x00000000,                 // Software version number, loaded from compiled in version information at boot time
+    SW_VERSION,                 // Software version number, loaded from compiled in version information at boot time
     0x00000000,                 // Assembly date
     0x00000000,                 // Assembly time
     0x00000000,                 // Serial number
