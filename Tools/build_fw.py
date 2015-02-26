@@ -30,7 +30,7 @@ args = parser.parse_args()
 desc = {}
 
 # Get the current git info
-cmd = " ".join(["git", "describe", "--always", "--dirty"])
+cmd = " ".join(["git", "describe", "--tags", "--dirty"])
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
 desc['git_identity'] = str(p.read().strip())
 p.close()
