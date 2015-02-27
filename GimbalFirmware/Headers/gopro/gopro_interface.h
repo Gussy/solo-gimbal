@@ -130,7 +130,7 @@ Uint8 gp_get_new_set_response_available();
 int gp_get_request(Uint8 cmd_id);
 int gp_set_request(GPSetRequest* request);
 
-GPHeartbeatStatus* gp_get_heartbeat_status();
+GPHeartbeatStatus gp_get_heartbeat_status();
 GPGetResponse* gp_get_last_get_response();
 GPSetResponse* gp_get_last_set_response();
 

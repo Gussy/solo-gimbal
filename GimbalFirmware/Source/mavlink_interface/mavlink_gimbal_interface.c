@@ -587,7 +587,7 @@ void send_mavlink_gimbal_feedback() {
 	send_mavlink_message(&feedback_msg);
 }
 
-void send_mavlink_gopro_heartbeat(GPHeartbeatStatus* status)
+void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status)
 {
     static mavlink_message_t gopro_heartbeat_msg;
     mavlink_msg_gopro_heartbeat_pack(MAVLINK_GIMBAL_SYSID,

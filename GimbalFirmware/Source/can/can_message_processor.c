@@ -731,7 +731,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 case CAND_PID_GOPRO_HEARTBEAT:
                 {
                 	GPHeartbeatStatus gp_heartbeat_state = (GPHeartbeatStatus)msg.param_response[msg.param_response_cnt - 1];
-                    send_mavlink_gopro_heartbeat(&gp_heartbeat_state);
+                    send_mavlink_gopro_heartbeat(gp_heartbeat_state);
                 }
                 break;
 

@@ -27,7 +27,6 @@ GPCmdResponse last_cmd_response = {0};
 Uint8 new_response_available = FALSE;
 Uint8 new_heartbeat_available = FALSE;
 GPExpectingDataType next_reception_expected = GP_EXPECTING_COMMAND;
-GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
 Uint16 heartbeat_counter = 0;
 GPRequestType last_request_type = GP_REQUEST_NONE;
 GOPRO_COMMAND last_request_cmd_id;
@@ -107,15 +106,14 @@ Uint8 gp_get_new_set_response_available()
 	return FALSE;
 }
 
-GPHeartbeatStatus* gp_get_heartbeat_status()
+GPHeartbeatStatus gp_get_heartbeat_status()
 {
+	GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
 	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
 		heartbeat_status = GP_HEARTBEAT_CONNECTED;
-	} else {
-		heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
 	}
-
-    return &heartbeat_status;
+	new_heartbeat_available = FALSE;
+    return heartbeat_status;
 }
 
 GPGetResponse* gp_get_last_get_response()
@@ -390,8 +388,7 @@ void gp_interface_state_machine()
     }
 
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
-	if (++heartbeat_counter >= (GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS))
-	{
+	if (heartbeat_counter++ > (GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
 		new_heartbeat_available = TRUE;
 		heartbeat_counter = 0;
 	}
