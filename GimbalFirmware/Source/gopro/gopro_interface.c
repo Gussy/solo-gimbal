@@ -10,6 +10,9 @@
 #include "gopro/gopro_interface.h"
 #include "PeripheralHeaderIncludes.h"
 
+// Include for GOPRO_COMMAND enum
+#include "mavlink_interface/mavlink_gimbal_interface.h"
+
 #include <ctype.h>
 
 static void gp_timeout(GPCmdResult reason);
@@ -22,12 +25,14 @@ Uint8 response_buffer[GP_COMMAND_RESPONSE_SIZE];
 Uint8 receive_buffer[GP_COMMAND_RECEIVE_BUFFER_SIZE];
 GPCmdResponse last_cmd_response = {0};
 Uint8 new_response_available = FALSE;
-Uint8 new_get_response_available = FALSE;
-Uint8 new_set_response_available = FALSE;
 Uint8 new_heartbeat_available = FALSE;
 GPExpectingDataType next_reception_expected = GP_EXPECTING_COMMAND;
 GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
 Uint16 heartbeat_counter = 0;
+GPRequestType last_request_type = GP_REQUEST_NONE;
+GOPRO_COMMAND last_request_cmd_id;
+GPGetResponse last_get_response;
+GPSetResponse last_set_response;
 
 void init_gp_interface()
 {
@@ -90,35 +95,49 @@ Uint8 gp_get_new_heartbeat_available()
 
 Uint8 gp_get_new_get_response_available()
 {
-    // TODO: Implement
-    return new_get_response_available;
+    if(last_request_type == GP_REQUEST_GET)
+    	return new_response_available;
+    return FALSE;
 }
 
 Uint8 gp_get_new_set_response_available()
 {
-    // TODO: Implement
-    return new_set_response_available;
+	if(last_request_type == GP_REQUEST_SET)
+		return new_response_available;
+	return FALSE;
 }
 
 GPHeartbeatStatus* gp_get_heartbeat_status()
 {
-    // TODO: Implement
-    new_heartbeat_available = FALSE;
-    //return &last_cmd_response;
+	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
+		heartbeat_status = GP_HEARTBEAT_CONNECTED;
+	} else {
+		heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
+	}
+
+    return &heartbeat_status;
 }
 
 GPGetResponse* gp_get_last_get_response()
 {
-    // TODO: Implement
-    new_get_response_available = FALSE;
-    //return &last_cmd_response;
+	last_get_response.cmd_id = last_request_cmd_id;
+	if (last_cmd_response.cmd_status == 0x01 && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
+		last_get_response.value = last_cmd_response.cmd_response;
+	} else {
+		last_get_response.value = 0xFF;
+	}
+    return &last_get_response;
 }
 
 GPSetResponse* gp_get_last_set_response()
 {
-    // TODO: Implement
-    new_set_response_available = FALSE;
-    //return &last_cmd_response;
+	last_set_response.cmd_id = last_request_cmd_id;
+	if (last_cmd_response.cmd_status == 0x01 && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
+		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_SUCCESS;
+	} else {
+		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_FAILURE;
+	}
+    return &last_set_response;
 }
 
 int gp_request_power_on()
@@ -145,10 +164,29 @@ int gp_request_power_off()
     }
 }
 
-int gp_get_request(Uint8* cmd_id)
+int gp_get_request(Uint8 cmd_id)
 {
-    // TODO: Implement
-    return -1;
+	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
+		GPCmd cmd;
+
+		switch(cmd_id) {
+			case GOPRO_COMMAND_MODEL:
+				cmd.cmd[0] = 'c';
+				cmd.cmd[1] = 'v';
+			break;
+
+			default:
+				// Unsupported Command ID
+				return -1;
+		}
+
+		last_request_type = GP_REQUEST_GET;
+		last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
+		gp_send_command(&cmd);
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 int gp_set_request(GPSetRequest* request)
@@ -453,7 +491,10 @@ static void gp_timeout(GPCmdResult reason)
 {
     timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
     GP_DEASSERT_INTR(); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
+
+    // Indicate that a "new response" is available (what's available is the indication that we timed out)
     last_cmd_response.cmd_result = reason;
-    new_response_available = TRUE; // Indicate that a "new response" is available (what's available is the indication that we timed out)
+    new_response_available = TRUE;
+
     gp_control_state = GP_CONTROL_STATE_IDLE;
 }

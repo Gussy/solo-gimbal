@@ -81,6 +81,12 @@ typedef enum {
     GP_HEARTBEAT_RECORDING = 3
 } GPHeartbeatStatus;
 
+typedef enum {
+	GP_REQUEST_NONE,
+	GP_REQUEST_GET,
+	GP_REQUEST_SET
+} GPRequestType;
+
 typedef struct {
     char cmd[2];
     Uint8 cmd_parm;
@@ -121,7 +127,7 @@ Uint8 gp_get_new_heartbeat_available();
 Uint8 gp_get_new_get_response_available();
 Uint8 gp_get_new_set_response_available();
 
-int gp_get_request(Uint8* cmd_id);
+int gp_get_request(Uint8 cmd_id);
 int gp_set_request(GPSetRequest* request);
 
 GPHeartbeatStatus* gp_get_heartbeat_status();

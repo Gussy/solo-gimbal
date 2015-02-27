@@ -412,8 +412,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
 
         // Check for any new GoPro get requests
         if (*(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) == TRUE) {
-            gp_get_request((Uint8*)&param_set[CAND_PID_GOPRO_GET_REQUEST].param);
-
+            gp_get_request((Uint8)param_set[CAND_PID_GOPRO_GET_REQUEST].param);
             *(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) = FALSE;
         }
 
@@ -424,7 +423,6 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
             set_request.cmd_id = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 24) & 0x000000FF;
             set_request.value = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 16) & 0x000000FF;
             gp_set_request(&set_request);
-
             *(param_set[CAND_PID_GOPRO_SET_REQUEST].sema) = FALSE;
         }
     }
