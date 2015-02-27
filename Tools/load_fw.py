@@ -6,7 +6,8 @@ Utility for loading firmware into the 3DR Gimbal.
 @author: Angus Peart (angus@3dr.com)
 """
 
-import sys, signal, argparse
+import sys, argparse
+import base64, json, zlib
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import common as mavlink
 
@@ -15,7 +16,7 @@ MAVLINK_COMPONENT_ID = 230
 
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
-baudrate = 230400
+default_baudrate = 230400
 
 def wait_handshake(m):
     '''wait for a handshake so we know the target system IDs'''
@@ -29,10 +30,12 @@ def wait_handshake(m):
             return msg
     return None
 
-def load_binary(filename):
-    '''Load binary image file into a byte array'''
-    with open(filename, "rb") as f:
-        return bytearray(f.read())
+def load_firmware(filename):
+    '''Load the image from the JSON firmware file into a byte array'''
+    with open(filename, "r") as f:
+        desc = json.load(f)
+
+        return bytearray(zlib.decompress(base64.b64decode(desc['image'])))
 
 def bytearray_to_wordarray(data):
     '''Converts an 8-bit byte array into a 16-bit word array'''
@@ -75,7 +78,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("binary", help="Application binary file load")
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
+    parser.add_argument("-b", "--baudrate", help="Serial port baudrate")
     args = parser.parse_args()
+
+    # Accept a command line baudrate, fallback to the default
+    baudrate = default_baudrate
+    if args.baudrate:
+        baudrate = args.baudrate
 
     # Open the serial port
     mavserial = mavutil.mavserial(
@@ -86,15 +95,16 @@ def main():
 
     # Load the binary image into a byte array
     print("Application binary: %s" % args.binary)
-    hexfile = load_binary(args.binary)
+    hexfile = load_firmware(args.binary)
     binary = append_checksum(hexfile)
 
     # Wait for a handshake from the gimbal which contains the payload length
     sys.stdout.write("Uploading firmware to gimbal ")
     sys.stdout.flush()
     finished = False
+    timeout_counter = 0
 
-    # Loop until we are finished, TODO: timeout
+    # Loop until we are finished
     while(finished == False):
         # Wait for target to reset into bootloader mode
         msg = wait_handshake(mavserial)
@@ -105,7 +115,14 @@ def main():
             # Handshake timed out
             sys.stdout.write('.')
             sys.stdout.flush()
+
+            # Timeout after ~10 seconds without messages
+            if timeout_counter > 10:
+                print("\nNot response from gimbal, exiting.")
+                sys.exit(1)
+            timeout_counter += 1
         else:
+            timeout_counter = 0
             sequence_number = msg.width
             payload_length = msg.payload
 
@@ -145,10 +162,7 @@ def main():
     link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
     print(" OK")
 
-# Gracefully handle a interrupt signal
-def signal_handler(signal, frame):
-    sys.exit(0)
-signal.signal(signal.SIGINT, signal_handler)
-
 if __name__ == '__main__':
     main()
+    sys.exit(0)
+
