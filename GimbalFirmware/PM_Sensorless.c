@@ -41,6 +41,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "motor/motor_commutation.h"
 #include "can/can_parameter_updates.h"
 #include "hardware/encoder.h"
+#include "hardware/led.h"
 
 #include <math.h>
 #include <string.h>
@@ -495,6 +496,9 @@ void main(void)
 
         // Initialize the HeroBus interface
         init_gp_interface();
+
+        // Initialize the beacon LED
+        init_led();
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication
@@ -940,19 +944,21 @@ void B3(void) //  SPARE
 #define STATUS_LED_OFF() 	{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
 
 // Gimbal Beacon LEDs (off-board, operated by EL axis)
+/*
 #define BEACON_RED_ON()     {GpioDataRegs.GPASET.bit.GPIO8 = 1;}
 #define BEACON_RED_OFF()    {GpioDataRegs.GPACLEAR.bit.GPIO8 = 1;}
 #define BEACON_GREEN_ON()   {GpioDataRegs.GPASET.bit.GPIO9 = 1;}
 #define BEACON_GREEN_OFF()  {GpioDataRegs.GPACLEAR.bit.GPIO9 = 1;}
 #define BEACON_BLUE_ON()    {GpioDataRegs.GPASET.bit.GPIO10 = 1;}
 #define BEACON_BLUE_OFF()   {GpioDataRegs.GPACLEAR.bit.GPIO10 = 1;}
+*/
 
 #define CH1OTWn GpioDataRegs.GPBDAT.bit.GPIO50
 #define CH1Faultn GpioDataRegs.GPADAT.bit.GPIO13
 
 int led_cnt = 0;
-BeaconState beacon_state = BEACON_RED;
-Uint32 beacon_counter = 0;
+//BeaconState beacon_state = BEACON_RED;
+//Uint32 beacon_counter = 0;
 
 //----------------------------------------
 void C1(void) // Update Status LEDs
@@ -995,7 +1001,7 @@ void C1(void) // Update Status LEDs
 
 	//TODO: Testing Gimbal Beacon
 	if (board_hw_id == EL) {
-        beacon_counter++;
+        /*beacon_counter++;
         switch (beacon_state) {
         case BEACON_RED:
             if (beacon_counter >= 7) {
@@ -1023,7 +1029,7 @@ void C1(void) // Update Status LEDs
                 beacon_state = BEACON_RED;
             }
             break;
-        }
+        }*/
 	}
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C2

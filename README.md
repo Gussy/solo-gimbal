@@ -94,4 +94,4 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 
 ## Beacon LED (Camera Carriage Board)
 
-Currently cyces between R/G/B.
+Currently cyces between R/G/B combinations.

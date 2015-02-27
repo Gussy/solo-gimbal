@@ -17,6 +17,7 @@
 #include "hardware/HWSpecific.h"
 #include "hardware/uart.h"
 #include "hardware/i2c.h"
+#include "hardware/led.h"
 
 // Functions that will be run from RAM need to be assigned to
 // a different section.  This section will then be mapped to a load and
@@ -125,8 +126,14 @@ void DeviceInit(void)
    SysCtrlRegs.PCLKCR1.bit.EPWM2ENCLK = 1;  // ePWM2
    SysCtrlRegs.PCLKCR1.bit.EPWM3ENCLK = 1;  // ePWM3
    SysCtrlRegs.PCLKCR1.bit.EPWM4ENCLK = 0;  // ePWM4
-   SysCtrlRegs.PCLKCR1.bit.EPWM5ENCLK = 0;	// ePWM5
-   SysCtrlRegs.PCLKCR1.bit.EPWM6ENCLK = 0;	// ePWM6
+   // PWM modules 5-6 are used for the beacon LED on EL board only
+   if(GetBoardHWID() == EL) {
+	   SysCtrlRegs.PCLKCR1.bit.EPWM5ENCLK = 1;	// ePWM5
+	   SysCtrlRegs.PCLKCR1.bit.EPWM6ENCLK = 1;	// ePWM6
+   } else {
+	   SysCtrlRegs.PCLKCR1.bit.EPWM5ENCLK = 0;	// ePWM5
+       SysCtrlRegs.PCLKCR1.bit.EPWM6ENCLK = 0;	// ePWM6
+   }
    SysCtrlRegs.PCLKCR1.bit.EPWM7ENCLK = 0;	// ePWM7
    SysCtrlRegs.PCLKCR1.bit.EPWM8ENCLK = 0;	// ePWM8
    //------------------------------------------------
@@ -240,22 +247,22 @@ void DeviceInit(void)
 //	GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;	// uncomment if --> Set Low initially
 	GpioDataRegs.GPASET.bit.GPIO7 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-08 - PIN FUNCTION = Gimbal Status LED Red (off-board)
-	GpioCtrlRegs.GPAMUX1.bit.GPIO8 = 0;		// 0=GPIO,  1=EPWM5A,  2=Resv,  3=ADCSOCA
+//  GPIO-08 - PIN FUNCTION = Gimbal Status LED Red
+	GpioCtrlRegs.GPAMUX1.bit.GPIO8 = 1;		// 0=GPIO,  1=EPWM5A,  2=Resv,  3=ADCSOCA
 	GpioCtrlRegs.GPADIR.bit.GPIO8 = 1;		// 1=OUTput,  0=INput
 	GpioCtrlRegs.GPAPUD.bit.GPIO8 = 1;      // Disable internal pullup
 	GpioDataRegs.GPACLEAR.bit.GPIO8 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO8 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-09 - PIN FUNCTION = Gimbal Status LED Green (off-board)
-	GpioCtrlRegs.GPAMUX1.bit.GPIO9 = 0;		// 0=GPIO,  1=EPWM5B,  2=SCITXDB,  3=ECAP3
+//  GPIO-09 - PIN FUNCTION = Gimbal Status LED Green
+	GpioCtrlRegs.GPAMUX1.bit.GPIO9 = 1;		// 0=GPIO,  1=EPWM5B,  2=SCITXDB,  3=ECAP3
 	GpioCtrlRegs.GPADIR.bit.GPIO9 = 1;		// 1=OUTput,  0=INput
 	GpioCtrlRegs.GPAPUD.bit.GPIO9 = 1;      // Disable internal pullup
 	GpioDataRegs.GPACLEAR.bit.GPIO9 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO9 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-10 - PIN FUNCTION = Gimbal Status LED Blue (off-board)
-	GpioCtrlRegs.GPAMUX1.bit.GPIO10 = 0;	// 0=GPIO,  1=EPWM6A,  2=Resv,  3=ADCSOCB
+//  GPIO-10 - PIN FUNCTION = Gimbal Status LED Blue
+	GpioCtrlRegs.GPAMUX1.bit.GPIO10 = 1;	// 0=GPIO,  1=EPWM6A,  2=Resv,  3=ADCSOCB
 	GpioCtrlRegs.GPADIR.bit.GPIO10 = 1;		// 1=OUTput,  0=INput
 	GpioCtrlRegs.GPAPUD.bit.GPIO10 = 1;      // Disable internal pullup
 	GpioDataRegs.GPACLEAR.bit.GPIO10 = 1;	// uncomment if --> Set Low initially
@@ -604,6 +611,8 @@ void InitInterrupts()
         PieVectTable.XINT1 = &GyroIntISR; // Gyro ISR is driven from external interrupt 1
         PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx fifo interrupts are handled by the same ISR
         PieVectTable.I2CINT1A = &i2c_int_a_isr; // All non-fifo I2C interrupts are handled by the same ISR
+        PieVectTable.EPWM5_INT = &led_epwm5_isr;
+        PieVectTable.EPWM6_INT = &led_epwm6_isr;
         EDIS;
 
         // Enable PIE group 1 interrupt 4 for XINT1 (for gyro interrupt line)
@@ -612,6 +621,10 @@ void InitInterrupts()
         PieCtrlRegs.PIEIER8.bit.INTx2 = 1;
         // Enable PIE group 8 interrupt 1 for Regular I2C interrupts (the only one we're currently using is addressed as slave (AAS))
         PieCtrlRegs.PIEIER8.bit.INTx1 = 1;
+        // Enable PIE group 3 interrupt 5 for ePWM5 interrupts
+        PieCtrlRegs.PIEIER3.bit.INTx5 = 1;
+        // Enable PIE group 3 interrupt 5 for ePWM5 interrupts
+        PieCtrlRegs.PIEIER3.bit.INTx6 = 1;
 
         // Configure and enable XINT1 (for gyro interrupt line)
         EALLOW;
@@ -619,6 +632,9 @@ void InitInterrupts()
         EDIS;
         XIntruptRegs.XINT1CR.bit.POLARITY = 0x01; // Interrupt on rising edge
         XIntruptRegs.XINT1CR.bit.ENABLE = 1; // Enable interrupt
+
+        // Enable CPU INT3 which is connected to EPWMx INTs:
+        IER |= M_INT3;
 
         // Enable CPU INT8 for I2C FIFO and I2C addressed as slave (AAS)
         IER |= M_INT8;
