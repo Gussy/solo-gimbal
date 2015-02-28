@@ -18,7 +18,9 @@ struct flash_param_struct_0000 {
 	Uint32 sys_swver;
 	Uint32 assy_date;
 	Uint32 assy_time;
-	Uint32 ser_num;
+	Uint32 ser_num_1;
+	Uint32 ser_num_2;
+	Uint32 ser_num_3;
 	Uint32 mavlink_baud_rate;
 	float AxisCalibrationSlopes[AXIS_CNT];
 	float AxisCalibrationIntercepts[AXIS_CNT];

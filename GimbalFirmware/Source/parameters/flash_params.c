@@ -98,7 +98,9 @@ struct flash_param_struct_0000 flash_params =
     0x00000000,                 // Software version number, loaded from compiled in version information at boot time
     0x00000000,                 // Assembly date
     0x00000000,                 // Assembly time
-    0x00000000,                 // Serial number
+    0x00000000,                 // Serial number part 1 (part code, design, language/country)
+    0x00000000,                 // Serial number part 2 (option, year, month)
+    0x00000000,                 // Serial number part 3 (incrementing serial number per month)
     115,                        // Mavlink baud rate
     // ***************************************************************
     // NOTE: These differ per gimbal, and are loaded from flash at boot
@@ -300,6 +302,37 @@ int erase_our_flash()
 		return -1;
 	}
 	return 1;
+}
+
+int erase_firmware_and_config()
+{
+    Uint16  Status;
+    Uint16  VersionHex;     // Version of the API in decimal encoded hex
+    EALLOW;
+    Flash_CPUScaleFactor = SCALE_FACTOR;
+    EDIS;
+
+    VersionHex = Flash_APIVersionHex();
+    if(VersionHex != 0x0100)
+    {
+        // Unexpected API version
+        // Make a decision based on this info.
+        asm("    ESTOP0");
+    }
+
+    Example_CsmUnlock();
+    // Erase all sectors except for sector A (that's where the bootloader lives)
+    Status = Flash_Erase(SECTORB, &FlashStatus);
+    Status = Flash_Erase(SECTORC, &FlashStatus);
+    Status = Flash_Erase(SECTORD, &FlashStatus);
+    Status = Flash_Erase(SECTORE, &FlashStatus);
+    Status = Flash_Erase(SECTORF, &FlashStatus);
+    Status = Flash_Erase(SECTORG, &FlashStatus);
+    Status = Flash_Erase(SECTORH, &FlashStatus);
+    if (Status != STATUS_SUCCESS) {
+        return -1;
+    }
+    return 1;
 }
 
 int write_flash(void)

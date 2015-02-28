@@ -32,6 +32,7 @@ static void handle_reset_gimbal(mavlink_message_t* received_msg);
 static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
 static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_set_factory_params(mavlink_message_t* msg);
+static void handle_gimbal_erase_flash(mavlink_message_t* msg);
 
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
@@ -235,6 +236,10 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDrivePar
 
 			case MAVLINK_MSG_ID_SET_FACTORY_PARAMETERS:
 			    handle_set_factory_params(&received_msg);
+			    break;
+
+			case MAVLINK_MSG_ID_ERASE_GIMBAL_FIRMWARE_AND_CONFIG:
+			    handle_gimbal_erase_flash(&received_msg);
 			    break;
 
 			default: {
@@ -490,14 +495,51 @@ static void handle_set_factory_params(mavlink_message_t* msg)
     // Compute the "checksums" using the 3 magic numbers to determine if this is a valid factory parameter set
     if (((assy_date + decoded_msg.magic_1) == FACTORY_PARAM_CHECK_MAGIC_1) &&
         ((assy_time + decoded_msg.magic_2) == FACTORY_PARAM_CHECK_MAGIC_2) &&
-        ((decoded_msg.serial_number + decoded_msg.magic_3) == FACTORY_PARAM_CHECK_MAGIC_3)) {
+        ((decoded_msg.serial_number_pt_1 + decoded_msg.magic_3) == FACTORY_PARAM_CHECK_MAGIC_3)) {
         // This means the parameters are valid and we can go ahead and set them.  Otherwise, we just ignore the parameters
         flash_params.assy_date = assy_date;
         flash_params.assy_time = assy_time;
-        flash_params.ser_num = decoded_msg.serial_number;
+        flash_params.ser_num_1 = decoded_msg.serial_number_pt_1;
+        flash_params.ser_num_2 = decoded_msg.serial_number_pt_2;
+        flash_params.ser_num_3 = decoded_msg.serial_number_pt_3;
         write_flash();
         // Indicate that we've loaded the new parameters
         send_mavlink_factory_parameters_loaded();
+    }
+}
+
+static void handle_gimbal_erase_flash(mavlink_message_t* msg)
+{
+    mavlink_erase_gimbal_firmware_and_config_t decoded_msg;
+    mavlink_msg_erase_gimbal_firmware_and_config_decode(msg, &decoded_msg);
+
+    // Make sure this message is for us
+    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+        // Make sure the knock value is correct
+        if (decoded_msg.knock == GIMBAL_FIRMWARE_ERASE_KNOCK) {
+            // stop this axis
+            power_down_motor();
+            // stop the other axis
+            cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RELAX);
+            // reset other axis
+            cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RESET);
+
+            // Erase firmware and calibration
+            extern int erase_firmware_and_config();
+            erase_firmware_and_config();
+
+            // reset
+            extern void WDogEnable(void);
+            WDogEnable();
+
+            EALLOW;
+            // Cause a device reset by writing incorrect values into WDCHK
+            SysCtrlRegs.WDCR = 0x0010;
+            EDIS;
+
+            // This should never be reached.
+            while(1);
+        }
     }
 }
 

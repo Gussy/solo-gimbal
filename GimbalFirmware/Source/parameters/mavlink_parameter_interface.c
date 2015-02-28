@@ -292,11 +292,23 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_TIME].uint32_data_ptr = &(flash_params.assy_time);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_TIME].access_type = GIMBAL_PARAM_READ_ONLY;
 
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUMBER].param_id, "SYSID_SER_NUM", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUMBER].can_parameter_id = CAND_PID_INVALID;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUMBER].param_type = MAV_PARAM_TYPE_UINT32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUMBER].uint32_data_ptr = &(flash_params.ser_num);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUMBER].access_type = GIMBAL_PARAM_READ_ONLY;
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].param_id, "SYSID_SER_NUM_1", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].param_type = MAV_PARAM_TYPE_UINT32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].uint32_data_ptr = &(flash_params.ser_num_1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].access_type = GIMBAL_PARAM_READ_ONLY;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].param_id, "SYSID_SER_NUM_2", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].param_type = MAV_PARAM_TYPE_UINT32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].uint32_data_ptr = &(flash_params.ser_num_2);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].access_type = GIMBAL_PARAM_READ_ONLY;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].param_id, "SYSID_SER_NUM_3", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].param_type = MAV_PARAM_TYPE_UINT32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].uint32_data_ptr = &(flash_params.ser_num_3);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].access_type = GIMBAL_PARAM_READ_ONLY;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].param_id, "SERIAL_BAUD", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SERIAL_BAUD].can_parameter_id = CAND_PID_INVALID;

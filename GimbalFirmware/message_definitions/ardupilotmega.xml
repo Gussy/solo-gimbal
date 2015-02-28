@@ -681,7 +681,9 @@
 		<field name="assembly_hour" type="uint8_t">Assembly Time Hour</field>
 		<field name="assembly_minute" type="uint8_t">Assembly Time Minute</field>
 		<field name="assembly_second" type="uint8_t">Assembly Time Second</field>
-		<field name="serial_number" type="uint32_t">Unit Serial Number</field>
+		<field name="serial_number_pt_1" type="uint32_t">Unit Serial Number Part 1 (part code, design, language/country)</field>
+		<field name="serial_number_pt_2" type="uint32_t">Unit Serial Number Part 2 (option, year, month)</field>
+		<field name="serial_number_pt_3" type="uint32_t">Unit Serial Number Part 3 (incrementing serial number per month)</field>
 	</message>
 	
 	<message name="FACTORY_PARAMETERS_LOADED" id="195">
@@ -689,6 +691,19 @@
 			Sent by the gimbal after the factory parameters are successfully loaded, to inform the factory software that the load is complete
 		</description>
 		<field name="dummy" type="uint8_t">Dummy field because mavgen doesn't allow messages with no fields</field>
+	</message>
+	
+	<message name="ERASE_GIMBAL_FIRMWARE_AND_CONFIG" id="196">
+		<description>
+			Commands the gimbal to erase its firmware image and flash configuration, leaving only the bootloader.  The gimbal will then reboot into the bootloader,
+			ready for the load of a new application firmware image.  Erasing the flash configuration will cause the gimbal to re-perform axis calibration when a
+			new firmware image is loaded, and will cause all tuning parameters to return to their factory defaults.  WARNING: sending this command will render a
+			gimbal inoperable until a new firmware image is loaded onto it.  For this reason, a particular "knock" value must be sent for the command to take effect.
+			Use this command at your own risk
+		</description>
+		<field name="target_system" type="uint8_t">System ID</field>
+		<field name="target_component" type="uint8_t">Component ID</field>
+		<field name="knock" type="uint32_t">Knock value to confirm this is a valid request</field>
 	</message>
 
      </messages>

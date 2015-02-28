@@ -2077,14 +2077,16 @@ static void mavlink_test_set_factory_parameters(uint8_t system_id, uint8_t compo
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
 	mavlink_set_factory_parameters_t packet_in = {
-		963497464,963497672,963497880,963498088,18067,187,254,65,132,199,10,77
+		963497464,963497672,963497880,963498088,963498296,963498504,18483,211,22,89,156,223,34,101
     };
 	mavlink_set_factory_parameters_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         	packet1.magic_1 = packet_in.magic_1;
         	packet1.magic_2 = packet_in.magic_2;
         	packet1.magic_3 = packet_in.magic_3;
-        	packet1.serial_number = packet_in.serial_number;
+        	packet1.serial_number_pt_1 = packet_in.serial_number_pt_1;
+        	packet1.serial_number_pt_2 = packet_in.serial_number_pt_2;
+        	packet1.serial_number_pt_3 = packet_in.serial_number_pt_3;
         	packet1.assembly_year = packet_in.assembly_year;
         	packet1.target_system = packet_in.target_system;
         	packet1.target_component = packet_in.target_component;
@@ -2102,12 +2104,12 @@ static void mavlink_test_set_factory_parameters(uint8_t system_id, uint8_t compo
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_set_factory_parameters_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.magic_1 , packet1.magic_2 , packet1.magic_3 , packet1.assembly_year , packet1.assembly_month , packet1.assembly_day , packet1.assembly_hour , packet1.assembly_minute , packet1.assembly_second , packet1.serial_number );
+	mavlink_msg_set_factory_parameters_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.magic_1 , packet1.magic_2 , packet1.magic_3 , packet1.assembly_year , packet1.assembly_month , packet1.assembly_day , packet1.assembly_hour , packet1.assembly_minute , packet1.assembly_second , packet1.serial_number_pt_1 , packet1.serial_number_pt_2 , packet1.serial_number_pt_3 );
 	mavlink_msg_set_factory_parameters_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_set_factory_parameters_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.magic_1 , packet1.magic_2 , packet1.magic_3 , packet1.assembly_year , packet1.assembly_month , packet1.assembly_day , packet1.assembly_hour , packet1.assembly_minute , packet1.assembly_second , packet1.serial_number );
+	mavlink_msg_set_factory_parameters_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.magic_1 , packet1.magic_2 , packet1.magic_3 , packet1.assembly_year , packet1.assembly_month , packet1.assembly_day , packet1.assembly_hour , packet1.assembly_minute , packet1.assembly_second , packet1.serial_number_pt_1 , packet1.serial_number_pt_2 , packet1.serial_number_pt_3 );
 	mavlink_msg_set_factory_parameters_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -2120,7 +2122,7 @@ static void mavlink_test_set_factory_parameters(uint8_t system_id, uint8_t compo
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_set_factory_parameters_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.magic_1 , packet1.magic_2 , packet1.magic_3 , packet1.assembly_year , packet1.assembly_month , packet1.assembly_day , packet1.assembly_hour , packet1.assembly_minute , packet1.assembly_second , packet1.serial_number );
+	mavlink_msg_set_factory_parameters_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.magic_1 , packet1.magic_2 , packet1.magic_3 , packet1.assembly_year , packet1.assembly_month , packet1.assembly_day , packet1.assembly_hour , packet1.assembly_minute , packet1.assembly_second , packet1.serial_number_pt_1 , packet1.serial_number_pt_2 , packet1.serial_number_pt_3 );
 	mavlink_msg_set_factory_parameters_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
@@ -2165,6 +2167,51 @@ static void mavlink_test_factory_parameters_loaded(uint8_t system_id, uint8_t co
         memset(&packet2, 0, sizeof(packet2));
 	mavlink_msg_factory_parameters_loaded_send(MAVLINK_COMM_1 , packet1.dummy );
 	mavlink_msg_factory_parameters_loaded_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+}
+
+static void mavlink_test_erase_gimbal_firmware_and_config(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
+{
+	mavlink_message_t msg;
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        uint16_t i;
+	mavlink_erase_gimbal_firmware_and_config_t packet_in = {
+		963497464,17,84
+    };
+	mavlink_erase_gimbal_firmware_and_config_t packet1, packet2;
+        memset(&packet1, 0, sizeof(packet1));
+        	packet1.knock = packet_in.knock;
+        	packet1.target_system = packet_in.target_system;
+        	packet1.target_component = packet_in.target_component;
+        
+        
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_erase_gimbal_firmware_and_config_encode(system_id, component_id, &msg, &packet1);
+	mavlink_msg_erase_gimbal_firmware_and_config_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_erase_gimbal_firmware_and_config_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.knock );
+	mavlink_msg_erase_gimbal_firmware_and_config_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_erase_gimbal_firmware_and_config_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.knock );
+	mavlink_msg_erase_gimbal_firmware_and_config_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+        mavlink_msg_to_send_buffer(buffer, &msg);
+        for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
+        	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
+        }
+	mavlink_msg_erase_gimbal_firmware_and_config_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+        
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_erase_gimbal_firmware_and_config_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.knock );
+	mavlink_msg_erase_gimbal_firmware_and_config_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
 
@@ -2215,6 +2262,7 @@ static void mavlink_test_ardupilotmega(uint8_t system_id, uint8_t component_id, 
 	mavlink_test_home_offset_calibration_result(system_id, component_id, last_msg);
 	mavlink_test_set_factory_parameters(system_id, component_id, last_msg);
 	mavlink_test_factory_parameters_loaded(system_id, component_id, last_msg);
+	mavlink_test_erase_gimbal_firmware_and_config(system_id, component_id, last_msg);
 }
 
 #ifdef __cplusplus
