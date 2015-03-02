@@ -92,7 +92,9 @@ extern Uint16 PRG_key7;
 #define	 EDIS	asm(" EDIS")
 #define  DINT   asm(" setc INTM")
 
-#define SW_VERSION ((unsigned long int)GitVersionMajorInt << 16) | (GitVersionMinorInt << 8) | GitVersionRevisionInt
+//TODO: Talk to 3DR and figure out how this was supposed to work
+//#define SW_VERSION ((unsigned long int)GitVersionMajorInt << 16) | (GitVersionMinorInt << 8) | GitVersionRevisionInt
+#define SW_VERSION 0x00000000
 
 struct flash_param_struct_0000 flash_params =
 {
