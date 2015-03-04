@@ -6,7 +6,6 @@
  */
 
 #include "F2806x_EPwm_defines.h"
-#include "hardware/device_init.h"
 #include "hardware/led.h"
 
 static void set_rgba(Uint8 red, Uint8 green, Uint8 blue, Uint8 alpha);

@@ -2,6 +2,7 @@
  * main.c
  */
 #include "Boot.h"
+#include "hardware/led.h"
 
 // External functions
 extern void CopyData(void);
@@ -11,6 +12,8 @@ extern void ReadReservedFn(void);
 Uint32 words_received;
 #pragma   DATA_SECTION(endRam,".endmem");
 Uint16 endRam;
+
+LED_RGBA rgba_amber = {255, 160, 0, 0xff};
 
 void CAN_Init()
 {
@@ -149,7 +152,6 @@ Uint16 CAN_GetWordData()
    Uint16 wait_time = 0;
    Uint16 tenths_of_seconds = 0;
    Uint16 blink_state = 0;
-   Uint16 blink_counter = 5;
 
    wordData = 0x0000;
    byteData = 0x0000;
@@ -169,15 +171,14 @@ Uint16 CAN_GetWordData()
 				   ECanaRegs.CANTA.all = (1ul<<2);		// "writing 0 has no effect", clears pending interrupt, open for our tx
 
 				   // Toggle the LED in here to show that we're doing something
-				   if (++blink_counter >= 5) {
-                       if (blink_state == 0) {
-                           GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
-                           blink_state = 1;
-                       } else {
-                           GpioDataRegs.GPASET.bit.GPIO7 = 1;
-                           blink_state = 0;
-                       }
-                       blink_counter = 0;
+				   if (blink_state == 0) {
+					   GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
+					   led_set_mode(LED_MODE_SOLID, rgba_amber, 0);
+					   blink_state = 1;
+				   } else {
+					   GpioDataRegs.GPASET.bit.GPIO7 = 1;
+					   led_set_mode(LED_MODE_OFF, rgba_amber, 0);
+					   blink_state = 0;
 				   }
 			   }
 		   }
@@ -233,6 +234,11 @@ Uint16 read_Data()
 
 Uint32 CAN_Boot()
 {
+   init_led_periph();
+   init_led_interrupts();
+   init_led();
+   led_set_mode(LED_MODE_OFF, rgba_amber, 0);
+
    Uint32 EntryAddr;
 
    location = 0;
