@@ -49,6 +49,9 @@ typedef struct {
 
 void init_led(void);
 
+void init_led_periph(void);
+void init_led_interrupts(void);
+
 void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration);
 void led_update_state(void);
 

@@ -27,6 +27,46 @@ static Uint16 state_duration;
 static Uint16 blink_toggle = 0;
 static Uint32 fade_in_step_counter = 0;
 
+void init_led_periph(void)
+{
+	// Peripheral clock enables-
+	SysCtrlRegs.PCLKCR1.bit.EPWM5ENCLK = 1;	// ePWM5
+	SysCtrlRegs.PCLKCR1.bit.EPWM6ENCLK = 1;	// ePWM6
+
+	// GPIO (General Purpose I/O) Config
+	//  GPIO-08 - PIN FUNCTION = Gimbal Status LED Red
+	GpioCtrlRegs.GPAMUX1.bit.GPIO8 = 1;		// 0=GPIO,  1=EPWM5A,  2=Resv,  3=ADCSOCA
+	GpioCtrlRegs.GPADIR.bit.GPIO8 = 1;		// 1=OUTput,  0=INput
+	GpioCtrlRegs.GPAPUD.bit.GPIO8 = 1;		// Disable internal pullup
+	GpioDataRegs.GPACLEAR.bit.GPIO8 = 1;	// uncomment if --> Set Low initially
+	//  GPIO-09 - PIN FUNCTION = Gimbal Status LED Green
+	GpioCtrlRegs.GPAMUX1.bit.GPIO9 = 1;		// 0=GPIO,  1=EPWM5B,  2=SCITXDB,  3=ECAP3
+	GpioCtrlRegs.GPADIR.bit.GPIO9 = 1;		// 1=OUTput,  0=INput
+	GpioCtrlRegs.GPAPUD.bit.GPIO9 = 1;		// Disable internal pullup
+	GpioDataRegs.GPACLEAR.bit.GPIO9 = 1;	// uncomment if --> Set Low initially
+	//  GPIO-10 - PIN FUNCTION = Gimbal Status LED Blue
+	GpioCtrlRegs.GPAMUX1.bit.GPIO10 = 1;	// 0=GPIO,  1=EPWM6A,  2=Resv,  3=ADCSOCB
+	GpioCtrlRegs.GPADIR.bit.GPIO10 = 1;		// 1=OUTput,  0=INput
+	GpioCtrlRegs.GPAPUD.bit.GPIO10 = 1;		// Disable internal pullup
+	GpioDataRegs.GPACLEAR.bit.GPIO10 = 1;	// uncomment if --> Set Low initially
+}
+
+void init_led_interrupts(void)
+{
+	EALLOW;
+	PieVectTable.EPWM5_INT = &led_epwm5_isr;
+	PieVectTable.EPWM6_INT = &led_epwm6_isr;
+	EDIS;
+
+	// Enable PIE group 3 interrupt 5 for ePWM5 interrupts
+	PieCtrlRegs.PIEIER3.bit.INTx5 = 1;
+	// Enable PIE group 3 interrupt 5 for ePWM5 interrupts
+	PieCtrlRegs.PIEIER3.bit.INTx6 = 1;
+
+	// Enable CPU INT3 which is connected to EPWMx INTs:
+	IER |= M_INT3;
+}
+
 void init_led()
 {
 	EALLOW;
