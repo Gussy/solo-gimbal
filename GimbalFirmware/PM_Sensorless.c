@@ -499,10 +499,8 @@ void main(void)
 
         // Initialize the beacon LED
         init_led();
-        LED_RGBA rgba_empty = {0, 0, 0, 0};
-        led_set_mode(LED_MODE_DISCO, rgba_empty, 0);
-        //LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
-        //led_set_mode(LED_MODE_SOLID, rgba_red, 0);
+        LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
+        led_set_mode(LED_MODE_FADE_IN_BLINK_3, rgba_green, 0);
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication
@@ -947,22 +945,10 @@ void B3(void) //  SPARE
 #define STATUS_LED_ON() 	{GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;}
 #define STATUS_LED_OFF() 	{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
 
-// Gimbal Beacon LEDs (off-board, operated by EL axis)
-/*
-#define BEACON_RED_ON()     {GpioDataRegs.GPASET.bit.GPIO8 = 1;}
-#define BEACON_RED_OFF()    {GpioDataRegs.GPACLEAR.bit.GPIO8 = 1;}
-#define BEACON_GREEN_ON()   {GpioDataRegs.GPASET.bit.GPIO9 = 1;}
-#define BEACON_GREEN_OFF()  {GpioDataRegs.GPACLEAR.bit.GPIO9 = 1;}
-#define BEACON_BLUE_ON()    {GpioDataRegs.GPASET.bit.GPIO10 = 1;}
-#define BEACON_BLUE_OFF()   {GpioDataRegs.GPACLEAR.bit.GPIO10 = 1;}
-*/
-
 #define CH1OTWn GpioDataRegs.GPBDAT.bit.GPIO50
 #define CH1Faultn GpioDataRegs.GPADAT.bit.GPIO13
 
 int led_cnt = 0;
-//BeaconState beacon_state = BEACON_RED;
-//Uint32 beacon_counter = 0;
 
 //----------------------------------------
 void C1(void) // Update Status LEDs
@@ -1003,37 +989,9 @@ void C1(void) // Update Status LEDs
 
 	led_cnt++;
 
-	//TODO: Testing Gimbal Beacon
+	// Periodically call Gimbal Beacon state machine
 	if (board_hw_id == EL) {
-        /*beacon_counter++;
-        switch (beacon_state) {
-        case BEACON_RED:
-            if (beacon_counter >= 7) {
-                beacon_counter = 0;
-                BEACON_RED_OFF();
-                BEACON_GREEN_ON();
-                beacon_state = BEACON_GREEN;
-            }
-            break;
-
-        case BEACON_GREEN:
-            if (beacon_counter >= 13) {
-                beacon_counter = 0;
-                BEACON_GREEN_OFF();
-                BEACON_BLUE_ON();
-                beacon_state = BEACON_BLUE;
-            }
-            break;
-
-        case BEACON_BLUE:
-            if (beacon_counter >= 20) {
-                beacon_counter = 0;
-                BEACON_BLUE_OFF();
-                BEACON_RED_ON();
-                beacon_state = BEACON_RED;
-            }
-            break;
-        }*/
+        led_update_state();
 	}
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C2

@@ -12,13 +12,20 @@
 static void set_rgba(Uint8 red, Uint8 green, Uint8 blue, Uint8 alpha);
 static void enable_epwm_interrupts(void);
 static void disable_epwm_interrupts(void);
+static void update_compare_fade_in(LED_EPWM_INFO *epwm_info);
 static void update_compare_disco(LED_EPWM_INFO *epwm_info);
 
 // Pointer to update function. Point to disco by default
 static void (*update_function)(LED_EPWM_INFO*) = &update_compare_disco;
 
-LED_EPWM_INFO epwm5_info;
-LED_EPWM_INFO epwm6_info;
+static LED_EPWM_INFO epwm5_info;
+static LED_EPWM_INFO epwm6_info;
+
+static LED_MODE	state_mode;
+static LED_RGBA state_rgba;
+static Uint16 state_duration;
+static Uint16 blink_toggle = 0;
+static Uint32 fade_in_step_counter = 0;
 
 void init_led()
 {
@@ -43,7 +50,7 @@ void init_led()
 
 	// Set Compare values
 	EPwm5Regs.CMPA.half.CMPA = LED_EPWM_MIN_CMP;		// Set compare A value
-	EPwm5Regs.CMPB = LED_EPWM_MAX_CMP;					// Set Compare B value
+	EPwm5Regs.CMPB = LED_EPWM_MIN_CMP;					// Set Compare B value
 
 	// Set actions
 	EPwm5Regs.AQCTLA.bit.ZRO = AQ_SET;					// Set PWM1A on Zero
@@ -107,6 +114,9 @@ void init_led()
 
 void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration)
 {
+	// Update the current mode
+	state_mode = mode;
+
 	switch(mode) {
 		// Turn off all LEDs by setting alpha to 0 turns off the LEDs
 		case LED_MODE_OFF:
@@ -121,9 +131,21 @@ void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration)
 			break;
 
 		case LED_MODE_FADE_IN:
+		case LED_MODE_FADE_IN_BLINK_3:
+			state_rgba = color;
+			state_rgba.alpha = 1;
+			update_function = &update_compare_fade_in;
+			// Only enable 1 of the ePWM interrupts,
+			// which we use to step to fade alpha up
+			EPwm5Regs.ETSEL.bit.INTEN = 1;
+			EPwm6Regs.ETSEL.bit.INTEN = 0;
 			break;
 
 		case LED_MODE_BLINK:
+		case LED_MODE_BLINK_FOREVER:
+			disable_epwm_interrupts();
+			state_rgba = color;
+			state_duration = duration;
 			break;
 
 		// Cycle through RGB colours. Useful for testing.
@@ -137,58 +159,54 @@ void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration)
 	}
 }
 
+void led_update_state(void)
+{
+	if(state_mode == LED_MODE_BLINK || state_mode == LED_MODE_BLINK_FOREVER){
+		// Toggle the LED
+		if(blink_toggle == 0) {
+			set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, state_rgba.alpha);
+			blink_toggle = 1;
+			state_duration--;
+		} else {
+			set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, 0);
+			blink_toggle = 0;
+
+			// End a blink animation
+			if(state_duration == 0 && state_mode == LED_MODE_BLINK) {
+				state_mode = LED_MODE_OFF;
+				return;
+			}
+		}
+
+	}
+}
+
 static void set_rgba(Uint8 red, Uint8 green, Uint8 blue, Uint8 alpha)
 {
 	Uint8 scaledRed = (Uint16)(red * alpha) / 0xFF;
 	Uint8 scaledGreen = (Uint16)(green * alpha) / 0xFF;
 	Uint8 scaledBlue = (Uint16)(blue * alpha) / 0xFF;
 
-	// Handling 0%-100% PWM duty cycle:
-	// Disable PWM action when target output value is 0 or 255 (min or max)
-	// When output is at max, set output so it's held high at 100% duty cycle
-	// Otherwise, write the new PWM value into the compare register
+	// Handling 0%-100% PWM duty cycle
 
 	// Red
-	if(scaledRed == 0) {
-		EPwm5Regs.AQCTLA.bit.ZRO = AQ_NO_ACTION;
-		EPwm5Regs.AQCTLA.bit.CAU = AQ_CLEAR;
-	} else if(scaledRed == LED_EPWM_TIMER_TBPRD) {
-		EPwm5Regs.AQCTLA.bit.ZRO = AQ_NO_ACTION;
-		EPwm5Regs.AQCTLA.bit.CAU = AQ_SET;
+	if(scaledRed == LED_EPWM_TIMER_TBPRD) {
+		EPwm5Regs.CMPA.half.CMPA = LED_EPWM_TIMER_TBPRD-1;
 	} else {
-		EPwm5Regs.AQCTLA.bit.ZRO = AQ_SET;
-		EPwm5Regs.AQCTLA.bit.CAU = AQ_CLEAR;
 		EPwm5Regs.CMPA.half.CMPA = scaledRed;
 	}
 
 	// Green
-
-	if(scaledGreen == 0) {
-		EPwm5Regs.AQCTLB.bit.ZRO = AQ_NO_ACTION;
-		EPwm5Regs.AQCTLB.bit.CAU = AQ_CLEAR;
-	} else if(scaledGreen == LED_EPWM_TIMER_TBPRD) {
-		//EPwm5Regs.AQCTLB.bit.ZRO = AQ_NO_ACTION;
-		//EPwm5Regs.AQCTLB.bit.CAU = AQ_SET;
-		// XXX: Why doesn't the above work with green? What's different to red and blue???
-		EPwm5Regs.AQCTLB.bit.ZRO = AQ_SET;
-		EPwm5Regs.AQCTLB.bit.CAU = AQ_CLEAR;
+	if(scaledGreen == LED_EPWM_TIMER_TBPRD) {
 		EPwm5Regs.CMPB = LED_EPWM_TIMER_TBPRD-1;
 	} else {
-		EPwm5Regs.AQCTLB.bit.ZRO = AQ_SET;
-		EPwm5Regs.AQCTLB.bit.CAU = AQ_CLEAR;
 		EPwm5Regs.CMPB = scaledGreen;
 	}
 
 	// Blue
-	if(scaledBlue == 0) {
-		EPwm6Regs.AQCTLA.bit.ZRO = AQ_NO_ACTION;
-		EPwm6Regs.AQCTLA.bit.CAU = AQ_CLEAR;
-	} else if(scaledBlue == LED_EPWM_TIMER_TBPRD) {
-		EPwm6Regs.AQCTLA.bit.ZRO = AQ_NO_ACTION;
-		EPwm6Regs.AQCTLA.bit.CAU = AQ_SET;
+	if(scaledBlue == LED_EPWM_TIMER_TBPRD) {
+		EPwm6Regs.CMPA.half.CMPA = LED_EPWM_TIMER_TBPRD-1;
 	} else {
-		EPwm6Regs.AQCTLA.bit.ZRO = AQ_SET;
-		EPwm6Regs.AQCTLA.bit.CAU = AQ_CLEAR;
 		EPwm6Regs.CMPA.half.CMPA = scaledBlue;
 	}
 }
@@ -203,6 +221,31 @@ static void disable_epwm_interrupts(void)
 {
 	EPwm5Regs.ETSEL.bit.INTEN = 0;
 	EPwm6Regs.ETSEL.bit.INTEN = 0;
+}
+
+static void update_compare_fade_in(LED_EPWM_INFO *epwm_info)
+{
+	// Every 128th interrupt, change the alpha value
+	if(fade_in_step_counter == 0x7F) {
+		fade_in_step_counter = 0;
+
+		if(state_rgba.alpha <= 0xff) {
+			set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, state_rgba.alpha++);
+		} else {
+			if(state_mode == LED_MODE_FADE_IN_BLINK_3) {
+				blink_toggle = 1; // LED is already on
+				led_set_mode(LED_MODE_BLINK, state_rgba, 3);
+			} else {
+				state_mode = LED_MODE_SOLID;
+				disable_epwm_interrupts();
+			}
+			return;
+		}
+	} else {
+		fade_in_step_counter++;
+	}
+
+	return;
 }
 
 static void update_compare_disco(LED_EPWM_INFO *epwm_info)
