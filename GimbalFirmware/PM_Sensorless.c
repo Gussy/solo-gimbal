@@ -499,6 +499,10 @@ void main(void)
 
         // Initialize the beacon LED
         init_led();
+        LED_RGBA rgba_empty = {0, 0, 0, 0};
+        led_set_mode(LED_MODE_DISCO, rgba_empty, 0);
+        //LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
+        //led_set_mode(LED_MODE_SOLID, rgba_red, 0);
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication

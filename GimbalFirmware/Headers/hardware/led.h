@@ -11,13 +11,21 @@
 #include "PeripheralHeaderIncludes.h"
 
 // Configure the period for each timer
-#define LED_EPWM_TIMER_TBPRD	2000
-#define LED_EPWM_MAX_CMP		(LED_EPWM_TIMER_TBPRD - 10)
-#define LED_EPWM_MIN_CMP		10
+#define LED_EPWM_TIMER_TBPRD	0xFF
+#define LED_EPWM_MAX_CMP		(LED_EPWM_TIMER_TBPRD - 1)
+#define LED_EPWM_MIN_CMP		1
 
 // To keep track of which way the compare value is moving
 #define LED_EPWM_CMP_UP   1
 #define LED_EPWM_CMP_DOWN 0
+
+typedef enum {
+	LED_MODE_OFF,
+	LED_MODE_SOLID,
+	LED_MODE_FADE_IN,
+	LED_MODE_BLINK,
+	LED_MODE_DISCO
+} LED_MODE;
 
 typedef struct {
 	volatile struct EPWM_REGS *EPwmRegHandle;
@@ -30,7 +38,16 @@ typedef struct {
 	Uint16 EPwmMinCMPB;
 } LED_EPWM_INFO;
 
+typedef struct {
+	Uint8 red;
+	Uint8 green;
+	Uint8 blue;
+	Uint8 alpha;
+} LED_RGBA;
+
 void init_led(void);
+
+void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration);
 
 interrupt void led_epwm5_isr(void);
 interrupt void led_epwm6_isr(void);
