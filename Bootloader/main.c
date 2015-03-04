@@ -3,6 +3,8 @@
  */
 #include "Boot.h"
 #include "hardware/led.h"
+#include "hardware/device_init.h"
+#include "hardware/HWSpecific.h"
 
 // External functions
 extern void CopyData(void);
@@ -173,11 +175,13 @@ Uint16 CAN_GetWordData()
 				   // Toggle the LED in here to show that we're doing something
 				   if (blink_state == 0) {
 					   GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
-					   led_set_mode(LED_MODE_SOLID, rgba_amber, 0);
+					   if(GetBoardHWID() == EL)
+						   led_set_mode(LED_MODE_SOLID, rgba_amber, 0);
 					   blink_state = 1;
 				   } else {
 					   GpioDataRegs.GPASET.bit.GPIO7 = 1;
-					   led_set_mode(LED_MODE_OFF, rgba_amber, 0);
+					   if(GetBoardHWID() == EL)
+						   led_set_mode(LED_MODE_OFF, rgba_amber, 0);
 					   blink_state = 0;
 				   }
 			   }
@@ -234,10 +238,12 @@ Uint16 read_Data()
 
 Uint32 CAN_Boot()
 {
-   init_led_periph();
-   init_led_interrupts();
-   init_led();
-   led_set_mode(LED_MODE_OFF, rgba_amber, 0);
+   if(GetBoardHWID() == EL) {
+	   init_led_periph();
+	   init_led_interrupts();
+	   init_led();
+	   led_set_mode(LED_MODE_OFF, rgba_amber, 0);
+   }
 
    Uint32 EntryAddr;
 
