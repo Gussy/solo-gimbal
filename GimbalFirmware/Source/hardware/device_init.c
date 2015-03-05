@@ -17,6 +17,7 @@
 #include "hardware/HWSpecific.h"
 #include "hardware/uart.h"
 #include "hardware/i2c.h"
+#include "hardware/led.h"
 
 // Functions that will be run from RAM need to be assigned to
 // a different section.  This section will then be mapped to a load and
@@ -240,21 +241,21 @@ void DeviceInit(void)
 //	GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;	// uncomment if --> Set Low initially
 	GpioDataRegs.GPASET.bit.GPIO7 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-08 - PIN FUNCTION = Gimbal Status LED Red (off-board)
+//  GPIO-08 - PIN FUNCTION = Gimbal Status LED Red
 	GpioCtrlRegs.GPAMUX1.bit.GPIO8 = 0;		// 0=GPIO,  1=EPWM5A,  2=Resv,  3=ADCSOCA
 	GpioCtrlRegs.GPADIR.bit.GPIO8 = 1;		// 1=OUTput,  0=INput
 	GpioCtrlRegs.GPAPUD.bit.GPIO8 = 1;      // Disable internal pullup
 	GpioDataRegs.GPACLEAR.bit.GPIO8 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO8 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-09 - PIN FUNCTION = Gimbal Status LED Green (off-board)
+//  GPIO-09 - PIN FUNCTION = Gimbal Status LED Green
 	GpioCtrlRegs.GPAMUX1.bit.GPIO9 = 0;		// 0=GPIO,  1=EPWM5B,  2=SCITXDB,  3=ECAP3
 	GpioCtrlRegs.GPADIR.bit.GPIO9 = 1;		// 1=OUTput,  0=INput
 	GpioCtrlRegs.GPAPUD.bit.GPIO9 = 1;      // Disable internal pullup
 	GpioDataRegs.GPACLEAR.bit.GPIO9 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO9 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-10 - PIN FUNCTION = Gimbal Status LED Blue (off-board)
+//  GPIO-10 - PIN FUNCTION = Gimbal Status LED Blue
 	GpioCtrlRegs.GPAMUX1.bit.GPIO10 = 0;	// 0=GPIO,  1=EPWM6A,  2=Resv,  3=ADCSOCB
 	GpioCtrlRegs.GPADIR.bit.GPIO10 = 1;		// 1=OUTput,  0=INput
 	GpioCtrlRegs.GPAPUD.bit.GPIO10 = 1;      // Disable internal pullup
@@ -325,6 +326,8 @@ void DeviceInit(void)
 	    break;
 
 	case EL:
+		// Initialise the Beacon LED specific peripherals
+		init_led_periph();
 	case ROLL:
 	    // On the EL and ROLL boards, GPIOs 16, 17, 18 and 19 get configured as SPI pins
 	    //--------------------------------------------------------------------------------------
@@ -622,6 +625,9 @@ void InitInterrupts()
 
         // Enable CPU INT8 for I2C FIFO and I2C addressed as slave (AAS)
         IER |= M_INT8;
+
+        // Initialise the Beacon LED specific interrupts
+        init_led_interrupts();
     }
 
     // Enable global Interrupts and higher priority real-time debug events:

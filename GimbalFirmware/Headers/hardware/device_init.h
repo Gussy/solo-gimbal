@@ -11,6 +11,8 @@
 #include "f2806x_int8.h"
 #include "PeripheralHeaderIncludes.h"
 
+#include "F2806x_EPwm_defines.h"
+
 void DeviceInit(void);
 void InitInterrupts();
 void ISR_ILLEGAL(void);

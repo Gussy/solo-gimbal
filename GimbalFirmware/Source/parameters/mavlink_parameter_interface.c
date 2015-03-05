@@ -15,6 +15,8 @@
 
 GimbalMavlinkParameter gimbal_params[MAVLINK_GIMBAL_PARAM_MAX];
 
+extern unsigned char gimbal_sysid;
+
 float commit_to_flash_status = 0.0;
 
 void init_default_mavlink_params()
@@ -446,6 +448,6 @@ void send_gimbal_param(int param_num)
         param_val = float_converter.float_val;
     }
 
-    mavlink_msg_param_value_pack(MAVLINK_GIMBAL_SYSID, MAV_COMP_ID_GIMBAL, &param_msg, param->param_id, param_val, param->param_type, MAVLINK_GIMBAL_PARAM_MAX, param_num);
+    mavlink_msg_param_value_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &param_msg, param->param_id, param_val, param->param_type, MAVLINK_GIMBAL_PARAM_MAX, param_num);
     send_mavlink_message(&param_msg);
 }
