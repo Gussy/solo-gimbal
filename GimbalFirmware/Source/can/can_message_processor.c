@@ -125,6 +125,11 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             md_parms->motor_drive_state = STATE_CALIBRATE_HOME_OFFSETS;
             break;
 
+        case CAND_CMD_START_FACTORY_TESTS:
+            // Transition to the factory tests state
+            cb_parms->running_tests = TRUE;
+            break;
+
         default:
             AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
             break;
@@ -214,11 +219,18 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         //NOTE: Using this for whatever debug info I'm looking for at the moment,
                         //so this parsing will change whenver I change whatever data I'm sending
                         char debug_msg[50];
+                        /*
                         Uint16 max_loop_time = (((Uint16)msg.extended_param[0] << 8) & 0xFF00) |
                                 ((Uint16)msg.extended_param[1] & 0x00FF);
                         Uint16 missed_interrupts = (((Uint16)msg.extended_param[2] << 8) & 0xFF00) |
                                 ((Uint16)msg.extended_param[3] & 0x00FF);
                         snprintf(debug_msg, 50, "Max Time: %d, Missed Intr: %d", max_loop_time, missed_interrupts);
+                        */
+                        //snprintf(debug_msg, 50, "El state: %d", msg.extended_param[0]);
+                        int16 error = (((Uint16)msg.extended_param[0] << 8) & 0xFF00) | ((Uint16)msg.extended_param[1] & 0x00FF);
+                        int16 min = (((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF);
+                        int16 encoder = (((Uint16)msg.extended_param[4] << 8) & 0xFF00) | ((Uint16)msg.extended_param[5] & 0x00FF);
+                        snprintf(debug_msg, 50, "Error: %d, Limit: %d, Enc: %d", error, min, encoder);
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                     }
                     break;
@@ -238,6 +250,20 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                             send_mavlink_calibration_progress(calibration_progress, GIMBAL_AXIS_ROLL, calibration_status);
                         }
                         break;
+
+                    case CAND_EPID_FACTORY_TEST_PROGRESS:
+                        if (msg.extended_param_length == 4) {
+                            send_mavlink_factory_test_progress((FACTORY_TEST)(msg.extended_param[0] & 0x00FF), msg.extended_param[1] & 0x00FF, msg.extended_param[2] & 0x00FF, msg.extended_param[3] & 0x00FF);
+                        }
+                        break;
+
+                    case CAND_EPID_FACTORY_TESTS_COMPLETE:
+                        cb_parms->running_tests = FALSE;
+                        // Disable the other two axes
+                        cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
+                        // Disable ourselves
+                        RelaxAZAxis();
+                        break;
                 }
             } else {
                 // Not an extended parameter, parse normally
@@ -250,10 +276,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 }
             }
         }
-
-        cb_parms->angle_targets[AZ]   = param_set[CAND_PID_TARGET_ANGLES_AZ].param;
-        cb_parms->angle_targets[EL]   = param_set[CAND_PID_TARGET_ANGLES_EL].param;
-        cb_parms->angle_targets[ROLL] = param_set[CAND_PID_TARGET_ANGLES_ROLL].param;
         break;
 
     case CAND_RX_PARAM_QUERY:
@@ -717,18 +739,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     }
                 }
                 break;
-
-                case CAND_PID_TARGET_ANGLES_AZ:
-                    cb_parms->angle_targets[AZ] = msg.param_response[msg.param_response_cnt-1];
-                    break;
-
-                case CAND_PID_TARGET_ANGLES_EL:
-                    cb_parms->angle_targets[EL] = msg.param_response[msg.param_response_cnt-1];
-                    break;
-
-                case CAND_PID_TARGET_ANGLES_ROLL:
-                    cb_parms->angle_targets[ROLL] = msg.param_response[msg.param_response_cnt-1];
-                    break;
 
                 case CAND_PID_GP_CMD:
                 {

@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 
-static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
+static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void send_mavlink_request_stream();
 static void handle_attitude(mavlink_message_t* received_msg);
 static void handle_mount_control(mavlink_message_t* received_msg);
@@ -33,6 +33,7 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
 static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_set_factory_params(mavlink_message_t* msg);
 static void handle_gimbal_erase_flash(mavlink_message_t* msg);
+static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardParms* cb_parms);
 
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
@@ -71,10 +72,10 @@ DebugData attitude_debug_data = {
 	0
 };
 
-void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
+void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
 	switch (mavlink_info->mavlink_processing_state) {
 	case MAVLINK_STATE_PARSE_INPUT:
-		process_mavlink_input(mavlink_info, md_parms, encoder_parms, load_ap_state_info);
+		process_mavlink_input(mavlink_info, cb_parms, md_parms, encoder_parms, load_ap_state_info);
 		break;
 
 	case MAVLINK_STATE_SEND_PARAM_LIST:
@@ -170,7 +171,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 	}
 }
 
-static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
+static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
 	static mavlink_message_t received_msg;
 	mavlink_status_t parse_status;
 
@@ -242,9 +243,11 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDrivePar
 			    handle_gimbal_erase_flash(&received_msg);
 			    break;
 
-			default: {
-				Uint8 msgid = received_msg.msgid;
-			}
+			case MAVLINK_MSG_ID_PERFORM_FACTORY_TESTS:
+			    handle_perform_factory_tests(&received_msg, cb_parms);
+			    break;
+
+			default:
 				break;
 			}
 		}
@@ -543,6 +546,27 @@ static void handle_gimbal_erase_flash(mavlink_message_t* msg)
     }
 }
 
+static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardParms* cb_parms)
+{
+    mavlink_perform_factory_tests_t decoded_msg;
+    mavlink_msg_perform_factory_tests_decode(msg, &decoded_msg);
+
+    // Make sure this is for us
+    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+        // Remember that we're performing tests
+        cb_parms->running_tests = TRUE;
+
+        // Enable all of the axes
+        // Enable the other two axes
+        cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
+        // Enable ourselves
+        EnableAZAxis();
+
+        // Command the EL axis to start the factory tests
+        cand_tx_command(CAND_ID_EL, CAND_CMD_START_FACTORY_TESTS);
+    }
+}
+
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
     static mavlink_message_t heartbeat_msg;
     mavlink_msg_heartbeat_pack(MAVLINK_GIMBAL_SYSID,
@@ -696,6 +720,19 @@ void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis, GIMBAL_
             calibration_status);
 
     send_mavlink_message(&calibration_progress_msg);
+}
+
+void send_mavlink_factory_test_progress(FACTORY_TEST test, Uint8 section, Uint8 progress, Uint8 status)
+{
+    static mavlink_message_t factory_test_progress_msg;
+    mavlink_msg_report_factory_tests_progress_pack(MAVLINK_GIMBAL_SYSID,
+            MAV_COMP_ID_GIMBAL,
+            &factory_test_progress_msg,
+            test,
+            section,
+            progress,
+            status);
+    send_mavlink_message(&factory_test_progress_msg);
 }
 
 void send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS result)

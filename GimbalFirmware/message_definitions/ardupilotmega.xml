@@ -164,6 +164,12 @@
 		</entry>
 	</enum>
 	
+	<enum name="FACTORY_TEST">
+		<entry name="FACTORY_TEST_AXIS_RANGE_LIMITS" value="0">
+			<description>Tests to make sure each axis can move to its mechanical limits</description>
+		</entry>
+	</enum>
+	
 	<!-- GoPro command result enumeration -->
 	<enum name="GOPRO_CMD_RESULT">
 		<entry name="GOPRO_CMD_RESULT_UNKNOWN" value="0">
@@ -704,6 +710,24 @@
 		<field name="target_system" type="uint8_t">System ID</field>
 		<field name="target_component" type="uint8_t">Component ID</field>
 		<field name="knock" type="uint32_t">Knock value to confirm this is a valid request</field>
+	</message>
+	
+	<message name="PERFORM_FACTORY_TESTS" id="197">
+		<description>
+			Command the gimbal to perform a series of factory tests.  Should not be needed by end users
+		</description>
+		<field name="target_system" type="uint8_t">System ID</field>
+		<field name="target_component" type="uint8_t">Component ID</field>
+	</message>
+	
+	<message name="REPORT_FACTORY_TESTS_PROGRESS" id="198">
+		<description>
+			Reports the current status of a section of a running factory test
+		</description>
+		<field name="test" type="uint8_t" enum="FACTORY_TEST">Which factory test is currently running</field>
+		<field name="test_section" type="uint8_t">Which section of the test is currently running.  The meaning of this is test-dependent</field>
+		<field name="test_section_progress" type="uint8_t">The progress of the current test section, 0x64=100%</field>
+		<field name="test_status" type="uint8_t">The status of the currently executing test section.  The meaning of this is test and section-dependent</field>
 	</message>
 
      </messages>

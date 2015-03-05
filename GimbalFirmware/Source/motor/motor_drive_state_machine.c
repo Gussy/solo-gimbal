@@ -16,6 +16,8 @@
 #include "control/PID.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "parameters/flash_params.h"
+#include "tests/factory_tests.h"
+#include "tests/test_axis_range_limits.h"
 #include "PeripheralHeaderIncludes.h"
 
 #include <string.h>

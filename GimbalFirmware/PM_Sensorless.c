@@ -41,6 +41,8 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "motor/motor_commutation.h"
 #include "can/can_parameter_updates.h"
 #include "hardware/encoder.h"
+#include "tests/factory_tests.h"
+#include "tests/test_axis_range_limits.h"
 
 #include <math.h>
 #include <string.h>
@@ -201,8 +203,10 @@ ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Tuning rate inject
     {0, 0, 0},                                              // Rate command inject
     READ_GYRO_PASS,                                         // Rate loop pass
+    RATE_MODE,                                              // Control loop type
     FALSE,                                                  // Initialized
-    FALSE                                                   // Enabled
+    FALSE,                                                  // Enabled
+    FALSE                                                   // Running tests
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
@@ -296,6 +300,23 @@ MotorDriveParms motor_drive_parms = {
     0,                              // Pre-init timer
     0,                              // Fault revive counter
     FALSE                           // Motor drive initialized
+};
+
+TestAxisRangeLimitsParms axis_range_limits_parms = {
+    EL,                                     // Test axis
+    RANGE_LIMITS_STATE_INIT,                // Test state
+    AXIS_RANGE_TEST_SECTION_EL_CHECK_NEG,   // Current Section
+    {-833.0, -555.0, -833.0},               // Axis range minimum
+    {833.0, 555.0, 833.0},                 // Axis range maximum
+    0.0,                                    // Current axis position
+    0.0,                                    // Position step
+    0,                                      // Status output decimation count
+    0                                       // Settle counter
+};
+
+FactoryTestsParms test_parms = {
+    TEST_AXIS_RANGE_LIMITS,     // Test type
+    &axis_range_limits_parms    // Axis range limits test parameters
 };
 
 Uint8 unused = FALSE;
@@ -598,7 +619,7 @@ void main(void)
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
 		if (board_hw_id == AZ) {
-		    mavlink_state_machine(&mavlink_gimbal_info, &motor_drive_parms, &encoder_parms, &load_ap_state_info);
+		    mavlink_state_machine(&mavlink_gimbal_info, &control_board_parms, &motor_drive_parms, &encoder_parms, &load_ap_state_info);
 		}
 
 		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
@@ -613,6 +634,15 @@ void main(void)
 
             // Increment the global timestamp counter
             global_timestamp_counter++;
+
+            // If we're the elevation board, and we're running factory tests, run an iteration of them here to update the motor commutation loop inputs
+            if ((board_hw_id == EL) && control_board_parms.running_tests) {
+                if (RunFactoryTestsIteration(&test_parms, &motor_drive_parms, &control_board_parms, &axis_parms, &encoder_parms) == 1) {
+                    // A return value of 1 means factory tests are finished running.  Inform the AZ board that we're done
+                    control_board_parms.running_tests = FALSE;
+                    CANSendFactoryTestsComplete();
+                }
+            }
 
             MotorCommutationLoop(&control_board_parms,
                     &axis_parms,
@@ -842,13 +872,18 @@ void A2(void) // SPARE (not used)
     // If we miss more than 10 rate commands in a row (roughly 100ms),
     // disable the gimbal axes.  They'll be re-enabled when we get a new
     // rate command
-    if (mavlink_gimbal_info.gimbal_active) {
-        if (++mavlink_gimbal_info.rate_cmd_timeout_counter >= 33) {
-            // Disable the other two axes
-            cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
-            // Disable ourselves
-            RelaxAZAxis();
-            mavlink_gimbal_info.gimbal_active = FALSE;
+    // If we're in factory test mode, don't go to disabled mode
+    if (GetBoardHWID() == AZ) {
+        if (mavlink_gimbal_info.gimbal_active) {
+            if (++mavlink_gimbal_info.rate_cmd_timeout_counter >= 33) {
+                if (!control_board_parms.running_tests) {
+                    // Disable the other two axes
+                    cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
+                    // Disable ourselves
+                    RelaxAZAxis();
+                }
+                mavlink_gimbal_info.gimbal_active = FALSE;
+            }
         }
     }
 
@@ -1086,6 +1121,7 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
         }
 	}
 
+	/*
 	// Debug messages for monitoring of loop timing
 	static int debug_output_decimation = 0;
     static int max_time_reset_counter = 0;
@@ -1097,7 +1133,7 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
             debug_info[1] = (MaxMainWorkElapsedTime & 0x000000FF);
             debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
             debug_info[3] = (MissedInterrupts & 0x000000FF);
-            //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
+            cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
 
             if (++max_time_reset_counter >= 5) {
                 max_time_reset_counter = 0;
@@ -1105,6 +1141,18 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
             }
         }
     }
+    */
+	// TODO: Debug messages for determining which state el board is in
+	/*
+	static int debug_output_decimation = 0;
+	if (board_hw_id == EL) {
+	    if (++debug_output_decimation >= 7) {
+	        debug_output_decimation = 0;
+	        Uint8 debug_info = motor_drive_parms.motor_drive_state;
+	        cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, &debug_info, 1);
+	    }
+	}
+	*/
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
 	C_Task_Ptr = &C3;	

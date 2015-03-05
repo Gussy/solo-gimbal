@@ -11,6 +11,7 @@
 #include "control/PID.h"
 #include "hardware/gyro.h"
 #include "control/gyro_kinematics_correction.h"
+#include "tests/factory_tests.h"
 #include "PM_Sensorless-Settings.h"
 
 static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);
@@ -107,21 +108,33 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
         break;
 
         case ERROR_AZ_PASS:
-            cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
+            if (cb_parms->control_loop_type == RATE_MODE) {
+                cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
+            } else {
+                cb_parms->axis_errors[AZ] = cb_parms->unfiltered_position_errors[AZ] - cb_parms->corrected_gyro_readings[AZ];
+            }
 
             // Set up the next rate loop pass to be the el error computation pass
             cb_parms->rate_loop_pass = ERROR_EL_PASS;
             break;
 
         case ERROR_EL_PASS:
-            cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject[EL] - cb_parms->corrected_gyro_readings[EL];
+            if (cb_parms->control_loop_type == RATE_MODE) {
+                cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject[EL] - cb_parms->corrected_gyro_readings[EL];
+            } else {
+                cb_parms->axis_errors[EL] = cb_parms->unfiltered_position_errors[EL] - cb_parms->corrected_gyro_readings[EL];
+            }
 
             // Set up the next rate loop pass to be the roll error computation pass
             cb_parms->rate_loop_pass = ERROR_ROLL_PASS;
             break;
 
         case ERROR_ROLL_PASS:
-            cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
+            if (cb_parms->control_loop_type == RATE_MODE) {
+                cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
+            } else {
+                cb_parms->axis_errors[ROLL] = cb_parms->unfiltered_position_errors[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
+            }
 
             // Set up the next rate loop pass to be the torque command output pass
             cb_parms->rate_loop_pass = TORQUE_OUT_PASS;

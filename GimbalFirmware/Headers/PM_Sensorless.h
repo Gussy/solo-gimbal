@@ -75,6 +75,11 @@ typedef enum {
     TORQUE_OUT_PASS
 } RateLoopPass;
 
+typedef enum {
+    POSITION_MODE,
+    RATE_MODE
+} ControlLoopType;
+
 typedef struct {
     Uint32 param;
     Uint8 *sema;
@@ -148,8 +153,10 @@ typedef struct {
     int16 tuning_rate_inject[AXIS_CNT];
     int16 rate_cmd_inject[AXIS_CNT];
     RateLoopPass rate_loop_pass;
+    ControlLoopType control_loop_type;
     Uint8 initialized;
     Uint8 enabled;
+    Uint8 running_tests;
 } ControlBoardParms;
 
 typedef struct {

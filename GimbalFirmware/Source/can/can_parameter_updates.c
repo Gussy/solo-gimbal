@@ -394,6 +394,22 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
             *(param_set[CAND_PID_GYRO_OFFSET_RL].sema) = FALSE;
         }
 
+        // Check for target angle updates
+        if (*(param_set[CAND_PID_TARGET_ANGLES_AZ].sema) == TRUE) {
+            cb_parms->angle_targets[AZ] = (int16)param_set[CAND_PID_TARGET_ANGLES_AZ].param;
+            *(param_set[CAND_PID_TARGET_ANGLES_AZ].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_TARGET_ANGLES_EL].sema) == TRUE) {
+            cb_parms->angle_targets[EL] = (int16)param_set[CAND_PID_TARGET_ANGLES_EL].param;
+            *(param_set[CAND_PID_TARGET_ANGLES_EL].sema) = FALSE;
+        }
+
+        if (*(param_set[CAND_PID_TARGET_ANGLES_ROLL].sema) == TRUE) {
+            cb_parms->angle_targets[ROLL] = param_set[CAND_PID_TARGET_ANGLES_ROLL].param;
+            *(param_set[CAND_PID_TARGET_ANGLES_ROLL].sema) = FALSE;
+        }
+
         // Check for any new GoPro commands
         if (*(param_set[CAND_PID_GP_CMD].sema) == TRUE) {
             // Extract the GoPro command and parameter from the CAN parameter
