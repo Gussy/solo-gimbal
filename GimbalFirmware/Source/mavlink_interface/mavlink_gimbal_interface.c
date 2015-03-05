@@ -144,8 +144,7 @@ void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_
 static void handle_data_transmission_handshake(mavlink_message_t *msg)
 {
 	/* does this need to be a state machine? */
-	if ((msg->sysid == MAVLINK_GIMBAL_SYSID)&&
-		(msg->compid == MAV_COMP_ID_GIMBAL)) {
+	if (msg->compid == MAV_COMP_ID_GIMBAL) {
 		// make sure this message is for us
 		// stop this axis
 		power_down_motor();
@@ -372,7 +371,7 @@ static void handle_gopro_power_on(mavlink_message_t* received_msg)
     mavlink_msg_gopro_power_on_decode(received_msg, &decoded_msg);
 
     // Make sure the message was for us.  If it was, send the GoPro power on command over CAN
-    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_ON);
     }
 }
@@ -383,7 +382,7 @@ static void handle_gopro_power_off(mavlink_message_t* received_msg)
     mavlink_msg_gopro_power_off_decode(received_msg, &decoded_msg);
 
     // Make sure the message was for us.  If it was, send the GoPro power off command over CAN
-    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         cand_tx_command(CAND_ID_EL, CAND_CMD_GOPRO_OFF);
     }
 }
@@ -394,7 +393,7 @@ static void handle_gopro_command(mavlink_message_t* received_msg)
     mavlink_msg_gopro_command_decode(received_msg, &decoded_msg);
 
     // Make sure the message was for us.  If it was, package up the command and send it over CAN
-    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         Uint32 parameter = 0;
         parameter |= (((Uint32)decoded_msg.gp_cmd_name_1) << 24) & 0xFF000000;
         parameter |= (((Uint32)decoded_msg.gp_cmd_name_2) << 16) & 0x00FF0000;
@@ -409,7 +408,7 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
     mavlink_msg_gimbal_control_decode(received_msg, &decoded_msg);
 
     // Make sure the message was for us.  If it was, send the various parameters over CAN
-    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         CAND_ParameterID rate_cmd_pids[3] = {CAND_PID_RATE_CMD_AZ, CAND_PID_RATE_CMD_EL, CAND_PID_RATE_CMD_RL};
         Uint32 rate_cmds[3] = {0, 0, 0};
 
@@ -447,7 +446,7 @@ static void handle_reset_gimbal(mavlink_message_t* received_msg)
     mavlink_msg_reset_gimbal_decode(received_msg, &decoded_msg);
 
     // Make sure the message is for us
-    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         // stop this axis
         RelaxAZAxis();
         power_down_motor();
@@ -519,7 +518,7 @@ static void handle_gimbal_erase_flash(mavlink_message_t* msg)
     mavlink_msg_erase_gimbal_firmware_and_config_decode(msg, &decoded_msg);
 
     // Make sure this message is for us
-    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         // Make sure the knock value is correct
         if (decoded_msg.knock == GIMBAL_FIRMWARE_ERASE_KNOCK) {
             // stop this axis
