@@ -556,7 +556,7 @@ static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardPar
     mavlink_msg_perform_factory_tests_decode(msg, &decoded_msg);
 
     // Make sure this is for us
-    if ((decoded_msg.target_system == MAVLINK_GIMBAL_SYSID) && (decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+    if (decoded_msg.target_component == MAV_COMP_ID_GIMBAL) {
         // Remember that we're performing tests
         cb_parms->running_tests = TRUE;
 
@@ -729,7 +729,7 @@ void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis, GIMBAL_
 void send_mavlink_factory_test_progress(FACTORY_TEST test, Uint8 section, Uint8 progress, Uint8 status)
 {
     static mavlink_message_t factory_test_progress_msg;
-    mavlink_msg_report_factory_tests_progress_pack(MAVLINK_GIMBAL_SYSID,
+    mavlink_msg_report_factory_tests_progress_pack(gimbal_sysid,
             MAV_COMP_ID_GIMBAL,
             &factory_test_progress_msg,
             test,
