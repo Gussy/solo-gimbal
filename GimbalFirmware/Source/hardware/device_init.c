@@ -51,8 +51,6 @@ void DeviceInit(void)
 	SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 0; // Return ADC clock to original state
 	EDIS;
 
-// Switch to Internal Oscillator 1 and turn off all other clock
-// sources to minimize power consumption
 	EALLOW;
 	SysCtrlRegs.CLKCTL.bit.INTOSC1OFF = 0;
     SysCtrlRegs.CLKCTL.bit.OSCCLKSRCSEL=0;  // Clk Src = INTOSC1
@@ -63,22 +61,15 @@ void DeviceInit(void)
 	SysCtrlRegs.CLKCTL.bit.OSCCLKSRCSEL = 1;  //Select osc2
     EDIS;
 
-// SYSTEM CLOCK speed based on Internal OSC = 10 MHz
-// 0x10=  80    MHz		(16)
-// 0xF =  75    MHz		(15)
-// 0xE =  70    MHz		(14)
-// 0xD =  65    MHz		(13)
-// 0xC =  60	MHz		(12)
-// 0xB =  55	MHz		(11)
-// 0xA =  50	MHz		(10)
-// 0x9 =  45	MHz		(9)
-// 0x8 =  40	MHz		(8)
-// 0x7 =  35	MHz		(7)
-// 0x6 =  30	MHz		(6)
-// 0x5 =  25	MHz		(5)
-// 0x4 =  20	MHz		(4)
-// 0x3 =  15	MHz		(3)
-// 0x2 =  10	MHz		(2)
+// SYSTEM CLOCK speed based on external 20MHz crystal
+// 0x9 =  90	MHz		(9)
+// 0x8 =  80	MHz		(8)
+// 0x7 =  70	MHz		(7)
+// 0x6 =  60	MHz		(6)
+// 0x5 =  50	MHz		(5)
+// 0x4 =  40	MHz		(4)
+// 0x3 =  30	MHz		(3)
+// 0x2 =  20	MHz		(2)
 
 	PLLset( 0x8 );	// choose from options above
 
