@@ -11,3 +11,4 @@ version.h
 data.h
 data.hh
 *.bin
+*.ax
