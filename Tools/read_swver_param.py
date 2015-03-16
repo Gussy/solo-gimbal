@@ -45,4 +45,4 @@ if not msg:
     sys.exit(1)
 else:
     swver_raw = float_to_bytes(msg.param_value)
-    print("SW Version %i.%i.%i" % (swver_raw[1], swver_raw[2], swver_raw[3]))
+    print("SW Version %i.%i.%i" % (swver_raw[3], swver_raw[2], swver_raw[1]))
