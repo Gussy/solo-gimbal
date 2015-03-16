@@ -93,6 +93,7 @@ def main():
     )
     link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
 
+
     # Load the binary image into a byte array
     print("Application binary: %s" % args.binary)
     hexfile = load_firmware(args.binary)
