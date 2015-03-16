@@ -29,7 +29,7 @@ if args.baudrate:
     baudrate = args.baudrate
 
 # Open the serial port
-mavserial = mavutil.mavserial(
+mavserial = mavutil.mavlink_connection(
     device = args.port,
     baud = baudrate
 )
