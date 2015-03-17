@@ -3,12 +3,9 @@
 """
 Utility for loading firmware into the 3DR Gimbal.
 
-@author: Angus Peart (angus@3dr.com)
 """
 
-import sys, argparse
-import base64, json, zlib
-from pymavlink import mavutil
+import sys,base64, json, zlib
 from pymavlink.dialects.v10 import common as mavlink
 
 MAVLINK_SYSTEM_ID = 50
@@ -74,96 +71,62 @@ def append_checksum(binary):
     return barray
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("binary", help="Application binary file load")
-    parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
-    parser.add_argument("-b", "--baudrate", help="Serial port baudrate")
-    args = parser.parse_args()
 
-    # Accept a command line baudrate, fallback to the default
-    baudrate = default_baudrate
-    if args.baudrate:
-        baudrate = args.baudrate
-
-    # Open the serial port
-    mavserial = mavutil.mavlink_connection(
-        device = args.port,
-        baud = baudrate
-    )
-    link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
-
-
-    # Load the binary image into a byte array
-    print("Application binary: %s" % args.binary)
-    hexfile = load_firmware(args.binary)
+def update(binary, link):
+    print ( # Load the binary image into a byte array
+        "Application binary: %s" % binary)
+    hexfile = load_firmware(binary)
     binary = append_checksum(hexfile)
-
-    # Wait for a handshake from the gimbal which contains the payload length
+# Wait for a handshake from the gimbal which contains the payload length
     sys.stdout.write("Uploading firmware to gimbal ")
     sys.stdout.flush()
     finished = False
     timeout_counter = 0
-
-    # Loop until we are finished
-    while(finished == False):
+# Loop until we are finished
+    while (finished == False):
         # Wait for target to reset into bootloader mode
-        msg = wait_handshake(mavserial)
-        if(msg == None):
-            # Signal the target to reset into bootloader mode
+        msg = wait_handshake(link.file)
+        if (msg == None):
+    # Signal the target to reset into bootloader mode
             link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
-
-            # Handshake timed out
+    # Handshake timed out
             sys.stdout.write('.')
             sys.stdout.flush()
-
-            # Timeout after ~10 seconds without messages
+    # Timeout after ~10 seconds without messages
             if timeout_counter > 10:
-                print("\nNot response from gimbal, exiting.")
+                print ("\nNot response from gimbal, exiting.")
                 sys.exit(1)
             timeout_counter += 1
         else:
             timeout_counter = 0
             sequence_number = msg.width
             payload_length = msg.payload
-
             # Print the bootloader version on the first data handshake
             if sequence_number == 0:
                 version_major = (msg.height >> 8) & 0xff
                 version_minor = msg.height & 0xff
                 sys.stdout.write(' (BL Ver %i.%i) ' % (version_major, version_minor))
                 sys.stdout.flush()
-
             # Calculate the window of data to send
-            start_idx = sequence_number*payload_length
-            end_idx = (sequence_number+1)*payload_length
-
+            start_idx = sequence_number * payload_length
+            end_idx = (sequence_number + 1) * payload_length
             # Clamp the end index from overflowing
-            if(end_idx > len(binary)):
+            if (end_idx > len(binary)):
                 end_idx = len(binary)
-
             # Slice the binary image
             data = binary[start_idx:end_idx]
-            
             # Pad the data to fit the mavlink message
             if len(data) < MAVLINK_ENCAPSULATED_DATA_LENGTH:
                 data.extend([0] * (MAVLINK_ENCAPSULATED_DATA_LENGTH - len(data)))
-            
             # Send the data with the corrosponding sequence number
             link.encapsulated_data_send(sequence_number, data)
-            
             # If the entire image buffer has been sent, exit this loop
             if end_idx >= len(binary):
                 finished = True
-
             sys.stdout.write("!")
             sys.stdout.flush()
-
-    # Send an "end of transmission" signal to the target, to cause a target reset
+    
+# Send an "end of transmission" signal to the target, to cause a target reset
     link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
-    print(" OK")
-
-if __name__ == '__main__':
-    main()
-    sys.exit(0)
-
+    print (" OK")
+    
