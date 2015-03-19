@@ -4,7 +4,7 @@
 #include "protocol_c2000.h"
 #endif
 
-#define MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST 189
+#define MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST 183
 
 typedef struct __mavlink_autopilot_version_request_t
 {
@@ -13,10 +13,10 @@ typedef struct __mavlink_autopilot_version_request_t
 } mavlink_autopilot_version_request_t;
 
 #define MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST_LEN 2
-#define MAVLINK_MSG_ID_189_LEN 2
+#define MAVLINK_MSG_ID_183_LEN 2
 
 #define MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST_CRC 85
-#define MAVLINK_MSG_ID_189_CRC 85
+#define MAVLINK_MSG_ID_183_CRC 85
 
 
 

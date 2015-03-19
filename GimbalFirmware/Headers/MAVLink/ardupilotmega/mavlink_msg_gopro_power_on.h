@@ -4,7 +4,7 @@
 #include "protocol_c2000.h"
 #endif
 
-#define MAVLINK_MSG_ID_GOPRO_POWER_ON 185
+#define MAVLINK_MSG_ID_GOPRO_POWER_ON 215
 
 typedef struct __mavlink_gopro_power_on_t
 {
@@ -13,10 +13,10 @@ typedef struct __mavlink_gopro_power_on_t
 } mavlink_gopro_power_on_t;
 
 #define MAVLINK_MSG_ID_GOPRO_POWER_ON_LEN 2
-#define MAVLINK_MSG_ID_185_LEN 2
+#define MAVLINK_MSG_ID_215_LEN 2
 
 #define MAVLINK_MSG_ID_GOPRO_POWER_ON_CRC 241
-#define MAVLINK_MSG_ID_185_CRC 241
+#define MAVLINK_MSG_ID_215_CRC 241
 
 
 
