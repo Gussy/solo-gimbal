@@ -159,6 +159,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             // don't want to rail up against the stop).  To do this, outside of a deadband in the middle of travel, we linearly increase an extra torque injection
             // up to max torque as we get closer and closer to the stop.
             float extra_torque = 0;
+            /*
             if ((cb_parms->encoder_readings[AZ] > 5000) && (cb_parms->encoder_readings[AZ] < ((int16)AZ_KEEP_OFF_STOP_START_COUNT_NEGATIVE))) {
                 // We're starting to get close to the stop on the negative side, so we need to start adding gain to the position error
                 extra_torque = (((AZ_KEEP_OFF_STOP_START_COUNT_NEGATIVE - ((float)cb_parms->encoder_readings[AZ])) / AZ_KEEP_OFF_STOP_SPAN_NEGATIVE) * AZ_KEEP_OFF_STOP_MAX_TORQUE) * TorqueSignMap[AZ];
@@ -166,6 +167,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
                 // We're starting to get close to the stop on the positive side, so we need to start adding gain to the position error
                 extra_torque = (((AZ_KEEP_OFF_STOP_START_COUNT_POSITIVE - ((float)cb_parms->encoder_readings[AZ])) / AZ_KEEP_OFF_STOP_SPAN_POSITIVE) * AZ_KEEP_OFF_STOP_MAX_TORQUE) * TorqueSignMap[AZ];
             }
+            */
 
             int32 az_torque = cb_parms->motor_torques[AZ] + (int32)extra_torque;
             if (az_torque > INT16_MAX) {

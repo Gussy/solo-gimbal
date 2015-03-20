@@ -1044,26 +1044,6 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 		axis_parms.BIT_heartbeat_decimate = 6;	// ~1 Hz
 	}
 
-	//TODO: Deal with over-temp and over-current for 3DR hardware
-	// ROBBY SAYS THIS IS WRONG, DON'T USE
-	/*
-	//Fault is asserted low if: an over current, GVDD under voltage or overtemperature (>150 C die temp)
-	if (CH1Faultn == 0 && Faultmsgsent == 0) {
-	   cand_tx_fault(CAND_FLVL_ERR, CAND_FMOD_POWER, "501", 3);
-	   Faultmsgsent = 1;
-	} else if (CH1Faultn == 0) {
-		Faultmsgsent = 0;
-	}
-
-	//OTW is asserted if die temp is >125C
-	if (CH1OTWn == 0 && OTWmsgsent == 0) {
-	   cand_tx_fault(CAND_FLVL_ERR, CAND_FMOD_TEMP, "501", 3);
-	   OTWmsgsent = 1;
-	} else if (CH1Faultn == 0) {
-		OTWmsgsent = 0;
-	}
-	*/
-
 	// If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
 	if (board_hw_id == EL) {
         if (gp_get_new_response_available()) {

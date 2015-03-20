@@ -44,9 +44,9 @@ void init_adc()
     ADC_DELAY_US(ADC_usDELAY);
 
     /******* CHANNEL SELECT *******/
-    // Set SOC's 0, 1, 2, 3, and 4 to be high priority, guaranteeing that phase current and encoder
+    // Set SOC's 0, 1, 2, 3, 4, and 5 to be high priority, guaranteeing that phase current and encoder
     // measurements always complete in preference to temperature and bus voltage measurements
-    AdcRegs.SOCPRICTL.bit.SOCPRIORITY = 5;
+    AdcRegs.SOCPRICTL.bit.SOCPRIORITY = 6;
 
     // Dummy read for ADC first read errata
     AdcRegs.ADCSOC0CTL.bit.CHSEL    = 0x1;  /* ChSelect: ADC A1-> Phase A Current Sense*/
