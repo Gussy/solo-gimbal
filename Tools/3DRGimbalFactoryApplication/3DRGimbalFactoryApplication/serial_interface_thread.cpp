@@ -115,15 +115,15 @@ void SerialInterfaceThread::handleInput()
                     handleStatusText(&received_msg);
                     break;
 
-                case MAVLINK_MSG_ID_HOME_OFFSET_CALIBRATION_RESULT:
+                case MAVLINK_MSG_ID_GIMBAL_HOME_OFFSET_CALIBRATION_RESULT:
                     handleHomeOffsetCalibrationResult(&received_msg);
                     break;
 
-                case MAVLINK_MSG_ID_FACTORY_PARAMETERS_LOADED:
+                case MAVLINK_MSG_ID_GIMBAL_FACTORY_PARAMETERS_LOADED:
                     emit factoryParametersLoaded();
                     break;
 
-                case MAVLINK_MSG_ID_REPORT_FACTORY_TESTS_PROGRESS:
+                case MAVLINK_MSG_ID_GIMBAL_REPORT_FACTORY_TESTS_PROGRESS:
                     handleFactoryTestsProgress(&received_msg);
                     break;
 
@@ -293,7 +293,7 @@ void SerialInterfaceThread::resetGimbal()
     m_interfaceState = INTERFACE_INITIALIZED;
 
     mavlink_message_t reset_msg;
-    mavlink_msg_reset_gimbal_pack(0,
+    mavlink_msg_gimbal_reset_pack(0,
                                   0,
                                   &reset_msg,
                                   MAVLINK_GIMBAL_SYSTEM_ID,
@@ -422,8 +422,8 @@ void SerialInterfaceThread::handleStatusText(mavlink_message_t *msg)
 
 void SerialInterfaceThread::handleFactoryTestsProgress(mavlink_message_t* msg)
 {
-    mavlink_report_factory_tests_progress_t decoded_msg;
-    mavlink_msg_report_factory_tests_progress_decode(msg, &decoded_msg);
+    mavlink_gimbal_report_factory_tests_progress_t decoded_msg;
+    mavlink_msg_gimbal_report_factory_tests_progress_decode(msg, &decoded_msg);
 
     emit factoryTestsStatus(decoded_msg.test, decoded_msg.test_section, decoded_msg.test_section_progress, decoded_msg.test_status);
 
@@ -536,7 +536,7 @@ void SerialInterfaceThread::requestCalibrateHomeOffsets()
 void SerialInterfaceThread::sendCalibrateHomeOffsets()
 {
     mavlink_message_t calHomeOffsetsMsg;
-    mavlink_msg_set_home_offsets_pack(0,
+    mavlink_msg_gimbal_set_home_offsets_pack(0,
                                       0,
                                       &calHomeOffsetsMsg,
                                       MAVLINK_GIMBAL_SYSTEM_ID,
@@ -546,8 +546,8 @@ void SerialInterfaceThread::sendCalibrateHomeOffsets()
 
 void SerialInterfaceThread::handleHomeOffsetCalibrationResult(mavlink_message_t* msg)
 {
-    mavlink_home_offset_calibration_result_t decoded_msg;
-    mavlink_msg_home_offset_calibration_result_decode(msg, &decoded_msg);
+    mavlink_gimbal_home_offset_calibration_result_t decoded_msg;
+    mavlink_msg_gimbal_home_offset_calibration_result_decode(msg, &decoded_msg);
     if (decoded_msg.calibration_result == GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED) {
         emit homeOffsetCalibrationFinished(true);
 
@@ -600,7 +600,7 @@ void SerialInterfaceThread::setGimbalFactoryParameters(unsigned short assyYear,
 
     // Compose the factory param set mavlink message
     mavlink_message_t factory_param_set_msg;
-    mavlink_msg_set_factory_parameters_pack(0,
+    mavlink_msg_gimbal_set_factory_parameters_pack(0,
                                             0,
                                             &factory_param_set_msg,
                                             MAVLINK_GIMBAL_SYSTEM_ID,
@@ -631,7 +631,7 @@ void SerialInterfaceThread::requestFactoryParameters()
 void SerialInterfaceThread::requestGimbalEraseFlash()
 {
     mavlink_message_t erase_flash_msg;
-    mavlink_msg_erase_gimbal_firmware_and_config_pack(0,
+    mavlink_msg_gimbal_erase_firmware_and_config_pack(0,
                                                       0,
                                                       &erase_flash_msg,
                                                       MAVLINK_GIMBAL_SYSTEM_ID,
@@ -656,7 +656,7 @@ void SerialInterfaceThread::requestGimbalFactoryTests()
 
     // Command the gimbal to start running the factory tests
     mavlink_message_t start_factory_tests_msg;
-    mavlink_msg_perform_factory_tests_pack(0,
+    mavlink_msg_gimbal_perform_factory_tests_pack(0,
                                            0,
                                            &start_factory_tests_msg,
                                            MAVLINK_GIMBAL_SYSTEM_ID,

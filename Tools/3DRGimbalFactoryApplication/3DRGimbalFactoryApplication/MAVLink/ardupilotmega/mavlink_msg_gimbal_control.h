@@ -4,7 +4,7 @@
 #include "protocol_c2000.h"
 #endif
 
-#define MAVLINK_MSG_ID_GIMBAL_CONTROL 184
+#define MAVLINK_MSG_ID_GIMBAL_CONTROL 201
 
 typedef struct __mavlink_gimbal_control_t
 {
@@ -16,10 +16,10 @@ typedef struct __mavlink_gimbal_control_t
 } mavlink_gimbal_control_t;
 
 #define MAVLINK_MSG_ID_GIMBAL_CONTROL_LEN 14
-#define MAVLINK_MSG_ID_184_LEN 14
+#define MAVLINK_MSG_ID_201_LEN 14
 
 #define MAVLINK_MSG_ID_GIMBAL_CONTROL_CRC 205
-#define MAVLINK_MSG_ID_184_CRC 205
+#define MAVLINK_MSG_ID_201_CRC 205
 
 
 
