@@ -51,8 +51,8 @@ Uint16 endRam;
 #define STATUS_LED_OFF()			{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
 #define STATUS_LED_TOGGLE()			{GpioDataRegs.GPATOGGLE.bit.GPIO7 = 1;}
 
-#define MAVLINK_SYSTEM_ID			50
-#define MAVLINK_COMPONENT_ID 		230
+#define MAVLINK_SYSTEM_ID			0
+#define MAVLINK_COMPONENT_ID 		MAV_COMP_ID_GIMBAL
 
 // Max payload of MAVLINK_MSG_ID_ENCAPSULATED_DATA message is 253 Bytes
 // Must be an even number or the uint8_t[] to uint16_t[] conversion will fail
@@ -62,7 +62,7 @@ Uint16 endRam;
 
 #define BOOTLOADER_KEY_VALUE_8BIT	0x08AA
 
-#define BOOTLOADER_VERSION_MAJOR	0x01
+#define BOOTLOADER_VERSION_MAJOR	0x02
 #define BOOTLOADER_VERSION_MINOR	0x00
 #define BOOTLOADER_VERSION			((BOOTLOADER_VERSION_MAJOR << 8) | BOOTLOADER_VERSION_MINOR)
 
@@ -578,8 +578,7 @@ Uint32 MAVLINK_Flash()
 				getting_messages = 1;
 				for(idx1 = 0; idx1 < read_size; idx1++) {
 					if(mavlink_parse_char(MAVLINK_COMM_0, buffer[idx1]&0xFF, &inmsg, &status)) {
-						if((inmsg.sysid == MAVLINK_SYSTEM_ID)&&
-							(inmsg.compid == MAVLINK_COMPONENT_ID)&&
+						if((inmsg.compid == MAVLINK_COMPONENT_ID)&&
 							(inmsg.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA)) {
 							if(inmsg.len > 2) {
 								seq = mavlink_msg_encapsulated_data_get_seqnr(&inmsg);
@@ -627,7 +626,7 @@ Uint32 MAVLINK_Flash()
 									seq++;
 								}
 							}
-						} else if((inmsg.sysid == MAVLINK_SYSTEM_ID) &&
+						} else if(
 								(inmsg.compid == MAVLINK_COMPONENT_ID) &&
 								(inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE)) {
 

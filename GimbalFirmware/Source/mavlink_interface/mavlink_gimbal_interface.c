@@ -231,23 +231,23 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			    handle_gimbal_control(&received_msg, mavlink_info);
 			    break;
 
-			case MAVLINK_MSG_ID_RESET_GIMBAL:
+			case MAVLINK_MSG_ID_GIMBAL_RESET:
 			    handle_reset_gimbal(&received_msg);
 			    break;
 
-			case MAVLINK_MSG_ID_SET_HOME_OFFSETS:
+			case MAVLINK_MSG_ID_GIMBAL_SET_HOME_OFFSETS:
 			    handle_set_home_offsets(md_parms, encoder_parms, load_ap_state_info);
 			    break;
 
-			case MAVLINK_MSG_ID_SET_FACTORY_PARAMETERS:
+			case MAVLINK_MSG_ID_GIMBAL_SET_FACTORY_PARAMETERS:
 			    handle_set_factory_params(&received_msg);
 			    break;
 
-			case MAVLINK_MSG_ID_ERASE_GIMBAL_FIRMWARE_AND_CONFIG:
+			case MAVLINK_MSG_ID_GIMBAL_ERASE_FIRMWARE_AND_CONFIG:
 			    handle_gimbal_erase_flash(&received_msg);
 			    break;
 
-			case MAVLINK_MSG_ID_PERFORM_FACTORY_TESTS:
+			case MAVLINK_MSG_ID_GIMBAL_PERFORM_FACTORY_TESTS:
 			    handle_perform_factory_tests(&received_msg, cb_parms);
 			    break;
 
@@ -445,8 +445,8 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
 
 static void handle_reset_gimbal(mavlink_message_t* received_msg)
 {
-    mavlink_reset_gimbal_t decoded_msg;
-    mavlink_msg_reset_gimbal_decode(received_msg, &decoded_msg);
+    mavlink_gimbal_reset_t decoded_msg;
+    mavlink_msg_gimbal_reset_decode(received_msg, &decoded_msg);
 
     // Make sure the message is for us
     if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
@@ -486,8 +486,8 @@ static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* enc
 
 static void handle_set_factory_params(mavlink_message_t* msg)
 {
-    mavlink_set_factory_parameters_t decoded_msg;
-    mavlink_msg_set_factory_parameters_decode(msg, &decoded_msg);
+    mavlink_gimbal_set_factory_parameters_t decoded_msg;
+    mavlink_msg_gimbal_set_factory_parameters_decode(msg, &decoded_msg);
 
     // Compose the assembly date and assembly time into the internal 32-bit format
     Uint32 assy_date = 0;
@@ -517,8 +517,8 @@ static void handle_set_factory_params(mavlink_message_t* msg)
 
 static void handle_gimbal_erase_flash(mavlink_message_t* msg)
 {
-    mavlink_erase_gimbal_firmware_and_config_t decoded_msg;
-    mavlink_msg_erase_gimbal_firmware_and_config_decode(msg, &decoded_msg);
+    mavlink_gimbal_erase_firmware_and_config_t decoded_msg;
+    mavlink_msg_gimbal_erase_firmware_and_config_decode(msg, &decoded_msg);
 
     // Make sure this message is for us
     if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
@@ -552,8 +552,8 @@ static void handle_gimbal_erase_flash(mavlink_message_t* msg)
 
 static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardParms* cb_parms)
 {
-    mavlink_perform_factory_tests_t decoded_msg;
-    mavlink_msg_perform_factory_tests_decode(msg, &decoded_msg);
+    mavlink_gimbal_perform_factory_tests_t decoded_msg;
+    mavlink_msg_gimbal_perform_factory_tests_decode(msg, &decoded_msg);
 
     // Make sure this is for us
     if (decoded_msg.target_component == MAV_COMP_ID_GIMBAL) {
@@ -729,7 +729,7 @@ void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis, GIMBAL_
 void send_mavlink_factory_test_progress(FACTORY_TEST test, Uint8 section, Uint8 progress, Uint8 status)
 {
     static mavlink_message_t factory_test_progress_msg;
-    mavlink_msg_report_factory_tests_progress_pack(gimbal_sysid,
+    mavlink_msg_gimbal_report_factory_tests_progress_pack(gimbal_sysid,
             MAV_COMP_ID_GIMBAL,
             &factory_test_progress_msg,
             test,
@@ -742,7 +742,7 @@ void send_mavlink_factory_test_progress(FACTORY_TEST test, Uint8 section, Uint8 
 void send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS result)
 {
     static mavlink_message_t home_offset_cal_result_msg;
-    mavlink_msg_home_offset_calibration_result_pack(gimbal_sysid,
+    mavlink_msg_gimbal_home_offset_calibration_result_pack(gimbal_sysid,
             MAV_COMP_ID_GIMBAL,
             &home_offset_cal_result_msg,
             result);
@@ -753,7 +753,7 @@ void send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS 
 void send_mavlink_factory_parameters_loaded()
 {
     static mavlink_message_t factory_params_loaded_msg;
-    mavlink_msg_factory_parameters_loaded_pack(gimbal_sysid,
+    mavlink_msg_gimbal_factory_parameters_loaded_pack(gimbal_sysid,
             MAV_COMP_ID_GIMBAL,
             &factory_params_loaded_msg,
             0);
