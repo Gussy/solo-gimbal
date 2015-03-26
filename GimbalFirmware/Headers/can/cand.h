@@ -40,8 +40,7 @@ typedef union {
     } fault;
     // Directive Messages
     struct {
-        unsigned :4;
-        unsigned command:3;   ///< Directive ID = bXXX see enum CAND_directive_id
+        unsigned command:7;   ///< Directive ID = bXXXXXXX see enum CAND_directive_id
         unsigned d_id:2;      ///< Destination ID = bXX see enum CAND_destination_id
         unsigned m_id:2;      ///< Message ID = b01
         unsigned :16;

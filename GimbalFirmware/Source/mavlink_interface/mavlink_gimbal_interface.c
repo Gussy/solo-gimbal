@@ -34,6 +34,8 @@ static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* enc
 static void handle_set_factory_params(mavlink_message_t* msg);
 static void handle_gimbal_erase_flash(mavlink_message_t* msg);
 static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardParms* cb_parms);
+static void handle_request_axis_calibration(mavlink_message_t* msg, MotorDriveParms* md_parms);
+static void handle_request_axis_calibration_status(mavlink_message_t* msg, ControlBoardParms* cb_parms);
 
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
@@ -249,6 +251,14 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 
 			case MAVLINK_MSG_ID_GIMBAL_PERFORM_FACTORY_TESTS:
 			    handle_perform_factory_tests(&received_msg, cb_parms);
+			    break;
+
+			case MAVLINK_MSG_ID_GIMBAL_REQUEST_AXIS_CALIBRATION:
+			    handle_request_axis_calibration(&received_msg, md_parms);
+			    break;
+
+			case MAVLINK_MSG_ID_GIMBAL_REQUEST_AXIS_CALIBRATION_STATUS:
+			    handle_request_axis_calibration_status(&received_msg, cb_parms);
 			    break;
 
 			default:
@@ -571,6 +581,40 @@ static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardPar
     }
 }
 
+static void handle_request_axis_calibration(mavlink_message_t* msg, MotorDriveParms* md_parms)
+{
+    // First, decode the message to see which axes are being requested to calibrate
+    mavlink_gimbal_request_axis_calibration_t decoded_msg;
+    mavlink_msg_gimbal_request_axis_calibration_decode(msg, &decoded_msg);
+
+    // Make sure the message is intended for us
+    if (decoded_msg.target_component == MAV_COMP_ID_GIMBAL) {
+        // Make sure we're in the waiting to calibrate state before commanding calibration
+        if (md_parms->motor_drive_state == STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND) {
+            // Tell all axes to start calibrating
+            cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_CALIBRATE_AXES);
+            md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
+        }
+    }
+}
+
+static void handle_request_axis_calibration_status(mavlink_message_t* msg, ControlBoardParms* cb_parms)
+{
+    mavlink_gimbal_request_axis_calibration_status_t decoded_msg;
+    mavlink_msg_gimbal_request_axis_calibration_status_decode(msg, &decoded_msg);
+
+    if (decoded_msg.target_component == MAV_COMP_ID_GIMBAL) {
+        /*
+        send_mavlink_axis_calibration_status(cb_parms->calibration_status[AZ] == CALIBRATION_REQUIRED,
+                                             cb_parms->calibration_status[EL] == CALIBRATION_REQUIRED,
+                                             cb_parms->calibration_status[ROLL] == CALIBRATION_REQUIRED);
+        */
+        send_mavlink_axis_calibration_status(cb_parms->calibration_status[AZ],
+                                             cb_parms->calibration_status[EL],
+                                             cb_parms->calibration_status[ROLL]);
+    }
+}
+
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
     static mavlink_message_t heartbeat_msg;
     mavlink_msg_heartbeat_pack(gimbal_sysid,
@@ -758,6 +802,18 @@ void send_mavlink_factory_parameters_loaded()
             &factory_params_loaded_msg,
             0);
     send_mavlink_message(&factory_params_loaded_msg);
+}
+
+void send_mavlink_axis_calibration_status(Uint8 az_needs_calibration, Uint8 el_needs_calibration, Uint8 rl_needs_calibration)
+{
+    static mavlink_message_t axis_calibration_status_msg;
+    mavlink_msg_gimbal_report_axis_calibration_status_pack(gimbal_sysid,
+            MAV_COMP_ID_GIMBAL,
+            &axis_calibration_status_msg,
+            az_needs_calibration,
+            el_needs_calibration,
+            rl_needs_calibration);
+    send_mavlink_message(&axis_calibration_status_msg);
 }
 
 void send_mavlink_message(mavlink_message_t* msg) {

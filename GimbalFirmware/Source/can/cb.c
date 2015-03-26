@@ -126,6 +126,15 @@ void CANSendFactoryTestsComplete()
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_FACTORY_TESTS_COMPLETE, NULL, 0);
 }
 
+void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status)
+{
+    Uint8 params[2];
+    params[0] = status;
+    params[1] = GetBoardHWID();
+
+    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_CALIBRATION_REQUIRED_STATUS, params, 2);
+}
+
 void IFBSendVersionV2( DavinciVersion* v )
 {
 	static DavinciVersionState sw_version_state = VERSION_MAJOR;

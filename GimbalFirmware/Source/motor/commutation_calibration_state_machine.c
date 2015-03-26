@@ -373,6 +373,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
 		    calibration_progress = 100;
 		    send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED);
+		    CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE);
 		    break;
 
     }

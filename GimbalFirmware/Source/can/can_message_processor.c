@@ -130,6 +130,10 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             cb_parms->running_tests = TRUE;
             break;
 
+        case CAND_CMD_CALIBRATE_AXES:
+            md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
+            break;
+
         default:
             AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
             break;
@@ -263,6 +267,14 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
                         // Disable ourselves
                         RelaxAZAxis();
+                        break;
+
+                    case CAND_EPID_CALIBRATION_REQUIRED_STATUS:
+                        if (msg.extended_param_length == 2) {
+                            GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_required_status = (GIMBAL_AXIS_CALIBRATION_REQUIRED)(msg.extended_param[0] & 0x00FF);
+                            GimbalAxis axis = (GimbalAxis)(msg.extended_param[1] & 0x00FF);
+                            cb_parms->calibration_status[axis] = calibration_required_status;
+                        }
                         break;
                 }
             } else {
