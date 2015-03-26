@@ -41,7 +41,8 @@ signals:
     void axisCalibrationStarted(int axis);
     void axisCalibrationFinished(int axis, bool successful);
     void requestFirmwareVersion();
-    void requestCalibrateAxes();
+    void requestCalibrateAxesSetup(bool calibrateYaw, bool calibratePitch, bool calibrateRoll);
+    void requestCalibrateAxesPerform();
     void retryAxesCalibration();
     void requestResetGimbal();
     void requestHomeOffsetCalibration();
@@ -60,6 +61,8 @@ signals:
     void requestEraseGimbalFlash();
     void requestStartFactoryTests();
     void factoryTestsStatus(int test, int test_section, int test_progress, int test_status);
+    void gimbalAxisCalibrationStatus(bool yawNeedsCalibration, bool pitchNeedsCalibration, bool rollNeedsCalibration);
+    void requestAxisCalibrationStatus();
 
 private:
     Ui::MainWindow *ui;
@@ -68,8 +71,15 @@ private:
     SerialInterfaceThread* m_serialThreadObj;
     QTimer m_connectionTimeoutTimer;
 
+    void setUIGimbalConnectedNoFirmware();
+    void setUIGimbalConnectedNeedsCalibration();
+    void setUIGimbalConnected();
+    void setUIGimbalDisconnected();
+
 private slots:
     void connectionTimeout();
+    void gimbalRequiresCalibration(bool requiresCalibration);
+
     void on_connectButton_clicked();
     void on_disconnectButton_clicked();
     void on_firmwareImageBrowseButton_clicked();

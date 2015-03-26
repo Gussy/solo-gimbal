@@ -5,7 +5,8 @@
 
 CalibrateAxesDialog::CalibrateAxesDialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CalibrateAxesDialog)
+    ui(new Ui::CalibrateAxesDialog),
+    m_axisCalibrationStatusReceived(true)
 {
     // Disable all of the title bar buttons (so the user can't close the dialog from the title bar)
     setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
@@ -130,6 +131,18 @@ void CalibrateAxesDialog::resetForCalibrationRetry()
     ui->yawProgress->setValue(0);
     ui->yawStatus->setText("Waiting for calibration");
     emit retryAxesCalibration();
+    m_axisCalibrationStatusReceived = false;
+}
+
+void CalibrateAxesDialog::receiveAxisCalibrationStatus(bool yawNeedsCalibration, bool pitchNeedsCalibration, bool rollNeedsCalibration)
+{
+    // We can receive this message more than once, so only act on the first reception
+    if (!m_axisCalibrationStatusReceived) {
+        m_axisCalibrationStatusReceived = true;
+        // Receiving the calibration status message indicates that the gimbal has reset,
+        // so send the command to start calibration
+        emit requestStartAxisCalibration();
+    }
 }
 
 void CalibrateAxesDialog::reject()

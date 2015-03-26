@@ -63,7 +63,8 @@ public slots:
     void handleInput();
     void requestStop();
     void requestLoadFirmware(QString firmwareImageFileName);
-    void requestCalibrateAxes();
+    void requestCalibrateAxesSetup(bool calibrateYaw, bool calibratePitch, bool calibrateRoll);
+    void requestCalibrateAxesPerform();
     void requestResetGimbal();
     void requestFirmwareVersion();
     void retryAxesCalibration();
@@ -81,6 +82,7 @@ public slots:
     void requestGimbalEraseFlash();
     void requestGimbalFactoryTests();
     void requestCalibrationParameters();
+    void requestAxisCalibrationStatus();
 
 signals:
     void receivedHeartbeat();
@@ -96,6 +98,7 @@ signals:
     void sendFactoryParameters(QString assyDateTime, QString serialNumber);
     void factoryParametersLoaded();
     void factoryTestsStatus(int test, int test_section, int test_progress, int test_status);
+    void gimbalAxisCalibrationStatus(bool yawAxisNeedsCalibration, bool pitchAxisNeedsCalibration, bool rollAxisNeedsCalibration);
 
 private:
     QSerialPort* m_serialPort;
@@ -127,6 +130,7 @@ private:
     void handleStatusText(mavlink_message_t* msg);
     void handleHomeOffsetCalibrationResult(mavlink_message_t* msg);
     void handleFactoryTestsProgress(mavlink_message_t* msg);
+    void handleReportAxisCalibrationStatus(mavlink_message_t* msg);
     void sendLoadFirmwareStart(int numPackets);
     void sendCalibrateHomeOffsets();
     void sendParamRequest(QString paramName);

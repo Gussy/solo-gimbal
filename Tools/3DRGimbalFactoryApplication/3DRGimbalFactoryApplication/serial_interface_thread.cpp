@@ -127,6 +127,10 @@ void SerialInterfaceThread::handleInput()
                     handleFactoryTestsProgress(&received_msg);
                     break;
 
+                case MAVLINK_MSG_ID_GIMBAL_REPORT_AXIS_CALIBRATION_STATUS:
+                    handleReportAxisCalibrationStatus(&received_msg);
+                    break;
+
                 default:
                     //qDebug() << "Unknown message ID received: " << received_msg.msgid << "\n";
                     break;
@@ -266,21 +270,40 @@ void SerialInterfaceThread::handleGimbalAxisCalibrationProgress(mavlink_message_
     }
 }
 
-void SerialInterfaceThread::requestCalibrateAxes()
+void SerialInterfaceThread::requestCalibrateAxesSetup(bool calibrateYaw, bool calibratePitch, bool calibrateRoll)
 {
-    // Set all commutation calibration parameters to 0
-    mavlinkSetParam("CC_YAW_SLOPE", 0.0);
-    mavlinkSetParam("CC_YAW_ICEPT", 0.0);
-    mavlinkSetParam("CC_ROLL_SLOPE", 0.0);
-    mavlinkSetParam("CC_ROLL_ICEPT", 0.0);
-    mavlinkSetParam("CC_PITCH_SLOPE", 0.0);
-    mavlinkSetParam("CC_PITCH_ICEPT", 0.0);
+    // Set the requested commutation calibration parameters to 0
+    if (calibrateYaw) {
+        mavlinkSetParam("CC_YAW_SLOPE", 0.0);
+        mavlinkSetParam("CC_YAW_ICEPT", 0.0);
+    }
+
+    if (calibratePitch) {
+        mavlinkSetParam("CC_PITCH_SLOPE", 0.0);
+        mavlinkSetParam("CC_PITCH_ICEPT", 0.0);
+    }
+
+    if (calibrateRoll) {
+        mavlinkSetParam("CC_ROLL_SLOPE", 0.0);
+        mavlinkSetParam("CC_ROLL_ICEPT", 0.0);
+    }
 
     // Commit the zeroed out calibration parameters to flash
     mavlinkSetParam("COMMIT_FLASH", 69.0);
 
     // Reset the gimbal
     resetGimbal();
+}
+
+void SerialInterfaceThread::requestCalibrateAxesPerform()
+{
+    mavlink_message_t perform_calibration_msg;
+    mavlink_msg_gimbal_request_axis_calibration_pack(0,
+                                                     0,
+                                                     &perform_calibration_msg,
+                                                     MAVLINK_GIMBAL_SYSTEM_ID,
+                                                     MAV_COMP_ID_GIMBAL);
+    sendMavlinkMessage(&perform_calibration_msg);
 }
 
 void SerialInterfaceThread::requestResetGimbal()
@@ -290,7 +313,7 @@ void SerialInterfaceThread::requestResetGimbal()
 
 void SerialInterfaceThread::resetGimbal()
 {
-    m_interfaceState = INTERFACE_INITIALIZED;
+    //m_interfaceState = INTERFACE_INITIALIZED;
 
     mavlink_message_t reset_msg;
     mavlink_msg_gimbal_reset_pack(0,
@@ -403,7 +426,7 @@ void SerialInterfaceThread::handleParamValue(mavlink_message_t *msg)
                 QString(option) +
                 QString::number(year) +
                 QString::number(month, 16) +
-                QString::number(m_lastSerialNumber3);
+                QString("%1").arg(static_cast<ulong>(m_lastSerialNumber3), 5, 10, QChar('0'));
         emit sendFactoryParameters(dateTimeString, serialNumber);
     } else {
         // If we don't have special handling installed for a particular parameter,
@@ -497,6 +520,24 @@ void SerialInterfaceThread::handleFactoryTestsProgress(mavlink_message_t* msg)
 
     qDebug("Test: %s, Section: %s, Progress: %d, Status: %s", test, section, decoded_msg.test_section_progress, status);
     */
+}
+
+void SerialInterfaceThread::handleReportAxisCalibrationStatus(mavlink_message_t *msg)
+{
+    mavlink_gimbal_report_axis_calibration_status_t decoded_msg;
+    mavlink_msg_gimbal_report_axis_calibration_status_decode(msg, &decoded_msg);
+
+    // If any of the axis calibration statuses are unknown, resend the request.  Otherwise,
+    // let the rest of the application know the calibration status for all axes
+    if ((decoded_msg.yaw_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) ||
+        (decoded_msg.pitch_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) ||
+        (decoded_msg.roll_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN)) {
+        requestAxisCalibrationStatus();
+    } else {
+        emit gimbalAxisCalibrationStatus((decoded_msg.yaw_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE),
+                                         (decoded_msg.pitch_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE),
+                                         (decoded_msg.roll_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE));
+    }
 }
 
 void SerialInterfaceThread::retryAxesCalibration()
@@ -673,4 +714,15 @@ void SerialInterfaceThread::requestCalibrationParameters()
     sendParamRequest("CC_ROLL_SLOPE");
     sendParamRequest("CC_ROLL_ICEPT");
     sendParamRequest("PID_YAW_P");
+}
+
+void SerialInterfaceThread::requestAxisCalibrationStatus()
+{
+    mavlink_message_t request_axis_cal_status_msg;
+    mavlink_msg_gimbal_request_axis_calibration_status_pack(0,
+                                                            0,
+                                                            &request_axis_cal_status_msg,
+                                                            MAVLINK_GIMBAL_SYSTEM_ID,
+                                                            MAV_COMP_ID_GIMBAL);
+    sendMavlinkMessage(&request_axis_cal_status_msg);
 }

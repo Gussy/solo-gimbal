@@ -21,7 +21,9 @@ SOURCES += main.cpp\
     enter_factory_parameters_dialog.cpp \
     datevalidator.cpp \
     timevalidator.cpp \
-    axis_range_test_dialog.cpp
+    axis_range_test_dialog.cpp \
+    axis_calibration_status_dialog.cpp \
+    choose_axes_to_calibrate_dialog.cpp
 
 HEADERS  += mainwindow.h \
     MAVLink/ardupilotmega/ardupilotmega.h \
@@ -202,14 +204,18 @@ HEADERS  += mainwindow.h \
     MAVLink/ardupilotmega/mavlink_msg_factory_parameters_loaded.h \
     MAVLink/ardupilotmega/mavlink_msg_set_factory_parameters.h \
     axis_range_test_dialog.h \
-    version.h
+    version.h \
+    axis_calibration_status_dialog.h \
+    choose_axes_to_calibrate_dialog.h
 
 FORMS    += mainwindow.ui \
     load_firmware_dialog.ui \
     calibrate_axes_dialog.ui \
     home_offset_calibration_result_dialog.ui \
     enter_factory_parameters_dialog.ui \
-    axis_range_test_dialog.ui
+    axis_range_test_dialog.ui \
+    axis_calibration_status_dialog.ui \
+    choose_axes_to_calibrate_dialog.ui
 
 RESOURCES += \
     images.qrc

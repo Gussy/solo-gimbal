@@ -6,6 +6,8 @@
 #include "home_offset_calibration_result_dialog.h"
 #include "enter_factory_parameters_dialog.h"
 #include "axis_range_test_dialog.h"
+#include "axis_calibration_status_dialog.h"
+#include "choose_axes_to_calibrate_dialog.h"
 #include "version.h"
 
 #include <QSerialPort>
@@ -63,7 +65,6 @@ void MainWindow::on_connectButton_clicked()
     connect(m_serialThreadObj, SIGNAL(axisCalibrationFinished(int,bool)), this, SIGNAL(axisCalibrationFinished(int,bool)));
     connect(this, SIGNAL(requestFirmwareVersion()), m_serialThreadObj, SLOT(requestFirmwareVersion()));
     connect(m_serialThreadObj, SIGNAL(sendFirmwareVersion(QString)), this, SLOT(receiveFirmwareVersion(QString)));
-    connect(this, SIGNAL(requestCalibrateAxes()), m_serialThreadObj, SLOT(requestCalibrateAxes()));
     connect(m_serialThreadObj, SIGNAL(serialPortOpenError(QString)), this, SLOT(receiveSerialPortOpenError(QString)));
     connect(this, SIGNAL(retryAxesCalibration()), m_serialThreadObj, SLOT(retryAxesCalibration()));
     connect(this, SIGNAL(requestResetGimbal()), m_serialThreadObj, SLOT(requestResetGimbal()));
@@ -77,6 +78,10 @@ void MainWindow::on_connectButton_clicked()
     connect(this, SIGNAL(requestEraseGimbalFlash()), m_serialThreadObj, SLOT(requestGimbalEraseFlash()));
     connect(this, SIGNAL(requestStartFactoryTests()), m_serialThreadObj, SLOT(requestGimbalFactoryTests()));
     connect(m_serialThreadObj, SIGNAL(factoryTestsStatus(int,int,int,int)), this, SIGNAL(factoryTestsStatus(int,int,int,int)));
+    connect(m_serialThreadObj, SIGNAL(gimbalAxisCalibrationStatus(bool,bool,bool)), this, SIGNAL(gimbalAxisCalibrationStatus(bool,bool,bool)));
+    connect(this, SIGNAL(requestAxisCalibrationStatus()), m_serialThreadObj, SLOT(requestAxisCalibrationStatus()));
+    connect(this, SIGNAL(requestCalibrateAxesSetup(bool,bool,bool)), m_serialThreadObj, SLOT(requestCalibrateAxesSetup(bool,bool,bool)));
+    connect(this, SIGNAL(requestCalibrateAxesPerform()), m_serialThreadObj, SLOT(requestCalibrateAxesPerform()));
     m_serialThread.start();
 
     // Disable the connect button, enable the disconnect button
@@ -144,21 +149,25 @@ void MainWindow::receivedGimbalHeartbeat()
     // Set connection status to connected
     ui->connectionStatus->setText("Connected");
 
-    // Enable the load firmware and calibration controls
-    ui->loadFirmwareButton->setEnabled(true);
-    ui->firmwareImage->setEnabled(true);
-    ui->firmwareImageBrowseButton->setEnabled(true);
-    ui->runAxisCalibrationButton->setEnabled(true);
-    ui->setHomePositionsButton->setEnabled(true);
-    ui->setUnitParametersButton->setEnabled(true);
-    ui->eraseGimbalFlashButton->setEnabled(true);
-    ui->factoryTestsButton->setEnabled(true);
+    // Since we don't know whether the gimbal needs calibration yet, only enable
+    // the subset of controls that are valid when the gimbal is uncalibrated
+    setUIGimbalConnectedNeedsCalibration();
 
     // Request gimbal firmware version
     emit requestFirmwareVersion();
 
     // Request the factory parameters (assembly date, serial number)
     emit requestFactoryParameters();
+
+    // Wait for the gimbal axis calibration status
+    AxisCalibrationStatusDialog dialog;
+    connect(this, SIGNAL(gimbalAxisCalibrationStatus(bool,bool,bool)), &dialog, SLOT(receiveCalibrationStatus(bool,bool,bool)));
+    connect(&dialog, SIGNAL(gimbalRequiresCalibration(bool)), this, SLOT(gimbalRequiresCalibration(bool)));
+
+    // Request the gimbal axis calibration status
+    emit requestAxisCalibrationStatus();
+
+    dialog.exec();
 }
 
 void MainWindow::receivedGimbalDataTransmissionHandshake()
@@ -171,10 +180,7 @@ void MainWindow::receivedGimbalDataTransmissionHandshake()
     // Set connection status to connected
     ui->connectionStatus->setText("Connected");
 
-    // Enable only the load firmware controls
-    ui->loadFirmwareButton->setEnabled(true);
-    ui->firmwareImage->setEnabled(true);
-    ui->firmwareImageBrowseButton->setEnabled(true);
+    setUIGimbalConnectedNoFirmware();
 
     // Show the user a message indicating that they need to load firmware
     QMessageBox msg;
@@ -195,15 +201,7 @@ void MainWindow::on_disconnectButton_clicked()
     ui->disconnectButton->setEnabled(false);
     ui->connectButton->setEnabled(true);
 
-    // Disable the load firmware and calibration controls
-    ui->loadFirmwareButton->setEnabled(false);
-    ui->firmwareImage->setEnabled(false);
-    ui->firmwareImageBrowseButton->setEnabled(false);
-    ui->runAxisCalibrationButton->setEnabled(false);
-    ui->setHomePositionsButton->setEnabled(false);
-    ui->setUnitParametersButton->setEnabled(false);
-    ui->eraseGimbalFlashButton->setEnabled(false);
-    ui->factoryTestsButton->setEnabled(false);
+    setUIGimbalDisconnected();
 
     // Change connection status to disconnected
     ui->connectionStatus->setText("Disconnected");
@@ -242,32 +240,26 @@ void MainWindow::on_loadFirmwareButton_clicked()
         connect(this, SIGNAL(firmwareLoadProgress(double)), &firmwareDialog, SLOT(updateFirmwareProgress(double)));
         emit requestFirmwareDownload(ui->firmwareImage->text());
         if (firmwareDialog.exec() == QDialog::Accepted) {
-            // Once the firmware load has completed, bring up the calibrate axes dialog
-            // (in case the newly loaded gimbal needs to run the axis calibration)
-            CalibrateAxesDialog calibrateAxesDialog;
-            connect(this, SIGNAL(axisCalibrationStarted(int)), &calibrateAxesDialog, SLOT(axisCalibrationStarted(int)));
-            connect(this, SIGNAL(axisCalibrationFinished(int,bool)), &calibrateAxesDialog, SLOT(axisCalibrationFinished(int,bool)));
-            connect(&calibrateAxesDialog, SIGNAL(retryAxesCalibration()), this, SIGNAL(retryAxesCalibration()));
-            if (calibrateAxesDialog.exec() == QDialog::Accepted) {
-                // Once the axis calibration is complete, but only if it completed successfully,
-                // bring up the factory parameters dialog to set assembly date/time and serial number
-                EnterFactoryParametersDialog factoryParmsDialog;
-                connect(&factoryParmsDialog, SIGNAL(setGimbalFactoryParameters(unsigned short,unsigned char,unsigned char,unsigned char,unsigned char,unsigned char,ulong,ulong,ulong)), this, SIGNAL(setGimbalFactoryParameters(unsigned short,unsigned char,unsigned char,unsigned char,unsigned char,unsigned char,ulong,ulong,ulong)));
-                connect(this, SIGNAL(factoryParametersLoaded()), &factoryParmsDialog, SLOT(factoryParametersLoaded()));
-                factoryParmsDialog.exec();
+            // Once the firmware load has completed, enable the parts of the UI that are valid if the gimbal is not calibrated
+            setUIGimbalConnectedNeedsCalibration();
 
-                // Once the factory parameters dialog has been disposed of, enable the rest of the UI, since there's now firmware loaded
-                ui->runAxisCalibrationButton->setEnabled(true);
-                ui->setHomePositionsButton->setEnabled(true);
-                ui->setUnitParametersButton->setEnabled(true);
-                ui->eraseGimbalFlashButton->setEnabled(true);
-                ui->factoryTestsButton->setEnabled(true);
+            // Bring up the axis calibration status dialog
+            AxisCalibrationStatusDialog calibrationStatusDialog;
+            connect(this, SIGNAL(gimbalAxisCalibrationStatus(bool,bool,bool)), &calibrationStatusDialog, SLOT(receiveCalibrationStatus(bool,bool,bool)));
+            connect(&calibrationStatusDialog, SIGNAL(gimbalRequiresCalibration(bool)), this, SLOT(gimbalRequiresCalibration(bool)));
+            calibrationStatusDialog.exec();
 
-                // Reload the firmware version, since it has probably changed after the update
-                emit requestFirmwareVersion();
-                // Also reload the factory parameters, since the user has entered new ones
-                emit requestFactoryParameters();
-            }
+            // Once the user has closed the calibration status dialog,
+            // bring up the factory parameters dialog to set assembly date/time and serial number
+            EnterFactoryParametersDialog factoryParmsDialog;
+            connect(&factoryParmsDialog, SIGNAL(setGimbalFactoryParameters(unsigned short,unsigned char,unsigned char,unsigned char,unsigned char,unsigned char,ulong,ulong,ulong)), this, SIGNAL(setGimbalFactoryParameters(unsigned short,unsigned char,unsigned char,unsigned char,unsigned char,unsigned char,ulong,ulong,ulong)));
+            connect(this, SIGNAL(factoryParametersLoaded()), &factoryParmsDialog, SLOT(factoryParametersLoaded()));
+            factoryParmsDialog.exec();
+
+            // Reload the firmware version, since it has probably changed after the update
+            emit requestFirmwareVersion();
+            // Also reload the factory parameters, since the user has entered new ones
+            emit requestFactoryParameters();
         }
     }
 }
@@ -287,15 +279,21 @@ void MainWindow::on_runAxisCalibrationButton_clicked()
     msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     msg.setDefaultButton(QMessageBox::No);
     if (msg.exec() == QMessageBox::Yes) {
-        emit requestCalibrateAxes();
+        ChooseAxesToCalibrateDialog chooseAxesDialog;
+        connect(&chooseAxesDialog, SIGNAL(requestAxisCalibrationSetup(bool,bool,bool)), this, SIGNAL(requestCalibrateAxesSetup(bool,bool,bool)));
+        connect(&chooseAxesDialog, SIGNAL(requestAxisCalibrationStart()), this, SIGNAL(requestCalibrateAxesPerform()));
+        connect(this, SIGNAL(gimbalAxisCalibrationStatus(bool,bool,bool)), &chooseAxesDialog, SLOT(receiveGimbalAxisCalibrationStatus(bool,bool,bool)));
+
         CalibrateAxesDialog calibrateAxesDialog;
         connect(this, SIGNAL(axisCalibrationStarted(int)), &calibrateAxesDialog, SLOT(axisCalibrationStarted(int)));
         connect(this, SIGNAL(axisCalibrationFinished(int,bool)), &calibrateAxesDialog, SLOT(axisCalibrationFinished(int,bool)));
         connect(&calibrateAxesDialog, SIGNAL(retryAxesCalibration()), this, SIGNAL(retryAxesCalibration()));
-        if (calibrateAxesDialog.exec() == QDialog::Rejected) {
-            // If the user canceled the calibration, reset the gimbal
-            emit requestResetGimbal();
-        }
+        connect(this, SIGNAL(gimbalAxisCalibrationStatus(bool,bool,bool)), &calibrateAxesDialog, SLOT(receiveAxisCalibrationStatus(bool,bool,bool)));
+        connect(&calibrateAxesDialog, SIGNAL(requestStartAxisCalibration()), this, SIGNAL(requestCalibrateAxesPerform()));
+
+        chooseAxesDialog.exec();
+
+        calibrateAxesDialog.exec();
     }
 }
 
@@ -368,14 +366,7 @@ void MainWindow::on_eraseGimbalFlashButton_clicked()
         emit requestEraseGimbalFlash();
 
         // Disable the load firmware and calibration controls
-        ui->loadFirmwareButton->setEnabled(false);
-        ui->firmwareImage->setEnabled(false);
-        ui->firmwareImageBrowseButton->setEnabled(false);
-        ui->runAxisCalibrationButton->setEnabled(false);
-        ui->setHomePositionsButton->setEnabled(false);
-        ui->setUnitParametersButton->setEnabled(false);
-        ui->eraseGimbalFlashButton->setEnabled(false);
-        ui->factoryTestsButton->setEnabled(false);
+        setUIGimbalDisconnected();
 
         // Change connection status to disconnected
         ui->connectionStatus->setText("Erasing flash...");
@@ -396,6 +387,62 @@ void MainWindow::on_factoryTestsButton_clicked()
     connect(&dialog, SIGNAL(requestTestRetry()), this, SIGNAL(requestStartFactoryTests()));
     emit requestStartFactoryTests();
     dialog.exec();
+}
+
+void MainWindow::gimbalRequiresCalibration(bool requiresCalibration)
+{
+    // If the gimbal does not require calibration, enable the entire UI
+    // Else, the UI has already been put into the connected but needs calibration state,
+    // so don't do anything
+    if (!requiresCalibration) {
+        setUIGimbalConnected();
+    }
+}
+
+void MainWindow::setUIGimbalConnectedNoFirmware()
+{
+    // Enable only the load firmware controls
+    ui->loadFirmwareButton->setEnabled(true);
+    ui->firmwareImage->setEnabled(true);
+    ui->firmwareImageBrowseButton->setEnabled(true);
+}
+
+void MainWindow::setUIGimbalConnectedNeedsCalibration()
+{
+    // Enable the load firmware and calibration controls
+    ui->loadFirmwareButton->setEnabled(true);
+    ui->firmwareImage->setEnabled(true);
+    ui->firmwareImageBrowseButton->setEnabled(true);
+    ui->runAxisCalibrationButton->setEnabled(true);
+    ui->setHomePositionsButton->setEnabled(true);
+    ui->setUnitParametersButton->setEnabled(true);
+    ui->eraseGimbalFlashButton->setEnabled(true);
+}
+
+void MainWindow::setUIGimbalConnected()
+{
+    // Enable the load firmware, calibration, and factory tests controls
+    ui->loadFirmwareButton->setEnabled(true);
+    ui->firmwareImage->setEnabled(true);
+    ui->firmwareImageBrowseButton->setEnabled(true);
+    ui->runAxisCalibrationButton->setEnabled(true);
+    ui->setHomePositionsButton->setEnabled(true);
+    ui->setUnitParametersButton->setEnabled(true);
+    ui->eraseGimbalFlashButton->setEnabled(true);
+    ui->factoryTestsButton->setEnabled(true);
+}
+
+void MainWindow::setUIGimbalDisconnected()
+{
+    // Disable all controls except connection settings
+    ui->loadFirmwareButton->setEnabled(false);
+    ui->firmwareImage->setEnabled(false);
+    ui->firmwareImageBrowseButton->setEnabled(false);
+    ui->runAxisCalibrationButton->setEnabled(false);
+    ui->setHomePositionsButton->setEnabled(false);
+    ui->setUnitParametersButton->setEnabled(false);
+    ui->eraseGimbalFlashButton->setEnabled(false);
+    ui->factoryTestsButton->setEnabled(false);
 }
 
 void MainWindow::closeEvent(QCloseEvent *)
