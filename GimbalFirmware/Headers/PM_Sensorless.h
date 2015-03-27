@@ -73,7 +73,9 @@ typedef enum {
     ERROR_AZ_PASS,
     ERROR_EL_PASS,
     ERROR_ROLL_PASS,
-    TORQUE_OUT_PASS
+    ERROR_CALC_PASS,
+    TORQUE_OUT_PASS,
+    TELEM_OUT_PASS
 } RateLoopPass;
 
 typedef enum {
