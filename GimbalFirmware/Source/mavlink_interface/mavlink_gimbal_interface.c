@@ -40,7 +40,7 @@ uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
 
 unsigned char feedback_id;
 
-unsigned char gimbal_sysid = 0;
+unsigned char gimbal_sysid = 1;
 
 int messages_received = 0;
 int heartbeats_received = 0;
