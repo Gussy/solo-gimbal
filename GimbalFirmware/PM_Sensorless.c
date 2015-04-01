@@ -1095,14 +1095,21 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
         }
     }
     */
-	// TODO: Debug messages for determining which state el board is in
 	/*
+	// TODO: Debug messages for determining which state rl board is in
 	static int debug_output_decimation = 0;
-	if (board_hw_id == EL) {
+	if (board_hw_id == AZ) {
 	    if (++debug_output_decimation >= 7) {
 	        debug_output_decimation = 0;
-	        Uint8 debug_info = motor_drive_parms.motor_drive_state;
-	        cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, &debug_info, 1);
+	        //Uint8 debug_info = motor_drive_parms.motor_drive_state;
+	        //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, &debug_info, 1);
+
+	        char debug_msg[50];
+
+            // Current state debug
+            snprintf(debug_msg, 50, "EL HB: %d, RL HB: %d", axis_parms.other_axis_hb_recvd[EL], axis_parms.other_axis_hb_recvd[ROLL]);
+
+            send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
 	    }
 	}
 	*/
