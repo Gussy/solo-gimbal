@@ -51,6 +51,11 @@ void ChooseAxesToCalibrateDialog::on_setupCalibrationButton_clicked()
         msg.setIcon(QMessageBox::Information);
         msg.exec();
     } else {
+        // Disable the axis select checkboxes
+        ui->calibrateYaw->setEnabled(false);
+        ui->calibratePitch->setEnabled(false);
+        ui->calibrateRoll->setEnabled(false);
+
         emit requestAxisCalibrationSetup(ui->calibrateYaw->isChecked(), ui->calibratePitch->isChecked(), ui->calibrateRoll->isChecked());
         ui->setupCalibrationButton->setEnabled(false);
         ui->settingUpCalibration_label->setVisible(true);

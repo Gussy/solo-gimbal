@@ -17,7 +17,7 @@ public:
 
 public slots:
     void receiveCalibrationStatus(bool yawNeedsCalibration, bool pitchNeedsCalibration, bool rollNeedsCalibration);
-    void reject();
+    //void reject();
 
 signals:
     void gimbalRequiresCalibration(bool requiresCalibration);

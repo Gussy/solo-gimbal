@@ -69,7 +69,9 @@ void AxisCalibrationStatusDialog::receiveCalibrationStatus(bool yawNeedsCalibrat
     }
 }
 
+/*
 void AxisCalibrationStatusDialog::reject()
 {
     // Overriding this to prevent default behavior of escape key causing dialog to exit
 }
+*/
