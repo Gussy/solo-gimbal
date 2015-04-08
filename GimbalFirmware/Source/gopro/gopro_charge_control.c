@@ -33,9 +33,9 @@ void gp_update_charge_control(int16 proc_temperature, int16 batt_level)
 
         case GOPRO_CHARGE_HALTED_OVER_TEMP:
             // See if we've cooled down enough to resume charging again
-            if (proc_temperature < RESUME_CHARGING_TEMP_LIMIT_C) {
+            if (proc_temperature <= RESUME_CHARGING_TEMP_LIMIT_C) {
                 // If we've cooled down enough, check capacity to make sure we shouldn't still be disabled
-                if (batt_level < RESUME_CHARGING_CHARGE_LEVEL) {
+                if (batt_level <= RESUME_CHARGING_CHARGE_LEVEL) {
                     gp_enable_charging();
                     send_charge_event(CHARGING_RESUMED_UNDER_TEMP);
                     charge_state = GOPRO_CHARGING;
@@ -48,9 +48,9 @@ void gp_update_charge_control(int16 proc_temperature, int16 batt_level)
 
         case GOPRO_CHARGE_HALTED_OVER_CAPACITY:
             // See if battery charge level has reduced enough to resume charging again
-            if (batt_level < RESUME_CHARGING_CHARGE_LEVEL) {
+            if (batt_level <= RESUME_CHARGING_CHARGE_LEVEL) {
                 // If we're at a low enough battery level, check temperature to make sure we shouldn't still be disabled
-                if (proc_temperature < RESUME_CHARGING_TEMP_LIMIT_C) {
+                if (proc_temperature <= RESUME_CHARGING_TEMP_LIMIT_C) {
                     gp_enable_charging();
                     send_charge_event(CHARGING_RESUMED_UNDER_CAPACITY_THRESHOLD);
                     charge_state = GOPRO_CHARGING;
