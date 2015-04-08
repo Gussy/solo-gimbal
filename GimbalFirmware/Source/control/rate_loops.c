@@ -39,7 +39,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             ReadAccel(&(raw_accel_readings[GyroAxisMap[X_AXIS]]), &(raw_accel_readings[GyroAxisMap[Y_AXIS]]), &(raw_accel_readings[GyroAxisMap[Z_AXIS]]));
             //cb_parms->rate_loop_pass = READ_TEMP_PASS;
             // Skip reading temperature for now
-            cb_parms->rate_loop_pass = KINEMATICS_PASS
+            cb_parms->rate_loop_pass = KINEMATICS_PASS;
             break;
 
         case READ_TEMP_PASS:
