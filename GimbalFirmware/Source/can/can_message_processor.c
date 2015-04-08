@@ -296,26 +296,26 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     case CAND_EPID_GP_CHARGE_CONTROL_EVENT:
                         if (msg.extended_param_length == 1) {
                             GoProChargeControlEvent charge_event = (GoProChargeControlEvent)(msg.extended_param[0]);
-                            char msg[50];
+                            char msg[75];
                             MAV_SEVERITY severity;
                             switch (charge_event) {
                             case CHARGING_HALTED_OVER_TEMP:
-                                snprintf(msg, 50, "GoPro charging halted due to high temperature condition");
+                                snprintf(msg, 75, "GoPro charging halted due to high temperature condition");
                                 severity = MAV_SEVERITY_WARNING;
                                 break;
 
                             case CHARGING_HALTED_CAPACITY_THRESHOLD_REACHED:
-                                snprintf(msg, 50, "GoPro charging halted due to capacity threshold reached");
+                                snprintf(msg, 75, "GoPro charging halted due to capacity threshold reached");
                                 severity = MAV_SEVERITY_WARNING;
                                 break;
 
                             case CHARGING_RESUMED_UNDER_TEMP:
-                                snprintf(msg, 50, "High temperature condition resolved, GoPro charging resumed");
+                                snprintf(msg, 75, "High temperature condition resolved, GoPro charging resumed");
                                 severity = MAV_SEVERITY_NOTICE;
                                 break;
 
                             case CHARGING_RESUMED_UNDER_CAPACITY_THRESHOLD:
-                                snprintf(msg, 50, "GoPro battery under capacity threshold, charging resumed");
+                                snprintf(msg, 75, "GoPro battery under capacity threshold, charging resumed");
                                 severity = MAV_SEVERITY_NOTICE;
                                 break;
                             }
