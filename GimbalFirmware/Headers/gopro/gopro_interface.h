@@ -95,5 +95,9 @@ Uint16 gp_ready_for_cmd();
 void addressed_as_slave_callback(I2CAIntSrc int_src);
 GPCmdResponse* gp_get_last_response();
 Uint8 gp_get_new_response_available();
+void gp_enable_hb_interface();
+void gp_disable_hb_interface();
+void gp_enable_charging();
+void gp_disable_charging();
 
 #endif /* GOPRO_INTERFACE_H_ */

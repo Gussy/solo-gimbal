@@ -69,6 +69,7 @@ typedef enum {
 typedef enum {
     READ_GYRO_PASS,
     READ_ACCEL_PASS,
+    READ_TEMP_PASS,
     KINEMATICS_PASS,
     ERROR_AZ_PASS,
     ERROR_EL_PASS,
@@ -161,6 +162,7 @@ typedef struct {
     Uint8 initialized;
     Uint8 enabled;
     Uint8 running_tests;
+    int16 last_gyro_temp;
 } ControlBoardParms;
 
 typedef struct {

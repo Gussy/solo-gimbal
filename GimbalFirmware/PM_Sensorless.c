@@ -44,6 +44,7 @@ Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 #include "tests/factory_tests.h"
 #include "tests/test_axis_range_limits.h"
 #include "hardware/led.h"
+#include "gopro/gopro_charge_control.h"
 
 #include <math.h>
 #include <string.h>
@@ -212,7 +213,8 @@ ControlBoardParms control_board_parms = {
     RATE_MODE,                                              // Control loop type
     FALSE,                                                  // Initialized
     FALSE,                                                  // Enabled
-    FALSE                                                   // Running tests
+    FALSE,                                                  // Running tests
+    0                                                       // Last gyro temperature
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
@@ -522,6 +524,11 @@ void main(void)
 
         // Initialize the HeroBus interface
         init_gp_interface();
+
+        // Enable the GoPro HeroBus interface
+        gp_enable_hb_interface();
+        // Enable the GoPro charging interface
+        gp_enable_charging();
 
         // Initialize the beacon LED
         init_led();
@@ -884,6 +891,7 @@ void A2(void) // SPARE (not used)
     // disable the gimbal axes.  They'll be re-enabled when we get a new
     // rate command
     // If we're in factory test mode, don't go to disabled mode
+
     if (GetBoardHWID() == AZ) {
         if (mavlink_gimbal_info.gimbal_active) {
             if (++mavlink_gimbal_info.rate_cmd_timeout_counter >= 33) {
@@ -1129,7 +1137,9 @@ int mavlink_heartbeat_counter = 0;
 void C3(void) // Read temperature and handle stopping motor on receipt of fault messages
 //-----------------------------------------
 {
-	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset*33/30) * (long)TempSlope*33/30))>>14) + 1)>>1;
+    static int gopro_charge_control_counter = 0;
+
+	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset) * (long)TempSlope))>>14) + 1)>>1;
 
 	DcBusVoltage = AdcResult.ADCRESULT14; // DC Bus voltage meas.
 
@@ -1144,6 +1154,27 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 			mavlink_heartbeat_counter = 0;
 		}
 	}
+
+	// Monitor temperature and GoPro battery level every 5s to determine if we need to start or stop GoPro charging
+	if (board_hw_id == EL) {
+	    if (gopro_charge_control_counter++ >= 34) { // 34 = roughly every 5s, period of C3 is 150ms
+	        // TODO: Use actual GoPro battery level once we have code to read it
+	        gp_update_charge_control(DegreesC, 0);
+	        gopro_charge_control_counter = 0;
+	    }
+	}
+
+	//TODO: Sending temp for debug
+	/*
+	if (board_hw_id == EL) {
+	    Uint8 params[4];
+	    params[0] = (DegreesC >> 8) & 0x00FF;
+	    params[1] = (DegreesC & 0x00FF);
+	    params[2] = (control_board_parms.last_gyro_temp >> 8) & 0x00FF;
+	    params[3] = (control_board_parms.last_gyro_temp & 0x00FF);
+	    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, params, 4);
+	}
+	*/
 
 #ifdef ENABLE_BALANCE_PROCEDURE
 	if (axis_parms.run_motor) {

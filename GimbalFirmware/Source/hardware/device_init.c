@@ -364,8 +364,8 @@ void DeviceInit(void)
 	GpioCtrlRegs.GPAMUX2.bit.GPIO23 = 0;	// 0=GPIO,  1=EQEP1I,  2=MFSXA,  3=SCIRXDB
 	GpioCtrlRegs.GPAPUD.bit.GPIO23 = 1;     // Disable the internal pullup on this pin
 	GpioCtrlRegs.GPADIR.bit.GPIO23 = 1;		// 1=OUTput,  0=INput
-	GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;	// uncomment if --> Set Low initially
-//	GpioDataRegs.GPASET.bit.GPIO23 = 1;		// uncomment if --> Set High initially
+//	GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;	// uncomment if --> Set Low initially
+	GpioDataRegs.GPASET.bit.GPIO23 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
 //  GPIO-24 - PIN FUNCTION = Debug SPI port MOSI
 	GpioCtrlRegs.GPAMUX2.bit.GPIO24 = 3;	// 0=GPIO,  1=ECAP1,  2=EQEP2A,  3=SPISIMOB
@@ -394,14 +394,15 @@ void DeviceInit(void)
 //	GpioDataRegs.GPACLEAR.bit.GPIO27 = 1;	// uncomment if --> Set Low initially
 	GpioDataRegs.GPASET.bit.GPIO27 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-28 - PIN FUNCTION = UART RX, non-isolated NOTE: Temporary GPIO for debugging
+//  GPIO-28 - PIN FUNCTION = GoPro BacPac Detect Control, Active Low
 	GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;	// 0=GPIO,  1=SCIRXDA,  2=SDAA,  3=TZ2
 	GpioCtrlRegs.GPADIR.bit.GPIO28 = 1;		// 1=OUTput,  0=INput
-	GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;	// uncomment if --> Set Low initially
-//	GpioDataRegs.GPASET.bit.GPIO28 = 1;		// uncomment if --> Set High initially
+	GpioCtrlRegs.GPAPUD.bit.GPIO28 = 1;     // Disable pullup on this pin
+//	GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;	// uncomment if --> Set Low initially
+	GpioDataRegs.GPASET.bit.GPIO28 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-29 - PIN FUNCTION = UART TX, non-isolated NOTE: Temporary GPIO for debugging
-	GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 1;	// 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
+//  GPIO-29 - PIN FUNCTION = Unused (may be used for debug UART if needed)
+	GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;	// 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
 	GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;		// 1=OUTput,  0=INput
 	GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPASET.bit.GPIO29 = 1;		// uncomment if --> Set High initially

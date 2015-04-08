@@ -17,6 +17,7 @@
 #include "gopro/gopro_interface.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "helpers/fault_handling.h"
+#include "gopro/gopro_charge_control.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -234,7 +235,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         */
 
                         // Current state debug
-                        snprintf(debug_msg, 50, "Rl state: %d", msg.extended_param[0]);
+                        //snprintf(debug_msg, 50, "Rl state: %d", msg.extended_param[0]);
 
                         //Encoder debug
                         /*
@@ -244,6 +245,11 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         snprintf(debug_msg, 50, "Error: %d, Limit: %d, Enc: %d", error, min, encoder);
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                         */
+
+                        // Temperature debug
+                        int16 proc_temp = (int16)((((Uint16)msg.extended_param[0] << 8) & 0xFF00) | ((Uint16)msg.extended_param[1] & 0x00FF));
+                        int16 gyro_temp = (int16)((((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF));
+                        snprintf(debug_msg, 50, "Proc temp: %d, Gyro Temp: %d", proc_temp, gyro_temp);
 
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                     }
@@ -284,6 +290,37 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                             GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_required_status = (GIMBAL_AXIS_CALIBRATION_REQUIRED)(msg.extended_param[0] & 0x00FF);
                             GimbalAxis axis = (GimbalAxis)(msg.extended_param[1] & 0x00FF);
                             cb_parms->calibration_status[axis] = calibration_required_status;
+                        }
+                        break;
+
+                    case CAND_EPID_GP_CHARGE_CONTROL_EVENT:
+                        if (msg.extended_param_length == 1) {
+                            GoProChargeControlEvent charge_event = (GoProChargeControlEvent)(msg.extended_param[0]);
+                            char msg[50];
+                            MAV_SEVERITY severity;
+                            switch (charge_event) {
+                            case CHARGING_HALTED_OVER_TEMP:
+                                snprintf(msg, 50, "GoPro charging halted due to high temperature condition");
+                                severity = MAV_SEVERITY_WARNING;
+                                break;
+
+                            case CHARGING_HALTED_CAPACITY_THRESHOLD_REACHED:
+                                snprintf(msg, 50, "GoPro charging halted due to capacity threshold reached");
+                                severity = MAV_SEVERITY_WARNING;
+                                break;
+
+                            case CHARGING_RESUMED_UNDER_TEMP:
+                                snprintf(msg, 50, "High temperature condition resolved, GoPro charging resumed");
+                                severity = MAV_SEVERITY_NOTICE;
+                                break;
+
+                            case CHARGING_RESUMED_UNDER_CAPACITY_THRESHOLD:
+                                snprintf(msg, 50, "GoPro battery under capacity threshold, charging resumed");
+                                severity = MAV_SEVERITY_NOTICE;
+                                break;
+                            }
+
+                            send_mavlink_statustext(msg, severity);
                         }
                         break;
                 }
