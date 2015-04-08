@@ -99,6 +99,7 @@ signals:
     void factoryParametersLoaded();
     void factoryTestsStatus(int test, int test_section, int test_progress, int test_status);
     void gimbalAxisCalibrationStatus(bool yawAxisNeedsCalibration, bool pitchAxisNeedsCalibration, bool rollAxisNeedsCalibration);
+    void gimbalStatusMessage(unsigned int severity, QString message);
 
 private:
     QSerialPort* m_serialPort;

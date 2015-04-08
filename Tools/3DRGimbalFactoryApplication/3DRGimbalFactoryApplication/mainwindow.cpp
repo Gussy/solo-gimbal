@@ -17,10 +17,12 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QDialog>
+#include <QTime>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    m_gimbalMessagesVisible(false)
 {
     ui->setupUi(this);
 
@@ -38,6 +40,26 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Populate the version string
     ui->version_label->setText(QString(GitVersionString) + QString("-") + QString(GitBranch));
+
+    // Hide the gimbal messages console by default
+    ui->gimbalMessagesConsole->setVisible(false);
+    this->adjustSize();
+
+    // Set up gimbal messages window stylesheet
+    ui->gimbalMessagesConsole->document()->setDefaultStyleSheet(".info_msg { \
+                                                                    color: #00529B; \
+                                                                    background-color: #BDE5F8; \
+                                                                } \
+                                                                .warning_msg { \
+                                                                    color: #9F6000; \
+                                                                    background-color: #FEEFB3; \
+                                                                } \
+                                                                .error_msg { \
+                                                                    color: #D8000C; \
+                                                                    background-color: #FFBABA; \
+                                                                }");
+    // Set max number of gimbal messages at 1000
+    ui->gimbalMessagesConsole->document()->setMaximumBlockCount(1000);
 }
 
 MainWindow::~MainWindow()
@@ -82,6 +104,7 @@ void MainWindow::on_connectButton_clicked()
     connect(this, SIGNAL(requestAxisCalibrationStatus()), m_serialThreadObj, SLOT(requestAxisCalibrationStatus()));
     connect(this, SIGNAL(requestCalibrateAxesSetup(bool,bool,bool)), m_serialThreadObj, SLOT(requestCalibrateAxesSetup(bool,bool,bool)));
     connect(this, SIGNAL(requestCalibrateAxesPerform()), m_serialThreadObj, SLOT(requestCalibrateAxesPerform()));
+    connect(m_serialThreadObj, SIGNAL(gimbalStatusMessage(uint,QString)), this, SLOT(receiveGimbalStatusMessage(uint,QString)));
     m_serialThread.start();
 
     // Disable the connect button, enable the disconnect button
@@ -269,6 +292,80 @@ void MainWindow::receiveFirmwareVersion(QString versionString)
     ui->firmwareLoaded->setText(versionString);
 }
 
+void MainWindow::receiveGimbalStatusMessage(unsigned int severity, QString message)
+{
+    QString newMessage = "";
+
+    // Set the text color appropriate to the message severity
+    switch (severity) {
+        case MAV_SEVERITY_EMERGENCY:
+        case MAV_SEVERITY_ALERT:
+        case MAV_SEVERITY_CRITICAL:
+        case MAV_SEVERITY_ERROR:
+            newMessage += "<span class='error_msg'>";
+            break;
+
+        case MAV_SEVERITY_WARNING:
+            newMessage += "<span class='warning_msg'>";
+            break;
+
+        case MAV_SEVERITY_NOTICE:
+        case MAV_SEVERITY_INFO:
+        case MAV_SEVERITY_DEBUG:
+            newMessage += "<span class='info_msg'>";
+            break;
+    }
+
+    // Add the current time to the message
+    newMessage += QTime::currentTime().toString("HH:mm:ss ");
+
+    // Add the severity level to the message
+    switch (severity) {
+        case MAV_SEVERITY_EMERGENCY:
+            newMessage += QString("EMERGENCY: ");
+            break;
+
+        case MAV_SEVERITY_ALERT:
+            newMessage += QString("ALERT: ").leftJustified(11, ' ');
+            break;
+
+        case MAV_SEVERITY_CRITICAL:
+            newMessage += QString("CRITICAL: ").leftJustified(11, ' ');
+            break;
+
+        case MAV_SEVERITY_ERROR:
+            newMessage += QString("ERROR: ").leftJustified(11, ' ');
+            break;
+
+        case MAV_SEVERITY_WARNING:
+            newMessage += QString("WARNING: ").leftJustified(11, ' ');
+            break;
+
+        case MAV_SEVERITY_NOTICE:
+            newMessage += QString("NOTICE: ").leftJustified(11, ' ');
+            break;
+
+        case MAV_SEVERITY_INFO:
+            newMessage += QString("INFO: ").leftJustified(11, ' ');
+            break;
+
+        case MAV_SEVERITY_DEBUG:
+            newMessage += QString("DEBUG: ").leftJustified(11, ' ');
+            break;
+    }
+
+    // Add the actual message
+    newMessage += message;
+
+    // Close the color span tag
+    newMessage += "</span>";
+
+    // Append the new message to the log window
+    ui->gimbalMessagesConsole->textCursor().insertBlock();
+    ui->gimbalMessagesConsole->textCursor().insertHtml(newMessage);
+    ui->gimbalMessagesConsole->ensureCursorVisible();
+}
+
 void MainWindow::on_runAxisCalibrationButton_clicked()
 {
     // First, make sure the user really wants to run the axis calibration
@@ -387,6 +484,21 @@ void MainWindow::on_factoryTestsButton_clicked()
     connect(&dialog, SIGNAL(requestTestRetry()), this, SIGNAL(requestStartFactoryTests()));
     emit requestStartFactoryTests();
     dialog.exec();
+}
+
+void MainWindow::on_showHideGimbalMessagesButton_clicked()
+{
+    if (m_gimbalMessagesVisible) {
+        ui->gimbalMessagesConsole->setVisible(false);
+        this->resize(ui->connectionInfoFrame->width() - 500, this->height());
+        ui->showHideGimbalMessagesButton->setText("Show Gimbal Messages");
+        m_gimbalMessagesVisible = false;
+    } else {
+        ui->gimbalMessagesConsole->setVisible(true);
+        this->resize(ui->connectionInfoFrame->width() + 500, this->height());
+        ui->showHideGimbalMessagesButton->setText("Hide Gimbal Messages");
+        m_gimbalMessagesVisible = true;
+    }
 }
 
 void MainWindow::gimbalRequiresCalibration(bool requiresCalibration)

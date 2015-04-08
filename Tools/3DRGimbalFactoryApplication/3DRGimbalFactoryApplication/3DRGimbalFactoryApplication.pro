@@ -11,6 +11,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = 3DRGimbalFactoryApplication
 TEMPLATE = app
 
+DEFINES *= QT_USE_QSTRINGBUILDER
+
 
 SOURCES += main.cpp\
         mainwindow.cpp \

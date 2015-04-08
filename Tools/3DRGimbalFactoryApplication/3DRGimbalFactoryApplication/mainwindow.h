@@ -31,6 +31,7 @@ public slots:
     void receiveSerialPortOpenError(QString errorMsg);
     void receiveHomeOffsetCalibrationStatus(bool successful);
     void receiveFactoryParameters(QString assemblyDateTime, QString serialNumber);
+    void receiveGimbalStatusMessage(unsigned int severity, QString message);
     void closeEvent(QCloseEvent *);
 
 signals:
@@ -70,6 +71,7 @@ private:
     QThread m_serialThread;
     SerialInterfaceThread* m_serialThreadObj;
     QTimer m_connectionTimeoutTimer;
+    bool m_gimbalMessagesVisible;
 
     void setUIGimbalConnectedNoFirmware();
     void setUIGimbalConnectedNeedsCalibration();
@@ -90,6 +92,7 @@ private slots:
     void on_setUnitParametersButton_clicked();
     void on_eraseGimbalFlashButton_clicked();
     void on_factoryTestsButton_clicked();
+    void on_showHideGimbalMessagesButton_clicked();
 };
 
 #endif // MAINWINDOW_H

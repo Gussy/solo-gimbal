@@ -441,6 +441,7 @@ void SerialInterfaceThread::handleStatusText(mavlink_message_t *msg)
     mavlink_msg_statustext_decode(msg, &decoded_msg);
 
     qDebug("Received status text message: %s", decoded_msg.text);
+    emit gimbalStatusMessage(decoded_msg.severity, QString(decoded_msg.text));
 }
 
 void SerialInterfaceThread::handleFactoryTestsProgress(mavlink_message_t* msg)
