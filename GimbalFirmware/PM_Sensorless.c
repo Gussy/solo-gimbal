@@ -433,6 +433,10 @@ Uint32 can_init_fault_message_resend_counter = 0;
 
 void main(void)
 {
+	GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;	// 0=GPIO,  1=SCIRXDA,  2=SDAA,  3=TZ2
+	GpioCtrlRegs.GPADIR.bit.GPIO28 = 1;		// 1=OUTput,  0=INput
+	GpioDataRegs.GPASET.bit.GPIO28 = 1;		// uncomment if --> Set High initially
+
 	DeviceInit();	// Device Life support & GPIO
 
 	// initialize flash
@@ -440,7 +444,7 @@ void main(void)
 
     // Program the EEPROM on every boot
 	#define I2C_NUMBYTES 16
-    if(board_hw_id == EL && 0) {
+    if(board_hw_id == EL) {
     	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
     	GpioDataRegs.GPASET.bit.GPIO28 = 1;
 
@@ -448,7 +452,7 @@ void main(void)
     	uint8_t EEPROMData[I2C_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
 
     	// Init I2C peripheral
-    	I2caRegs.I2CMDR.all 	= 0x0000;
+    	I2caRegs.I2CMDR.all = 0x0000;
     	I2caRegs.I2CSAR = 0x0050;					//Set slave address
     	I2caRegs.I2CPSC.bit.IPSC = 6;				//Prescaler - need 7-12 Mhz on module clk
 
@@ -488,9 +492,6 @@ void main(void)
 			// Let the EEPROM write
 			ADC_DELAY_US(5000);
 		}
-
-		// Enable the HeroBus port (GoPro should start mastering the I2C bus)
-		GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
     }
 
     if (board_hw_id == AZ) {

@@ -32,10 +32,16 @@ GPRequestType last_request_type = GP_REQUEST_NONE;
 GOPRO_COMMAND last_request_cmd_id;
 GPGetResponse last_get_response;
 GPSetResponse last_set_response;
+GPSetRequest last_set_request;
+GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
+Uint8 gccb_version_queried = 0;
 
 void init_gp_interface()
 {
     init_i2c(&addressed_as_slave_callback);
+
+    // Enable the HeroBus port (GoPro should start mastering the I2C bus)
+    GP_BP_DET_LOW();
 }
 
 Uint16 gp_ready_for_cmd()
@@ -109,8 +115,16 @@ Uint8 gp_get_new_set_response_available()
 GPHeartbeatStatus gp_get_heartbeat_status()
 {
 	GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
-	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
+	if (gp_get_power_status() == GP_POWER_ON
+			&& gp_ready_for_cmd()
+			&& last_request_type == GP_REQUEST_SET
+			&& last_set_request.cmd_id == GOPRO_COMMAND_SHUTTER
+			&& last_set_request.value == 1) {
+			heartbeat_status = GP_HEARTBEAT_RECORDING;
+	} else if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gccb_version_queried == 1) {
 		heartbeat_status = GP_HEARTBEAT_CONNECTED;
+	} else if (gp_get_power_status() == GP_POWER_ON && gccb_version_queried == 0) {
+		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
 	}
 	new_heartbeat_available = FALSE;
     return heartbeat_status;
@@ -119,7 +133,7 @@ GPHeartbeatStatus gp_get_heartbeat_status()
 GPGetResponse gp_get_last_get_response()
 {
 	last_get_response.cmd_id = last_request_cmd_id;
-	if (last_cmd_response.cmd_status == 0x00 && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
+	if (last_cmd_response.cmd_status == GP_CMD_STATUS_SUCCESS && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
 		last_get_response.value = last_cmd_response.cmd_response;
 	} else {
 		last_get_response.value = 0xFF;
@@ -131,7 +145,7 @@ GPGetResponse gp_get_last_get_response()
 GPSetResponse gp_get_last_set_response()
 {
 	last_set_response.cmd_id = last_request_cmd_id;
-	if (last_cmd_response.cmd_status == 0x00 && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
+	if (last_cmd_response.cmd_status == GP_CMD_STATUS_SUCCESS && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
 		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_SUCCESS;
 	} else {
 		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_FAILURE;
@@ -235,6 +249,7 @@ int gp_set_request(GPSetRequest* request)
 				return -1;
 		}
 
+		last_set_request = *request;
 		last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
 		gp_send_command(&cmd);
 		return 0;
@@ -404,6 +419,7 @@ void gp_interface_state_machine()
                 response_buffer[0] = 2; // Packet size, 1st byte is status byte, 2nd byte is protocol version
                 response_buffer[1] = GP_CMD_STATUS_SUCCESS;
                 response_buffer[2] = GP_PROTOCOL_VERSION;
+                gccb_version_queried = 1;
             } else {
                 // Preload the response buffer with an error response, since we don't support the command we
                 // were sent.  This will be transmitted in the ISR
@@ -456,6 +472,13 @@ void gp_interface_state_machine()
 		new_heartbeat_available = TRUE;
 		heartbeat_counter = 0;
 	}
+
+	// Detect a change in power status to reset some flags when a GoPro is re-connected during operation
+	GPPowerStatus new_power_status = gp_get_power_status();
+	if(previous_power_status != new_power_status) {
+		gccb_version_queried = 0;
+	}
+	previous_power_status = new_power_status;
 }
 
 void addressed_as_slave_callback(I2CAIntSrc int_src)
@@ -554,8 +577,8 @@ static void gp_timeout(GPCmdResult reason)
     gp_deassert_intr(); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
 
     // Indicate that a "new response" is available (what's available is the indication that we timed out)
-    last_cmd_response.cmd_result = reason;
-    new_response_available = TRUE;
+    //last_cmd_response.cmd_result = reason;
+    //new_response_available = TRUE;
 
     gp_control_state = GP_CONTROL_STATE_IDLE;
 }

@@ -22,6 +22,8 @@
 
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
 #define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
+#define GP_BP_DET_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;}
+#define GP_BP_DET_HIGH() {GpioDataRegs.GPASET.bit.GPIO28 = 1;}
 
 #define GP_VON (GpioDataRegs.GPADAT.bit.GPIO6)
 
@@ -92,7 +94,7 @@ typedef struct {
 
 typedef struct {
     char cmd[2];
-    Uint8 cmd_status;
+    GPCmdStatus cmd_status;
     Uint8 cmd_response;
     GPCmdResult cmd_result;
 } GPCmdResponse;

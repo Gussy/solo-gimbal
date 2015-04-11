@@ -17,6 +17,7 @@ default_baudrate = 230400
 
 def print_heartbeats(m):
     '''show incoming mavlink messages'''
+    counter = 0
     while True:
         msg = m.recv_match(type="GOPRO_HEARTBEAT", blocking=True)
         if not msg:
@@ -26,7 +27,12 @@ def print_heartbeats(m):
                 sys.stdout.write(msg.data)
                 sys.stdout.flush()
         else:
-            print("GOPRO_HEARTBEAT=%i" % msg.status)
+            print("%i GOPRO_HEARTBEAT=%i=%s" % (counter, msg.status, mavlink.enums['GOPRO_HEARTBEAT_STATUS'][msg.status].name))
+            # Counter to stop repeating messages look like a console lock-up
+            if counter == 9:
+                counter = 0
+            else:
+                counter+=1
 
 def show_messages(m):
     '''show incoming mavlink messages'''
@@ -71,6 +77,6 @@ link = mavlink.MAVLink(mavserial, 0, 0)
 
 #link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_POWER, 1)
 
-#print_heartbeats(mavserial)
+print_heartbeats(mavserial)
 
-show_messages(mavserial)
+#show_messages(mavserial)
