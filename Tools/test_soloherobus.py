@@ -10,8 +10,8 @@ import sys, argparse, struct
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega as mavlink
 
-MAVLINK_SYSTEM_ID = 50
-MAVLINK_COMPONENT_ID = 230
+MAVLINK_SYSTEM_ID = 1
+MAVLINK_COMPONENT_ID = 154
 
 default_baudrate = 230400
 
@@ -26,7 +26,20 @@ def print_heartbeats(m):
                 sys.stdout.write(msg.data)
                 sys.stdout.flush()
         else:
-            print(msg.status)
+            print("GOPRO_HEARTBEAT=%i" % msg.status)
+
+def show_messages(m):
+    '''show incoming mavlink messages'''
+    while True:
+        msg = m.recv_match(blocking=True)
+        if not msg:
+            return
+        if msg.get_type() == "BAD_DATA":
+            if mavutil.all_printable(msg.data):
+                sys.stdout.write(msg.data)
+                sys.stdout.flush()
+        else:
+            print(msg)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
@@ -43,9 +56,21 @@ mavserial = mavutil.mavserial(
     device = args.port,
     baud = baudrate
 )
-link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
+link = mavlink.MAVLink(mavserial, 0, 0)
 
 # Request the model
 #link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_MODEL)
 
-print_heartbeats(mavserial)
+#link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_BATTERY)
+
+#link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_CAPTURE_MODE, 0)
+
+#link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_SHUTTER, 1)
+
+#link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_SHUTTER, 0)
+
+#link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_POWER, 1)
+
+#print_heartbeats(mavserial)
+
+show_messages(mavserial)

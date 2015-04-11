@@ -22,8 +22,6 @@
 
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
 #define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
-#define GP_ASSERT_INTR() {GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;}
-#define GP_DEASSERT_INTR() {GpioDataRegs.GPASET.bit.GPIO26 = 1;}
 
 #define GP_VON (GpioDataRegs.GPADAT.bit.GPIO6)
 
@@ -122,6 +120,9 @@ int gp_request_power_off();
 int gp_send_command(GPCmd* cmd);
 Uint16 gp_ready_for_cmd();
 void addressed_as_slave_callback(I2CAIntSrc int_src);
+
+void gp_assert_intr(void);
+void gp_deassert_intr(void);
 
 Uint8 gp_get_new_heartbeat_available();
 Uint8 gp_get_new_get_response_available();

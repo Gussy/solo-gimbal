@@ -420,8 +420,8 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
         if (*(param_set[CAND_PID_GOPRO_SET_REQUEST].sema) == TRUE) {
             // Extract the GoPro set request command id and value from the CAN parameter
             GPSetRequest set_request;
-            set_request.cmd_id = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 24) & 0x000000FF;
-            set_request.value = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 16) & 0x000000FF;
+            set_request.cmd_id = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 8) & 0x000000FF;
+            set_request.value = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 0) & 0x000000FF;
             gp_set_request(&set_request);
             *(param_set[CAND_PID_GOPRO_SET_REQUEST].sema) = FALSE;
         }

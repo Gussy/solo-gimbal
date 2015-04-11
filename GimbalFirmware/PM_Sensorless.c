@@ -433,50 +433,64 @@ Uint32 can_init_fault_message_resend_counter = 0;
 
 void main(void)
 {
-
 	DeviceInit();	// Device Life support & GPIO
 
 	// initialize flash
     board_hw_id = GetBoardHWID();
 
+    // Program the EEPROM on every boot
 	#define I2C_NUMBYTES 16
     if(board_hw_id == EL && 0) {
+    	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
+    	GpioDataRegs.GPASET.bit.GPIO28 = 1;
+
+    	// Data to write into EEPROM
     	uint8_t EEPROMData[I2C_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
 
+    	// Init I2C peripheral
     	I2caRegs.I2CMDR.all 	= 0x0000;
     	I2caRegs.I2CSAR = 0x0050;					//Set slave address
     	I2caRegs.I2CPSC.bit.IPSC = 6;				//Prescaler - need 7-12 Mhz on module clk
 
+    	// Setup I2C clock
     	I2caRegs.I2CCLKL = 10;						// NOTE: must be non zero
     	I2caRegs.I2CCLKH = 5;						// NOTE: must be non zero
 
     	I2caRegs.I2CMDR.all = 0x0020;
 
+    	// Setup I2C FIFO
     	I2caRegs.I2CFFTX.all = 0x6000;
     	I2caRegs.I2CFFRX.all = 0x2040;
 
+    	// Reset the I2C bus
     	I2caRegs.I2CMDR.bit.IRS = 1;
-
     	I2caRegs.I2CSAR = 0x0050;
 
+    	// Wait for the I2C bus to become available
     	while (I2caRegs.I2CSTR.bit.BB == 1);
 
-		I2caRegs.I2CMDR.all = 0x6E20; 				//start, stop, no rm, reset i2c
+		// Start, stop, no rm, reset i2c
+    	I2caRegs.I2CMDR.all = 0x6E20;
 
 		uint8_t i;
 		for(i = 0; i < I2C_NUMBYTES; i++){
+			// Setup I2C Master Write
 			I2caRegs.I2CMDR.all = 0x6E20;
-
 			I2caRegs.I2CCNT = 2;
-			I2caRegs.I2CMDR.bit.STP = 1;
-
 			I2caRegs.I2CDXR = i;
+			I2caRegs.I2CMDR.bit.STP = 1;
 			while(I2caRegs.I2CSTR.bit.XRDY == 0){};
-			I2caRegs.I2CDXR = EEPROMData[i]; 		//Send out the message
-			while(I2caRegs.I2CSTR.bit.XRDY == 0){}; //Do nothing till data is shifted out
 
+			// Write data byte and wait till it's shifted out
+			I2caRegs.I2CDXR = EEPROMData[i];
+			while(I2caRegs.I2CSTR.bit.XRDY == 0){};
+
+			// Let the EEPROM write
 			ADC_DELAY_US(5000);
 		}
+
+		// Enable the HeroBus port (GoPro should start mastering the I2C bus)
+		GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
     }
 
     if (board_hw_id == AZ) {

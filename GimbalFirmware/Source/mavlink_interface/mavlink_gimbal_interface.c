@@ -381,8 +381,8 @@ static void handle_gopro_set_request(mavlink_message_t* received_msg)
     // Make sure the message was for us.  If it was, package up the command and send it over CAN
     if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         Uint32 parameter = 0;
-        parameter |= (((Uint32)decoded_msg.cmd_id) << 24) & 0xFF000000;
-        parameter |= (((Uint32)decoded_msg.value) << 16) & 0x00FF0000;
+        parameter |= (((Uint32)decoded_msg.cmd_id) << 8) & 0x0000FF00;
+        parameter |= (((Uint32)decoded_msg.value) << 0) & 0x000000FF;
         cand_tx_param(CAND_ID_EL, CAND_PID_GOPRO_SET_REQUEST, parameter);
     }
 }
@@ -611,7 +611,7 @@ void send_mavlink_gopro_get_response(GPGetResponse response)
 void send_mavlink_gopro_set_response(GPSetResponse response)
 {
     static mavlink_message_t gopro_set_response_msg;
-    mavlink_msg_gopro_get_response_pack(gimbal_sysid,
+    mavlink_msg_gopro_set_response_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_set_response_msg,
                                     response.cmd_id,

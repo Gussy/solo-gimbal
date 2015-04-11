@@ -75,7 +75,7 @@ int gp_send_command(GPCmd* cmd)
         last_cmd_response.cmd[1] = cmd->cmd[1];
 
         // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
-        GP_ASSERT_INTR();
+        gp_assert_intr();
 
         // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
         timeout_counter = 0;
@@ -109,8 +109,7 @@ Uint8 gp_get_new_set_response_available()
 GPHeartbeatStatus gp_get_heartbeat_status()
 {
 	GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
-	//if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
-	if (gp_get_power_status() == GP_POWER_ON) {
+	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
 		heartbeat_status = GP_HEARTBEAT_CONNECTED;
 	}
 	new_heartbeat_available = FALSE;
@@ -167,6 +166,7 @@ int gp_request_power_off()
 
 int gp_get_request(Uint8 cmd_id)
 {
+	last_request_type = GP_REQUEST_GET;
 	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
 		GPCmd cmd;
 
@@ -183,18 +183,15 @@ int gp_get_request(Uint8 cmd_id)
 
 			default:
 				// Unsupported Command ID
-				last_request_type = GP_REQUEST_GET;
 				last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
 				new_response_available = TRUE;
 				return -1;
 		}
 
-		last_request_type = GP_REQUEST_GET;
 		last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
 		gp_send_command(&cmd);
 		return 0;
 	} else {
-		last_request_type = GP_REQUEST_GET;
 		last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
 		new_response_available = TRUE;
 		return -1;
@@ -203,12 +200,13 @@ int gp_get_request(Uint8 cmd_id)
 
 int gp_set_request(GPSetRequest* request)
 {
-	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
+	last_request_type = GP_REQUEST_SET;
+	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
 		GPCmd cmd;
 
 		switch(request->cmd_id) {
 			case GOPRO_COMMAND_POWER:
-				if(request->value == 0 && gp_get_power_status() == GP_POWER_ON) {
+				if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
 					cmd.cmd[0] = 'P';
 					cmd.cmd[1] = 'W';
 					cmd.cmd_parm = 0x00;
@@ -232,18 +230,15 @@ int gp_set_request(GPSetRequest* request)
 
 			default:
 				// Unsupported Command ID
-				last_request_type = GP_REQUEST_SET;
 				last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
 				new_response_available = TRUE;
 				return -1;
 		}
 
-		last_request_type = GP_REQUEST_SET;
 		last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
 		gp_send_command(&cmd);
 		return 0;
 	} else {
-		last_request_type = GP_REQUEST_SET;
 		last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
 		new_response_available = TRUE;
 		return -1;
@@ -264,6 +259,16 @@ GPPowerStatus gp_get_power_status()
             return GP_POWER_OFF;
         }
     }
+}
+
+void gp_assert_intr(void)
+{
+	GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;
+}
+
+void gp_deassert_intr(void)
+{
+	GpioDataRegs.GPASET.bit.GPIO26 = 1;
 }
 
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
@@ -407,7 +412,7 @@ void gp_interface_state_machine()
             }
 
             // Assert the interrupt request line to indicate that we're ready to respond to the GoPro's command
-            GP_ASSERT_INTR();
+            gp_assert_intr();
 
             gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
             timeout_counter = 0;
@@ -468,7 +473,7 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
                 i2c_send_data(request_cmd_buffer, request_cmd_buffer[0] + 1); // Length of command is 1st byte in command buffer, add 1 for length field
 
                 // Deassert the GoPro interrupt request line to indicate that we're ready to transmit the command
-                GP_DEASSERT_INTR();
+                gp_deassert_intr();
 
                 // Clear the timeout counter in preparation of waiting for a response from the GoPro
                 timeout_counter = 0;
@@ -484,7 +489,7 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
                 i2c_send_data(response_buffer, response_buffer[0] + 1); // Size of message is count in size field of message, +1 for size byte
 
                 // De-assert the interrupt request line to indicate to the GoPro that we're ready for it to read the response
-                GP_DEASSERT_INTR();
+                gp_deassert_intr();
 
                 // Clear the stop condition detected bit so we can poll it to determine when the GoPro is finished reading our response
                 i2c_clr_scd();
@@ -529,7 +534,7 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
                 new_response_available = TRUE;
 
                 // De-assert the interrupt line, since we're no longer trying to send a command to the GoPro
-                GP_DEASSERT_INTR();
+                gp_deassert_intr();
 
                 // Clear the stop condition detected bit so we can poll it to determine when the GoPro is done transmitting the command
                 i2c_clr_scd();
@@ -546,7 +551,7 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
 static void gp_timeout(GPCmdResult reason)
 {
     timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
-    GP_DEASSERT_INTR(); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
+    gp_deassert_intr(); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
 
     // Indicate that a "new response" is available (what's available is the indication that we timed out)
     last_cmd_response.cmd_result = reason;
