@@ -739,9 +739,9 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 {
                 	GPGetResponse gp_get_response;
 					Uint32 packed_param = msg.param_response[msg.param_response_cnt - 1];
-					gp_get_response.cmd_id = (packed_param >> 24) & 0x000000FF;
-					gp_get_response.value = (packed_param >> 16) & 0x000000FF;
-					send_mavlink_gopro_get_response(&gp_get_response);
+					gp_get_response.cmd_id = (packed_param >> 8) & 0x000000FF;
+					gp_get_response.value = (packed_param >> 0) & 0x000000FF;
+					send_mavlink_gopro_get_response(gp_get_response);
                 }
                 break;
 
@@ -749,9 +749,9 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 {
                 	GPSetResponse gp_set_response;
                     Uint32 packed_param = msg.param_response[msg.param_response_cnt - 1];
-                    gp_set_response.cmd_id = (packed_param >> 24) & 0x000000FF;
-                    gp_set_response.result = (packed_param >> 16) & 0x000000FF;
-                    send_mavlink_gopro_set_response(&gp_set_response);
+                    gp_set_response.cmd_id = (packed_param >> 8) & 0x000000FF;
+                    gp_set_response.result = (packed_param >> 0) & 0x000000FF;
+                    send_mavlink_gopro_set_response(gp_set_response);
                 }
                 break;
 

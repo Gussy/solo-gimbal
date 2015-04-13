@@ -109,33 +109,36 @@ Uint8 gp_get_new_set_response_available()
 GPHeartbeatStatus gp_get_heartbeat_status()
 {
 	GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
-	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
+	//if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
+	if (gp_get_power_status() == GP_POWER_ON) {
 		heartbeat_status = GP_HEARTBEAT_CONNECTED;
 	}
 	new_heartbeat_available = FALSE;
     return heartbeat_status;
 }
 
-GPGetResponse* gp_get_last_get_response()
+GPGetResponse gp_get_last_get_response()
 {
 	last_get_response.cmd_id = last_request_cmd_id;
-	if (last_cmd_response.cmd_status == 0x01 && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
+	if (last_cmd_response.cmd_status == 0x00 && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
 		last_get_response.value = last_cmd_response.cmd_response;
 	} else {
 		last_get_response.value = 0xFF;
 	}
-    return &last_get_response;
+	new_response_available = FALSE;
+    return last_get_response;
 }
 
-GPSetResponse* gp_get_last_set_response()
+GPSetResponse gp_get_last_set_response()
 {
 	last_set_response.cmd_id = last_request_cmd_id;
-	if (last_cmd_response.cmd_status == 0x01 && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
+	if (last_cmd_response.cmd_status == 0x00 && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
 		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_SUCCESS;
 	} else {
 		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_FAILURE;
 	}
-    return &last_set_response;
+	new_response_available = FALSE;
+    return last_set_response;
 }
 
 int gp_request_power_on()
@@ -173,8 +176,16 @@ int gp_get_request(Uint8 cmd_id)
 				cmd.cmd[1] = 'v';
 			break;
 
+			case GOPRO_COMMAND_BATTERY:
+				cmd.cmd[0] = 'b';
+				cmd.cmd[1] = 'l';
+			break;
+
 			default:
 				// Unsupported Command ID
+				last_request_type = GP_REQUEST_GET;
+				last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
+				new_response_available = TRUE;
 				return -1;
 		}
 
@@ -183,14 +194,60 @@ int gp_get_request(Uint8 cmd_id)
 		gp_send_command(&cmd);
 		return 0;
 	} else {
+		last_request_type = GP_REQUEST_GET;
+		last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
+		new_response_available = TRUE;
 		return -1;
 	}
 }
 
 int gp_set_request(GPSetRequest* request)
 {
-    // TODO: Implement
-    return -1;
+	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
+		GPCmd cmd;
+
+		switch(request->cmd_id) {
+			case GOPRO_COMMAND_POWER:
+				if(request->value == 0 && gp_get_power_status() == GP_POWER_ON) {
+					cmd.cmd[0] = 'P';
+					cmd.cmd[1] = 'W';
+					cmd.cmd_parm = 0x00;
+					gp_send_command(&cmd);
+				} else {
+					gp_request_power_on();
+				}
+				break;
+
+			case GOPRO_COMMAND_CAPTURE_MODE:
+				cmd.cmd[0] = 'C';
+				cmd.cmd[1] = 'M';
+				cmd.cmd_parm = request->value;
+				break;
+
+			case GOPRO_COMMAND_SHUTTER:
+				cmd.cmd[0] = 'S';
+				cmd.cmd[1] = 'H';
+				cmd.cmd_parm = request->value;
+			break;
+
+			default:
+				// Unsupported Command ID
+				last_request_type = GP_REQUEST_SET;
+				last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
+				new_response_available = TRUE;
+				return -1;
+		}
+
+		last_request_type = GP_REQUEST_SET;
+		last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
+		gp_send_command(&cmd);
+		return 0;
+	} else {
+		last_request_type = GP_REQUEST_SET;
+		last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
+		new_response_available = TRUE;
+		return -1;
+	}
 }
 
 GPPowerStatus gp_get_power_status()
@@ -227,6 +284,8 @@ void gp_interface_state_machine()
             if (gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
                 GP_PWRON_HIGH();
                 gp_control_state = GP_CONTROL_STATE_IDLE;
+                last_cmd_response.cmd_result = GP_CMD_SUCCESSFUL;
+				new_response_available = TRUE;
             }
             break;
 
@@ -388,7 +447,7 @@ void gp_interface_state_machine()
     }
 
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
-	if (heartbeat_counter++ > (GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
+	if (++heartbeat_counter >= (GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
 		new_heartbeat_available = TRUE;
 		heartbeat_counter = 0;
 	}

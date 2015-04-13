@@ -13,7 +13,7 @@
 
 #define GP_COMMAND_REQUEST_SIZE 4
 #define GP_COMMAND_RESPONSE_SIZE 3
-#define GP_COMMAND_RECEIVE_BUFFER_SIZE 10
+#define GP_COMMAND_RECEIVE_BUFFER_SIZE 40
 #define GP_STATE_MACHINE_PERIOD_MS 3
 #define GP_PWRON_TIME_MS 120 // Spec says 100ms, but I'm making it a little longer here just in case, and so it's an even multiple of our state machine poll period
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
@@ -131,7 +131,7 @@ int gp_get_request(Uint8 cmd_id);
 int gp_set_request(GPSetRequest* request);
 
 GPHeartbeatStatus gp_get_heartbeat_status();
-GPGetResponse* gp_get_last_get_response();
-GPSetResponse* gp_get_last_set_response();
+GPGetResponse gp_get_last_get_response();
+GPSetResponse gp_get_last_set_response();
 
 #endif /* GOPRO_INTERFACE_H_ */

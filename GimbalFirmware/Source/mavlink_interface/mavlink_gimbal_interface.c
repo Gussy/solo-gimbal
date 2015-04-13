@@ -597,25 +597,25 @@ void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status)
     send_mavlink_message(&gopro_heartbeat_msg);
 }
 
-void send_mavlink_gopro_get_response(GPGetResponse* response)
+void send_mavlink_gopro_get_response(GPGetResponse response)
 {
     static mavlink_message_t gopro_get_response_msg;
     mavlink_msg_gopro_get_response_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_get_response_msg,
-                                    response->cmd_id,
-                                    response->value);
+                                    response.cmd_id,
+                                    response.value);
     send_mavlink_message(&gopro_get_response_msg);
 }
 
-void send_mavlink_gopro_set_response(GPSetResponse* response)
+void send_mavlink_gopro_set_response(GPSetResponse response)
 {
     static mavlink_message_t gopro_set_response_msg;
     mavlink_msg_gopro_get_response_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_set_response_msg,
-                                    response->cmd_id,
-                                    response->result);
+                                    response.cmd_id,
+                                    response.result);
     send_mavlink_message(&gopro_set_response_msg);
 }
 
