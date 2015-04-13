@@ -8,8 +8,7 @@ Utility for loading firmware into the 3DR Gimbal.
 import sys,base64, json, zlib
 from pymavlink.dialects.v10 import common as mavlink
 
-MAVLINK_SYSTEM_ID = 50
-MAVLINK_COMPONENT_ID = 230
+MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
@@ -22,8 +21,7 @@ def wait_handshake(m):
         blocking = True,
         timeout = 1)
     if msg != None:
-        if(msg.get_srcSystem() == MAVLINK_SYSTEM_ID and
-           msg.get_srcComponent() == MAVLINK_COMPONENT_ID):
+        if(msg.get_srcComponent() == MAVLINK_COMPONENT_ID):
             return msg
     return None
 

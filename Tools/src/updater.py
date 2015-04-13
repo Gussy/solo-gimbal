@@ -11,8 +11,8 @@ from pymavlink.dialects.v10 import common as mavlink
 from read_swver_param import readSWver
 from load_fw import update
 
-MAVLINK_SYSTEM_ID = 50
-MAVLINK_COMPONENT_ID = 230
+MAVLINK_SYSTEM_ID = 1
+MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
 def main():
     parser = argparse.ArgumentParser()
