@@ -18,6 +18,7 @@
 #define GP_PWRON_TIME_MS 120 // Spec says 100ms, but I'm making it a little longer here just in case, and so it's an even multiple of our state machine poll period
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
 #define GP_PROTOCOL_VERSION 0x00
+#define GP_MAVLINK_HEARTBEAT_INTERVAL 1000
 
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
 #define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
@@ -73,6 +74,13 @@ typedef enum {
     GP_EXPECTING_RESPONSE
 } GPExpectingDataType;
 
+typedef enum {
+    GP_HEARTBEAT_DISCONNECTED = 0,
+    GP_HEARTBEAT_INCOMPATIBLE = 1,
+    GP_HEARTBEAT_CONNECTED = 2,
+    GP_HEARTBEAT_RECORDING = 3
+} GPHeartbeatStatus;
+
 typedef struct {
     char cmd[2];
     Uint8 cmd_parm;
@@ -109,12 +117,14 @@ int gp_send_command(GPCmd* cmd);
 Uint16 gp_ready_for_cmd();
 void addressed_as_slave_callback(I2CAIntSrc int_src);
 
+Uint8 gp_get_new_heartbeat_available();
 Uint8 gp_get_new_get_response_available();
 Uint8 gp_get_new_set_response_available();
 
 int gp_get_request(Uint8* cmd_id);
 int gp_set_request(GPSetRequest* request);
 
+GPHeartbeatStatus* gp_get_heartbeat_status();
 GPGetResponse* gp_get_last_get_response();
 GPSetResponse* gp_get_last_set_response();
 

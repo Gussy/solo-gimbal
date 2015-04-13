@@ -108,14 +108,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         	}
         	break;
 
-        case CAND_CMD_GOPRO_ON:
-            gp_request_power_on();
-            break;
-
-        case CAND_CMD_GOPRO_OFF:
-            gp_request_power_off();
-            break;
-
         case CAND_CMD_SET_HOME_OFFSETS:
             // Zero out the home offsets accumulator and sample counter
             encoder_parms->home_offset_calibration_accumulator = 0;
@@ -733,6 +725,13 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     if (bit_value & CAND_BIT_AXIS_PARMS_RECVD) {
                         axis_parms->other_axis_init_params_recvd[msg.sender_id] = TRUE;
                     }
+                }
+                break;
+
+                case CAND_PID_GOPRO_HEARTBEAT:
+                {
+                	GPHeartbeatStatus gp_heartbeat_state = (GPHeartbeatStatus)msg.param_response[msg.param_response_cnt - 1];
+                    send_mavlink_gopro_heartbeat(&gp_heartbeat_state);
                 }
                 break;
 

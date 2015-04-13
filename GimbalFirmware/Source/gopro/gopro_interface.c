@@ -22,7 +22,12 @@ Uint8 response_buffer[GP_COMMAND_RESPONSE_SIZE];
 Uint8 receive_buffer[GP_COMMAND_RECEIVE_BUFFER_SIZE];
 GPCmdResponse last_cmd_response = {0};
 Uint8 new_response_available = FALSE;
+Uint8 new_get_response_available = FALSE;
+Uint8 new_set_response_available = FALSE;
+Uint8 new_heartbeat_available = FALSE;
 GPExpectingDataType next_reception_expected = GP_EXPECTING_COMMAND;
+GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
+Uint16 heartbeat_counter = 0;
 
 void init_gp_interface()
 {
@@ -78,29 +83,41 @@ int gp_send_command(GPCmd* cmd)
     }
 }
 
+Uint8 gp_get_new_heartbeat_available()
+{
+    return new_heartbeat_available;
+}
+
 Uint8 gp_get_new_get_response_available()
 {
     // TODO: Implement
-    return new_response_available;
+    return new_get_response_available;
 }
 
 Uint8 gp_get_new_set_response_available()
 {
     // TODO: Implement
-    return new_response_available;
+    return new_set_response_available;
+}
+
+GPHeartbeatStatus* gp_get_heartbeat_status()
+{
+    // TODO: Implement
+    new_heartbeat_available = FALSE;
+    //return &last_cmd_response;
 }
 
 GPGetResponse* gp_get_last_get_response()
 {
     // TODO: Implement
-    new_response_available = FALSE;
+    new_get_response_available = FALSE;
     //return &last_cmd_response;
 }
 
 GPSetResponse* gp_get_last_set_response()
 {
     // TODO: Implement
-    new_response_available = FALSE;
+    new_set_response_available = FALSE;
     //return &last_cmd_response;
 }
 
@@ -333,6 +350,13 @@ void gp_interface_state_machine()
             new_response_available = TRUE;
             break;
     }
+
+	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
+	if (++heartbeat_counter >= (GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS))
+	{
+		new_heartbeat_available = TRUE;
+		heartbeat_counter = 0;
+	}
 }
 
 void addressed_as_slave_callback(I2CAIntSrc int_src)

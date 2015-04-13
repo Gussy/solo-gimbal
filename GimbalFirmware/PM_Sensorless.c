@@ -1068,6 +1068,12 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 
 	// If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
 	if (board_hw_id == EL) {
+		if (gp_get_new_heartbeat_available()) {
+			// If there is a heartbeat status, get it and send out over CAN.
+			GPHeartbeatStatus* status = gp_get_heartbeat_status();
+			cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (Uint32)status);
+		}
+
         if (gp_get_new_get_response_available()) {
             // If there are, get them and package them up to be sent out over CAN.
             GPGetResponse* response = gp_get_last_get_response();

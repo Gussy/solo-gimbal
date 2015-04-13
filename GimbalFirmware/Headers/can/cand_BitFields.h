@@ -100,9 +100,10 @@ typedef enum  {
     CAND_PID_BEACON_MODE,
     CAND_PID_BEACON_BRIGHTNESS,
     CAND_PID_VERSION,
+    CAND_PID_GOPRO_HEARTBEAT,
     CAND_PID_GOPRO_GET_REQUEST,
     CAND_PID_EXTENDED,
-    CAND_PID_LAST =                                     64
+    CAND_PID_LAST =                                     65
 } CAND_ParameterID;
 
 typedef enum {
@@ -160,8 +161,7 @@ typedef enum {
 typedef enum  {
     CAND_CMD_ENABLE = 0,
     CAND_CMD_RELAX,
-    CAND_CMD_GOPRO_ON,
-    CAND_CMD_GOPRO_OFF,
+    CAND_CMD_GOPRO_HEARTBEAT,
     CAND_CMD_INIT,
     CAND_CMD_SET_HOME_OFFSETS,
     CAND_CMD_START_FACTORY_TESTS,

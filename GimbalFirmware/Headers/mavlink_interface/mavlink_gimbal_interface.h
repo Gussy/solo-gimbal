@@ -66,6 +66,7 @@ void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* c
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_gimbal_feedback();
 void send_mavlink_debug_data(DebugData* debug_data);
+void send_mavlink_gopro_heartbeat(GPHeartbeatStatus* status);
 void send_mavlink_gopro_get_response(GPGetResponse* response);
 void send_mavlink_gopro_set_response(GPSetResponse* response);
 void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code, CAND_FaultType fault_type);
