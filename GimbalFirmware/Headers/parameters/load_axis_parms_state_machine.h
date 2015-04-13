@@ -13,8 +13,8 @@
 #include "hardware/HWSpecific.h"
 #include "can/cand_BitFields.h"
 
-#define TOTAL_LOADABLE_PARAMS 30
-#define EL_PARAMS_TO_LOAD 30
+#define TOTAL_LOADABLE_PARAMS 26
+#define EL_PARAMS_TO_LOAD 26
 #define RL_PARAMS_TO_LOAD 18
 // The request retry period is in ticks of the main torque loop update rate (currently 10kHz)
 #define REQUEST_RETRY_PERIOD 1000

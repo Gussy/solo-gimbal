@@ -508,7 +508,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             }
             break;
 
-            case CAND_PID_POS_EL_P:
+            /*case CAND_PID_POS_EL_P:
             {
                 IntOrFloat float_converter;
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
@@ -554,7 +554,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     cand_tx_response(msg.sender_id, CAND_PID_POS_EL_WINDUP, float_converter.uint32_val);
                 }
             }
-            break;
+            break;*/
 
             case CAND_PID_POS_AZ_P:
             {
@@ -699,6 +699,11 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
     case CAND_RX_PARAM_RESPONSE:
         while (msg.param_response_cnt) {
+        	load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_P_RECVD;
+        	load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_I_RECVD;
+        	load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_D_RECVD;
+        	load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_WINDUP_RECVD;
+
             // Response messages can contain up to 4 parameter responses
             switch (msg.param_response_id[msg.param_response_cnt - 1]) {
                 case CAND_PID_POSITION:
@@ -992,7 +997,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     }
                     break;
 
-                case CAND_PID_POS_EL_P:
+                /*case CAND_PID_POS_EL_P:
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_P_RECVD)) {
@@ -1035,7 +1040,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         //pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_WINDUP_RECVD;
                     }
-                    break;
+                    break;*/
 
                 case CAND_PID_POS_AZ_P:
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility

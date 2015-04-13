@@ -146,7 +146,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     }
 
     // Check for updated position loop PID params
-    if (*(param_set[CAND_PID_POS_EL_P].sema) == TRUE) {
+    /*if (*(param_set[CAND_PID_POS_EL_P].sema) == TRUE) {
         // Dump the integrator and differentiator
         //pos_pid_loop_float[EL].integralCumulative = 0.0;
         //pos_pid_loop_float[EL].errorPrevious = 0.0;
@@ -185,7 +185,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
         //pos_pid_loop_float[EL].integralMax = float_converter.float_val;
         //pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
         *(param_set[CAND_PID_POS_EL_WINDUP].sema) = FALSE;
-    }
+    }*/
 
     if (*(param_set[CAND_PID_POS_AZ_P].sema) == TRUE) {
         // Dump the integrator and differentiator

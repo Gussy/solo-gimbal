@@ -377,49 +377,49 @@ void init_param_set(void)
 	}
 
 	// Set up parameters we're using
-	param_set[CAND_PID_TORQUE].sema = &current_flag;
-	param_set[CAND_PID_RATE_EL_P].sema = &rate_pid_el_p_flag;
-	param_set[CAND_PID_RATE_EL_I].sema = &rate_pid_el_i_flag;
-	param_set[CAND_PID_RATE_EL_D].sema = &rate_pid_el_d_flag;
-	param_set[CAND_PID_RATE_EL_WINDUP].sema = &rate_pid_el_windup_flag;
-	param_set[CAND_PID_RATE_AZ_P].sema = &rate_pid_az_p_flag;
-    param_set[CAND_PID_RATE_AZ_I].sema = &rate_pid_az_i_flag;
-    param_set[CAND_PID_RATE_AZ_D].sema = &rate_pid_az_d_flag;
-    param_set[CAND_PID_RATE_AZ_WINDUP].sema = &rate_pid_az_windup_flag;
-    param_set[CAND_PID_RATE_RL_P].sema = &rate_pid_rl_p_flag;
-    param_set[CAND_PID_RATE_RL_I].sema = &rate_pid_rl_i_flag;
-    param_set[CAND_PID_RATE_RL_D].sema = &rate_pid_rl_d_flag;
-    param_set[CAND_PID_RATE_RL_WINDUP].sema = &rate_pid_rl_windup_flag;
-    param_set[CAND_PID_DEBUG_1].sema = &debug_1_flag;
-    param_set[CAND_PID_DEBUG_2].sema = &debug_2_flag;
-    param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
-    param_set[CAND_PID_POS_AZ_P].sema = &pos_pid_az_p_flag;
-    param_set[CAND_PID_POS_AZ_I].sema = &pos_pid_az_i_flag;
-    param_set[CAND_PID_POS_AZ_D].sema = &pos_pid_az_d_flag;
-    param_set[CAND_PID_POS_AZ_WINDUP].sema = &pos_pid_az_windup_flag;
-    param_set[CAND_PID_POS_EL_P].sema = &pos_pid_el_p_flag;
-    param_set[CAND_PID_POS_EL_I].sema = &pos_pid_el_i_flag;
-    param_set[CAND_PID_POS_EL_D].sema = &pos_pid_el_d_flag;
-    param_set[CAND_PID_POS_EL_WINDUP].sema = &pos_pid_el_windup_flag;
-    param_set[CAND_PID_POS_RL_P].sema = &pos_pid_rl_p_flag;
-    param_set[CAND_PID_POS_RL_I].sema = &pos_pid_rl_i_flag;
-    param_set[CAND_PID_POS_RL_D].sema = &pos_pid_rl_d_flag;
-    param_set[CAND_PID_POS_RL_WINDUP].sema = &pos_pid_rl_windup_flag;
-    param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema = &gyro_offset_x_flag;
-    param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema = &gyro_offset_y_flag;
-    param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema = &gyro_offset_z_flag;
-    param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
-    param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
-    param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
-    param_set[CAND_PID_RATE_CMD_AZ].sema = &rate_cmd_az_flag;
-    param_set[CAND_PID_RATE_CMD_EL].sema = &rate_cmd_el_flag;
-    param_set[CAND_PID_RATE_CMD_RL].sema = &rate_cmd_rl_flag;
-    param_set[CAND_PID_GOPRO_GET_REQUEST].sema = &gopro_get_request_flag;
-    param_set[CAND_PID_GOPRO_SET_REQUEST].sema = &gopro_set_request_flag;
-#ifdef ENABLE_BALANCE_PROCEDURE
-    param_set[CAND_PID_BALANCE_AXIS].sema = &balance_axis_flag;
-    param_set[CAND_PID_BALANCE_STEP_DURATION].sema = &balance_step_duration_flag;
-#endif
+		param_set[CAND_PID_TORQUE].sema = &current_flag;
+		param_set[CAND_PID_RATE_EL_P].sema = &rate_pid_el_p_flag;
+		param_set[CAND_PID_RATE_EL_I].sema = &rate_pid_el_i_flag;
+		param_set[CAND_PID_RATE_EL_D].sema = &rate_pid_el_d_flag;
+		param_set[CAND_PID_RATE_EL_WINDUP].sema = &rate_pid_el_windup_flag;
+		param_set[CAND_PID_RATE_AZ_P].sema = &rate_pid_az_p_flag;
+	    param_set[CAND_PID_RATE_AZ_I].sema = &rate_pid_az_i_flag;
+	    param_set[CAND_PID_RATE_AZ_D].sema = &rate_pid_az_d_flag;
+	    param_set[CAND_PID_RATE_AZ_WINDUP].sema = &rate_pid_az_windup_flag;
+	    param_set[CAND_PID_RATE_RL_P].sema = &rate_pid_rl_p_flag;
+	    param_set[CAND_PID_RATE_RL_I].sema = &rate_pid_rl_i_flag;
+	    param_set[CAND_PID_RATE_RL_D].sema = &rate_pid_rl_d_flag;
+	    param_set[CAND_PID_RATE_RL_WINDUP].sema = &rate_pid_rl_windup_flag;
+	    param_set[CAND_PID_DEBUG_1].sema = &debug_1_flag;
+	    param_set[CAND_PID_DEBUG_2].sema = &debug_2_flag;
+	    param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
+	    param_set[CAND_PID_POS_AZ_P].sema = &pos_pid_az_p_flag;
+	    param_set[CAND_PID_POS_AZ_I].sema = &pos_pid_az_i_flag;
+	    param_set[CAND_PID_POS_AZ_D].sema = &pos_pid_az_d_flag;
+	    param_set[CAND_PID_POS_AZ_WINDUP].sema = &pos_pid_az_windup_flag;
+	    /*param_set[CAND_PID_POS_EL_P].sema = &pos_pid_el_p_flag;
+	    param_set[CAND_PID_POS_EL_I].sema = &pos_pid_el_i_flag;
+	    param_set[CAND_PID_POS_EL_D].sema = &pos_pid_el_d_flag;
+	    param_set[CAND_PID_POS_EL_WINDUP].sema = &pos_pid_el_windup_flag;*/
+	    param_set[CAND_PID_POS_RL_P].sema = &pos_pid_rl_p_flag;
+	    param_set[CAND_PID_POS_RL_I].sema = &pos_pid_rl_i_flag;
+	    param_set[CAND_PID_POS_RL_D].sema = &pos_pid_rl_d_flag;
+	    param_set[CAND_PID_POS_RL_WINDUP].sema = &pos_pid_rl_windup_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema = &gyro_offset_x_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema = &gyro_offset_y_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema = &gyro_offset_z_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
+	    param_set[CAND_PID_RATE_CMD_AZ].sema = &rate_cmd_az_flag;
+	    param_set[CAND_PID_RATE_CMD_EL].sema = &rate_cmd_el_flag;
+	    param_set[CAND_PID_RATE_CMD_RL].sema = &rate_cmd_rl_flag;
+	    param_set[CAND_PID_GOPRO_GET_REQUEST].sema = &gopro_get_request_flag;
+	    param_set[CAND_PID_GOPRO_SET_REQUEST].sema = &gopro_set_request_flag;
+	#ifdef ENABLE_BALANCE_PROCEDURE
+	    param_set[CAND_PID_BALANCE_AXIS].sema = &balance_axis_flag;
+	    param_set[CAND_PID_BALANCE_STEP_DURATION].sema = &balance_step_duration_flag;
+	#endif
 }
 
 // TODO: For testing gopro stuff
