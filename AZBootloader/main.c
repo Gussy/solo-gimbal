@@ -526,7 +526,7 @@ static Uint16 Example_CsmUnlock()
 Uint32 MAVLINK_Flash()
 {
 	int getting_messages = 0;
-	Uint16 seq = 0, length, last_seq = 0;
+	Uint16 seq = 0, length;
 	FLASH_ST FlashStatus = {0};
 	Uint16  Status;
 	Uint16  *Flash_ptr = (Uint16 *)MAIN_APPLICATION_ADDRESS;     // Pointer to a location in flash
@@ -580,8 +580,7 @@ Uint32 MAVLINK_Flash()
 					if(mavlink_parse_char(MAVLINK_COMM_0, buffer[idx1]&0xFF, &inmsg, &status)) {
 						if((inmsg.compid == MAVLINK_COMPONENT_ID)&&
 							(inmsg.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA)) {
-							if(inmsg.len > 2) {
-								seq = mavlink_msg_encapsulated_data_get_seqnr(&inmsg);
+							if(inmsg.len > 2 && seq == mavlink_msg_encapsulated_data_get_seqnr(&inmsg)) {
 								mavlink_msg_encapsulated_data_get_data(&inmsg, buffer);
 								getting_messages = 0;
 
@@ -618,11 +617,10 @@ Uint32 MAVLINK_Flash()
 									Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
 									Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
 									seq++;
-								} else if(seq == (last_seq+1)) {
+								} else {
 									// write data to flash
 									Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
 									Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
-									last_seq = seq;
 									seq++;
 								}
 							}
