@@ -115,13 +115,13 @@ Uint8 gp_get_new_set_response_available()
 GPHeartbeatStatus gp_get_heartbeat_status()
 {
 	GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
-	if (gp_get_power_status() == GP_POWER_ON
+	/*if (gp_get_power_status() == GP_POWER_ON
 			&& gp_ready_for_cmd()
 			&& last_request_type == GP_REQUEST_SET
 			&& last_set_request.cmd_id == GOPRO_COMMAND_SHUTTER
 			&& last_set_request.value == 1) {
 			heartbeat_status = GP_HEARTBEAT_RECORDING;
-	} else if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gccb_version_queried == 1) {
+	} else */if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gccb_version_queried == 1) {
 		heartbeat_status = GP_HEARTBEAT_CONNECTED;
 	} else if (gp_get_power_status() == GP_POWER_ON && gccb_version_queried == 0) {
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
