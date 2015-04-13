@@ -455,7 +455,7 @@ void gp_interface_state_machine()
 
         case GP_CONTROL_STATE_PARSE_RECEIVED_RESPONSE:
             // Load the last command response struct with the values from the actual response
-            last_cmd_response.cmd_status = receive_buffer[1];
+            last_cmd_response.cmd_status = (GPCmdStatus)receive_buffer[1];
             last_cmd_response.cmd_response = receive_buffer[2];
 
             // The full command transmit has now completed successfully, so we can go back to idle
@@ -479,6 +479,60 @@ void gp_interface_state_machine()
 		gccb_version_queried = 0;
 	}
 	previous_power_status = new_power_status;
+}
+
+void gp_write_eeprom()
+{
+	if(GP_VON != 1)
+		return;
+
+	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
+	GpioDataRegs.GPASET.bit.GPIO28 = 1;
+
+	// Data to write into EEPROM
+	uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
+
+	// Init I2C peripheral
+	I2caRegs.I2CMDR.all = 0x0000;
+	I2caRegs.I2CSAR = 0x0050;					//Set slave address
+	I2caRegs.I2CPSC.bit.IPSC = 6;				//Prescaler - need 7-12 Mhz on module clk
+
+	// Setup I2C clock
+	I2caRegs.I2CCLKL = 10;						// NOTE: must be non zero
+	I2caRegs.I2CCLKH = 5;						// NOTE: must be non zero
+
+	I2caRegs.I2CMDR.all = 0x0020;
+
+	// Setup I2C FIFO
+	I2caRegs.I2CFFTX.all = 0x6000;
+	I2caRegs.I2CFFRX.all = 0x2040;
+
+	// Reset the I2C bus
+	I2caRegs.I2CMDR.bit.IRS = 1;
+	I2caRegs.I2CSAR = 0x0050;
+
+	// Wait for the I2C bus to become available
+	while (I2caRegs.I2CSTR.bit.BB == 1);
+
+	// Start, stop, no rm, reset i2c
+	I2caRegs.I2CMDR.all = 0x6E20;
+
+	uint8_t i;
+	for(i = 0; i < GP_I2C_EEPROM_NUMBYTES; i++){
+		// Setup I2C Master Write
+		I2caRegs.I2CMDR.all = 0x6E20;
+		I2caRegs.I2CCNT = 2;
+		I2caRegs.I2CDXR = i;
+		I2caRegs.I2CMDR.bit.STP = 1;
+		while(I2caRegs.I2CSTR.bit.XRDY == 0){};
+
+		// Write data byte and wait till it's shifted out
+		I2caRegs.I2CDXR = EEPROMData[i];
+		while(I2caRegs.I2CSTR.bit.XRDY == 0){};
+
+		// Let the EEPROM write
+		ADC_DELAY_US(5000);
+	}
 }
 
 void addressed_as_slave_callback(I2CAIntSrc int_src)

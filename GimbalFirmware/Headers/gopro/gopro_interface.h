@@ -19,6 +19,7 @@
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
 #define GP_PROTOCOL_VERSION 0x00
 #define GP_MAVLINK_HEARTBEAT_INTERVAL 1000
+#define GP_I2C_EEPROM_NUMBYTES 16
 
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
 #define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
@@ -121,6 +122,7 @@ int gp_request_power_on();
 int gp_request_power_off();
 int gp_send_command(GPCmd* cmd);
 Uint16 gp_ready_for_cmd();
+void gp_write_eeprom();
 void addressed_as_slave_callback(I2CAIntSrc int_src);
 
 void gp_assert_intr(void);

@@ -89,22 +89,6 @@ void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info)
     params_to_load[17].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
     params_to_load[17].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_WINDUP_RECVD;
 
-    /*params_to_load[18].request_param = CAND_PID_POS_EL_P;
-    params_to_load[18].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[18].recvd_flag_mask = INIT_PARAM_POS_PID_EL_P_RECVD;
-
-    params_to_load[19].request_param = CAND_PID_POS_EL_I;
-    params_to_load[19].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[19].recvd_flag_mask = INIT_PARAM_POS_PID_EL_I_RECVD;
-
-    params_to_load[20].request_param = CAND_PID_POS_EL_D;
-    params_to_load[20].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[20].recvd_flag_mask = INIT_PARAM_POS_PID_EL_D_RECVD;
-
-    params_to_load[21].request_param = CAND_PID_POS_EL_WINDUP;
-    params_to_load[21].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[21].recvd_flag_mask = INIT_PARAM_POS_PID_EL_WINDUP_RECVD;*/
-
     params_to_load[18].request_param = CAND_PID_POS_AZ_P;
     params_to_load[18].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
     params_to_load[18].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_P_RECVD;
