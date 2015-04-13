@@ -296,26 +296,26 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     case CAND_EPID_GP_CHARGE_CONTROL_EVENT:
                         if (msg.extended_param_length == 1) {
                             GoProChargeControlEvent charge_event = (GoProChargeControlEvent)(msg.extended_param[0]);
-                            char msg[75];
+                            char msg[50];
                             MAV_SEVERITY severity;
                             switch (charge_event) {
                             case CHARGING_HALTED_OVER_TEMP:
-                                snprintf(msg, 75, "GoPro charging halted due to high temperature condition");
+                                snprintf(msg, 50, "Charging halted due to high temp condition");
                                 severity = MAV_SEVERITY_WARNING;
                                 break;
 
                             case CHARGING_HALTED_CAPACITY_THRESHOLD_REACHED:
-                                snprintf(msg, 75, "GoPro charging halted due to capacity threshold reached");
+                                snprintf(msg, 50, "Batt. capacity threshold reached, charging halted");
                                 severity = MAV_SEVERITY_WARNING;
                                 break;
 
                             case CHARGING_RESUMED_UNDER_TEMP:
-                                snprintf(msg, 75, "High temperature condition resolved, GoPro charging resumed");
+                                snprintf(msg, 50, "High temp condition resolved, charging resumed");
                                 severity = MAV_SEVERITY_NOTICE;
                                 break;
 
                             case CHARGING_RESUMED_UNDER_CAPACITY_THRESHOLD:
-                                snprintf(msg, 75, "GoPro battery under capacity threshold, charging resumed");
+                                snprintf(msg, 50, "Batt. under capacity threshold, charging resumed");
                                 severity = MAV_SEVERITY_NOTICE;
                                 break;
                             }
