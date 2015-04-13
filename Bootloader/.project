@@ -31,4 +31,10 @@
 			<locationURI>PARENT-1-PROJECT_LOC/GimbalFirmware/Source/hardware/led.c</locationURI>
 		</link>
 	</linkedResources>
+	<variableList>
+		<variable>
+			<name>CONTROLSUITE_ROOT</name>
+			<value>file:/home/arthur/ti/controlSUITE</value>
+		</variable>
+	</variableList>
 </projectDescription>

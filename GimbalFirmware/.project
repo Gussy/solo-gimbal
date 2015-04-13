@@ -87,7 +87,7 @@
 		</variable>
 		<variable>
 			<name>ORIGINAL_PROJECT_ROOT</name>
-			<value>file:/C:/ti/controlSUITE/development_kits/DRV8312-C2-KIT_v128/PM_Sensorless</value>
+			<value>$%7BPARENT-1-PROJECT_LOC%7D/controlSUITE/development_kits/DRV8312-C2-KIT_v128/PM_Sensorless</value>
 		</variable>
 	</variableList>
 </projectDescription>

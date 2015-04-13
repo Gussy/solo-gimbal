@@ -13,16 +13,17 @@
 
 #define GP_COMMAND_REQUEST_SIZE 4
 #define GP_COMMAND_RESPONSE_SIZE 3
-#define GP_COMMAND_RECEIVE_BUFFER_SIZE 10
+#define GP_COMMAND_RECEIVE_BUFFER_SIZE 40
 #define GP_STATE_MACHINE_PERIOD_MS 3
 #define GP_PWRON_TIME_MS 120 // Spec says 100ms, but I'm making it a little longer here just in case, and so it's an even multiple of our state machine poll period
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
 #define GP_PROTOCOL_VERSION 0x00
+#define GP_MAVLINK_HEARTBEAT_INTERVAL 1000
 
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
 #define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
-#define GP_ASSERT_INTR() {GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;}
-#define GP_DEASSERT_INTR() {GpioDataRegs.GPASET.bit.GPIO26 = 1;}
+#define GP_BP_DET_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;}
+#define GP_BP_DET_HIGH() {GpioDataRegs.GPASET.bit.GPIO28 = 1;}
 
 #define GP_VON (GpioDataRegs.GPADAT.bit.GPIO6)
 
@@ -73,6 +74,19 @@ typedef enum {
     GP_EXPECTING_RESPONSE
 } GPExpectingDataType;
 
+typedef enum {
+    GP_HEARTBEAT_DISCONNECTED = 0,
+    GP_HEARTBEAT_INCOMPATIBLE = 1,
+    GP_HEARTBEAT_CONNECTED = 2,
+    GP_HEARTBEAT_RECORDING = 3
+} GPHeartbeatStatus;
+
+typedef enum {
+	GP_REQUEST_NONE,
+	GP_REQUEST_GET,
+	GP_REQUEST_SET
+} GPRequestType;
+
 typedef struct {
     char cmd[2];
     Uint8 cmd_parm;
@@ -80,10 +94,25 @@ typedef struct {
 
 typedef struct {
     char cmd[2];
-    Uint8 cmd_status;
+    GPCmdStatus cmd_status;
     Uint8 cmd_response;
     GPCmdResult cmd_result;
 } GPCmdResponse;
+
+typedef struct {
+    Uint8 cmd_id;
+    Uint8 value;
+} GPSetRequest;
+
+typedef struct {
+    Uint8 cmd_id;
+    Uint8 value;
+} GPGetResponse;
+
+typedef struct {
+    Uint8 cmd_id;
+    Uint8 result;
+} GPSetResponse;
 
 void init_gp_interface();
 void gp_interface_state_machine();
@@ -93,11 +122,24 @@ int gp_request_power_off();
 int gp_send_command(GPCmd* cmd);
 Uint16 gp_ready_for_cmd();
 void addressed_as_slave_callback(I2CAIntSrc int_src);
-GPCmdResponse* gp_get_last_response();
-Uint8 gp_get_new_response_available();
+
 void gp_enable_hb_interface();
 void gp_disable_hb_interface();
 void gp_enable_charging();
 void gp_disable_charging();
+
+void gp_assert_intr(void);
+void gp_deassert_intr(void);
+
+Uint8 gp_get_new_heartbeat_available();
+Uint8 gp_get_new_get_response_available();
+Uint8 gp_get_new_set_response_available();
+
+int gp_get_request(Uint8 cmd_id);
+int gp_set_request(GPSetRequest* request);
+
+GPHeartbeatStatus gp_get_heartbeat_status();
+GPGetResponse gp_get_last_get_response();
+GPSetResponse gp_get_last_set_response();
 
 #endif /* GOPRO_INTERFACE_H_ */

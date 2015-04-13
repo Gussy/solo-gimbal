@@ -31,7 +31,7 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
     TorqueLoopStartTime = CpuTimer2Regs.TIM.all;
 
     // TODO: Measuring timing
-    GpioDataRegs.GPASET.bit.GPIO28 = 1;
+    //GpioDataRegs.GPASET.bit.GPIO28 = 1; WARNING: Breaks GoPro Control on EL Board
     GpioDataRegs.GPASET.bit.GPIO29 = 1;
 
     if (axis_parms->run_motor) {
@@ -220,6 +220,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
     }
 
     // TODO: Testing timing
-    GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
+    //GpioDataRegs.GPACLEAR.bit.GPIO28 = 1; WARNING: Breaks GoPro Control on EL Board
     GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
 }

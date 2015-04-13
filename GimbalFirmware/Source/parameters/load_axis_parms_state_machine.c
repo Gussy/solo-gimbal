@@ -89,7 +89,7 @@ void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info)
     params_to_load[17].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
     params_to_load[17].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_WINDUP_RECVD;
 
-    params_to_load[18].request_param = CAND_PID_POS_EL_P;
+    /*params_to_load[18].request_param = CAND_PID_POS_EL_P;
     params_to_load[18].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
     params_to_load[18].recvd_flag_mask = INIT_PARAM_POS_PID_EL_P_RECVD;
 
@@ -103,39 +103,39 @@ void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info)
 
     params_to_load[21].request_param = CAND_PID_POS_EL_WINDUP;
     params_to_load[21].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[21].recvd_flag_mask = INIT_PARAM_POS_PID_EL_WINDUP_RECVD;
+    params_to_load[21].recvd_flag_mask = INIT_PARAM_POS_PID_EL_WINDUP_RECVD;*/
 
-    params_to_load[22].request_param = CAND_PID_POS_AZ_P;
+    params_to_load[18].request_param = CAND_PID_POS_AZ_P;
+    params_to_load[18].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[18].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_P_RECVD;
+
+    params_to_load[19].request_param = CAND_PID_POS_AZ_I;
+    params_to_load[19].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[19].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_I_RECVD;
+
+    params_to_load[20].request_param = CAND_PID_POS_AZ_D;
+    params_to_load[20].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[20].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_D_RECVD;
+
+    params_to_load[21].request_param = CAND_PID_POS_AZ_WINDUP;
+    params_to_load[21].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
+    params_to_load[21].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_WINDUP_RECVD;
+
+    params_to_load[22].request_param = CAND_PID_POS_RL_P;
     params_to_load[22].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[22].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_P_RECVD;
+    params_to_load[22].recvd_flag_mask = INIT_PARAM_POS_PID_RL_P_RECVD;
 
-    params_to_load[23].request_param = CAND_PID_POS_AZ_I;
+    params_to_load[23].request_param = CAND_PID_POS_RL_I;
     params_to_load[23].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[23].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_I_RECVD;
+    params_to_load[23].recvd_flag_mask = INIT_PARAM_POS_PID_RL_I_RECVD;
 
-    params_to_load[24].request_param = CAND_PID_POS_AZ_D;
+    params_to_load[24].request_param = CAND_PID_POS_RL_D;
     params_to_load[24].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[24].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_D_RECVD;
+    params_to_load[24].recvd_flag_mask = INIT_PARAM_POS_PID_RL_D_RECVD;
 
-    params_to_load[25].request_param = CAND_PID_POS_AZ_WINDUP;
+    params_to_load[25].request_param = CAND_PID_POS_RL_WINDUP;
     params_to_load[25].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[25].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_WINDUP_RECVD;
-
-    params_to_load[26].request_param = CAND_PID_POS_RL_P;
-    params_to_load[26].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[26].recvd_flag_mask = INIT_PARAM_POS_PID_RL_P_RECVD;
-
-    params_to_load[27].request_param = CAND_PID_POS_RL_I;
-    params_to_load[27].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[27].recvd_flag_mask = INIT_PARAM_POS_PID_RL_I_RECVD;
-
-    params_to_load[28].request_param = CAND_PID_POS_RL_D;
-    params_to_load[28].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[28].recvd_flag_mask = INIT_PARAM_POS_PID_RL_D_RECVD;
-
-    params_to_load[29].request_param = CAND_PID_POS_RL_WINDUP;
-    params_to_load[29].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[29].recvd_flag_mask = INIT_PARAM_POS_PID_RL_WINDUP_RECVD;
+    params_to_load[25].recvd_flag_mask = INIT_PARAM_POS_PID_RL_WINDUP_RECVD;
 
     if (GetBoardHWID() == EL) {
         load_parms_state_info->total_params_to_load = EL_PARAMS_TO_LOAD;

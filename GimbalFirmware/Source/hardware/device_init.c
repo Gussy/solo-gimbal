@@ -397,7 +397,6 @@ void DeviceInit(void)
 //  GPIO-28 - PIN FUNCTION = GoPro BacPac Detect Control, Active Low
 	GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;	// 0=GPIO,  1=SCIRXDA,  2=SDAA,  3=TZ2
 	GpioCtrlRegs.GPADIR.bit.GPIO28 = 1;		// 1=OUTput,  0=INput
-	GpioCtrlRegs.GPAPUD.bit.GPIO28 = 1;     // Disable pullup on this pin
 //	GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;	// uncomment if --> Set Low initially
 	GpioDataRegs.GPASET.bit.GPIO28 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------

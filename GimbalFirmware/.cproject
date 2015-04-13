@@ -7,7 +7,7 @@
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.ti.ccstudio.buildDefinitions.C2000.Debug.480596916" moduleId="org.eclipse.cdt.core.settings" name="F2806x_RAM">
 				<macros>
 					<stringMacro name="CONTROLSUITE_DRV8312_ROOT" type="VALUE_PATH_DIR" value="${ORIGINAL_PROJECT_ROOT}/../../.."/>
-					<stringMacro name="ORIGINAL_PROJECT_ROOT" type="VALUE_PATH_DIR" value="C:/ti/controlSUITE/development_kits/DRV8312-C2-KIT_v128/PM_Sensorless"/>
+					<stringMacro name="ORIGINAL_PROJECT_ROOT" type="VALUE_PATH_DIR" value="../../controlSUITE/development_kits/DRV8312-C2-KIT_v128/PM_Sensorless"/>
 				</macros>
 				<externalSettings/>
 				<extensions>
@@ -18,7 +18,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="out" artifactName="PM_Sensorless_F2806x" buildProperties="" description="" id="com.ti.ccstudio.buildDefinitions.C2000.Debug.480596916" name="F2806x_RAM" parent="com.ti.ccstudio.buildDefinitions.C2000.Debug" postannouncebuildStep="Build hex binary" postbuildStep="&quot;${CG_TOOL_HEX}&quot; -i &quot;${BuildArtifactFileName}&quot; -o &quot;${BuildArtifactFileBaseName}.hex&quot; -boot -gpio8 -b" prebuildStep="cmd /C &quot;del ${BuildArtifactFileName}&quot;;cmd /C &quot;del ${BuildArtifactFileBaseName}.hex&quot;;python &quot;../../Tools/git_describe.py&quot; &quot;../Headers/version.h&quot;">
+				<configuration artifactExtension="out" artifactName="PM_Sensorless_F2806x" buildProperties="" description="" id="com.ti.ccstudio.buildDefinitions.C2000.Debug.480596916" name="F2806x_RAM" parent="com.ti.ccstudio.buildDefinitions.C2000.Debug" postannouncebuildStep="Build hex binary" postbuildStep="&quot;${CG_TOOL_HEX}&quot; -i &quot;${BuildArtifactFileName}&quot; -o &quot;${BuildArtifactFileBaseName}.hex&quot; -boot -gpio8 -b &amp;&amp; python ../../Tools/src/build_fw.py --board_revision=0 --image=../F2806x_RAM/PM_Sensorless_F2806x.hex --outdir=../../" prebuildStep="cmd /C &quot;del ${BuildArtifactFileName}&quot;;cmd /C &quot;del ${BuildArtifactFileBaseName}.hex&quot; &amp;&amp; python &quot;../../Tools/git_describe.py&quot; &quot;../Headers/version.h&quot;">
 					<folderInfo id="com.ti.ccstudio.buildDefinitions.C2000.Debug.480596916.812638300" name="/" resourcePath="">
 						<toolChain id="com.ti.ccstudio.buildDefinitions.C2000_6.2.exe.DebugToolchain.844418620" name="TI Build Tools" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.exe.DebugToolchain" targetTool="com.ti.ccstudio.buildDefinitions.C2000_6.2.exe.linkerDebug.1153551907">
 							<option id="com.ti.ccstudio.buildDefinitions.core.OPT_TAGS.1213764051" superClass="com.ti.ccstudio.buildDefinitions.core.OPT_TAGS" valueType="stringList">
@@ -64,6 +64,8 @@
 									<listOptionValue builtIn="false" value="225"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DIRECTORY_MODE.1352674836" name="Mode" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DIRECTORY_MODE" value="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DIRECTORY_MODE.manual" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.OPT_LEVEL.1273099605" name="Optimization level (--opt_level, -O)" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.OPT_LEVEL" value="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.OPT_LEVEL.4" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.OPT_FOR_SPEED.786307308" name="Speed vs. size trade-offs (--opt_for_speed, -mf)" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.OPT_FOR_SPEED" value="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.OPT_FOR_SPEED.2" valueType="enumerated"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compiler.inputType__C_SRCS.242018272" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compiler.inputType__C_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compiler.inputType__CPP_SRCS.994170838" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compiler.inputType__CPP_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compiler.inputType__ASM_SRCS.1005928791" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compiler.inputType__ASM_SRCS"/>

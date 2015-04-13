@@ -365,7 +365,8 @@ Uint8 gyro_offset_rl_flag = FALSE;
 Uint8 rate_cmd_az_flag = FALSE;
 Uint8 rate_cmd_el_flag = FALSE;
 Uint8 rate_cmd_rl_flag = FALSE;
-Uint8 gp_cmd_flag = FALSE;
+Uint8 gopro_get_request_flag = FALSE;
+Uint8 gopro_set_request_flag = FALSE;
 #ifdef ENABLE_BALANCE_PROCEDURE
 Uint8 balance_axis_flag = FALSE;
 Uint8 balance_step_duration_flag = FALSE;
@@ -383,48 +384,49 @@ void init_param_set(void)
 	}
 
 	// Set up parameters we're using
-	param_set[CAND_PID_TORQUE].sema = &current_flag;
-	param_set[CAND_PID_RATE_EL_P].sema = &rate_pid_el_p_flag;
-	param_set[CAND_PID_RATE_EL_I].sema = &rate_pid_el_i_flag;
-	param_set[CAND_PID_RATE_EL_D].sema = &rate_pid_el_d_flag;
-	param_set[CAND_PID_RATE_EL_WINDUP].sema = &rate_pid_el_windup_flag;
-	param_set[CAND_PID_RATE_AZ_P].sema = &rate_pid_az_p_flag;
-    param_set[CAND_PID_RATE_AZ_I].sema = &rate_pid_az_i_flag;
-    param_set[CAND_PID_RATE_AZ_D].sema = &rate_pid_az_d_flag;
-    param_set[CAND_PID_RATE_AZ_WINDUP].sema = &rate_pid_az_windup_flag;
-    param_set[CAND_PID_RATE_RL_P].sema = &rate_pid_rl_p_flag;
-    param_set[CAND_PID_RATE_RL_I].sema = &rate_pid_rl_i_flag;
-    param_set[CAND_PID_RATE_RL_D].sema = &rate_pid_rl_d_flag;
-    param_set[CAND_PID_RATE_RL_WINDUP].sema = &rate_pid_rl_windup_flag;
-    param_set[CAND_PID_DEBUG_1].sema = &debug_1_flag;
-    param_set[CAND_PID_DEBUG_2].sema = &debug_2_flag;
-    param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
-    param_set[CAND_PID_POS_AZ_P].sema = &pos_pid_az_p_flag;
-    param_set[CAND_PID_POS_AZ_I].sema = &pos_pid_az_i_flag;
-    param_set[CAND_PID_POS_AZ_D].sema = &pos_pid_az_d_flag;
-    param_set[CAND_PID_POS_AZ_WINDUP].sema = &pos_pid_az_windup_flag;
-    param_set[CAND_PID_POS_EL_P].sema = &pos_pid_el_p_flag;
-    param_set[CAND_PID_POS_EL_I].sema = &pos_pid_el_i_flag;
-    param_set[CAND_PID_POS_EL_D].sema = &pos_pid_el_d_flag;
-    param_set[CAND_PID_POS_EL_WINDUP].sema = &pos_pid_el_windup_flag;
-    param_set[CAND_PID_POS_RL_P].sema = &pos_pid_rl_p_flag;
-    param_set[CAND_PID_POS_RL_I].sema = &pos_pid_rl_i_flag;
-    param_set[CAND_PID_POS_RL_D].sema = &pos_pid_rl_d_flag;
-    param_set[CAND_PID_POS_RL_WINDUP].sema = &pos_pid_rl_windup_flag;
-    param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema = &gyro_offset_x_flag;
-    param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema = &gyro_offset_y_flag;
-    param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema = &gyro_offset_z_flag;
-    param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
-    param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
-    param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
-    param_set[CAND_PID_RATE_CMD_AZ].sema = &rate_cmd_az_flag;
-    param_set[CAND_PID_RATE_CMD_EL].sema = &rate_cmd_el_flag;
-    param_set[CAND_PID_RATE_CMD_RL].sema = &rate_cmd_rl_flag;
-    param_set[CAND_PID_GP_CMD].sema = &gp_cmd_flag;
-#ifdef ENABLE_BALANCE_PROCEDURE
-    param_set[CAND_PID_BALANCE_AXIS].sema = &balance_axis_flag;
-    param_set[CAND_PID_BALANCE_STEP_DURATION].sema = &balance_step_duration_flag;
-#endif
+		param_set[CAND_PID_TORQUE].sema = &current_flag;
+		param_set[CAND_PID_RATE_EL_P].sema = &rate_pid_el_p_flag;
+		param_set[CAND_PID_RATE_EL_I].sema = &rate_pid_el_i_flag;
+		param_set[CAND_PID_RATE_EL_D].sema = &rate_pid_el_d_flag;
+		param_set[CAND_PID_RATE_EL_WINDUP].sema = &rate_pid_el_windup_flag;
+		param_set[CAND_PID_RATE_AZ_P].sema = &rate_pid_az_p_flag;
+	    param_set[CAND_PID_RATE_AZ_I].sema = &rate_pid_az_i_flag;
+	    param_set[CAND_PID_RATE_AZ_D].sema = &rate_pid_az_d_flag;
+	    param_set[CAND_PID_RATE_AZ_WINDUP].sema = &rate_pid_az_windup_flag;
+	    param_set[CAND_PID_RATE_RL_P].sema = &rate_pid_rl_p_flag;
+	    param_set[CAND_PID_RATE_RL_I].sema = &rate_pid_rl_i_flag;
+	    param_set[CAND_PID_RATE_RL_D].sema = &rate_pid_rl_d_flag;
+	    param_set[CAND_PID_RATE_RL_WINDUP].sema = &rate_pid_rl_windup_flag;
+	    param_set[CAND_PID_DEBUG_1].sema = &debug_1_flag;
+	    param_set[CAND_PID_DEBUG_2].sema = &debug_2_flag;
+	    param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
+	    param_set[CAND_PID_POS_AZ_P].sema = &pos_pid_az_p_flag;
+	    param_set[CAND_PID_POS_AZ_I].sema = &pos_pid_az_i_flag;
+	    param_set[CAND_PID_POS_AZ_D].sema = &pos_pid_az_d_flag;
+	    param_set[CAND_PID_POS_AZ_WINDUP].sema = &pos_pid_az_windup_flag;
+	    /*param_set[CAND_PID_POS_EL_P].sema = &pos_pid_el_p_flag;
+	    param_set[CAND_PID_POS_EL_I].sema = &pos_pid_el_i_flag;
+	    param_set[CAND_PID_POS_EL_D].sema = &pos_pid_el_d_flag;
+	    param_set[CAND_PID_POS_EL_WINDUP].sema = &pos_pid_el_windup_flag;*/
+	    param_set[CAND_PID_POS_RL_P].sema = &pos_pid_rl_p_flag;
+	    param_set[CAND_PID_POS_RL_I].sema = &pos_pid_rl_i_flag;
+	    param_set[CAND_PID_POS_RL_D].sema = &pos_pid_rl_d_flag;
+	    param_set[CAND_PID_POS_RL_WINDUP].sema = &pos_pid_rl_windup_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema = &gyro_offset_x_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema = &gyro_offset_y_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema = &gyro_offset_z_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_AZ].sema = &gyro_offset_az_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_EL].sema = &gyro_offset_el_flag;
+	    param_set[CAND_PID_GYRO_OFFSET_RL].sema = &gyro_offset_rl_flag;
+	    param_set[CAND_PID_RATE_CMD_AZ].sema = &rate_cmd_az_flag;
+	    param_set[CAND_PID_RATE_CMD_EL].sema = &rate_cmd_el_flag;
+	    param_set[CAND_PID_RATE_CMD_RL].sema = &rate_cmd_rl_flag;
+	    param_set[CAND_PID_GOPRO_GET_REQUEST].sema = &gopro_get_request_flag;
+	    param_set[CAND_PID_GOPRO_SET_REQUEST].sema = &gopro_set_request_flag;
+	#ifdef ENABLE_BALANCE_PROCEDURE
+	    param_set[CAND_PID_BALANCE_AXIS].sema = &balance_axis_flag;
+	    param_set[CAND_PID_BALANCE_STEP_DURATION].sema = &balance_step_duration_flag;
+	#endif
 }
 
 // TODO: For testing gopro stuff
@@ -438,11 +440,68 @@ Uint32 can_init_fault_message_resend_counter = 0;
 
 void main(void)
 {
+	GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;	// 0=GPIO,  1=SCIRXDA,  2=SDAA,  3=TZ2
+	GpioCtrlRegs.GPADIR.bit.GPIO28 = 1;		// 1=OUTput,  0=INput
+	GpioDataRegs.GPASET.bit.GPIO28 = 1;		// uncomment if --> Set High initially
+
 	DeviceInit();	// Device Life support & GPIO
 
 	// initialize flash
     board_hw_id = GetBoardHWID();
-	if (board_hw_id == AZ) {
+
+    // Program the EEPROM on every boot
+	#define I2C_NUMBYTES 16
+    if(board_hw_id == EL) {
+    	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
+    	GpioDataRegs.GPASET.bit.GPIO28 = 1;
+
+    	// Data to write into EEPROM
+    	uint8_t EEPROMData[I2C_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
+
+    	// Init I2C peripheral
+    	I2caRegs.I2CMDR.all = 0x0000;
+    	I2caRegs.I2CSAR = 0x0050;					//Set slave address
+    	I2caRegs.I2CPSC.bit.IPSC = 6;				//Prescaler - need 7-12 Mhz on module clk
+
+    	// Setup I2C clock
+    	I2caRegs.I2CCLKL = 10;						// NOTE: must be non zero
+    	I2caRegs.I2CCLKH = 5;						// NOTE: must be non zero
+
+    	I2caRegs.I2CMDR.all = 0x0020;
+
+    	// Setup I2C FIFO
+    	I2caRegs.I2CFFTX.all = 0x6000;
+    	I2caRegs.I2CFFRX.all = 0x2040;
+
+    	// Reset the I2C bus
+    	I2caRegs.I2CMDR.bit.IRS = 1;
+    	I2caRegs.I2CSAR = 0x0050;
+
+    	// Wait for the I2C bus to become available
+    	while (I2caRegs.I2CSTR.bit.BB == 1);
+
+		// Start, stop, no rm, reset i2c
+    	I2caRegs.I2CMDR.all = 0x6E20;
+
+		uint8_t i;
+		for(i = 0; i < I2C_NUMBYTES; i++){
+			// Setup I2C Master Write
+			I2caRegs.I2CMDR.all = 0x6E20;
+			I2caRegs.I2CCNT = 2;
+			I2caRegs.I2CDXR = i;
+			I2caRegs.I2CMDR.bit.STP = 1;
+			while(I2caRegs.I2CSTR.bit.XRDY == 0){};
+
+			// Write data byte and wait till it's shifted out
+			I2caRegs.I2CDXR = EEPROMData[i];
+			while(I2caRegs.I2CSTR.bit.XRDY == 0){};
+
+			// Let the EEPROM write
+			ADC_DELAY_US(5000);
+		}
+    }
+
+    if (board_hw_id == AZ) {
 		int i;
 		init_flash();
 		for ( i = 0; i < 3; i++) {
@@ -1059,26 +1118,30 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 
 	// If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
 	if (board_hw_id == EL) {
-        if (gp_get_new_response_available()) {
+		if (gp_get_new_heartbeat_available()) {
+			// If there is a heartbeat status, get it and send out over CAN.
+			GPHeartbeatStatus status = gp_get_heartbeat_status();
+			cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)status);
+		}
+
+        if (gp_get_new_get_response_available()) {
             // If there are, get them and package them up to be sent out over CAN.
-            // NOTE: Unfortunately, there are 5 bytes of data I'd like to send, and the biggest parameters are 4 bytes,
-            // so we have to send the data as 1 4-byte parameter and 1 1-byte parameter.  Both the parameters can be packed into the
-            // same CAN message, so it doesn't increase the bus load, but it complicates the parsing a bit on the other side
-            GPCmdResponse* response = gp_get_last_response();
-            Uint32 response_buffer[2];
-            response_buffer[0] = 0;
-            response_buffer[0] |= ((((Uint32)response->cmd[0]) << 24) & 0xFF000000);
-            response_buffer[0] |= ((((Uint32)response->cmd[1]) << 16) & 0x00FF0000);
-            response_buffer[0] |= ((((Uint32)response->cmd_status) << 8) & 0x0000FF00);
-            response_buffer[0] |= (((Uint32)response->cmd_response) & 0x000000FF);
+            GPGetResponse response = gp_get_last_get_response();
+            Uint32 response_buffer = 0;
+            response_buffer |= ((((Uint32)response.cmd_id) << 8) & 0x0000FF00);
+            response_buffer |= ((((Uint32)response.value) << 0) & 0x00FF00FF);
 
-            response_buffer[1] = 0;
-            response_buffer[1] = response->cmd_result;
+            cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_GET_RESPONSE, response_buffer);
+        }
 
-            CAND_ParameterID pids[2];
-            pids[0] = CAND_PID_GP_CMD;
-            pids[1] = CAND_PID_GP_LAST_CMD_RESULT;
-            cand_tx_multi_response(CAND_ID_AZ, pids, response_buffer, 2);
+        if (gp_get_new_set_response_available()) {
+            // If there are, get them and package them up to be sent out over CAN.
+            GPSetResponse response = gp_get_last_set_response();
+            Uint32 response_buffer = 0;
+            response_buffer |= ((((Uint32)response.cmd_id) << 8) & 0x0000FF00);
+            response_buffer |= ((((Uint32)response.result) << 0) & 0x000000FF);
+
+            cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_SET_RESPONSE, response_buffer);
         }
 	}
 
