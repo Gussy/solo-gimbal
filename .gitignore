@@ -16,3 +16,6 @@ Tools/3DRGimbalFactoryApplication/build-*/
 *.user
 *.exe
 *.db
+*.pyc
+*~
+*mav.tlog*
