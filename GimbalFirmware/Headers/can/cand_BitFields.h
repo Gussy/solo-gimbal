@@ -66,12 +66,12 @@ typedef enum  {
     CAND_PID_POS_RL_WINDUP,
 	CAND_PID_BALANCE_AXIS,
 	CAND_PID_BALANCE_STEP_DURATION,
-	CAND_PID_GP_CMD,
 	CAND_PID_GYRO_OFFSET_AZ,
 	CAND_PID_GYRO_OFFSET_EL,
 	CAND_PID_GYRO_OFFSET_RL,
+    
     // Two Byte Parameters
-    CAND_PID_4_BYTE_CUTOFF =                            36,
+    CAND_PID_4_BYTE_CUTOFF =                            35,
     CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET,
     CAND_PID_CORETEMP,
     CAND_PID_TORQUE,
@@ -85,21 +85,24 @@ typedef enum  {
     CAND_PID_RATE_CMD_EL,
     CAND_PID_RATE_CMD_AZ,
     CAND_PID_RATE_CMD_RL,
+    CAND_PID_GOPRO_GET_RESPONSE,
+    CAND_PID_GOPRO_SET_REQUEST,
+    CAND_PID_GOPRO_SET_RESPONSE,
     CAND_PID_DEBUG_1,
     CAND_PID_DEBUG_2,
     CAND_PID_DEBUG_3,
 
     // One Byte Parameters
-    CAND_PID_2_BYTE_CUTOFF =                            54,
+    CAND_PID_2_BYTE_CUTOFF =                            55,
     CAND_PID_BIT,
     CAND_PID_VOLTAGE,
     CAND_PID_USER_CONTROL_FLAGS,
     CAND_PID_BEACON_MODE,
     CAND_PID_BEACON_BRIGHTNESS,
     CAND_PID_VERSION,
-    CAND_PID_GP_LAST_CMD_RESULT,
+    CAND_PID_GOPRO_GET_REQUEST,
     CAND_PID_EXTENDED,
-    CAND_PID_LAST =                                     63
+    CAND_PID_LAST =                                     64
 } CAND_ParameterID;
 
 typedef enum {

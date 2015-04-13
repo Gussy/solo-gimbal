@@ -410,16 +410,22 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
             *(param_set[CAND_PID_TARGET_ANGLES_ROLL].sema) = FALSE;
         }
 
-        // Check for any new GoPro commands
-        if (*(param_set[CAND_PID_GP_CMD].sema) == TRUE) {
-            // Extract the GoPro command and parameter from the CAN parameter
-            GPCmd cmd;
-            cmd.cmd[0] = (param_set[CAND_PID_GP_CMD].param >> 24) & 0x000000FF;
-            cmd.cmd[1] = (param_set[CAND_PID_GP_CMD].param >> 16) & 0x000000FF;
-            cmd.cmd_parm = (param_set[CAND_PID_GP_CMD].param >> 8) & 0x000000FF;
-            gp_send_command(&cmd);
+        // Check for any new GoPro get requests
+        if (*(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) == TRUE) {
+            gp_get_request((Uint8*)&param_set[CAND_PID_GOPRO_GET_REQUEST].param);
 
-            *(param_set[CAND_PID_GP_CMD].sema) = FALSE;
+            *(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) = FALSE;
+        }
+
+        // Check for any new GoPro set requests
+        if (*(param_set[CAND_PID_GOPRO_SET_REQUEST].sema) == TRUE) {
+            // Extract the GoPro set request command id and value from the CAN parameter
+            GPSetRequest set_request;
+            set_request.cmd_id = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 24) & 0x000000FF;
+            set_request.value = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 16) & 0x000000FF;
+            gp_set_request(&set_request);
+
+            *(param_set[CAND_PID_GOPRO_SET_REQUEST].sema) = FALSE;
         }
     }
 }

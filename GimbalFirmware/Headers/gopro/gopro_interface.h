@@ -85,6 +85,21 @@ typedef struct {
     GPCmdResult cmd_result;
 } GPCmdResponse;
 
+typedef struct {
+    Uint8 cmd_id;
+    Uint8 value;
+} GPSetRequest;
+
+typedef struct {
+    Uint8 cmd_id;
+    Uint8 value;
+} GPGetResponse;
+
+typedef struct {
+    Uint8 cmd_id;
+    Uint8 result;
+} GPSetResponse;
+
 void init_gp_interface();
 void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
@@ -93,7 +108,14 @@ int gp_request_power_off();
 int gp_send_command(GPCmd* cmd);
 Uint16 gp_ready_for_cmd();
 void addressed_as_slave_callback(I2CAIntSrc int_src);
-GPCmdResponse* gp_get_last_response();
-Uint8 gp_get_new_response_available();
+
+Uint8 gp_get_new_get_response_available();
+Uint8 gp_get_new_set_response_available();
+
+int gp_get_request(Uint8* cmd_id);
+int gp_set_request(GPSetRequest* request);
+
+GPGetResponse* gp_get_last_get_response();
+GPSetResponse* gp_get_last_set_response();
 
 #endif /* GOPRO_INTERFACE_H_ */

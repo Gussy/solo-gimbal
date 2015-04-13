@@ -78,15 +78,30 @@ int gp_send_command(GPCmd* cmd)
     }
 }
 
-Uint8 gp_get_new_response_available()
+Uint8 gp_get_new_get_response_available()
 {
+    // TODO: Implement
     return new_response_available;
 }
 
-GPCmdResponse* gp_get_last_response()
+Uint8 gp_get_new_set_response_available()
 {
+    // TODO: Implement
+    return new_response_available;
+}
+
+GPGetResponse* gp_get_last_get_response()
+{
+    // TODO: Implement
     new_response_available = FALSE;
-    return &last_cmd_response;
+    //return &last_cmd_response;
+}
+
+GPSetResponse* gp_get_last_set_response()
+{
+    // TODO: Implement
+    new_response_available = FALSE;
+    //return &last_cmd_response;
 }
 
 int gp_request_power_on()
@@ -111,6 +126,18 @@ int gp_request_power_off()
     } else {
         return -1;
     }
+}
+
+int gp_get_request(Uint8* cmd_id)
+{
+    // TODO: Implement
+    return -1;
+}
+
+int gp_set_request(GPSetRequest* request)
+{
+    // TODO: Implement
+    return -1;
 }
 
 GPPowerStatus gp_get_power_status()

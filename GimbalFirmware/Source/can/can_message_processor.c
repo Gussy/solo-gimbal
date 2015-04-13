@@ -707,10 +707,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
     case CAND_RX_PARAM_RESPONSE:
         while (msg.param_response_cnt) {
-            // GoPro response messages come as 2 parameter IDs packed into the same param response, so we need a temporary GoPro response to assemble the two parts into,
-            // in case this param reponse happens to be a GoPro command response
-            GPCmdResponse gp_cmd_response;
-
             // Response messages can contain up to 4 parameter responses
             switch (msg.param_response_id[msg.param_response_cnt - 1]) {
                 case CAND_PID_POSITION:
@@ -740,22 +736,25 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 }
                 break;
 
-                case CAND_PID_GP_CMD:
+                case CAND_PID_GOPRO_GET_RESPONSE:
                 {
-                    Uint32 packed_param = msg.param_response[msg.param_response_cnt - 1];
-                    gp_cmd_response.cmd[0] = (packed_param >> 24) & 0x000000FF;
-                    gp_cmd_response.cmd[1] = (packed_param >> 16) & 0x000000FF;
-                    gp_cmd_response.cmd_status = (packed_param >> 8) & 0x000000FF;
-                    gp_cmd_response.cmd_response = (packed_param & 0x000000FF);
+                	GPGetResponse gp_get_response;
+					Uint32 packed_param = msg.param_response[msg.param_response_cnt - 1];
+					gp_get_response.cmd_id = (packed_param >> 24) & 0x000000FF;
+					gp_get_response.value = (packed_param >> 16) & 0x000000FF;
+					send_mavlink_gopro_get_response(&gp_get_response);
                 }
                 break;
 
-                case CAND_PID_GP_LAST_CMD_RESULT:
-                    gp_cmd_response.cmd_result = (GPCmdResult)msg.param_response[msg.param_response_cnt - 1];
-
-                    // This is the 2nd half of the GoPro result, so we can now send the result over the MAVLink interface
-                    send_mavlink_gopro_response(&gp_cmd_response);
-                    break;
+                case CAND_PID_GOPRO_SET_RESPONSE:
+                {
+                	GPSetResponse gp_set_response;
+                    Uint32 packed_param = msg.param_response[msg.param_response_cnt - 1];
+                    gp_set_response.cmd_id = (packed_param >> 24) & 0x000000FF;
+                    gp_set_response.result = (packed_param >> 16) & 0x000000FF;
+                    send_mavlink_gopro_set_response(&gp_set_response);
+                }
+                break;
 
                 case CAND_PID_TORQUE_KP:
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
