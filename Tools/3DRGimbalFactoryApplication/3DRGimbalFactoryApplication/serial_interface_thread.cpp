@@ -132,7 +132,7 @@ void SerialInterfaceThread::handleInput()
                     break;
 
                 default:
-                    //qDebug() << "Unknown message ID received: " << received_msg.msgid << "\n";
+                    qDebug() << "Unknown message ID received: " << received_msg.msgid << "\n";
                     break;
                 }
             }
