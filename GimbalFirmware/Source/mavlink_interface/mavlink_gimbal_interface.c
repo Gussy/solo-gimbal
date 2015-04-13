@@ -590,7 +590,7 @@ void send_mavlink_gimbal_feedback() {
 void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status)
 {
     static mavlink_message_t gopro_heartbeat_msg;
-    mavlink_msg_gopro_heartbeat_pack(MAVLINK_GIMBAL_SYSID,
+    mavlink_msg_gopro_heartbeat_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_heartbeat_msg,
                                     (uint8_t)status);
@@ -600,7 +600,7 @@ void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status)
 void send_mavlink_gopro_get_response(GPGetResponse* response)
 {
     static mavlink_message_t gopro_get_response_msg;
-    mavlink_msg_gopro_get_response_pack(MAVLINK_GIMBAL_SYSID,
+    mavlink_msg_gopro_get_response_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_get_response_msg,
                                     response->cmd_id,
@@ -611,7 +611,7 @@ void send_mavlink_gopro_get_response(GPGetResponse* response)
 void send_mavlink_gopro_set_response(GPSetResponse* response)
 {
     static mavlink_message_t gopro_set_response_msg;
-    mavlink_msg_gopro_get_response_pack(MAVLINK_GIMBAL_SYSID,
+    mavlink_msg_gopro_get_response_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_set_response_msg,
                                     response->cmd_id,
