@@ -132,6 +132,9 @@ GPHeartbeatStatus gp_get_heartbeat_status()
 			heartbeat_status = GP_HEARTBEAT_RECORDING;
 	} else */if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gccb_version_queried == 1) {
 		heartbeat_status = GP_HEARTBEAT_CONNECTED;
+	} else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb()) {
+		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
+		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
 	} else if (gp_get_power_status() == GP_POWER_ON && gccb_version_queried == 0) {
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
 	}
@@ -482,11 +485,7 @@ void gp_interface_state_machine()
             last_cmd_response.cmd_status = (GPCmdStatus)receive_buffer[1];
 
             // Special Handling of responses
-            if(last_cmd_response.cmd[0] == 'b' && last_cmd_response.cmd[1] == 'l' && gccb_version_queried == 0) {
-            	// Drop this dummy response and mark the GCCB as functional
-            	gccb_version_queried = 1;
-            	break;
-            } else if(last_cmd_response.cmd[0] == 'c' && last_cmd_response.cmd[1] == 'v') {
+            if(last_cmd_response.cmd[0] == 'c' && last_cmd_response.cmd[1] == 'v') {
             	// Take third byte (CAMERA_MODEL) of the "camera model and firmware version" response
             	last_cmd_response.cmd_response = receive_buffer[3];
             } else {
@@ -522,9 +521,9 @@ void gp_interface_state_machine()
 	// We also need to drop the response to this, so it doesn't propogate onto MAVLink
 	// This failure mode usually happens when the Gimbal and GoPro stays powered, but the
 	// Gimbal firmware resets (such as in a software update process).
-	// This is done at 1/4th of the heartbeat interval, so it's caught before the first
-	// heartbeat goes out in order to prevent glitching the heartbeat status
-	if((++interrogation_timeout > ((GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) / 2)) && gccb_version_queried == 0) {
+	// This is done at 1/8th of the heartbeat interval, so it's likely caught before the
+	// first heartbeat goes out in order to prevent glitching the heartbeat status
+	if((++interrogation_timeout > ((GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) / 8)) && gccb_version_queried == 0) {
 		GPCmd cmd;
 		cmd.cmd[0] = 'b';
 		cmd.cmd[1] = 'l';
@@ -665,7 +664,12 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
                 last_cmd_response.cmd_result = GP_CMD_PREEMPTED;
 
                 // Indicate that a "new response" is available (what's available is the indication that the command was preempted)
-                new_response_available = TRUE;
+                if(last_cmd_response.cmd[0] == 'b' && last_cmd_response.cmd[1] == 'l' && gccb_version_queried == 0) {
+                	// Drop this dummy response and mark the GCCB as functional
+                	gccb_version_queried = 1;
+                } else {
+                	new_response_available = TRUE;
+                }
 
                 // De-assert the interrupt line, since we're no longer trying to send a command to the GoPro
                 gp_deassert_intr();
