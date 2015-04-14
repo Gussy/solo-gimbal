@@ -9,17 +9,8 @@ Used for packaging application firmware with the bootloader firmware.
 """
 
 import argparse
+from firmware_helper import add_checksum, bytearray_to_wordarray, load_binary
 
-
-def load_binary(filename):
-	'''Load binary image file into a byte array'''
-	with open(filename, "rb") as f:
-		return bytearray(f.read())
-
-def add_checksum(checksum, word):
-	'''Simple XOR checksum'''
-	checksum ^= word
-	return checksum
 
 def write_data_header(filename, data):
 	'''Write data.h file to be bundled with bootloader firmware'''
@@ -44,18 +35,7 @@ def write_data_header(filename, data):
 		# Write the checksum bytes
 		f.write(" 0x%04X, 0x%04X, 0x0000};\n" % (checksum & 0xFFFF, (checksum & 0xFFFF) >> 16))
 
-def bytearray_to_wordarray(data):
-	'''Converts an 8-bit byte array into a 16-bit word array'''
-	wordarray = list()
 
-	for i in range(len(data) / 2):
-		# Calculate 16 bit word from two bytes
-		msb = data[(i * 2) + 0]
-		lsb = data[(i * 2) + 1]
-		word = (msb << 8) | lsb
-		wordarray.append(word)
-
-	return wordarray
 
 def main():
 	parser = argparse.ArgumentParser()

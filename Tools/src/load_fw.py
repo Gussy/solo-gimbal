@@ -5,16 +5,13 @@ Utility for loading firmware into the 3DR Gimbal.
 
 """
 
-import sys, base64, json, zlib
+import sys
 
 from pymavlink.dialects.v10 import common as mavlink
+from firmware_helper import append_checksum, load_firmware
 
-
-MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
-
-default_baudrate = 230400
 
 def wait_handshake(m, timeout=1):
     '''wait for a handshake so we know the target system IDs'''
@@ -23,54 +20,9 @@ def wait_handshake(m, timeout=1):
         blocking=True,
         timeout=timeout)
     if msg != None:
-        if(msg.get_srcComponent() == MAVLINK_COMPONENT_ID):
+        if(msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL):
             return msg
     return None
-
-def load_firmware(filename):
-    '''Load the image from the JSON firmware file into a byte array'''
-    with open(filename, "r") as f:
-        desc = json.load(f)
-
-        return bytearray(zlib.decompress(base64.b64decode(desc['image'])))
-
-def bytearray_to_wordarray(data):
-    '''Converts an 8-bit byte array into a 16-bit word array'''
-    wordarray = list()
-
-    for i in range(len(data) / 2):
-        # Calculate 16 bit word from two bytes
-        msb = data[(i * 2) + 0]
-        lsb = data[(i * 2) + 1]
-        word = (msb << 8) | lsb
-        wordarray.append(word)
-
-    return wordarray
-
-def append_checksum(binary):
-    '''Calculate and append the XOR checksum to the bytearray'''
-    checksum = 0xFFFF
-    wordarray = bytearray_to_wordarray(binary)
-
-    # Compute the checksum
-    for i in range(len(wordarray)):
-        checksum ^= wordarray[i]
-    print("Checksum: 0x%04X" % checksum)
-
-    # Add the checksum to the end of the wordarray
-    wordarray.extend([checksum & 0xFFFF, (checksum & 0xFFFF) >> 16, 0x0000])
-
-    # Convert the wordarray back into a bytearray
-    barray = list()
-    for i in range(len(wordarray)):
-        lsb = wordarray[i] & 0xFF
-        msb = (wordarray[i] >> 8) & 0xFF
-        barray.append(lsb)
-        barray.append(msb)
-
-    return barray
-
-
 
 def update(binary, link):
     print (# Load the binary image into a byte array
