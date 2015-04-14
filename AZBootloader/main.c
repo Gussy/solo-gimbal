@@ -11,15 +11,6 @@
 
 #include "protocol_c2000.h"
 
-#if 0
-#ifndef MAVLINK_MESSAGE_CRC
-#pragma    DATA_SECTION(mavlink_message_crcs,"DMARAML5");
-	extern uint8_t mavlink_message_crcs[256];
-
-#define MAVLINK_MESSAGE_CRC(msgid) mavlink_message_crcs[msgid]
-#endif
-#endif
-
 #include "mavlink.h"
 
 #define	FLASH_F2806x 1
@@ -47,7 +38,6 @@ Uint16 endRam;
 #define STATUS_LED_TOGGLE()			{GpioDataRegs.GPATOGGLE.bit.GPIO7 = 1;}
 
 #define MAVLINK_SYSTEM_ID			1
-#define MAVLINK_COMPONENT_ID 		MAV_COMP_ID_GIMBAL
 
 // Max payload of MAVLINK_MSG_ID_ENCAPSULATED_DATA message is 253 Bytes
 // Must be an even number or the uint8_t[] to uint16_t[] conversion will fail
@@ -408,13 +398,22 @@ int read_serial_port(unsigned char *data, unsigned int max_size)
 	int bytes_read = 0;
 	Uint16 timeout = 0;
 	while (max_size > 0) {
-		// Empty the FIFO into the receive ring buffer
-		while ((ScibRegs.SCIFFRX.bit.RXFFST > 0)&&(max_size > 0)) {
-			*data = ScibRegs.SCIRXBUF.bit.RXDT;
-			data++;
-			max_size--;
-			bytes_read++;
-			timeout = 0;
+		// Check whether this was an interrupt due to a received character or a receive error
+		if (ScibRegs.SCIRXST.bit.RXERROR) {
+			// This was an error interrupt
+
+			// Reset the peripheral to clear the error condition
+			ScibRegs.SCICTL1.bit.SWRESET = 0;
+			ScibRegs.SCICTL1.bit.SWRESET = 1;
+		} else {
+			// Empty the FIFO into the receive ring buffer
+			while ((ScibRegs.SCIFFRX.bit.RXFFST > 0)&&(max_size > 0)) {
+				*data = ScibRegs.SCIRXBUF.bit.RXDT;
+				data++;
+				max_size--;
+				bytes_read++;
+				timeout = 0;
+			}
 		}
 
 		// Clear the overflow flag if it is set
@@ -432,6 +431,7 @@ int read_serial_port(unsigned char *data, unsigned int max_size)
 			return bytes_read;
 		}
 	}
+
 	return bytes_read;
 }
 
@@ -446,39 +446,6 @@ int send_serial_port(unsigned char *data, unsigned int size)
 	}
 	return 0;
 }
-
-
-/* all these may be overwritten when loading the image */
-#pragma    DATA_SECTION(msg,"DMARAML5");
-#pragma    DATA_SECTION(inmsg,"DMARAML5");
-#pragma    DATA_SECTION(status,"DMARAML5");
-#pragma    DATA_SECTION(buffer,"DMARAML5");
-mavlink_message_t msg, inmsg;
-mavlink_status_t status;
-#define BUFFER_LENGTH	300
-unsigned char buffer[BUFFER_LENGTH];
-
-#if 0
-uint16_t mavlink_msg_request_encapsulated_data_pack(uint8_t system_id,
-		                                            uint8_t component_id,
-		                                            mavlink_message_t *msg,
-		                                            uint16_t seqnr)
-{
-#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	_mav_put_uint16_t(buf, 0, seqnr);
-#else
-	mavlink_encapsulated_data_t *packet = (mavlink_encapsulated_data_t *)msg;
-	packet->seqnr = seqnr;
-#endif
-
-	msg->msgid = MAVLINK_MSG_ID_ENCAPSULATED_DATA;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, 20, MAVLINK_MSG_ID_ENCAPSULATED_DATA_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, 20);
-#endif
-}
-#endif
 
 static Uint16 Example_CsmUnlock()
 {
@@ -518,12 +485,53 @@ static Uint16 Example_CsmUnlock()
 
 }
 
+/* all these may be overwritten when loading the image */
+#pragma    DATA_SECTION(msg,"DMARAML5");
+#pragma    DATA_SECTION(inmsg,"DMARAML5");
+#pragma    DATA_SECTION(status,"DMARAML5");
+#pragma    DATA_SECTION(buffer,"DMARAML5");
+mavlink_message_t msg, inmsg;
+mavlink_status_t status;
+#define BUFFER_LENGTH	300
+unsigned char buffer[BUFFER_LENGTH];
+
+void MAVLINK_send_heartbeat()
+{
+	Uint16 length;
+	mavlink_message_t heartbeat_msg;
+	mavlink_msg_heartbeat_pack(MAVLINK_SYSTEM_ID,
+								MAV_COMP_ID_GIMBAL,
+								&heartbeat_msg,
+								MAV_TYPE_GIMBAL,
+								MAV_AUTOPILOT_INVALID,
+								MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+								0, /* MAV_MODE_GIMBAL_UNINITIALIZED */
+								0  /* MAV_STATE_UNINIT */
+								);
+
+	length = mavlink_msg_to_send_buffer(buffer, &heartbeat_msg);
+	send_serial_port(buffer, length);
+}
+
+void send_mavlink_statustext(char* message)
+{
+	Uint16 length;
+    mavlink_message_t status_msg;
+    mavlink_msg_statustext_pack(MAVLINK_SYSTEM_ID,
+								MAV_COMP_ID_GIMBAL,
+								&status_msg,
+								MAV_SEVERITY_DEBUG,
+								message);
+
+    length = mavlink_msg_to_send_buffer(buffer, &status_msg);
+    send_serial_port(buffer, length);
+}
+
 Uint32 MAVLINK_Flash()
 {
 	int getting_messages = 0;
 	Uint16 seq = 0, length;
 	FLASH_ST FlashStatus = {0};
-	Uint16  Status;
 	Uint16  *Flash_ptr = (Uint16 *)MAIN_APPLICATION_ADDRESS;     // Pointer to a location in flash
     Uint16 blink_counter = 0;
     int idx1 = 0;
@@ -541,10 +549,14 @@ Uint32 MAVLINK_Flash()
 
 	// wait for an image to arrive over mavlink serial
 	while(1) {
+		// send a mavlink heartbeat if the bootload sequence hasn't started yet
+		//if(seq == 0)
+			MAVLINK_send_heartbeat();
+
 		// send mavlink message to request data stream
 		mavlink_msg_data_transmission_handshake_pack(
 			MAVLINK_SYSTEM_ID,
-			MAVLINK_COMPONENT_ID,
+			MAV_COMP_ID_GIMBAL,
 			&msg,
 			MAVLINK_TYPE_UINT16_T,
 			0 /* size */,
@@ -593,17 +605,17 @@ Uint32 MAVLINK_Flash()
 									Example_CsmUnlock();
 
 									/* don't erase SECTOR A */
-									Status = Flash_Erase(SECTORB, &FlashStatus);
+									Flash_Erase(SECTORB, &FlashStatus);
 									STATUS_LED_TOGGLE();
-									Status = Flash_Erase(SECTORC, &FlashStatus);
+									Flash_Erase(SECTORC, &FlashStatus);
 									STATUS_LED_TOGGLE();
-									Status = Flash_Erase(SECTORD, &FlashStatus);
+									Flash_Erase(SECTORD, &FlashStatus);
 									STATUS_LED_TOGGLE();
-									Status = Flash_Erase(SECTORE, &FlashStatus);
+									Flash_Erase(SECTORE, &FlashStatus);
 									STATUS_LED_TOGGLE();
-									Status = Flash_Erase(SECTORF, &FlashStatus);
+									Flash_Erase(SECTORF, &FlashStatus);
 									STATUS_LED_TOGGLE();
-									Status = Flash_Erase(SECTORG, &FlashStatus);
+									Flash_Erase(SECTORG, &FlashStatus);
 									STATUS_LED_TOGGLE();
 									/* don't erase SECTOR H */
 
@@ -618,14 +630,28 @@ Uint32 MAVLINK_Flash()
 									seq++;
 								}
 							}
-						} else if((inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE)) {
+						} else if(inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE) {
+							// send mavlink message to request data stream
+							mavlink_msg_data_transmission_handshake_pack(
+								MAVLINK_SYSTEM_ID,
+								MAV_COMP_ID_GIMBAL,
+								&msg,
+								MAVLINK_TYPE_UINT16_T,
+								0 /* size */,
+								UINT16_MAX /* width */,
+								BOOTLOADER_VERSION /*uint16_t height*/,
+								0 /*uint16_t packets*/,
+								ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/,
+								0 /*uint8_t jpg_quality*/
+							);
+
+							length = mavlink_msg_to_send_buffer(buffer, &msg);
+							send_serial_port(buffer, length);
+
 							/* must be done */
 							WatchDogEnable();
 
-							EALLOW;
-							// Cause a device reset by writing incorrect values into WDCHK
-							SysCtrlRegs.WDCR = 0x0010;
-							EDIS;
+							// Don't reset immediately, otherwise the MAVLink message above won't be flushed.
 
 							// This should never be reached.
 							while(1);
