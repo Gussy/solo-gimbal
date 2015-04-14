@@ -8,10 +8,8 @@ from pymavlink import mavutil
 import sys, argparse
 
 from pymavlink.dialects.v10 import common as mavlink
-
-from load_fw import update
+from firmware_loader import update
 from read_swver_param import readSWver
-
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
