@@ -67,7 +67,8 @@ typedef enum {
 
 typedef enum {
     GP_CMD_STATUS_SUCCESS = 0,
-    GP_CMD_STATUS_FAILURE = 1
+    GP_CMD_STATUS_FAILURE = 1,
+	GP_CMD_STATUS_UNKNOWN = 2
 } GPCmdStatus;
 
 typedef enum {

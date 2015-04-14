@@ -28,6 +28,7 @@ Uint8 new_response_available = FALSE;
 Uint8 new_heartbeat_available = FALSE;
 GPExpectingDataType next_reception_expected = GP_EXPECTING_COMMAND;
 Uint16 heartbeat_counter = 0;
+Uint16 interrogation_timeout = 0;
 GPRequestType last_request_type = GP_REQUEST_NONE;
 GOPRO_COMMAND last_request_cmd_id;
 GPGetResponse last_get_response;
@@ -35,13 +36,16 @@ GPSetResponse last_set_response;
 GPSetRequest last_set_request;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 Uint8 gccb_version_queried = 0;
+Uint8 gccb_eeprom_written = 0;
 
 void init_gp_interface()
 {
     init_i2c(&addressed_as_slave_callback);
 
-    // Enable the HeroBus port (GoPro should start mastering the I2C bus)
-    GP_BP_DET_LOW();
+    //if(gccb_eeprom_written == 1) {
+    	// Enable the HeroBus port since the eeprom has been written
+    	GP_BP_DET_LOW();
+    //}
 }
 
 Uint16 gp_ready_for_cmd()
@@ -74,6 +78,11 @@ int gp_send_command(GPCmd* cmd)
             request_cmd_buffer[1] = cmd->cmd[0];
             request_cmd_buffer[2] = cmd->cmd[1];
         }
+
+        // Clear the last command data
+        last_cmd_response.cmd_response = 0x00;
+		last_cmd_response.cmd_status = GP_CMD_STATUS_UNKNOWN;
+		last_cmd_response.cmd_result = GP_CMD_UNKNOWN;
 
         // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
         // this command, and this way a caller of gp_get_last_response can know what command the response goes with
@@ -138,7 +147,10 @@ GPGetResponse gp_get_last_get_response()
 	} else {
 		last_get_response.value = 0xFF;
 	}
+
+	// Clear the last command response
 	new_response_available = FALSE;
+
     return last_get_response;
 }
 
@@ -185,6 +197,16 @@ int gp_get_request(Uint8 cmd_id)
 		GPCmd cmd;
 
 		switch(cmd_id) {
+			case GOPRO_COMMAND_SHUTTER:
+				cmd.cmd[0] = 's';
+				cmd.cmd[1] = 'h';
+			break;
+
+			case GOPRO_COMMAND_CAPTURE_MODE:
+				cmd.cmd[0] = 'c';
+				cmd.cmd[1] = 'm';
+			break;
+
 			case GOPRO_COMMAND_MODEL:
 				cmd.cmd[0] = 'c';
 				cmd.cmd[1] = 'v';
@@ -215,6 +237,8 @@ int gp_get_request(Uint8 cmd_id)
 int gp_set_request(GPSetRequest* request)
 {
 	last_request_type = GP_REQUEST_SET;
+
+	// GoPro has to be powered on and ready, or the command has to be a power on command
 	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
 		GPCmd cmd;
 
@@ -456,7 +480,19 @@ void gp_interface_state_machine()
         case GP_CONTROL_STATE_PARSE_RECEIVED_RESPONSE:
             // Load the last command response struct with the values from the actual response
             last_cmd_response.cmd_status = (GPCmdStatus)receive_buffer[1];
-            last_cmd_response.cmd_response = receive_buffer[2];
+
+            // Special Handling of responses
+            if(last_cmd_response.cmd[0] == 'b' && last_cmd_response.cmd[1] == 'l' && gccb_version_queried == 0) {
+            	// Drop this dummy response and mark the GCCB as functional
+            	gccb_version_queried = 1;
+            	break;
+            } else if(last_cmd_response.cmd[0] == 'c' && last_cmd_response.cmd[1] == 'v') {
+            	// Take third byte (CAMERA_MODEL) of the "camera model and firmware version" response
+            	last_cmd_response.cmd_response = receive_buffer[3];
+            } else {
+            	last_cmd_response.cmd_response = receive_buffer[2];
+            }
+
 
             // The full command transmit has now completed successfully, so we can go back to idle
             last_cmd_response.cmd_result = GP_CMD_SUCCESSFUL;
@@ -479,6 +515,21 @@ void gp_interface_state_machine()
 		gccb_version_queried = 0;
 	}
 	previous_power_status = new_power_status;
+
+	// If >500ms has passed and we haven't been queried for a GCCB version,
+	// the camera may have already done so, or simply doesn't feel like doing so
+	// To test if we can actually send commands, we will ask for the battery level
+	// We also need to drop the response to this, so it doesn't propogate onto MAVLink
+	// This failure mode usually happens when the Gimbal and GoPro stays powered, but the
+	// Gimbal firmware resets (such as in a software update process).
+	// This is done at 1/4th of the heartbeat interval, so it's caught before the first
+	// heartbeat goes out in order to prevent glitching the heartbeat status
+	if((++interrogation_timeout > ((GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) / 2)) && gccb_version_queried == 0) {
+		GPCmd cmd;
+		cmd.cmd[0] = 'b';
+		cmd.cmd[1] = 'l';
+		gp_send_command(&cmd);
+	}
 }
 
 void gp_write_eeprom()
@@ -487,7 +538,7 @@ void gp_write_eeprom()
 		return;
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
-	GpioDataRegs.GPASET.bit.GPIO28 = 1;
+	GP_BP_DET_HIGH();
 
 	// Data to write into EEPROM
 	uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
@@ -533,6 +584,12 @@ void gp_write_eeprom()
 		// Let the EEPROM write
 		ADC_DELAY_US(5000);
 	}
+
+	// Store the written state of the EEPROM for this power cycle
+	gccb_eeprom_written = 1;
+
+	// Enable the HeroBus port
+	GP_BP_DET_LOW();
 }
 
 void addressed_as_slave_callback(I2CAIntSrc int_src)

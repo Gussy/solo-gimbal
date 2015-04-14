@@ -47,6 +47,21 @@ def show_messages(m):
         else:
             print(msg)
 
+def show_gopro(m):
+    '''show incoming mavlink gopro messages'''
+    while True:
+        msg = m.recv_match(blocking=True)
+        if not msg:
+            return
+        if msg.get_type() == "GOPRO_HEARTBEAT":
+            print("%s: %s" % (msg.get_type(), mavlink.enums['GOPRO_HEARTBEAT_STATUS'][msg.status].name))
+        elif msg.get_type() == "GOPRO_GET_RESPONSE":
+            print("%s: '%s' = %u" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.value))
+        elif msg.get_type() == "GOPRO_SET_RESPONSE":
+            print("%s: '%s' = %u" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.result))
+        elif msg.get_type().startswith("GOPRO"):
+            print(msg)
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
 parser.add_argument("-b", "--baudrate", help="Serial port baudrate")
@@ -65,18 +80,21 @@ mavserial = mavutil.mavserial(
 link = mavlink.MAVLink(mavserial, 0, 0)
 
 # Request the model
-#link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_MODEL)
+link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_MODEL)
 
 #link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_BATTERY)
 
+#link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_CAPTURE_MODE)
 #link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_CAPTURE_MODE, 0)
 
 #link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_SHUTTER, 1)
-
 #link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_SHUTTER, 0)
+#link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_SHUTTER)
 
 #link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_POWER, 1)
 
-print_heartbeats(mavserial)
+#print_heartbeats(mavserial)
+
+show_gopro(mavserial)
 
 #show_messages(mavserial)
