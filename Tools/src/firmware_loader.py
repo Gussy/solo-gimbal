@@ -57,7 +57,7 @@ def update(binary, link):
             if sequence_number == 0:
                 version_major = (msg.height >> 8) & 0xff
                 version_minor = msg.height & 0xff
-                sys.stdout.write(' (BL Ver %i.%i) ' % (version_major, version_minor))
+                print ('\n(BL Ver %i.%i)' % (version_major, version_minor))
                 sys.stdout.flush()
             # Calculate the window of data to send
             start_idx = sequence_number * payload_length
