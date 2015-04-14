@@ -41,9 +41,9 @@ desc['build_time'] = int(time.time())
 
 # Convert the image to be JSON safe
 with open(args.image, "rb") as f:
-	bytes = f.read()
-	desc['image_size'] = len(bytes)
-	desc['image'] = base64.b64encode(zlib.compress(bytes, 9)).decode('utf-8')
+	data = f.read()
+	desc['image_size'] = len(data)
+	desc['image'] = base64.b64encode(zlib.compress(data, 9)).decode('utf-8')
 
 # Write the output
 outputfile = os.path.join(args.outdir, "%s%s.%s" % (firmware_prefix, desc['version'], firmware_extension))
