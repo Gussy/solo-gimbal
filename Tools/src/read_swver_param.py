@@ -7,6 +7,7 @@ Utility for reading the software version from a 3DR Gimbal.
 
 import sys, struct
 
+
 def float_to_bytes(f):
     return struct.unpack('4b', struct.pack('<f', f))
 

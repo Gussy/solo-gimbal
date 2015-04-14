@@ -5,11 +5,14 @@ Created on Mar 16, 2015
 
 '''
 
-import sys,argparse
 from pymavlink import mavutil
+import sys, argparse
+
 from pymavlink.dialects.v10 import common as mavlink
-from read_swver_param import readSWver
+
 from load_fw import update
+from read_swver_param import readSWver
+
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
@@ -23,8 +26,8 @@ def main():
  
     # Open the serial port
     mavserial = mavutil.mavlink_connection(
-        device = args.port,
-        baud = args.baudrate
+        device=args.port,
+        baud=args.baudrate
     )
     link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
     

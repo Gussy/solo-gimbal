@@ -7,10 +7,8 @@ Utility for generating a version header file
 @created: 28th Feb 2015
 """
 
-import argparse
-import os
-import subprocess
-import sys
+import argparse, subprocess
+
 
 # Parse commandline arguments
 parser = argparse.ArgumentParser(description="Utility for generating a version header file")

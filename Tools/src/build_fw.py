@@ -7,14 +7,8 @@ Utility for building a release firmware bundle
 @created: 25th Feb 2015
 """
 
-import argparse
-import base64
-import json
-import os
-import subprocess
-import sys
-import time
-import zlib
+import argparse, base64, json, os, subprocess, time, zlib
+
 
 firmware_prefix = "gimbal_firmware_"
 firmware_extension = "ax"
@@ -33,7 +27,7 @@ desc = {}
 # Empty release name
 desc['release'] = ""
 if args.release != None:
-	desc['release']	= str(args.release)
+	desc['release']	 = str(args.release)
 
 # Get the current git info
 cmd = " ".join(["git", "describe", "--tags", "--dirty"])
@@ -51,7 +45,7 @@ desc['build_time'] = int(time.time())
 with open(args.image, "rb") as f:
 	bytes = f.read()
 	desc['image_size'] = len(bytes)
-	desc['image'] = base64.b64encode(zlib.compress(bytes,9)).decode('utf-8')
+	desc['image'] = base64.b64encode(zlib.compress(bytes, 9)).decode('utf-8')
 
 # Write the output
 outputfile = os.path.join(args.outdir, "%s%s.%s" % (firmware_prefix, desc['version'], firmware_extension))

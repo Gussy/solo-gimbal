@@ -9,7 +9,8 @@ Used for packaging application firmware with the bootloader firmware.
 @author: Angus Peart (angus@3dr.com)
 """
 
-import sys, argparse
+import argparse
+
 
 def load_binary(filename):
 	'''Load binary image file into a byte array'''
@@ -38,20 +39,20 @@ def write_data_header(filename, data):
 			checksum = add_checksum(checksum, data[i])
 
 			# Carrige return every 12 bytes
-			if (i+1) % bytes_per_line == 0:
+			if (i + 1) % bytes_per_line == 0:
 				f.write("\n")
 
 		# Write the checksum bytes
-		f.write(" 0x%04X, 0x%04X, 0x0000};\n" % (checksum&0xFFFF, (checksum&0xFFFF)>>16))
+		f.write(" 0x%04X, 0x%04X, 0x0000};\n" % (checksum & 0xFFFF, (checksum & 0xFFFF) >> 16))
 
 def bytearray_to_wordarray(data):
 	'''Converts an 8-bit byte array into a 16-bit word array'''
 	wordarray = list()
 
-	for i in range(len(data)/2):
+	for i in range(len(data) / 2):
 		# Calculate 16 bit word from two bytes
-		msb = data[(i*2)+0]
-		lsb = data[(i*2)+1]
+		msb = data[(i * 2) + 0]
+		lsb = data[(i * 2) + 1]
 		word = (msb << 8) | lsb
 		wordarray.append(word)
 

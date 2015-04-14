@@ -5,7 +5,7 @@ Utility for loading firmware into the 3DR Gimbal.
 
 """
 
-import sys,base64, json, zlib
+import sys, base64, json, zlib
 from pymavlink.dialects.v10 import common as mavlink
 
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
@@ -14,12 +14,12 @@ MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
 default_baudrate = 230400
 
-def wait_handshake(m, timeout =1):
+def wait_handshake(m, timeout=1):
     '''wait for a handshake so we know the target system IDs'''
     msg = m.recv_match(
         type='DATA_TRANSMISSION_HANDSHAKE',
-        blocking = True,
-        timeout = timeout)
+        blocking=True,
+        timeout=timeout)
     if msg != None:
         if(msg.get_srcComponent() == MAVLINK_COMPONENT_ID):
             return msg
@@ -36,10 +36,10 @@ def bytearray_to_wordarray(data):
     '''Converts an 8-bit byte array into a 16-bit word array'''
     wordarray = list()
 
-    for i in range(len(data)/2):
+    for i in range(len(data) / 2):
         # Calculate 16 bit word from two bytes
-        msb = data[(i*2)+0]
-        lsb = data[(i*2)+1]
+        msb = data[(i * 2) + 0]
+        lsb = data[(i * 2) + 1]
         word = (msb << 8) | lsb
         wordarray.append(word)
 
@@ -56,7 +56,7 @@ def append_checksum(binary):
     print("Checksum: 0x%04X" % checksum)
 
     # Add the checksum to the end of the wordarray
-    wordarray.extend([checksum&0xFFFF, (checksum&0xFFFF)>>16, 0x0000])
+    wordarray.extend([checksum & 0xFFFF, (checksum & 0xFFFF) >> 16, 0x0000])
 
     # Convert the wordarray back into a bytearray
     barray = list()
@@ -71,7 +71,7 @@ def append_checksum(binary):
 
 
 def update(binary, link):
-    print ( # Load the binary image into a byte array
+    print (# Load the binary image into a byte array
         "Application binary: %s" % binary)
     hexfile = load_firmware(binary)
     binary = append_checksum(hexfile)
@@ -127,7 +127,7 @@ def update(binary, link):
 # Send an "end of transmission" signal to the target, to cause a target reset
     while True:
         link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
-        msg = wait_handshake(link.file, timeout = 10)
+        msg = wait_handshake(link.file, timeout=10)
         sys.stdout.flush()    
         if msg == None:
             print(" timeout")
