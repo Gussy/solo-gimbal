@@ -14,12 +14,12 @@ MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
 default_baudrate = 230400
 
-def wait_handshake(m):
+def wait_handshake(m, timeout =1):
     '''wait for a handshake so we know the target system IDs'''
     msg = m.recv_match(
         type='DATA_TRANSMISSION_HANDSHAKE',
         blocking = True,
-        timeout = 1)
+        timeout = timeout)
     if msg != None:
         if(msg.get_srcComponent() == MAVLINK_COMPONENT_ID):
             return msg
@@ -125,6 +125,14 @@ def update(binary, link):
             sys.stdout.flush()
     
 # Send an "end of transmission" signal to the target, to cause a target reset
-    link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
-    print (" OK")
+    while True:
+        link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
+        msg = wait_handshake(link.file, timeout = 10)
+        sys.stdout.flush()    
+        if msg == None:
+            print(" timeout")
+            break
+        if msg.width == 0xFFFF:
+            print(" OK")
+            break
     
