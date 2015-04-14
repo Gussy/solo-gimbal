@@ -22,15 +22,10 @@
 
 #include "mavlink.h"
 
-
 #define	FLASH_F2806x 1
 #include "Flash2806x_API_Library.h"
 
 #include "F2806x_SysCtrl.h"
-
-
-
-//uint8_t mavlink_message_crcs[256] = MAVLINK_MESSAGE_CRCS;
 
 #pragma    DATA_SECTION(m_mavlink_buffer,"DMARAML5");
 #pragma    DATA_SECTION(m_mavlink_status,"DMARAML5");
@@ -51,7 +46,7 @@ Uint16 endRam;
 #define STATUS_LED_OFF()			{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
 #define STATUS_LED_TOGGLE()			{GpioDataRegs.GPATOGGLE.bit.GPIO7 = 1;}
 
-#define MAVLINK_SYSTEM_ID			0
+#define MAVLINK_SYSTEM_ID			1
 #define MAVLINK_COMPONENT_ID 		MAV_COMP_ID_GIMBAL
 
 // Max payload of MAVLINK_MSG_ID_ENCAPSULATED_DATA message is 253 Bytes
@@ -63,7 +58,7 @@ Uint16 endRam;
 #define BOOTLOADER_KEY_VALUE_8BIT	0x08AA
 
 #define BOOTLOADER_VERSION_MAJOR	0x02
-#define BOOTLOADER_VERSION_MINOR	0x00
+#define BOOTLOADER_VERSION_MINOR	0x01
 #define BOOTLOADER_VERSION			((BOOTLOADER_VERSION_MAJOR << 8) | BOOTLOADER_VERSION_MINOR)
 
 void CAN_Init()
@@ -578,8 +573,7 @@ Uint32 MAVLINK_Flash()
 				getting_messages = 1;
 				for(idx1 = 0; idx1 < read_size; idx1++) {
 					if(mavlink_parse_char(MAVLINK_COMM_0, buffer[idx1]&0xFF, &inmsg, &status)) {
-						if((inmsg.compid == MAVLINK_COMPONENT_ID)&&
-							(inmsg.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA)) {
+						if(inmsg.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA) {
 							if(inmsg.len > 2 && seq == mavlink_msg_encapsulated_data_get_seqnr(&inmsg)) {
 								mavlink_msg_encapsulated_data_get_data(&inmsg, buffer);
 								getting_messages = 0;
@@ -624,10 +618,7 @@ Uint32 MAVLINK_Flash()
 									seq++;
 								}
 							}
-						} else if(
-								(inmsg.compid == MAVLINK_COMPONENT_ID) &&
-								(inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE)) {
-
+						} else if((inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE)) {
 							/* must be done */
 							WatchDogEnable();
 
