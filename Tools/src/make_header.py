@@ -6,7 +6,6 @@ application image as an array.
 
 Used for packaging application firmware with the bootloader firmware.
 
-@author: Angus Peart (angus@3dr.com)
 """
 
 import argparse

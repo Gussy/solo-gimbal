@@ -6,7 +6,9 @@ Utility for loading firmware into the 3DR Gimbal.
 """
 
 import sys, base64, json, zlib
+
 from pymavlink.dialects.v10 import common as mavlink
+
 
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 

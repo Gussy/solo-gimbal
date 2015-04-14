@@ -3,8 +3,6 @@
 """
 Utility for building a release firmware bundle
 
-@author: Angus Peart (angus@3dr.com)
-@created: 25th Feb 2015
 """
 
 import argparse, base64, json, os, subprocess, time, zlib

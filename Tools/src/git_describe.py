@@ -3,8 +3,6 @@
 """
 Utility for generating a version header file
 
-@author: Angus Peart (angus@3dr.com)
-@created: 28th Feb 2015
 """
 
 import argparse, subprocess

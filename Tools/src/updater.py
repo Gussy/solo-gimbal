@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
 '''
-Created on Mar 16, 2015
-
+     Command-line utility to handle comms to gimbal 
 '''
 
 from pymavlink import mavutil
