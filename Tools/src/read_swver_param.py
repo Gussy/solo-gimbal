@@ -6,17 +6,14 @@ Utility for reading the software version from a 3DR Gimbal.
 """
 
 import sys, struct
-
+from parameters_helper import fetch_param
 
 def float_to_bytes(f):
     return struct.unpack('4b', struct.pack('<f', f))
 
-
 def readSWver(link):
-    # Get a parameter
-    link.param_request_read_send(link.srcSystem, link.srcComponent, "SYSID_SWVER", -1)
-# Wait 10 seconds for a response
-    msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=10)
+        
+    msg = fetch_param(link,"SYSID_SWVER")
     if not msg:
         print "Requested param not received."
         sys.exit(1)
