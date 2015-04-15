@@ -351,11 +351,16 @@ void setup_serial_port()
 	// For 115200, BRR = 20.701, set BRR to 21 for 113636 effective baud rate, for 1.3% deviation from nominal baud rate
 	ScibRegs.SCIHBAUD = 0;
 	ScibRegs.SCILBAUD = 21;
-	*/
+
 	// Set initial baud rate to 230400
 	// For 230400, BRR = 9.851, set BRR to 10 for 227272 effective baud rate, for 1.36% deviation from nominal baud rate
 	ScibRegs.SCIHBAUD = 0;
-	ScibRegs.SCILBAUD = 10;
+	ScibRegs.SCILBAUD = 10;*/
+
+	// Set initial baud rate to 500000
+	// For 500000, BRR = 4.0, set BRR to 4 for 500000 effective baud rate, for 0% deviation from nominal baud rate
+	ScibRegs.SCIHBAUD = 0;
+	ScibRegs.SCILBAUD = 4;
 
 	// Configure SCI peripheral to free-run when the processor is suspended (debugging at a breakpoint)
 	ScibRegs.SCIPRI.bit.SOFT = 0;
