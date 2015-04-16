@@ -42,14 +42,14 @@
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.FLOAT_SUPPORT.1297624760" name="Specify floating point support (--float_support)" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.FLOAT_SUPPORT" value="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.FLOAT_SUPPORT.fpu32" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.INCLUDE_PATH.770117229" name="Add dir to #include search path (--include_path, -I)" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.INCLUDE_PATH" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;..\Headers\&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;..\Headers\MAVLink&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../Headers/&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../Headers/MAVLink&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_DRV8312_ROOT}/device_support/f2806x/v100/F2806x_headers/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_DRV8312_ROOT}\libs\math\IQmath\v15c\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_DRV8312_ROOT}/libs/math/IQmath/v15c/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_DRV8312_ROOT}/device_support/f2806x/v100/F2806x_common/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_DRV8312_ROOT}/development_kits/~SupportFiles/F2806x_headers&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_DRV8312_ROOT}\libs\app_libs\motor_control\math_blocks\v3.1&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_DRV8312_ROOT}\libs\utilities\flash_api\2806x\v100\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_DRV8312_ROOT}/libs/app_libs/motor_control/math_blocks/v3.1&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_DRV8312_ROOT}/libs/utilities/flash_api/2806x/v100/include&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DEBUGGING_MODEL.1704619993" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DEFINE.551490246" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DEFINE" valueType="definedSymbols">
