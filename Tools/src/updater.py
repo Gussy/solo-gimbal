@@ -10,6 +10,7 @@ import sys, argparse
 from pymavlink.dialects.v10 import common as mavlink
 from firmware_loader import update
 from read_swver_param import readSWver
+import setup_comutation
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
@@ -34,14 +35,18 @@ def main():
     
     if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=5) == None:
         print 'failed to comunicate to gimbal'
-        sys.exit(1)
+        return
     
     if args.binary:
         update(args.binary, link)
     else:
         readSWver(link)
-    
+        print ''
+        setup_comutation.status(link)
 
 if __name__ == '__main__':
     main()
+    
+    print '\n exit'
+    
     sys.exit(0)
