@@ -14,10 +14,10 @@ from setup_read_sw_version import readSWver
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--binary", help="Application binary file load", default=None)
-    parser.add_argument("--show", help="Show the comutation parameters", action='store_true')
-    parser.add_argument("--comutation", help="Run the comutation setup", action='store_true')
-    parser.add_argument("--home", help="Home alignment", action='store_true')
+    parser.add_argument("-l","--load", help="Application binary file load", default=None)
+    parser.add_argument("-s","--show", help="Show the comutation parameters", action='store_true')
+    parser.add_argument("-c","--comutation", help="Run the comutation setup", action='store_true')
+    parser.add_argument("-o","--home", help="Home alignment", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
     parser.add_argument("-b", "--baudrate", help="Serial port baudrate", default=230400)
@@ -30,8 +30,8 @@ def main():
         print 'failed to comunicate to gimbal'
         return
     
-    if args.binary:
-        update(args.binary, link)
+    if args.load:
+        update(args.load, link)
         return
     elif args.comutation:
         setup_comutation.status(link)
