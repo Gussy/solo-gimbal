@@ -21,41 +21,28 @@
 #include <stdio.h>
 
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
-static void send_mavlink_request_stream();
-static void handle_attitude(mavlink_message_t* received_msg);
-static void handle_mount_control(mavlink_message_t* received_msg);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal();
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
 static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
 static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
-static void handle_set_factory_params(mavlink_message_t* msg);
-static void handle_gimbal_erase_flash(mavlink_message_t* msg);
 static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardParms* cb_parms);
+void send_cmd_long_ack(uint16_t cmd_id, uint8_t result);
 
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
-
-unsigned char feedback_id;
 
 unsigned char gimbal_sysid = 1;
 
 int messages_received = 0;
 int heartbeats_received = 0;
-int attitude_received = 0;
-
-float roll = 0.0;
-float pitch = 0.0;
-float yaw = 0.0;
 
 // Encoder, Gyro, and Accelerometer telemetry
 float latest_encoder_telemetry[3] = {0, 0, 0};
 float latest_gyro_telemetry[3] = {0, 0, 0};
 float latest_accel_telemetry[3] = {0, 0, 0};
 Uint16 telem_received = 0;
-
-float targets[3] = { 0, 0, 0 };
 
 int last_parameter_sent = 0;
 
@@ -66,12 +53,6 @@ void init_mavlink() {
 	// Initialize the default parameters for the parameter interface
 	init_default_mavlink_params();
 }
-
-DebugData attitude_debug_data = {
-	0,
-	0,
-	0
-};
 
 void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
 	switch (mavlink_info->mavlink_processing_state) {
@@ -85,59 +66,6 @@ void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* c
 		    mavlink_info->mavlink_processing_state = MAVLINK_STATE_PARSE_INPUT;
 		}
 		break;
-	}
-
-	if (attitude_received) {
-		static int16 pos[3] = { 0, 0, 0 };
-		CAND_ParameterID pids[3] = { CAND_PID_TARGET_ANGLES_AZ,
-				CAND_PID_TARGET_ANGLES_EL, CAND_PID_TARGET_ANGLES_ROLL };
-
-		// azimuth
-		pos[0] = -1 * yaw / (3.14159 / 2) * ENCODER_COUNTS_PER_REV;
-		// set azimuth to zero since it points north, zero keeps it trying to point forward
-		pos[0] = targets[AZ] * ENCODER_COUNTS_PER_REV;
-		if (pos[0] < 0) {
-			pos[0] += ENCODER_COUNTS_PER_REV;
-		} else if (pos[0] > ENCODER_COUNTS_PER_REV) {
-			pos[0] -= ENCODER_COUNTS_PER_REV;
-		}
-
-		// elevation
-		pos[1] = targets[EL] * ENCODER_COUNTS_PER_REV
-				- 1 * pitch / (3.14159 * 2) * ENCODER_COUNTS_PER_REV;
-		if (pos[1] < 0) {
-			pos[1] += ENCODER_COUNTS_PER_REV;
-		} else if (pos[1] > ENCODER_COUNTS_PER_REV) {
-			pos[1] -= ENCODER_COUNTS_PER_REV;
-		}
-		// roll
-		pos[2] = targets[ROLL] * ENCODER_COUNTS_PER_REV
-				- 1 * roll / (3.14159 * 2) * ENCODER_COUNTS_PER_REV;
-		if (pos[2] < 0) {
-			pos[2] += ENCODER_COUNTS_PER_REV;
-		} else if (pos[2] > ENCODER_COUNTS_PER_REV) {
-			pos[2] -= ENCODER_COUNTS_PER_REV;
-		}
-
-		//TODO: For debugging pixhawk attitude drift
-		/*
-		attitude_debug_data.debug_1 = pos[0];
-		attitude_debug_data.debug_2 = pos[1];
-		attitude_debug_data.debug_3 = pos[2];
-
-		send_mavlink_debug_data(&attitude_debug_data);
-		*/
-
-		// Inhibit transmission of new target angles if we're running the balance procedure,
-		// so we don't overwrite the balance angles
-#ifndef ENABLE_BALANCE_PROCEDURE
-		Uint32 pos_payload[3];
-		pos_payload[0] = pos[0];
-		pos_payload[1] = pos[1];
-		pos_payload[2] = pos[2];
-		cand_tx_multi_param(CAND_ID_EL, pids, pos_payload, 3);
-#endif
-		attitude_received = 0;
 	}
 }
 
@@ -201,15 +129,6 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 				handle_param_set(&received_msg);
 				break;
 
-			case MAVLINK_MSG_ID_ATTITUDE:
-				attitude_received++;
-				handle_attitude(&received_msg);
-				break;
-
-			case MAVLINK_MSG_ID_MOUNT_CONTROL:
-				handle_mount_control(&received_msg);
-				break;
-
 			case MAVLINK_MSG_ID_GOPRO_GET_REQUEST:
 				handle_gopro_get_request(&received_msg);
 				break;
@@ -223,14 +142,6 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 
 			case MAVLINK_MSG_ID_GIMBAL_CONTROL:
 			    handle_gimbal_control(&received_msg, mavlink_info);
-			    break;
-
-			case MAVLINK_MSG_ID_GIMBAL_SET_FACTORY_PARAMETERS:
-			    handle_set_factory_params(&received_msg);
-			    break;
-
-			case MAVLINK_MSG_ID_GIMBAL_ERASE_FIRMWARE_AND_CONFIG:
-			    handle_gimbal_erase_flash(&received_msg);
 			    break;
 
 			case MAVLINK_MSG_ID_GIMBAL_PERFORM_FACTORY_TESTS:
@@ -249,9 +160,7 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			    default:
 					break;
 			    }
-
 			    break;
-
 			default:
 				break;
 			}
@@ -352,22 +261,6 @@ void receive_accel_rl_telemetry(int32 rl_accel)
     }
 }
 
-static void handle_attitude(mavlink_message_t* received_msg) {
-	mavlink_attitude_t decoded_msg;
-	mavlink_msg_attitude_decode(received_msg, &decoded_msg);
-
-	roll = decoded_msg.roll;
-	pitch = decoded_msg.pitch;
-	yaw = decoded_msg.yaw;
-}
-
-static void handle_mount_control(mavlink_message_t* received_msg) {
-	mavlink_mount_control_t decoded_msg;
-	mavlink_msg_mount_control_decode(received_msg, &decoded_msg);
-	targets[EL] = decoded_msg.input_a / (360 * 100.0); ///< pitch(deg*100) or lat, depending on mount mode
-	targets[ROLL] = decoded_msg.input_b / (360 * 100.0); ///< roll(deg*100) or lon depending on mount mode
-	targets[AZ] = decoded_msg.input_c / (360 * 100.0); ///< yaw(deg*100) or alt (in cm) depending on mount mode
-}
 
 static void handle_gopro_get_request(mavlink_message_t* received_msg)
 {
@@ -469,71 +362,6 @@ static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* enc
     md_parms->motor_drive_state = STATE_CALIBRATE_HOME_OFFSETS;
 }
 
-static void handle_set_factory_params(mavlink_message_t* msg)
-{
-    mavlink_gimbal_set_factory_parameters_t decoded_msg;
-    mavlink_msg_gimbal_set_factory_parameters_decode(msg, &decoded_msg);
-
-    // Compose the assembly date and assembly time into the internal 32-bit format
-    Uint32 assy_date = 0;
-    Uint32 assy_time = 0;
-    assy_date |= ((Uint32)decoded_msg.assembly_year << 16);
-    assy_date |= ((Uint32)decoded_msg.assembly_month << 8);
-    assy_date |= ((Uint32)decoded_msg.assembly_day);
-    assy_time |= ((Uint32)decoded_msg.assembly_hour << 24);
-    assy_time |= ((Uint32)decoded_msg.assembly_minute << 16);
-    assy_time |= ((Uint32)decoded_msg.assembly_second << 8);
-
-    // Compute the "checksums" using the 3 magic numbers to determine if this is a valid factory parameter set
-    if (((assy_date + decoded_msg.magic_1) == FACTORY_PARAM_CHECK_MAGIC_1) &&
-        ((assy_time + decoded_msg.magic_2) == FACTORY_PARAM_CHECK_MAGIC_2) &&
-        ((decoded_msg.serial_number_pt_1 + decoded_msg.magic_3) == FACTORY_PARAM_CHECK_MAGIC_3)) {
-        // This means the parameters are valid and we can go ahead and set them.  Otherwise, we just ignore the parameters
-        flash_params.assy_date = assy_date;
-        flash_params.assy_time = assy_time;
-        flash_params.ser_num_1 = decoded_msg.serial_number_pt_1;
-        flash_params.ser_num_2 = decoded_msg.serial_number_pt_2;
-        flash_params.ser_num_3 = decoded_msg.serial_number_pt_3;
-        write_flash();
-        // Indicate that we've loaded the new parameters
-        send_mavlink_factory_parameters_loaded();
-    }
-}
-
-static void handle_gimbal_erase_flash(mavlink_message_t* msg)
-{
-    mavlink_gimbal_erase_firmware_and_config_t decoded_msg;
-    mavlink_msg_gimbal_erase_firmware_and_config_decode(msg, &decoded_msg);
-
-    // Make sure this message is for us
-    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
-        // Make sure the knock value is correct
-        if (decoded_msg.knock == GIMBAL_FIRMWARE_ERASE_KNOCK) {
-            // stop this axis
-            power_down_motor();
-            // stop the other axis
-            cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RELAX);
-            // reset other axis
-            cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RESET);
-
-            // Erase firmware and calibration
-            extern int erase_firmware_and_config();
-            erase_firmware_and_config();
-
-            // reset
-            extern void WDogEnable(void);
-            WDogEnable();
-
-            EALLOW;
-            // Cause a device reset by writing incorrect values into WDCHK
-            SysCtrlRegs.WDCR = 0x0010;
-            EDIS;
-
-            // This should never be reached.
-            while(1);
-        }
-    }
-}
 
 static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardParms* cb_parms)
 {
@@ -750,16 +578,6 @@ void send_mavlink_factory_test_progress(FACTORY_TEST test, Uint8 section, Uint8 
     send_mavlink_message(&factory_test_progress_msg);
 }
 
-void send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS result)
-{
-    static mavlink_message_t home_offset_cal_result_msg;
-    mavlink_msg_gimbal_home_offset_calibration_result_pack(gimbal_sysid,
-            MAV_COMP_ID_GIMBAL,
-            &home_offset_cal_result_msg,
-            result);
-
-    send_mavlink_message(&home_offset_cal_result_msg);
-}
 
 void send_mavlink_factory_parameters_loaded()
 {
