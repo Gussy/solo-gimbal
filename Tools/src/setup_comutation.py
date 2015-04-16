@@ -5,34 +5,32 @@ Utility for loading firmware into the 3DR Gimbal.
 
 """
 import sys
-
-from setup_mavlink import set_param, reset_gimbal, printAxisCalibrationParam,\
-    getCalibrationProgress
+import setup_mavlink
 
 axis_enum = ['PITCH', 'ROLL', 'YAW']
 status_enum = ['in progress', 'succeeded', 'failed']
 
 def startCalibration(link):
     # Set all commutation calibration parameters to 0
-    set_param(link, "CC_YAW_SLOPE", 0.0);
-    set_param(link, "CC_YAW_ICEPT", 0.0);
-    set_param(link, "CC_ROLL_SLOPE", 0.0);
-    set_param(link, "CC_ROLL_ICEPT", 0.0);
-    set_param(link, "CC_PITCH_SLOPE", 0.0);
-    set_param(link, "CC_PITCH_ICEPT", 0.0);
+    setup_mavlink.set_param(link, "CC_YAW_SLOPE", 0.0);
+    setup_mavlink.set_param(link, "CC_YAW_ICEPT", 0.0);
+    setup_mavlink.set_param(link, "CC_ROLL_SLOPE", 0.0);
+    setup_mavlink.set_param(link, "CC_ROLL_ICEPT", 0.0);
+    setup_mavlink.set_param(link, "CC_PITCH_SLOPE", 0.0);
+    setup_mavlink.set_param(link, "CC_PITCH_ICEPT", 0.0);
 
     # Commit the zeroed out calibration parameters to flash
-    set_param(link, "COMMIT_FLASH", 69.0);
+    setup_mavlink.set_param(link, "COMMIT_FLASH", 69.0);
 
     # Reset the gimbal
-    reset_gimbal(link);
+    setup_mavlink.reset_gimbal(link);
 
 def status(link):    
     startCalibration(link)
     
     status_per_axis = []
     while(len(status_per_axis) < 3):
-        axis, progress, status = getCalibrationProgress(link)
+        axis, progress, status = setup_mavlink.getCalibrationProgress(link)
         
         text = "\rCalibrating %s - progress %d%% - %s            " % (axis, progress, status)
         sys.stdout.write(text)
@@ -46,7 +44,7 @@ def status(link):
     print '\n'
     print status_per_axis
     print ''
-    printAxisCalibrationParam(link)    
+    setup_mavlink.printAxisCalibrationParam(link)    
     
     
     
