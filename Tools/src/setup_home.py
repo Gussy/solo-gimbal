@@ -1,7 +1,7 @@
 """
 """
 import setup_comutation
-from parameters_helper import receive_home_offset_result, start_home_calibration
+from setup_mavlink import receive_home_offset_result, start_home_calibration
 
 
 def home(link):

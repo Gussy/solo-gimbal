@@ -6,7 +6,7 @@ Utility for reading the software version from a 3DR Gimbal.
 """
 
 import sys, struct
-from parameters_helper import fetch_param
+from setup_mavlink import fetch_param
 
 def float_to_bytes(f):
     return struct.unpack('4b', struct.pack('<f', f))
