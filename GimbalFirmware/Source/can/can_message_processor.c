@@ -238,10 +238,10 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                         */
 
-                        // Temperature debug
+                        // Temperature and GoPro battery level debug
                         int16 proc_temp = (int16)((((Uint16)msg.extended_param[0] << 8) & 0xFF00) | ((Uint16)msg.extended_param[1] & 0x00FF));
                         int16 gyro_temp = (int16)((((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF));
-                        snprintf(debug_msg, 50, "Proc temp: %d, Gyro Temp: %d", proc_temp, gyro_temp);
+                        snprintf(debug_msg, 50, "Proc temp: %d, Gyro Temp: %d, Batt level: %d", proc_temp, gyro_temp, msg.extended_param[4]);
 
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                     }
