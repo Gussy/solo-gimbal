@@ -11,6 +11,7 @@ axis_enum = ['PITCH', 'ROLL', 'YAW']
 status_enum = ['in progress', 'succeeded', 'failed']
 
 def startCalibration(link):
+    print 'Clearing old calibration values'
     # Set all commutation calibration parameters to 0
     setup_mavlink.set_param(link, "CC_YAW_SLOPE", 0.0);
     setup_mavlink.set_param(link, "CC_YAW_ICEPT", 0.0);

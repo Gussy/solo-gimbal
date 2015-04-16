@@ -10,5 +10,5 @@ def home(link):
         print 'home positions set'
         printAxisCalibrationParam(link)
     else:
-        print 'failed to set gome positions'
+        print 'failed to set home positions'
     
