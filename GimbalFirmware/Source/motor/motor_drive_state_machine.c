@@ -369,7 +369,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 write_flash();
 
                 // Send a done message over MAVLink
-                send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED);
+                send_cmd_long_ack(42500,MAV_CMD_ACK_OK);
 
                 // Return to the disabled state
                 md_parms->motor_drive_state = STATE_DISABLED;

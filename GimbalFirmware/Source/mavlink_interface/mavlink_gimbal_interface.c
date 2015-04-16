@@ -25,7 +25,7 @@ static void send_mavlink_request_stream();
 static void handle_attitude(mavlink_message_t* received_msg);
 static void handle_mount_control(mavlink_message_t* received_msg);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
-static void handle_reset_gimbal(mavlink_message_t* received_msg);
+static void handle_reset_gimbal();
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
 static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
@@ -225,14 +225,6 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			    handle_gimbal_control(&received_msg, mavlink_info);
 			    break;
 
-			case MAVLINK_MSG_ID_GIMBAL_RESET:
-			    handle_reset_gimbal(&received_msg);
-			    break;
-
-			case MAVLINK_MSG_ID_GIMBAL_SET_HOME_OFFSETS:
-			    handle_set_home_offsets(md_parms, encoder_parms, load_ap_state_info);
-			    break;
-
 			case MAVLINK_MSG_ID_GIMBAL_SET_FACTORY_PARAMETERS:
 			    handle_set_factory_params(&received_msg);
 			    break;
@@ -243,6 +235,21 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 
 			case MAVLINK_MSG_ID_GIMBAL_PERFORM_FACTORY_TESTS:
 			    handle_perform_factory_tests(&received_msg, cb_parms);
+			    break;
+
+			case MAVLINK_MSG_ID_COMMAND_LONG:
+			    switch(mavlink_msg_command_long_get_command(&received_msg)){
+			    case 42500:
+			    	handle_set_home_offsets(md_parms, encoder_parms, load_ap_state_info);
+			    	break;
+			    case 42501:
+			    	handle_reset_gimbal();
+			    	break;
+
+			    default:
+					break;
+			    }
+
 			    break;
 
 			default:
@@ -425,13 +432,10 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
     }
 }
 
-static void handle_reset_gimbal(mavlink_message_t* received_msg)
+static void handle_reset_gimbal()
 {
-    mavlink_gimbal_reset_t decoded_msg;
-    mavlink_msg_gimbal_reset_decode(received_msg, &decoded_msg);
+		send_cmd_long_ack(42501, MAV_CMD_ACK_OK);
 
-    // Make sure the message is for us
-    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         // stop this axis
         RelaxAZAxis();
         power_down_motor();
@@ -447,7 +451,6 @@ static void handle_reset_gimbal(mavlink_message_t* received_msg)
         WDogEnable();
         while(1)
         {}
-    }
 }
 
 static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info)
@@ -587,6 +590,18 @@ void send_mavlink_gimbal_feedback() {
 	send_mavlink_message(&feedback_msg);
 }
 
+
+void send_cmd_long_ack(uint16_t cmd_id, uint8_t result)
+{
+    static mavlink_message_t msg;
+    mavlink_msg_command_ack_pack(gimbal_sysid,
+                                    MAV_COMP_ID_GIMBAL,
+                                    &msg,
+                                    cmd_id,
+									result);
+    send_mavlink_message(&msg);
+}
+
 void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status)
 {
     static mavlink_message_t gopro_heartbeat_msg;
@@ -713,17 +728,13 @@ void send_mavlink_statustext(char* message, MAV_SEVERITY severity)
     send_mavlink_message(&status_msg);
 }
 
-void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status)
-{
-    static mavlink_message_t calibration_progress_msg;
-    mavlink_msg_gimbal_axis_calibration_progress_pack(gimbal_sysid,
-            MAV_COMP_ID_GIMBAL,
-            &calibration_progress_msg,
-            axis,
-            progress,
-            calibration_status);
-
-    send_mavlink_message(&calibration_progress_msg);
+void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis,
+		GIMBAL_AXIS_CALIBRATION_STATUS calibration_status) {
+	static mavlink_message_t msg;
+	mavlink_msg_command_long_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &msg, 0, 0,
+			42502, 0, (float) axis, (float) progress,
+			(float) calibration_status, 0, 0, 0, 0);
+	send_mavlink_message(&msg);
 }
 
 void send_mavlink_factory_test_progress(FACTORY_TEST test, Uint8 section, Uint8 progress, Uint8 status)
