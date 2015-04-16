@@ -11,6 +11,12 @@ from parameters_helper import fetch_param, set_param, reset_gimbal
 axis_enum = ['PITCH', 'ROLL', 'YAW']
 status_enum = ['in progress', 'succeeded', 'failed']
 
+def printAxisCalibrationParam(link):
+    print getAxisCalibrationParam(link, axis_enum[0])
+    print getAxisCalibrationParam(link, axis_enum[1])
+    print getAxisCalibrationParam(link, axis_enum[2])
+    
+
 def getAxisCalibrationParam(link, axis_enum):
     home = fetch_param(link, "CC_" + axis_enum + "_HOME")
     icept = fetch_param(link, "CC_" + axis_enum + "_ICEPT")
@@ -32,12 +38,7 @@ def startCalibration(link):
     # Reset the gimbal
     reset_gimbal(link);
 
-def status(link):        
-    print getAxisCalibrationParam(link, axis_enum[0])
-    print getAxisCalibrationParam(link, axis_enum[1])
-    print getAxisCalibrationParam(link, axis_enum[2])
-    print ''
-    
+def status(link):    
     startCalibration(link)
     
     status_per_axis = []
@@ -58,5 +59,8 @@ def status(link):
         
     print '\n'
     print status_per_axis
+    print ''
+    printAxisCalibrationParam(link)    
+    
     
     

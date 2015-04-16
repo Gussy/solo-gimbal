@@ -10,7 +10,7 @@ import sys, argparse
 from pymavlink.dialects.v10 import common as mavlink
 from firmware_loader import update
 from read_swver_param import readSWver
-import setup_comutation
+import setup_comutation, setup_home
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
@@ -20,6 +20,8 @@ TARGET_COMPONENT_ID =  mavlink.MAV_COMP_ID_GIMBAL
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--binary", help="Application binary file load", default=None)
+    parser.add_argument("--show", help="Show the comutation parameters", action='store_true')
+    parser.add_argument("--comutation", help="Run the comutation setup", action='store_true')
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
     parser.add_argument("-b", "--baudrate", help="Serial port baudrate", default=230400)
     args = parser.parse_args()
@@ -39,14 +41,17 @@ def main():
     
     if args.binary:
         update(args.binary, link)
+        return
+    elif args.comutation:
+        setup_comutation.status(link)
+        return
+    elif args.show:
+        setup_comutation.printAxisCalibrationParam(link)
+        return
     else:
         readSWver(link)
-        print ''
-        setup_comutation.status(link)
+        return
 
 if __name__ == '__main__':
-    main()
-    
-    print '\n exit'
-    
+    main()    
     sys.exit(0)
