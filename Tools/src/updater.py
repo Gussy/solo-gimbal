@@ -8,7 +8,7 @@ import sys, argparse
 
 from firmware_loader import update
 from setup_mavlink import open_comm
-from read_swver_param import readSWver
+from setup_read_sw_version import readSWver
 import setup_comutation, setup_home
 
 
