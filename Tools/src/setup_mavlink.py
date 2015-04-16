@@ -34,14 +34,6 @@ def fetch_param(link, param, timeout=10):
 def set_param(link, param_name, param_value):
     link.param_set_send(link.target_sysid, link.target_compid, param_name, param_value, MAV_PARAM_TYPE_REAL32)
 
-
-def reset_gimbal(link):
-    link.file.mav.gimbal_reset_send(link.target_sysid, link.target_compid)
-    
-    # clear the receive buffer
-    for i in range(10): 
-        link.file.recv_msg()
-
 def getAxisCalibrationParam(link, axis_enum):
     home = fetch_param(link, "CC_" + axis_enum + "_HOME")
     icept = fetch_param(link, "CC_" + axis_enum + "_ICEPT")
@@ -54,18 +46,32 @@ def printAxisCalibrationParam(link):
     print getAxisCalibrationParam(link, axis_enum[1])
     print getAxisCalibrationParam(link, axis_enum[2])
     
-def getCalibrationProgress(link):
-    msg_progress = link.file.recv_match(type="GIMBAL_AXIS_CALIBRATION_PROGRESS", blocking=True, timeout=10)
+def reset_gimbal(link):
+    link.file.mav.command_long_send(link.target_sysid, link.target_compid,42501,0,0,0,0,0,0,0,0)
+    result = link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
+    if result:
+        return True
+    else:
+        print 'failed to reboot'
+        return False 
 
-    axis = axis_enum[msg_progress.calibration_axis - 1]
-    progress = msg_progress.calibration_progress
-    status = status_enum[msg_progress.calibration_status]
+def getCalibrationProgress(link):
+    while(True):
+        msg_progress = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=10)
+        if msg_progress is None:
+            return None
+        if msg_progress.command == 42502:
+            break
+
+    axis = axis_enum[int(msg_progress.param1) - 1]
+    progress = int(msg_progress.param2)
+    status = status_enum[int(msg_progress.param3)]
     
     return axis, progress, status
 
 def receive_home_offset_result(link):
-    return link.file.recv_match(type="GIMBAL_HOME_OFFSET_CALIBRATION_RESULT", blocking=True, timeout=3)
+    return link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
 
 
-def start_home_calibration(link):
-    return link.file.mav.gimbal_set_home_offsets_send(link.target_sysid, link.target_compid)
+def start_home_calibration(link):    
+    return link.file.mav.command_long_send(link.target_sysid, link.target_compid,42500,0,0,0,0,0,0,0,0)
