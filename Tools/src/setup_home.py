@@ -1,11 +1,12 @@
 """
 """
 import setup_comutation
+from parameters_helper import receive_home_offset_result, start_home_calibration
 
 
 def home(link):
-    link.file.mav.gimbal_set_home_offsets_send(link.target_sysid, link.target_compid);
-    if link.file.recv_match(type="GIMBAL_HOME_OFFSET_CALIBRATION_RESULT", blocking=True, timeout=3):
+    start_home_calibration(link)
+    if receive_home_offset_result(link):
         print 'home positions set'
         setup_comutation.printAxisCalibrationParam(link)
     else:

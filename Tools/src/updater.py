@@ -4,18 +4,13 @@
      Command-line utility to handle comms to gimbal 
 '''
 
-from pymavlink import mavutil
 import sys, argparse
 
-from pymavlink.dialects.v10 import common as mavlink
 from firmware_loader import update
+from parameters_helper import open_comm
 from read_swver_param import readSWver
 import setup_comutation, setup_home
 
-MAVLINK_SYSTEM_ID = 255
-MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
-TARGET_SYSTEM_ID = 1
-TARGET_COMPONENT_ID =  mavlink.MAV_COMP_ID_GIMBAL
 
 def main():
     parser = argparse.ArgumentParser()
@@ -28,13 +23,7 @@ def main():
     args = parser.parse_args()
  
     # Open the serial port
-    mavserial = mavutil.mavlink_connection(
-        device=args.port,
-        baud=args.baudrate
-    )
-    link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
-    link.target_sysid = TARGET_SYSTEM_ID
-    link.target_compid = TARGET_COMPONENT_ID
+    link = open_comm(args.port, args.baudrate)
     
     if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=5) == None:
         print 'failed to comunicate to gimbal'

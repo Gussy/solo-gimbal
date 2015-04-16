@@ -6,22 +6,11 @@ Utility for loading firmware into the 3DR Gimbal.
 """
 import sys
 
-from parameters_helper import fetch_param, set_param, reset_gimbal
+from parameters_helper import set_param, reset_gimbal, printAxisCalibrationParam,\
+    getCalibrationProgress
 
 axis_enum = ['PITCH', 'ROLL', 'YAW']
 status_enum = ['in progress', 'succeeded', 'failed']
-
-def printAxisCalibrationParam(link):
-    print getAxisCalibrationParam(link, axis_enum[0])
-    print getAxisCalibrationParam(link, axis_enum[1])
-    print getAxisCalibrationParam(link, axis_enum[2])
-    
-
-def getAxisCalibrationParam(link, axis_enum):
-    home = fetch_param(link, "CC_" + axis_enum + "_HOME")
-    icept = fetch_param(link, "CC_" + axis_enum + "_ICEPT")
-    slope = fetch_param(link, "CC_" + axis_enum + "_SLOPE")
-    return axis_enum, home.param_value, icept.param_value, slope.param_value
 
 def startCalibration(link):
     # Set all commutation calibration parameters to 0
@@ -43,10 +32,7 @@ def status(link):
     
     status_per_axis = []
     while(len(status_per_axis) < 3):
-        msg_progress = link.file.recv_match(type="GIMBAL_AXIS_CALIBRATION_PROGRESS", blocking=True, timeout=10)
-        axis = axis_enum[msg_progress.calibration_axis - 1]
-        progress = msg_progress.calibration_progress
-        status = status_enum[msg_progress.calibration_status]
+        axis, progress, status = getCalibrationProgress(link)
         
         text = "\rCalibrating %s - progress %d%% - %s            " % (axis, progress, status)
         sys.stdout.write(text)
