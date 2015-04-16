@@ -66,6 +66,40 @@
                 <param index="6">Empty</param>
                 <param index="7">Empty</param>
             </entry>
+
+
+            <entry value="42500" name="MAV_CMD_GIMBAL_SET_HOME_OFFSETS">
+                <description>Instructs the gimbal to set its current position as its new home position</description>
+                <param index="1">Number of samples to use for average</param>
+                <param index="2">Empty</param>
+                <param index="3">Empty</param>
+                <param index="4">Empty</param>
+                <param index="5">Empty</param>
+                <param index="6">Empty</param>
+                <param index="7">Empty</param>
+            </entry>
+            
+            <entry value="42501" name="MAV_CMD_GIMBAL_RESET">
+                <description>Causes the gimbal to reset and boot as if it was just powered on</description>
+                <param index="1">Empty</param>
+                <param index="2">Empty</param>
+                <param index="3">Empty</param>
+                <param index="4">Empty</param>
+                <param index="5">Empty</param>
+                <param index="6">Empty</param>
+                <param index="7">Empty</param>
+            </entry>
+            
+            <entry value="42502" name="MAV_CMD_GIMBAL_REPORT_AXIS_CALIBRATION_STATUS">
+                <description> Reports progress and success or failure of gimbal axis calibration procedure</description>
+                <param index="1">Gimbal axis we're reporting calibration progress for</param>
+                <param index="2">Current calibration progress for this axis, 0x64=100%</param>
+                <param index="3">Status of the calibration</param>
+                <param index="4">Empty</param>
+                <param index="5">Empty</param>
+                <param index="6">Empty</param>
+                <param index="7">Empty</param>
+            </entry>
           </enum>
 	  
 	  	<!--  AP_Limits Enums -->
@@ -737,14 +771,6 @@
         <field type="float" name="demanded_rate_z">Demanded angular rate Z (rad/s)</field>
     </message>
 
-    <message name="GIMBAL_RESET" id="202">
-        <description>
-            Causes the gimbal to reset and boot as if it was just powered on
-        </description>
-        <field name="target_system" type="uint8_t">System ID</field>
-        <field name="target_component" type="uint8_t">Component ID</field>
-    </message>
-
     <message name="GIMBAL_AXIS_CALIBRATION_PROGRESS" id="203">
         <description>
             Reports progress and success or failure of gimbal axis calibration procedure
@@ -752,21 +778,6 @@
         <field name="calibration_axis" type="uint8_t" enum="GIMBAL_AXIS">Which gimbal axis we're reporting calibration progress for</field>
         <field name="calibration_progress" type="uint8_t">The current calibration progress for this axis, 0x64=100%</field>
         <field name="calibration_status" type="uint8_t" enum="GIMBAL_AXIS_CALIBRATION_STATUS">The status of the running calibration</field>
-    </message>
-
-    <message name="GIMBAL_SET_HOME_OFFSETS" id="204">
-        <description>
-            Instructs the gimbal to set its current position as its new home position.  Will primarily be used for factory calibration
-        </description>
-        <field name="target_system" type="uint8_t">System ID</field>
-        <field name="target_component" type="uint8_t">Component ID</field>
-    </message>
-
-    <message name="GIMBAL_HOME_OFFSET_CALIBRATION_RESULT" id="205">
-        <description>
-            Sent by the gimbal after it receives a SET_HOME_OFFSETS message to indicate the result of the home offset calibration
-        </description>
-        <field name="calibration_result" type="uint8_t" enum="GIMBAL_AXIS_CALIBRATION_STATUS">The result of the home offset calibration</field>
     </message>
 
     <message name="GIMBAL_SET_FACTORY_PARAMETERS" id="206">
