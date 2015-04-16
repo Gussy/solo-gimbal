@@ -7,10 +7,9 @@
 import sys, argparse
 
 from firmware_loader import update
-from setup_mavlink import open_comm
+from setup_mavlink import open_comm, wait_for_hearbeat
 from setup_read_sw_version import readSWver
 import setup_comutation, setup_home
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -25,7 +24,7 @@ def main():
     # Open the serial port
     link = open_comm(args.port, args.baudrate)
     
-    if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=5) == None:
+    if wait_for_hearbeat(link) == None:
         print 'failed to comunicate to gimbal'
         return
     

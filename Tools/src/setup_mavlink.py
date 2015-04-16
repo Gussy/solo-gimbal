@@ -21,6 +21,9 @@ def open_comm(port, baudrate):
     return link
 
 
+def wait_for_hearbeat(link):
+    return link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=5)
+
 def fetch_param(link, param, timeout=10):
     # Get a parameter
     link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
