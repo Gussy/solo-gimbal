@@ -508,53 +508,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             }
             break;
 
-            /*case CAND_PID_POS_EL_P:
-            {
-                IntOrFloat float_converter;
-                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
-                if (GetBoardHWID() == AZ) {
-                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_p[EL];
-                    cand_tx_response(msg.sender_id, CAND_PID_POS_EL_P, float_converter.uint32_val);
-                }
-            }
-            break;
-
-            case CAND_PID_POS_EL_I:
-            {
-                IntOrFloat float_converter;
-                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
-                if (GetBoardHWID() == AZ) {
-                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_i[EL];
-                    cand_tx_response(msg.sender_id, CAND_PID_POS_EL_I, float_converter.uint32_val);
-                }
-            }
-            break;
-
-            case CAND_PID_POS_EL_D:
-            {
-                IntOrFloat float_converter;
-                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
-                if (GetBoardHWID() == AZ) {
-                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_d[EL];
-                    cand_tx_response(msg.sender_id, CAND_PID_POS_EL_D, float_converter.uint32_val);
-                }
-            }
-            break;
-
-            case CAND_PID_POS_EL_WINDUP:
-            {
-                IntOrFloat float_converter;
-                // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
-                if (GetBoardHWID() == AZ) {
-                    // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_windup[EL];
-                    cand_tx_response(msg.sender_id, CAND_PID_POS_EL_WINDUP, float_converter.uint32_val);
-                }
-            }
-            break;*/
 
             case CAND_PID_POS_AZ_P:
             {
@@ -993,50 +946,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     }
                     break;
 
-                /*case CAND_PID_POS_EL_P:
-                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
-                    // of getting multiple responses for the same parameter)
-                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_P_RECVD)) {
-                        IntOrFloat float_converter;
-                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        //pos_pid_loop_float[EL].gainP = float_converter.float_val;
-                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_P_RECVD;
-                    }
-                    break;
-
-                case CAND_PID_POS_EL_I:
-                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
-                    // of getting multiple responses for the same parameter)
-                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_I_RECVD)) {
-                        IntOrFloat float_converter;
-                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        //pos_pid_loop_float[EL].gainI = float_converter.float_val;
-                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_I_RECVD;
-                    }
-                    break;
-
-                case CAND_PID_POS_EL_D:
-                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
-                    // of getting multiple responses for the same parameter)
-                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_D_RECVD)) {
-                        IntOrFloat float_converter;
-                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        //pos_pid_loop_float[EL].gainD = float_converter.float_val;
-                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_D_RECVD;
-                    }
-                    break;
-
-                case CAND_PID_POS_EL_WINDUP:
-                    // Only load the parameter once (because we request parameters until we get them, there's a possibility
-                    // of getting multiple responses for the same parameter)
-                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_POS_PID_EL_WINDUP_RECVD)) {
-                        IntOrFloat float_converter;
-                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        //pos_pid_loop_float[EL].integralMax = float_converter.float_val;
-                        //pos_pid_loop_float[EL].integralMin = -float_converter.float_val;
-                        load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_POS_PID_EL_WINDUP_RECVD;
-                    }
-                    break;*/
 
                 case CAND_PID_POS_AZ_P:
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility

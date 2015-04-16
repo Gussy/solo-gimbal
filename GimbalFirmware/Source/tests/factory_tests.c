@@ -20,7 +20,7 @@ int RunFactoryTestsIteration(FactoryTestsParms* test_parms, MotorDriveParms* md_
             } else {
                 return 0;
             }
-
-            break;
+        default:
+        	return 0;
     }
 }

@@ -271,7 +271,6 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                         cb_parms->control_loop_type = RATE_MODE;
                         test_parms->test_state = RANGE_LIMITS_STATE_INIT;
                         return 1;
-                        break;
                 }
             }
         }
