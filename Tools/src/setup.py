@@ -19,7 +19,8 @@ def main():
     parser.add_argument("-c","--comutation", help="Run the comutation setup", action='store_true')
     parser.add_argument("-o","--home", help="Home alignment", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
-    parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
+    parser.add_argument("-e","--erase", help="Erase calibration values", action='store_true')
+    parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default='0.0.0.0:14550')
     parser.add_argument("-b", "--baudrate", help="Serial port baudrate", default=230400)
     args = parser.parse_args()
  
@@ -44,6 +45,10 @@ def main():
         return
     elif args.reboot:
         setup_mavlink.reset_gimbal(link)
+	return
+    elif args.erase:
+	setup_comutation.startCalibration(link)
+	return
     else:
         readSWver(link)
         return
