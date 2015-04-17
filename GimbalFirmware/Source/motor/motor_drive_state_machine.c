@@ -12,7 +12,6 @@
 #include "can/cb.h"
 #include "hardware/device_init.h"
 #include "motor/commutation_calibration_state_machine.h"
-#include "motor/homing_calibration_state_machine.h"
 #include "control/PID.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "parameters/flash_params.h"
@@ -34,21 +33,6 @@ CommutationCalibrationParms cc_parms = {
     0,
     RMPCNTL_DEFAULTS,                       // Ramp control parameters
     {0}                                     // Calibration data
-};
-
-HomingCalibrationParms hc_parms = {
-    HOMING_STATE_INIT,          // Current homing state
-    HOMING_STATE_INIT,          // Next homing state
-    AXIS_STOP_1,                // Current stop being searched for
-    HOMING_DIRECTION_FORWARD,   // Current homing direction
-    0,                          // Current find stop iteration
-    0,                          // Current find stop stall count
-    0,                          // Mechanical stop 1 encoder location
-    0,                          // Mechanical stop 2 encoder location
-    0,                          // Settling timer
-    0.0,                        // Last mechanical theta,
-    0.0000001,                  // EPSILON
-    RMPCNTL_DEFAULTS            // Ramp control parameters
 };
 
 void MotorDriveStateMachine(AxisParms* axis_parms,
@@ -83,17 +67,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
                 axis_parms->other_axis_hb_recvd[AZ] = TRUE;
             }
-
-            //TODO: Temporarily sequencing the initialization of the different axes
-            /*
-            if (board_hw_id == EL) {
-                // We're the control board, so need to go through the init sequence
-                md_parms->motor_drive_state = STATE_COMMAND_AZ_INIT;
-            } else {
-                // We're not the control board, so just need to init ourselves
-                md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
-            }
-            */
 
             md_parms->rg1.Freq = 10;
 
@@ -179,42 +152,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
-        case STATE_COMMAND_AZ_INIT:
-        case STATE_WAIT_FOR_AZ_INIT:
-        case STATE_COMMAND_ROLL_INIT:
-        case STATE_WAIT_FOR_ROLL_INIT:
-            // Set park transformation angle to 0
-            md_parms->park_xform_parms.Angle = 0;
-
-            // Drive id and iq to 0 (not driving the motor)
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = 0;
-
-            switch (md_parms->motor_drive_state) {
-            case STATE_COMMAND_AZ_INIT:
-                cand_tx_command(CAND_ID_AZ, CAND_CMD_INIT);
-                md_parms->motor_drive_state = STATE_WAIT_FOR_AZ_INIT;
-                break;
-
-            case STATE_WAIT_FOR_AZ_INIT:
-                if (cb_parms->axes_homed[AZ] == TRUE) {
-                    md_parms->motor_drive_state = STATE_COMMAND_ROLL_INIT;
-                }
-                break;
-
-            case STATE_COMMAND_ROLL_INIT:
-                cand_tx_command(CAND_ID_ROLL, CAND_CMD_INIT);
-                md_parms->motor_drive_state = STATE_WAIT_FOR_ROLL_INIT;
-                break;
-
-            case STATE_WAIT_FOR_ROLL_INIT:
-                if (cb_parms->axes_homed[ROLL] == TRUE) {
-                    md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
-                }
-                break;
-            }
-            break;
-
         case STATE_CALIBRATING_CURRENT_MEASUREMENTS:
             //  LPF to average the calibration offsets.  Run this for a few seconds at boot to calibrate the phase current measurements
             md_parms->cal_offset_A = _IQ15mpy(md_parms->cal_filt_gain, _IQtoIQ15(md_parms->clarke_xform_parms.As)) + md_parms->cal_offset_A;
@@ -231,10 +168,60 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->current_cal_timer++;
             if (md_parms->current_cal_timer > (((Uint32)ISR_FREQUENCY) * ((Uint32)CURRENT_CALIBRATION_TIME_MS))) {
 #ifdef ENABLE_AXIS_CALIBRATION_PROCEDURE
-                md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
+                //md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
+                md_parms->motor_drive_state = STATE_CHECK_AXIS_CALIBRATION;
 #else
                 md_parms->motor_drive_state = STATE_HOMING;
 #endif
+            }
+            break;
+
+        case STATE_CHECK_AXIS_CALIBRATION:
+            if (AxisCalibrationSlopes[GetBoardHWID()] == 0.0) {
+                // If our commutation calibration slope is 0, then our axis needs calibrating
+                if (GetBoardHWID() == AZ) {
+                    cb_parms->calibration_status[AZ] = GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE;
+                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_STATUS;
+                } else {
+                    CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE);
+                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
+                }
+            } else {
+                // If there's a number other than 0 in the axis calibration slope, then our axis doesn't need to be calibrated
+                if (GetBoardHWID() == AZ) {
+                    cb_parms->calibration_status[AZ] = GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE;
+                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_STATUS;
+                } else {
+                    CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE);
+                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
+                }
+            }
+            break;
+
+        case STATE_WAIT_FOR_AXIS_CALIBRATION_STATUS:
+            // Wait for all of the axes to report their calibration status
+            if ((cb_parms->calibration_status[AZ] != GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) &&
+                (cb_parms->calibration_status[EL] != GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) &&
+                (cb_parms->calibration_status[ROLL] != GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN)) {
+                // We've received the axis calibration status from all axes.  Check to see if any of them require calibration
+                if ((cb_parms->calibration_status[AZ] == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE) ||
+                    (cb_parms->calibration_status[EL] == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE) ||
+                    (cb_parms->calibration_status[ROLL] == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE)) {
+                    // If any axes require calibration, go to the wait for axis calibration command state, where we'll send a periodic
+                    // status message and wait for a command to calibrate
+                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
+                } else {
+                    cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_CALIBRATE_AXES);
+                    md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
+                }
+            }
+            break;
+
+        case STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND:
+            // If we're the AZ board, send a periodic mavlink message indicating which axes need to be calibrated,
+            // otherwise, do nothing and stay in this state until we receive a command to calibrate
+            if (GetBoardHWID() == AZ) {
+
             }
             break;
 
@@ -247,7 +234,21 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_HOMING:
-            HomingCalibrationStateMachine(md_parms, encoder_parms, cb_parms, axis_parms, &hc_parms);
+            // Load the runtime values from the stored calibration values
+            encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
+            encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
+            encoder_parms->virtual_counts_offset = -((int16)AxisHomePositions[GetBoardHWID()]);
+
+            cb_parms->axes_homed[GetBoardHWID()] = TRUE;
+            if (GetBoardHWID() == EL) {
+                // If we're the EL board, we need to wait for the other axes to indicate that they've finished homing before
+                // we enable the rate loops.  Otherwise, we move to the disabled state and wait for a command to set us to actively running
+                md_parms->motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
+            } else {
+                md_parms->md_initialized = TRUE;
+                md_parms->motor_drive_state = STATE_DISABLED;
+                axis_parms->blink_state = BLINK_READY;
+            }
             break;
 
         case STATE_WAIT_FOR_AXES_HOME:
@@ -257,23 +258,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // Drive id and iq to 0
             md_parms->pid_id.term.Ref = 0;
             md_parms->pid_iq.term.Ref = 0;
-#if 0
-            def ENABLE_AXIS_CALIBRATION_PROCEDURE
-            {
-            	static short sent = 0;
-            	if (cb_parms->axes_homed[ROLL]) {
-            		if (sent & 0x02 == 0) {
-            			cand_tx_command(CAND_ID_AZ, CAND_CMD_ENABLE);
-            			sent |= 0x02;
-            		}
-            	} else {
-            		if (sent & 0x01 == 0) {
-            			cand_tx_command(CAND_ID_ROLL, CAND_CMD_ENABLE);
-            			sent |= 0x01;
-            		}
-            	}
-            }
-#endif
 
             if ((cb_parms->axes_homed[AZ] == TRUE) && (cb_parms->axes_homed[EL] == TRUE) && (cb_parms->axes_homed[ROLL] == TRUE)) {
                 //cb_parms->enabled = TRUE;

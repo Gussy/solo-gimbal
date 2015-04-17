@@ -2,6 +2,7 @@
 #include "PeripheralHeaderIncludes.h"
 #include "can/cand.h"
 #include "mavlink_interface/gimbal_mavlink.h"
+#include "PM_Sensorless.h"
 
 typedef struct _DavinciVersion {
     uint8_t major;
@@ -33,3 +34,4 @@ void SendDebug1ToAz(int16 debug_1, int16 debug_2, int16 debug_3);
 void CANSendCalibrationProgress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status);
 void CANSendFactoryTestProgress(Uint8 test, Uint8 section, Uint8 progress, Uint8 status);
 void CANSendFactoryTestsComplete();
+void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status);

@@ -200,6 +200,11 @@ ControlBoardParms control_board_parms = {
     {CAND_FAULT_NONE, CAND_FAULT_NONE, CAND_FAULT_NONE},    // Last axis faults
     {FALSE, FALSE, FALSE},									// Encoder values received
     {FALSE, FALSE, FALSE},                                  // Axes homed
+    {                                                       // Needs calibration
+        GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN,
+        GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN,
+        GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN
+    },
     0,                                                      // 2nd stage position loop decimation counter
     {0, 0, 0},                                              // Tuning rate inject
     {0, 0, 0},                                              // Rate command inject

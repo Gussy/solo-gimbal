@@ -51,6 +51,7 @@ Next, Include project specific include files.
 
 #include "can/cand_BitFields.h"
 #include "hardware/HWSpecific.h"
+#include "MAVLink/ardupilotmega/mavlink.h"
 
 typedef enum {
     BLINK_NO_COMM,
@@ -149,6 +150,7 @@ typedef struct {
     CAND_FaultCode last_axis_fault[AXIS_CNT];
     Uint8 encoder_value_received[AXIS_CNT];
     Uint16 axes_homed[AXIS_CNT];
+    GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_status[AXIS_CNT];
     int pos_loop_2nd_stage_decimation_count;
     int16 tuning_rate_inject[AXIS_CNT];
     int16 rate_cmd_inject[AXIS_CNT];

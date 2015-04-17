@@ -267,8 +267,14 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         		write_flash();
 		    }
 
+		    // Update calibration progress and status
 		    calibration_progress = 100;
 		    send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED);
+		    if (GetBoardHWID() == AZ) {
+		        cb_parms->calibration_status[AZ] = GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE;
+		    } else {
+		        CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE);
+		    }
 		    break;
 
     }

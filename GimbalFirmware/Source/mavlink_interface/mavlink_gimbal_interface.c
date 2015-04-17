@@ -23,6 +23,7 @@
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal();
+static void handle_request_axis_calibration(MotorDriveParms* md_parms);
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
 static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
@@ -156,7 +157,9 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			    case 42501:
 			    	handle_reset_gimbal();
 			    	break;
-
+			    case 42503:
+			    	handle_request_axis_calibration(md_parms);
+			    	break;
 			    default:
 					break;
 			    }
@@ -362,6 +365,15 @@ static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* enc
     md_parms->motor_drive_state = STATE_CALIBRATE_HOME_OFFSETS;
 }
 
+static void handle_request_axis_calibration(MotorDriveParms* md_parms)
+{
+    // Make sure we're in the waiting to calibrate state before commanding calibration
+    if (md_parms->motor_drive_state == STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND) {
+        // Tell all axes to start calibrating
+        cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_CALIBRATE_AXES);
+        md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
+    }
+}
 
 static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardParms* cb_parms)
 {
