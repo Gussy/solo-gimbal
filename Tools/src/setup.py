@@ -45,10 +45,10 @@ def main():
         return
     elif args.reboot:
         setup_mavlink.reset_gimbal(link)
-	return
+        return
     elif args.erase:
-	setup_comutation.startCalibration(link)
-	return
+        setup_comutation.startCalibration(link)
+        return
     else:
         readSWver(link)
         return

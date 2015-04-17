@@ -24,10 +24,11 @@ def startCalibration(link):
     setup_mavlink.set_param(link, "COMMIT_FLASH", 69.0);
 
     # Reset the gimbal
-    setup_mavlink.reset_gimbal(link);
+    return setup_mavlink.reset_gimbal(link);
 
 def status(link):    
-    startCalibration(link)
+    if not startCalibration(link):
+        return
     
     status_per_axis = []
     while(len(status_per_axis) < 3):
