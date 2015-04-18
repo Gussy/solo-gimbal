@@ -5,6 +5,7 @@ from pymavlink.dialects.v10.ardupilotmega import MAV_PARAM_TYPE_REAL32
 from setup_comutation import axis_enum, status_enum
 from pymavlink.mavutil import mavlink
 from pymavlink import mavutil
+from setuptools.command.build_ext import if_dl
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
@@ -55,6 +56,14 @@ def reset_gimbal(link):
         print 'failed to reboot'
         return False 
 
+def getCalibrationState(link):
+    while(True):
+        msg_status = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=10)
+        if msg_status is None:
+            return None
+        if msg_status.command == 42504:
+            return [msg_status.param2, msg_status.param3, msg_status.param1]
+
 def getCalibrationProgress(link):
     while(True):
         msg_progress = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=10)
@@ -72,6 +81,8 @@ def getCalibrationProgress(link):
 def receive_home_offset_result(link):
     return link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
 
-
 def start_home_calibration(link):    
     return link.file.mav.command_long_send(link.target_sysid, link.target_compid,42500,0,0,0,0,0,0,0,0)
+
+def requestCalibration(link):
+    return link.file.mav.command_long_send(link.target_sysid, link.target_compid,42503,0,0,0,0,0,0,0,0)

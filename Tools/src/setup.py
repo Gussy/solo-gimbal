@@ -16,7 +16,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l","--load", help="Application binary file load", default=None)
     parser.add_argument("-s","--show", help="Show the comutation parameters", action='store_true')
-    parser.add_argument("-c","--comutation", help="Run the comutation setup", action='store_true')
+    parser.add_argument("-c","--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("-o","--home", help="Home alignment", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
     parser.add_argument("-e","--erase", help="Erase calibration values", action='store_true')
@@ -34,8 +34,8 @@ def main():
     if args.load:
         update(args.load, link)
         return
-    elif args.comutation:
-        setup_comutation.status(link)
+    elif args.calibrate:
+        setup_comutation.calibrate(link)
         return
     elif args.show:
         setup_mavlink.printAxisCalibrationParam(link)
@@ -47,7 +47,7 @@ def main():
         setup_mavlink.reset_gimbal(link)
         return
     elif args.erase:
-        setup_comutation.startCalibration(link)
+        setup_comutation.resetCalibration(link)
         return
     else:
         readSWver(link)
