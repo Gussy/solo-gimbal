@@ -17,17 +17,17 @@ def home(link):
         print 'failed to set home positions'
 
 
-def getAverageAngle(link):
+def getAverage(link,get_variable):
     average = numpy.zeros(3)
     for i in range(NUMBER_OF_SAMPLES):
-        angles = numpy.array(get_current_joint_angles(link), dtype=numpy.float)
-        average += angles
-    
+        angles = numpy.array(get_variable(link), dtype=numpy.float)
+        average += angles    
     average /= NUMBER_OF_SAMPLES
     return average
 
 def calibrate_joints(link):
-    average = getAverageAngle(link)
+    average = getAverage(link, get_current_joint_angles)
     print average
-    set_joint_offsets(link,average)
+    set_offsets(link,'JNT',average)
+    return;
     return;

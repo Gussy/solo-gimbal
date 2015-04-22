@@ -48,10 +48,12 @@ def get_current_joint_angles(link):
             return None
         else:
             return [msg_gimbal.joint_el, msg_gimbal.joint_roll, msg_gimbal.joint_az]
-def set_joint_offsets(link, offsets):    
-    set_param(link, "MNT_OFF_JNT_Y", offsets[0]);
-    set_param(link, "MNT_OFF_JNT_X", offsets[1]);
-    set_param(link, "MNT_OFF_JNT_Z", offsets[2]);
+        
+        
+def set_offsets(link, kind, offsets):    
+    set_param(link, "MNT_OFF_"+kind+"_Y", offsets[0]);
+    set_param(link, "MNT_OFF_"+kind+"_X", offsets[1]);
+    set_param(link, "MNT_OFF_"+kind+"_Z", offsets[2]);
     
 def printAxisCalibrationParam(link):
     print getAxisCalibrationParam(link, axis_enum[0])
