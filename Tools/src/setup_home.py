@@ -3,7 +3,8 @@
 import math
 import numpy
 from setup_mavlink import receive_home_offset_result, start_home_calibration,\
-    printAxisCalibrationParam, get_current_joint_angles, set_joint_offsets
+    printAxisCalibrationParam, get_current_joint_angles, set_offsets,\
+    get_current_delta_angles
 
 NUMBER_OF_SAMPLES = 200
 ENCODER_COUNTS_PER_RADIAN = 1000.0/(2*math.pi)
@@ -30,4 +31,9 @@ def calibrate_joints(link):
     print average
     set_offsets(link,'JNT',average)
     return;
+
+def calibrate_gyro(link):
+    average = getAverage(link, get_current_delta_angles)
+    print average
+    set_offsets(link,'GYRO',average)
     return;

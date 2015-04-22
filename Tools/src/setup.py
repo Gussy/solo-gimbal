@@ -19,6 +19,7 @@ def main():
     parser.add_argument("-c","--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("-o","--home", help="Home alignment", action='store_true')
     parser.add_argument("-j","--jointcalibration", help="Calibrate joint angles", action='store_true')
+    parser.add_argument("-g","--gyrocalibration", help="Calibrate gyros", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
     parser.add_argument("-e","--erase", help="Erase calibration values", action='store_true')
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default='0.0.0.0:14550')
@@ -46,6 +47,9 @@ def main():
         return
     elif args.jointcalibration:
         setup_home.calibrate_joints(link)
+        return
+    elif args.gyrocalibration:
+        setup_home.calibrate_gyro(link)
         return
     elif args.reboot:
         setup_mavlink.reset_gimbal(link)

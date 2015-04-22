@@ -49,6 +49,13 @@ def get_current_joint_angles(link):
         else:
             return [msg_gimbal.joint_el, msg_gimbal.joint_roll, msg_gimbal.joint_az]
         
+def get_current_delta_angles(link):
+    while(True):
+        msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
+        if msg_gimbal is None:
+            return None
+        else:
+            return [msg_gimbal.delta_angle_y, msg_gimbal.delta_angle_x, msg_gimbal.delta_angle_z]
         
 def set_offsets(link, kind, offsets):    
     set_param(link, "MNT_OFF_"+kind+"_Y", offsets[0]);
