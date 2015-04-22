@@ -33,7 +33,7 @@ def fetch_param(link, param, timeout=10):
     return msg
 
 def set_param(link, param_name, param_value):
-    link.param_set_send(link.target_sysid, link.target_compid, param_name, param_value, MAV_PARAM_TYPE_REAL32)
+    link.param_set_send(link.target_sysid, 0, param_name, param_value, MAV_PARAM_TYPE_REAL32)
 
 def getAxisCalibrationParam(link, axis_enum):
     home = fetch_param(link, "CC_" + axis_enum + "_HOME")
@@ -41,6 +41,17 @@ def getAxisCalibrationParam(link, axis_enum):
     slope = fetch_param(link, "CC_" + axis_enum + "_SLOPE")
     return axis_enum, home.param_value, icept.param_value, slope.param_value
 
+def get_current_joint_angles(link):
+    while(True):
+        msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
+        if msg_gimbal is None:
+            return None
+        else:
+            return [msg_gimbal.joint_el, msg_gimbal.joint_roll, msg_gimbal.joint_az]
+def set_joint_offsets(link, offsets):    
+    set_param(link, "MNT_OFF_JNT_Y", offsets[0]);
+    set_param(link, "MNT_OFF_JNT_X", offsets[1]);
+    set_param(link, "MNT_OFF_JNT_Z", offsets[2]);
     
 def printAxisCalibrationParam(link):
     print getAxisCalibrationParam(link, axis_enum[0])
