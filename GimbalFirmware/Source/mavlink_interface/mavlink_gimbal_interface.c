@@ -218,6 +218,7 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 
 			case MAVLINK_MSG_ID_GOPRO_SET_REQUEST:
 				handle_gopro_set_request(&received_msg);
+				break;
 
 			case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
 				handle_data_transmission_handshake(&received_msg);
