@@ -203,6 +203,24 @@ struct flash_param_struct_0000 flash_params =
         0.0,    // AZ
         0.0     // ROLL
     },
+    // offset_joint
+    {
+        0.0,    // X
+        0.0,    // Y
+        0.0     // Z
+    },
+    // offset_accelerometers
+    {
+        0.0,    // X
+        0.0,    // Y
+        0.0     // Z
+    },
+    // offset_gyro
+    {
+        0.0,    // X
+        0.0,    // Y
+        0.0     // Z
+    },
     0.0,           // Balance axis (only used when balance mode is compiled in)
     20000.0        // Balance step time in ms (only used when balance mode is compiled in)
 };
