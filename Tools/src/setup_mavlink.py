@@ -56,7 +56,15 @@ def get_current_delta_angles(link):
             return None
         else:
             return [msg_gimbal.delta_angle_y, msg_gimbal.delta_angle_x, msg_gimbal.delta_angle_z]
-        
+
+def get_current_delta_velocity(link):
+    while(True):
+        msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
+        if msg_gimbal is None:
+            return None
+        else:
+            return [msg_gimbal.delta_velocity_y, msg_gimbal.delta_velocity_x, msg_gimbal.delta_velocity_z]
+    
 def set_offsets(link, kind, offsets):    
     set_param(link, "GMB_OFF_"+kind+"_Y", offsets[0]);
     set_param(link, "GMB_OFF_"+kind+"_X", offsets[1]);
