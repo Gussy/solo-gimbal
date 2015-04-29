@@ -10,11 +10,13 @@ from firmware_loader import update
 from setup_mavlink import open_comm, wait_for_hearbeat
 import setup_comutation, setup_home
 import setup_mavlink
+import setup_param
 from setup_read_sw_version import readSWver
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l","--load", help="Application binary file load", default=None)
+    parser.add_argument("--pid", help="Load PID setting from param file", default=None)
     parser.add_argument("-s","--show", help="Show the comutation parameters", action='store_true')
     parser.add_argument("-c","--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("-o","--home", help="Home alignment", action='store_true')
@@ -36,6 +38,9 @@ def main():
     
     if args.load:
         update(args.load, link)
+        return
+    elif args.pid:
+        setup_param.load_param_file(args.pid, link)
         return
     elif args.calibrate:
         setup_comutation.calibrate(link)
