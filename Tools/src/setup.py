@@ -7,10 +7,9 @@
 import sys, argparse
 
 from firmware_loader import update
-from setup_mavlink import open_comm, wait_for_hearbeat
 import setup_comutation, setup_home
-import setup_mavlink
-import setup_param
+from setup_mavlink import open_comm, wait_for_hearbeat
+import setup_mavlink,setup_param
 from setup_read_sw_version import readSWver
 
 def main():
@@ -46,7 +45,7 @@ def main():
         setup_comutation.calibrate(link)
         return
     elif args.show:
-        setup_mavlink.printAxisCalibrationParam(link)
+        setup_comutation.printAxisCalibrationParam(link)
         return
     elif args.home:
         setup_home.home(link)

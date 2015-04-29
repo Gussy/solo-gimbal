@@ -5,24 +5,20 @@ Utility for loading firmware into the 3DR Gimbal.
 
 """
 import sys
-import setup_mavlink
+import setup_mavlink,setup_param
+from setup_param import getAxisCalibrationParam
 
 axis_enum = ['PITCH', 'ROLL', 'YAW']
 status_enum = ['in progress', 'succeeded', 'failed']
 
+def printAxisCalibrationParam(link):
+    print getAxisCalibrationParam(link, axis_enum[0])
+    print getAxisCalibrationParam(link, axis_enum[1])
+    print getAxisCalibrationParam(link, axis_enum[2])
+
 def resetCalibration(link):
     print 'Clearing old calibration values'
-    # Set all commutation calibration parameters to 0
-    setup_mavlink.set_param(link, "GMB_YAW_SLOPE", 0.0);
-    setup_mavlink.set_param(link, "GMB_YAW_ICEPT", 0.0);
-    setup_mavlink.set_param(link, "GMB_ROLL_SLOPE", 0.0);
-    setup_mavlink.set_param(link, "GMB_ROLL_ICEPT", 0.0);
-    setup_mavlink.set_param(link, "GMB_PITCH_SLOPE", 0.0);
-    setup_mavlink.set_param(link, "GMB_PITCH_ICEPT", 0.0);
-
-    # Commit the zeroed out calibration parameters to flash
-    setup_mavlink.set_param(link, "GMB_FLASH", 69.0);
-    
+    setup_param.clear_comutation_params(link)    
     setup_mavlink.reset_gimbal(link)
     
 
@@ -45,7 +41,7 @@ def calibrate(link):
     print '\n'
     print status_per_axis
     print ''
-    setup_mavlink.printAxisCalibrationParam(link)    
+    printAxisCalibrationParam(link)    
     
     
     
