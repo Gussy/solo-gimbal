@@ -36,9 +36,9 @@ def set_param(link, param_name, param_value):
     link.param_set_send(link.target_sysid, 0, param_name, param_value, MAV_PARAM_TYPE_REAL32)
 
 def getAxisCalibrationParam(link, axis_enum):
-    home = fetch_param(link, "CC_" + axis_enum + "_HOME")
-    icept = fetch_param(link, "CC_" + axis_enum + "_ICEPT")
-    slope = fetch_param(link, "CC_" + axis_enum + "_SLOPE")
+    home = fetch_param(link, "GMB_" + axis_enum + "_HOME")
+    icept = fetch_param(link, "GMB_" + axis_enum + "_ICEPT")
+    slope = fetch_param(link, "GMB_" + axis_enum + "_SLOPE")
     return axis_enum, home.param_value, icept.param_value, slope.param_value
 
 def get_current_joint_angles(link):
@@ -58,9 +58,9 @@ def get_current_delta_angles(link):
             return [msg_gimbal.delta_angle_y, msg_gimbal.delta_angle_x, msg_gimbal.delta_angle_z]
         
 def set_offsets(link, kind, offsets):    
-    set_param(link, "MNT_OFF_"+kind+"_Y", offsets[0]);
-    set_param(link, "MNT_OFF_"+kind+"_X", offsets[1]);
-    set_param(link, "MNT_OFF_"+kind+"_Z", offsets[2]);
+    set_param(link, "GMB_OFF_"+kind+"_Y", offsets[0]);
+    set_param(link, "GMB_OFF_"+kind+"_X", offsets[1]);
+    set_param(link, "GMB_OFF_"+kind+"_Z", offsets[2]);
     
 def printAxisCalibrationParam(link):
     print getAxisCalibrationParam(link, axis_enum[0])

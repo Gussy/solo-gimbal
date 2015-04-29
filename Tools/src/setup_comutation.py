@@ -13,15 +13,15 @@ status_enum = ['in progress', 'succeeded', 'failed']
 def resetCalibration(link):
     print 'Clearing old calibration values'
     # Set all commutation calibration parameters to 0
-    setup_mavlink.set_param(link, "CC_YAW_SLOPE", 0.0);
-    setup_mavlink.set_param(link, "CC_YAW_ICEPT", 0.0);
-    setup_mavlink.set_param(link, "CC_ROLL_SLOPE", 0.0);
-    setup_mavlink.set_param(link, "CC_ROLL_ICEPT", 0.0);
-    setup_mavlink.set_param(link, "CC_PITCH_SLOPE", 0.0);
-    setup_mavlink.set_param(link, "CC_PITCH_ICEPT", 0.0);
+    setup_mavlink.set_param(link, "GMB_YAW_SLOPE", 0.0);
+    setup_mavlink.set_param(link, "GMB_YAW_ICEPT", 0.0);
+    setup_mavlink.set_param(link, "GMB_ROLL_SLOPE", 0.0);
+    setup_mavlink.set_param(link, "GMB_ROLL_ICEPT", 0.0);
+    setup_mavlink.set_param(link, "GMB_PITCH_SLOPE", 0.0);
+    setup_mavlink.set_param(link, "GMB_PITCH_ICEPT", 0.0);
 
     # Commit the zeroed out calibration parameters to flash
-    setup_mavlink.set_param(link, "COMMIT_FLASH", 69.0);
+    setup_mavlink.set_param(link, "GMB_FLASH", 69.0);
     
     setup_mavlink.reset_gimbal(link)
     

@@ -13,7 +13,7 @@ def float_to_bytes(f):
 
 def readSWver(link):
         
-    msg = fetch_param(link,"SYSID_SWVER")
+    msg = fetch_param(link,"GMB_SWVER")
     if not msg:
         print "Requested param not received."
         sys.exit(1)
