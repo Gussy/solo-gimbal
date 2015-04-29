@@ -17,7 +17,7 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
-
+#include "version.h"
 #include <stdio.h>
 
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
@@ -120,6 +120,7 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
 				last_parameter_sent = 0;
 				mavlink_info->mavlink_processing_state = MAVLINK_STATE_SEND_PARAM_LIST;
+			    send_mavlink_statustext(GitVersionString, MAV_SEVERITY_INFO);
 				break;
 
 			case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
