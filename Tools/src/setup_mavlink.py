@@ -47,6 +47,13 @@ def get_current_delta_velocity(link):
             return None
         else:
             return [msg_gimbal.delta_velocity_y, msg_gimbal.delta_velocity_x, msg_gimbal.delta_velocity_z]
+
+def get_gimbal_report(link):
+    msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
+    return msg_gimbal
+
+def send_gimbal_control(link,rate):
+    link.gimbal_control_send(link.target_sysid, link.target_compid,rate.x,rate.y,rate.z)
        
 def reset_gimbal(link):
     link.file.mav.command_long_send(link.target_sysid, link.target_compid,42501,0,0,0,0,0,0,0,0)

@@ -11,11 +11,14 @@ import setup_comutation, setup_home
 from setup_mavlink import open_comm, wait_for_hearbeat
 import setup_mavlink,setup_param
 from setup_read_sw_version import readSWver
+import setup_run
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l","--load", help="Application binary file load", default=None)
     parser.add_argument("--pid", help="Load PID setting from param file", default=None)
+    parser.add_argument("--run", help="run a quick test of the gimbal", action='store_true')
     parser.add_argument("-s","--show", help="Show the comutation parameters", action='store_true')
     parser.add_argument("-c","--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("-o","--home", help="Home alignment", action='store_true')
@@ -31,15 +34,18 @@ def main():
     # Open the serial port
     link = open_comm(args.port, args.baudrate)
     
-    if wait_for_hearbeat(link) == None:
-        print 'failed to comunicate to gimbal'
-        return
+    #if wait_for_hearbeat(link) == None:
+    #    print 'failed to comunicate to gimbal'
+    #    return
     
     if args.load:
         update(args.load, link)
         return
     elif args.pid:
         setup_param.load_param_file(args.pid, link)
+        return
+    elif args.run:
+        setup_run.run(link);
         return
     elif args.calibrate:
         setup_comutation.calibrate(link)
