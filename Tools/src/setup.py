@@ -3,24 +3,33 @@
 '''
      Command-line utility to handle comms to gimbal 
 '''
-
 import sys, argparse
 
 from firmware_loader import update
 import setup_comutation, setup_home
 from setup_mavlink import open_comm, wait_for_hearbeat
-import setup_mavlink,setup_param
+import setup_mavlink, setup_param
 from setup_read_sw_version import readSWver
 import setup_run
 
 
+
+def handle_file(args, link):
+    fileExtension = str(args.file).split(".")[-1].lower()
+    if fileExtension == 'param':
+        setup_param.load_param_file(args.file, link)
+    elif fileExtension == 'ax':
+        update(args.file, link)
+    else:
+        print 'file type not supported'
+    return
+
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default='0.0.0.0:14550')
     parser.add_argument("-s","--show", help="Show the comutation parameters", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
-    parser.add_argument("--load", help="Application binary file load", default=None)
-    parser.add_argument("--pid", help="Load PID setting from param file", default=None)
     parser.add_argument("--run", help="run a quick test of the gimbal", action='store_true')
     parser.add_argument("--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("--jointcalibration", help="Calibrate joint angles", action='store_true')
@@ -32,19 +41,15 @@ def main():
     # Open the serial port
     link = open_comm(args.port, 230400)
     
-        
     if wait_for_hearbeat(link) == None:
         print 'failed to comunicate to gimbal'
         return
-    
-    if args.load:
-        update(args.load, link)
-        return
-    elif args.pid:
-        setup_param.load_param_file(args.pid, link)
+
+    if args.file:
+        handle_file(args, link)
         return
     elif args.run:
-        setup_run.run(link);
+        setup_run.run(link)
         return
     elif args.calibrate:
         setup_comutation.calibrate(link)
