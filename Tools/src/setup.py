@@ -32,11 +32,12 @@ def main():
     args = parser.parse_args()
  
     # Open the serial port
-    link = open_comm(args.port, args.baudrate)
+    link = open_comm(args.port, 230400)
     
-    #if wait_for_hearbeat(link) == None:
-    #    print 'failed to comunicate to gimbal'
-    #    return
+        
+    if wait_for_hearbeat(link) == None:
+        print 'failed to comunicate to gimbal'
+        return
     
     if args.load:
         update(args.load, link)

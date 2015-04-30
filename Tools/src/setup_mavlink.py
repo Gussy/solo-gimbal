@@ -22,7 +22,11 @@ def open_comm(port, baudrate):
 
 
 def wait_for_hearbeat(link):
-    return link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=5)
+    for i in range(5):
+        link.heartbeat_send(0, 0, 0, 0, 0)
+        if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1):
+            return True        
+        
 
 def get_current_joint_angles(link):
     while(True):
