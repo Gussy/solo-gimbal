@@ -10,12 +10,6 @@
 // All of these get initialized over CAN at boot time (from parameters stored in flash on the AZ axis),
 // so they all get initialized to 0 here
 
-float AxisHomePositions[AXIS_CNT] = {
-    0.0,
-    0.0,
-    0.0
-};
-
 float AxisCalibrationSlopes[AXIS_CNT] = {
     0.0,
     0.0,

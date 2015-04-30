@@ -77,7 +77,6 @@ static const int EncoderSignMap[AXIS_CNT] = {
 };
 #endif
 
-extern float AxisHomePositions[AXIS_CNT];
 extern float AxisCalibrationSlopes[AXIS_CNT];
 extern float AxisCalibrationIntercepts[AXIS_CNT];
 extern float AxisTorqueLoopKp[AXIS_CNT];

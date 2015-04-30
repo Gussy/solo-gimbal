@@ -445,7 +445,6 @@ void main(void)
 		for ( i = 0; i < 3; i++) {
 			AxisCalibrationSlopes[i] = flash_params.AxisCalibrationSlopes[i];
 			AxisCalibrationIntercepts[i] = flash_params.AxisCalibrationIntercepts[i];
-			AxisHomePositions[i] = flash_params.AxisHomePositions[i];
 		}
 	}
 #if 0

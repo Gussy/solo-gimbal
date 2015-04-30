@@ -116,7 +116,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             AxisCalibrationSlopes[AZ] = flash_params.AxisCalibrationSlopes[AZ];
             AxisCalibrationIntercepts[AZ] = flash_params.AxisCalibrationIntercepts[AZ];
-            AxisHomePositions[AZ] = flash_params.AxisHomePositions[AZ];
 
             // After we've loaded our own init parameters, make a note of it, so we can continue later when we're waiting for
             // all axes to have received their init parameters
@@ -237,7 +236,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // Load the runtime values from the stored calibration values
             encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
             encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
-            encoder_parms->virtual_counts_offset = -((int16)AxisHomePositions[GetBoardHWID()]);
+            encoder_parms->virtual_counts_offset = 5000;
 
             cb_parms->axes_homed[GetBoardHWID()] = TRUE;
             if (GetBoardHWID() == EL) {
@@ -331,7 +330,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                     md_parms->motor_drive_state = STATE_DISABLED;
                 } else {
                     // If we're the azimuth board, we can update the flash parameters directly
-                    flash_params.AxisHomePositions[AZ] = encoder_parms->virtual_counts_offset;
 
                     // We also need to wait for the other two axes to send us their new home offsets before we can commit all of the new parameters to flash
                     md_parms->motor_drive_state = STATE_WAIT_FOR_OTHER_AXIS_HOME_OFFSETS;

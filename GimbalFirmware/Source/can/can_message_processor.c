@@ -371,7 +371,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             {
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
-                    cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET, (int)(flash_params.AxisHomePositions[msg.sender_id]));
+                    cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET, (int)(0));
                 }
             }
             break;
@@ -527,7 +527,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_p[AZ];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_POS_AZ_P, float_converter.uint32_val);
                 }
             }
@@ -539,7 +539,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_i[AZ];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_POS_AZ_I, float_converter.uint32_val);
                 }
             }
@@ -551,7 +551,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_d[AZ];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_POS_AZ_D, float_converter.uint32_val);
                 }
             }
@@ -563,7 +563,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_windup[AZ];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_POS_AZ_WINDUP, float_converter.uint32_val);
                 }
             }
@@ -575,7 +575,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_p[ROLL];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_POS_RL_P, float_converter.uint32_val);
                 }
             }
@@ -587,7 +587,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_i[ROLL];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_POS_RL_I, float_converter.uint32_val);
                 }
             }
@@ -599,7 +599,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_d[ROLL];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_POS_RL_D, float_converter.uint32_val);
                 }
             }
@@ -611,7 +611,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Position loop parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.pos_pid_windup[ROLL];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_POS_RL_WINDUP, float_converter.uint32_val);
                 }
             }
@@ -623,7 +623,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Gyro offset parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.gyro_offsets[EL];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_GYRO_OFFSET_EL, float_converter.uint32_val);
                 }
             }
@@ -635,7 +635,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Gyro offset parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.gyro_offsets[AZ];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_GYRO_OFFSET_AZ, float_converter.uint32_val);
                 }
             }
@@ -647,7 +647,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
                     // Gyro offset parameter requests all come from EL, so can't use the sender ID to lookup the proper value
-                    float_converter.float_val = flash_params.gyro_offsets[ROLL];
+                    float_converter.float_val = 0;
                     cand_tx_response(msg.sender_id, CAND_PID_GYRO_OFFSET_RL, float_converter.uint32_val);
                 }
             }
@@ -801,12 +801,10 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         if ((load_ap_state_info->init_param_recvd_flags_2 & ALL_NEW_HOME_OFFSETS_RECVD) != ALL_NEW_HOME_OFFSETS_RECVD) {
                             switch (msg.sender_id) {
                                 case CAND_ID_EL:
-                                    flash_params.AxisHomePositions[EL] = (int16)msg.param_response[msg.param_response_cnt - 1];
                                     load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_NEW_EL_HOME_OFFSET_RECVD;
                                     break;
 
                                 case CAND_ID_ROLL:
-                                    flash_params.AxisHomePositions[ROLL] = (int16)msg.param_response[msg.param_response_cnt - 1];
                                     load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_NEW_RL_HOME_OFFSET_RECVD;
                                     break;
                             }
@@ -817,7 +815,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         // Only load the parameter once (because we request parameters until we get them, there's a possibility
                         // of getting multiple responses for the same parameter)
                         if (!(load_ap_state_info->init_param_recvd_flags_2 & INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD)) {
-                            AxisHomePositions[GetBoardHWID()] = (float)(msg.param_response[msg.param_response_cnt - 1]);
                             load_ap_state_info->init_param_recvd_flags_2 |= INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD;
                         }
                     }
