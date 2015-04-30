@@ -212,7 +212,6 @@ ControlBoardParms control_board_parms = {
     RATE_MODE,                                              // Control loop type
     FALSE,                                                  // Initialized
     FALSE,                                                  // Enabled
-    FALSE                                                   // Running tests
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
@@ -644,15 +643,6 @@ void main(void)
             // Increment the global timestamp counter
             global_timestamp_counter++;
 
-            // If we're the elevation board, and we're running factory tests, run an iteration of them here to update the motor commutation loop inputs
-            if ((board_hw_id == EL) && control_board_parms.running_tests) {
-                if (RunFactoryTestsIteration(&test_parms, &motor_drive_parms, &control_board_parms, &axis_parms, &encoder_parms) == 1) {
-                    // A return value of 1 means factory tests are finished running.  Inform the AZ board that we're done
-                    control_board_parms.running_tests = FALSE;
-                    CANSendFactoryTestsComplete();
-                }
-            }
-
             MotorCommutationLoop(&control_board_parms,
                     &axis_parms,
                     &motor_drive_parms,
@@ -881,16 +871,13 @@ void A2(void) // SPARE (not used)
     // If we miss more than 10 rate commands in a row (roughly 100ms),
     // disable the gimbal axes.  They'll be re-enabled when we get a new
     // rate command
-    // If we're in factory test mode, don't go to disabled mode
     if (GetBoardHWID() == AZ) {
         if (mavlink_gimbal_info.gimbal_active) {
             if (++mavlink_gimbal_info.rate_cmd_timeout_counter >= 33) {
-                if (!control_board_parms.running_tests) {
-                    // Disable the other two axes
-                    cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
-                    // Disable ourselves
-                    RelaxAZAxis();
-                }
+                // Disable the other two axes
+                cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
+                // Disable ourselves
+                RelaxAZAxis();
                 mavlink_gimbal_info.gimbal_active = FALSE;
             }
         }

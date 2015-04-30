@@ -158,7 +158,6 @@ typedef struct {
     ControlLoopType control_loop_type;
     Uint8 initialized;
     Uint8 enabled;
-    Uint8 running_tests;
 } ControlBoardParms;
 
 typedef struct {

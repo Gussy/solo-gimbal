@@ -118,8 +118,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             break;
 
         case CAND_CMD_START_FACTORY_TESTS:
-            // Transition to the factory tests state
-            cb_parms->running_tests = TRUE;
             break;
 
         case CAND_CMD_CALIBRATE_AXES:
@@ -248,13 +246,9 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         break;
 
                     case CAND_EPID_FACTORY_TEST_PROGRESS:
-                        if (msg.extended_param_length == 4) {
-                            send_mavlink_factory_test_progress((FACTORY_TEST)(msg.extended_param[0] & 0x00FF), msg.extended_param[1] & 0x00FF, msg.extended_param[2] & 0x00FF, msg.extended_param[3] & 0x00FF);
-                        }
                         break;
 
                     case CAND_EPID_FACTORY_TESTS_COMPLETE:
-                        cb_parms->running_tests = FALSE;
                         // Disable the other two axes
                         cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
                         // Disable ourselves
