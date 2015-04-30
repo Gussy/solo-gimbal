@@ -1044,9 +1044,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_GYRO_OFFSET_EL_RECVD)) {
-                        IntOrFloat float_converter;
-                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        cb_parms->gyro_calibration_offsets[EL] = (int16)(float_converter.float_val);
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_GYRO_OFFSET_EL_RECVD;
                     }
                     break;
@@ -1054,10 +1051,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 case CAND_PID_GYRO_OFFSET_AZ:
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
-                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_GYRO_OFFSET_AZ_RECVD)) {
-                        IntOrFloat float_converter;
-                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        cb_parms->gyro_calibration_offsets[AZ] = (int16)(float_converter.float_val);
+                    if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_GYRO_OFFSET_AZ_RECVD)) {;
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_GYRO_OFFSET_AZ_RECVD;
                     }
                     break;
@@ -1066,9 +1060,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                     // Only load the parameter once (because we request parameters until we get them, there's a possibility
                     // of getting multiple responses for the same parameter)
                     if (!(load_ap_state_info->init_param_recvd_flags_3 & INIT_PARAM_GYRO_OFFSET_RL_RECVD)) {
-                        IntOrFloat float_converter;
-                        float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                        cb_parms->gyro_calibration_offsets[ROLL] = (int16)(float_converter.float_val);
                         load_ap_state_info->init_param_recvd_flags_3 |= INIT_PARAM_GYRO_OFFSET_RL_RECVD;
                     }
                     break;

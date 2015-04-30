@@ -183,8 +183,6 @@ AxisParms axis_parms = {
 ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Gyro readings
     {0, 0, 0},                                              // Corrected gyro readings
-    {0, 0, 0},                                              // Gyro offsets
-    {0, 0, 0},                                              // Gyro calibration offsets
     {0, 0, 0},                                              // Integrated raw gyro readings
     {0, 0, 0},                                              // Integrated raw accelerometer readings
     {0, 0, 0},                                              // Encoder readings

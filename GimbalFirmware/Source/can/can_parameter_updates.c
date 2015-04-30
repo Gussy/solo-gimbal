@@ -349,48 +349,27 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
 
         // Check for new gyro offsets from the copter
         if (*(param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema) == TRUE) {
-            cb_parms->gyro_offsets[X_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_X_AXIS].param;
             *(param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema) = FALSE;
         }
 
         if (*(param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema) == TRUE) {
-            cb_parms->gyro_offsets[Y_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].param;
             *(param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema) = FALSE;
         }
 
         if (*(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) == TRUE) {
-            cb_parms->gyro_offsets[Z_AXIS] = (int16)param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].param;
             *(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) = FALSE;
         }
 
         // Check for new gyro calibration offsets
         if (*(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) == TRUE) {
-            // Dump the integrator and differentiator
-            rate_pid_loop_float[AZ].integralCumulative = 0.0;
-            rate_pid_loop_float[AZ].errorPrevious = 0.0;
-
-            float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_AZ].param;
-            cb_parms->gyro_calibration_offsets[AZ] = (int16)float_converter.float_val;
             *(param_set[CAND_PID_GYRO_OFFSET_AZ].sema) = FALSE;
         }
 
         if (*(param_set[CAND_PID_GYRO_OFFSET_EL].sema) == TRUE) {
-            // Dump the integrator and differentiator
-            rate_pid_loop_float[EL].integralCumulative = 0.0;
-            rate_pid_loop_float[EL].errorPrevious = 0.0;
-
-            float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_EL].param;
-            cb_parms->gyro_calibration_offsets[EL] = (int16)float_converter.float_val;
             *(param_set[CAND_PID_GYRO_OFFSET_EL].sema) = FALSE;
         }
 
         if (*(param_set[CAND_PID_GYRO_OFFSET_RL].sema) == TRUE) {
-            // Dump the integrator and differentiator
-            rate_pid_loop_float[ROLL].integralCumulative = 0.0;
-            rate_pid_loop_float[ROLL].errorPrevious = 0.0;
-
-            float_converter.uint32_val = param_set[CAND_PID_GYRO_OFFSET_RL].param;
-            cb_parms->gyro_calibration_offsets[ROLL] = (int16)float_converter.float_val;
             *(param_set[CAND_PID_GYRO_OFFSET_RL].sema) = FALSE;
         }
 
