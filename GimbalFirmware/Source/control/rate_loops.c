@@ -20,7 +20,7 @@ static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
 
 Uint16 telemetry_decimation_count = 0;
 
-void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFilterParms* pos_loop_stage_1, RunningAvgFilterParms* pos_loop_stage_2, BalanceProcedureParms* bal_proc_parms)
+void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, BalanceProcedureParms* bal_proc_parms)
 {
     static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
     static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
@@ -72,70 +72,25 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
 
         // Do gyro kinematics correction
         do_gyro_correction(&(cb_parms->gyro_readings[0]), &(cb_parms->encoder_readings[0]), &(cb_parms->corrected_gyro_readings[0]));
-        //TODO: Temp for testing with a single axis
-        //cb_parms->corrected_gyro_readings[AZ] = cb_parms->gyro_readings[AZ];
-        //cb_parms->corrected_gyro_readings[EL] = cb_parms->gyro_readings[EL];
-        //cb_parms->corrected_gyro_readings[ROLL] = cb_parms->gyro_readings[ROLL];
-
-        // Run the 1st stage of the running average filter
-        running_avg_filter_iteration(pos_loop_stage_1,
-                        CorrectEncoderError(cb_parms->encoder_readings[AZ]),
-                        CorrectEncoderError(cb_parms->encoder_readings[EL]),
-                        CorrectEncoderError(cb_parms->encoder_readings[ROLL]));
-
-        // See if we need to run the 2nd stage of the running average filter
-        if (cb_parms->pos_loop_2nd_stage_decimation_count >= RUNNING_AVERAGE_DECIMATION_LIMIT) {
-            cb_parms->pos_loop_2nd_stage_decimation_count = 0;
-            running_avg_filter_iteration(pos_loop_stage_2,
-                    pos_loop_stage_1->az_avg,
-                    pos_loop_stage_1->el_avg,
-                    pos_loop_stage_1->rl_avg);
-        }
-
-        // Position errors with running average
-        cb_parms->filtered_position_errors[AZ] = CorrectEncoderError(cb_parms->angle_targets[AZ] - pos_loop_stage_2->az_avg);
-        cb_parms->filtered_position_errors[EL] = CorrectEncoderError(cb_parms->angle_targets[EL] - pos_loop_stage_2->el_avg);
-        cb_parms->filtered_position_errors[ROLL] = CorrectEncoderError(cb_parms->angle_targets[ROLL] - pos_loop_stage_2->rl_avg);
-        // Position errors with no running average
-        cb_parms->unfiltered_position_errors[AZ] = CorrectEncoderError(cb_parms->angle_targets[AZ] - cb_parms->encoder_readings[AZ]);
-        cb_parms->unfiltered_position_errors[EL] = CorrectEncoderError(cb_parms->angle_targets[EL] - cb_parms->encoder_readings[EL]);
-        cb_parms->unfiltered_position_errors[ROLL] = CorrectEncoderError(cb_parms->angle_targets[ROLL] - cb_parms->encoder_readings[ROLL]);
-
-        //SendDebug1ToAz(cb_parms->encoder_readings[AZ], cb_parms->encoder_readings[EL], cb_parms->encoder_readings[ROLL]);
 
         // Set up the next rate loop pass to be the az error computation pass
         cb_parms->rate_loop_pass = ERROR_AZ_PASS;
         break;
 
         case ERROR_AZ_PASS:
-            if (cb_parms->control_loop_type == RATE_MODE) {
-                cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
-            } else {
-                cb_parms->axis_errors[AZ] = cb_parms->unfiltered_position_errors[AZ] - cb_parms->corrected_gyro_readings[AZ];
-            }
-
+            cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
             // Set up the next rate loop pass to be the el error computation pass
             cb_parms->rate_loop_pass = ERROR_EL_PASS;
             break;
 
         case ERROR_EL_PASS:
-            if (cb_parms->control_loop_type == RATE_MODE) {
-                cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject[EL] - cb_parms->corrected_gyro_readings[EL];
-            } else {
-                cb_parms->axis_errors[EL] = cb_parms->unfiltered_position_errors[EL] - cb_parms->corrected_gyro_readings[EL];
-            }
-
+            cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject[EL] - cb_parms->corrected_gyro_readings[EL];
             // Set up the next rate loop pass to be the roll error computation pass
             cb_parms->rate_loop_pass = ERROR_ROLL_PASS;
             break;
 
         case ERROR_ROLL_PASS:
-            if (cb_parms->control_loop_type == RATE_MODE) {
-                cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
-            } else {
-                cb_parms->axis_errors[ROLL] = cb_parms->unfiltered_position_errors[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
-            }
-
+            cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
             // Set up the next rate loop pass to be the torque command output pass
             cb_parms->rate_loop_pass = TORQUE_OUT_PASS;
             break;

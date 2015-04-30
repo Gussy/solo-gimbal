@@ -62,6 +62,6 @@ typedef struct {
     Uint16 md_initialized;
 } MotorDriveParms;
 
-void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set, RunningAvgFilterParms* pos_loop_stage_1, RunningAvgFilterParms* pos_loop_stage_2, AveragePowerFilterParms* pf_parms, LoadAxisParmsStateInfo* load_ap_state_info);
+void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set, AveragePowerFilterParms* pf_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 
 #endif /* MOTOR_DRIVE_STATE_MACHINE_H_ */

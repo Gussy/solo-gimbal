@@ -189,14 +189,7 @@ ControlBoardParms control_board_parms = {
     {0, 0, 0},                                              // Integrated raw accelerometer readings
     {0, 0, 0},                                              // Encoder readings
     {0, 0, 0},                                              // Motor torques
-    {0, 0, 0},                                              // Unfiltered position errors
-    {0, 0, 0},                                              // Filtered position errors
-    {FALSE, FALSE, FALSE},                                  // Out of position deadband positive
-    {FALSE, FALSE, FALSE},                                  // Out of position deadband negative
-    {0, 0, 0},                                              // Position deadband hysteresis positive
-    {0, 0, 0},                                              // Position deadband hysteresis negative
     {0, 0, 0},                                              // Axis errors
-    {0, 0, 0},                                              // Angle targets,
     {CAND_FAULT_NONE, CAND_FAULT_NONE, CAND_FAULT_NONE},    // Last axis faults
     {FALSE, FALSE, FALSE},									// Encoder values received
     {FALSE, FALSE, FALSE},                                  // Axes homed
@@ -205,11 +198,9 @@ ControlBoardParms control_board_parms = {
         GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN,
         GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN
     },
-    0,                                                      // 2nd stage position loop decimation counter
     {0, 0, 0},                                              // Tuning rate inject
     {0, 0, 0},                                              // Rate command inject
     READ_GYRO_PASS,                                         // Rate loop pass
-    RATE_MODE,                                              // Control loop type
     FALSE,                                                  // Initialized
     FALSE,                                                  // Enabled
 };
@@ -246,36 +237,6 @@ AveragePowerFilterParms power_filter_parms = {
     FALSE,      // Iq over current
 };
 
-// NOTE: The C2000 compiler doesn't support the {0} zero initializer syntax, so the sample
-// history arrays here are not really zero initialized.  These arrays get properly initialized in
-// the running average filter init routine
-RunningAvgFilterParms pos_loop_filter_parms_stage_1 = {
-    {0},        // Az sample history
-    {0},        // El sample history
-    {0},        // Rl sample history
-    0,          // Az accumulator
-    0,          // El accumulator
-    0,          // Rl accumulator
-    0,          // Az average
-    0,          // El average
-    0,          // Rl average
-    0,          // Sample position
-    FALSE       // Initialized
-};
-
-RunningAvgFilterParms pos_loop_filter_parms_stage_2 = {
-    {0},        // Az sample history
-    {0},        // El sample history
-    {0},        // Rl sample history
-    0,          // Az accumulator
-    0,          // El accumulator
-    0,          // Rl accumulator
-    0,          // Az average
-    0,          // El average
-    0,          // Rl average
-    0,          // Sample position
-    FALSE       // Initialized
-};
 
 MotorDriveParms motor_drive_parms = {
     STATE_INIT,                     // Motor drive state
@@ -648,8 +609,6 @@ void main(void)
                     &motor_drive_parms,
                     &encoder_parms,
                     param_set,
-                    &pos_loop_filter_parms_stage_1,
-                    &pos_loop_filter_parms_stage_2,
                     &power_filter_parms,
                     &load_ap_state_info,
                     &balance_proc_parms);
@@ -662,7 +621,7 @@ void main(void)
 
                 RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
 
-                RunRateLoops(&control_board_parms, param_set, &pos_loop_filter_parms_stage_1, &pos_loop_filter_parms_stage_2, &balance_proc_parms);
+                RunRateLoops(&control_board_parms, param_set, &balance_proc_parms);
 
                 // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
                 if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {

@@ -40,8 +40,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         MotorDriveParms* md_parms,
         EncoderParms* encoder_parms,
         ParamSet* param_set,
-        RunningAvgFilterParms* pos_loop_stage_1,
-        RunningAvgFilterParms* pos_loop_stage_2,
         AveragePowerFilterParms* pf_parms,
         LoadAxisParmsStateInfo* load_ap_state_info)
 {
@@ -270,16 +268,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             if ((cb_parms->encoder_value_received[AZ] == TRUE) &&
                     (cb_parms->encoder_value_received[EL] == TRUE) &&
                     (cb_parms->encoder_value_received[ROLL == TRUE])) {
-                // Now that we've received all of the encoder values, we can go ahead and initialize the position loop filters
-                initialize_running_average_filter(pos_loop_stage_1,
-                        CorrectEncoderError(cb_parms->encoder_readings[AZ]),
-                        CorrectEncoderError(cb_parms->encoder_readings[EL]),
-                        CorrectEncoderError(cb_parms->encoder_readings[ROLL]));
-
-                initialize_running_average_filter(pos_loop_stage_2,
-                        pos_loop_stage_1->az_avg,
-                        pos_loop_stage_1->el_avg,
-                        pos_loop_stage_1->rl_avg);
 
                 // Now we're ready to move to the disabled state
                 // We wait for a command to move to the running state

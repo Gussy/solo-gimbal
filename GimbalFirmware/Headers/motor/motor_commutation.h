@@ -16,8 +16,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         MotorDriveParms* md_parms,
         EncoderParms* encoder_parms,
         ParamSet* param_set,
-        RunningAvgFilterParms* pos_loop_filter_parms_stage_1,
-        RunningAvgFilterParms* pos_loop_filter_parms_stage_2,
         AveragePowerFilterParms* power_filter_parms,
         LoadAxisParmsStateInfo* load_ap_state_info,
         BalanceProcedureParms* balance_proc_parms);
