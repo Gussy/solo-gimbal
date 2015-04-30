@@ -18,7 +18,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default='0.0.0.0:14550')
     parser.add_argument("-s","--show", help="Show the comutation parameters", action='store_true')
-    parser.add_argument("-o","--home", help="Home alignment", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
     parser.add_argument("--load", help="Application binary file load", default=None)
     parser.add_argument("--pid", help="Load PID setting from param file", default=None)
@@ -52,9 +51,6 @@ def main():
         return
     elif args.show:
         setup_comutation.printAxisCalibrationParam(link)
-        return
-    elif args.home:
-        setup_home.home(link)
         return
     elif args.jointcalibration:
         setup_home.calibrate_joints(link)
