@@ -31,6 +31,8 @@ def main():
     parser.add_argument("-s","--show", help="Show the comutation parameters", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
     parser.add_argument("--run", help="run a quick test of the gimbal", action='store_true')
+    parser.add_argument("--align", help="move the gimbal to the home position", action='store_true')
+    parser.add_argument("--stop", help="Hold the gimbal at the current position", action='store_true')
     parser.add_argument("--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("--jointcalibration", help="Calibrate joint angles", action='store_true')
     parser.add_argument("--gyrocalibration", help="Calibrate gyros", action='store_true')
@@ -50,6 +52,12 @@ def main():
         return
     elif args.run:
         setup_run.run(link)
+        return
+    elif args.stop:
+        setup_run.stop(link)
+        return
+    elif args.align:
+        setup_run.align(link)
         return
     elif args.calibrate:
         setup_comutation.calibrate(link)
