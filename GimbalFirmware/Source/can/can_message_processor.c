@@ -70,7 +70,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         case CAND_CMD_INIT:
             axis_parms->enable_flag = TRUE;
             md_parms->motor_drive_state = STATE_INIT;
-            axis_parms->blink_state = BLINK_INIT;
             break;
 
         case CAND_CMD_ENABLE:
@@ -83,7 +82,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         case CAND_CMD_RELAX:
         	axis_parms->enable_flag = FALSE;
             md_parms->motor_drive_state = STATE_DISABLED;
-            axis_parms->blink_state = BLINK_READY;
     		power_down_motor();
             break;
 
@@ -91,7 +89,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         	/* only reset if in relaxed state */
         	if ((axis_parms->enable_flag == FALSE)&&
         		(md_parms->motor_drive_state == STATE_DISABLED)&&
-            	(axis_parms->blink_state == BLINK_READY)&&
             	(GetBoardHWID() != AZ)) {
         		// just making sure we are off
         		power_down_motor();

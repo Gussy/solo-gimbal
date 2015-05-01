@@ -23,12 +23,10 @@ void AxisFault(CAND_FaultCode fault_code, CAND_FaultType fault_type, ControlBoar
     switch (fault_type) {
         case CAND_FAULT_TYPE_RECOVERABLE:
             md_parms->motor_drive_state = STATE_RECOVERABLE_FAULT;
-            axis_parms->blink_state = BLINK_ERROR;
             break;
 
         case CAND_FAULT_TYPE_UNRECOVERABLE:
             md_parms->motor_drive_state = STATE_UNRECOVERABLE_FAULT;
-            axis_parms->blink_state = BLINK_ERROR;
             break;
     }
 
