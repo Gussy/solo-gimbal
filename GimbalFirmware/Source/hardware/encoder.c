@@ -45,7 +45,7 @@ void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_pa
 #endif
 
     // Calculate the emulated encoder value to communicate back to the control board
-    encoder_parms->virtual_counts = (encoder_parms->mech_theta * ((float)ENCODER_COUNTS_PER_REV)) - encoder_parms->virtual_counts_offset;
+    encoder_parms->virtual_counts = (encoder_parms->mech_theta * ((float)ENCODER_COUNTS_PER_REV)) -5000;
 
     // Invert the encoder reading if necessary to make sure it counts up in the right direction
     // This is necessary for the kinematics math to work properly

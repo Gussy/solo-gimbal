@@ -27,7 +27,6 @@ static void handle_request_axis_calibration(MotorDriveParms* md_parms);
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
 static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
-static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 void send_cmd_long_ack(uint16_t cmd_id, uint8_t result);
 
 mavlink_system_t mavlink_system;
@@ -148,9 +147,6 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 
 			case MAVLINK_MSG_ID_COMMAND_LONG:
 			    switch(mavlink_msg_command_long_get_command(&received_msg)){
-			    case 42500:
-			    	handle_set_home_offsets(md_parms, encoder_parms, load_ap_state_info);
-			    	break;
 			    case 42501:
 			    	handle_reset_gimbal();
 			    	break;
@@ -344,22 +340,6 @@ static void handle_reset_gimbal()
         WDogEnable();
         while(1)
         {}
-}
-
-static void handle_set_home_offsets(MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info)
-{
-    // Reset the flags used to indicate when the other axes have recalibrated their own home offsets
-    load_ap_state_info->init_param_recvd_flags_2 &= ~ALL_NEW_HOME_OFFSETS_RECVD;
-
-    // Zero out our own home offset accumulator and sample counter
-    encoder_parms->home_offset_calibration_accumulator = 0;
-    encoder_parms->home_offset_calibration_samples_accumulated = 0;
-
-    // Command the other axes to start calibrating their home offsets
-    cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_SET_HOME_OFFSETS);
-
-    // Start calibrating our own home offset
-    md_parms->motor_drive_state = STATE_CALIBRATE_HOME_OFFSETS;
 }
 
 static void handle_request_axis_calibration(MotorDriveParms* md_parms)

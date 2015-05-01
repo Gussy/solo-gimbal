@@ -82,7 +82,6 @@ typedef struct {
 } ParamSet;
 
 #define BALANCE_PROCEDURE_ANGLE_COUNT 12
-#define HOME_OFFSET_CALIBRATION_NUM_SAMPLES 50
 
 typedef struct {
     int balance_angles[AXIS_CNT][BALANCE_PROCEDURE_ANGLE_COUNT];
@@ -98,17 +97,12 @@ typedef struct {
 typedef struct {
     int16 raw_theta;
     int16 virtual_counts;
-    int16 virtual_counts_offset;
     int32 virtual_counts_accumulator;
     Uint16 virtual_counts_accumulated;
-    int32 home_offset_calibration_accumulator;
-    Uint16 home_offset_calibration_samples_accumulated;
     int16 encoder_median_history[ENCODER_MEDIAN_HISTORY_SIZE];
     float mech_theta;
     float corrected_mech_theta;
     float elec_theta;
-    float calibration_mech_y0;
-    float calibration_mech_y1;
     float calibration_slope;
     float calibration_intercept;
 } EncoderParms;

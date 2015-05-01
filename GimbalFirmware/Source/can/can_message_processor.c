@@ -108,18 +108,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         	}
         	break;
 
-        case CAND_CMD_SET_HOME_OFFSETS:
-            // Zero out the home offsets accumulator and sample counter
-            encoder_parms->home_offset_calibration_accumulator = 0;
-            encoder_parms->home_offset_calibration_samples_accumulated = 0;
-
-            // Transition to the calibrate home offsets state, which will do the actual home offset calibration
-            md_parms->motor_drive_state = STATE_CALIBRATE_HOME_OFFSETS;
-            break;
-
-        case CAND_CMD_START_FACTORY_TESTS:
-            break;
-
         case CAND_CMD_CALIBRATE_AXES:
             md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
             break;
