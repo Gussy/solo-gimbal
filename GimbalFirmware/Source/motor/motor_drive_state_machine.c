@@ -265,8 +265,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.term.Ref = 0;
 
             if ((cb_parms->axes_homed[AZ] == TRUE) && (cb_parms->axes_homed[EL] == TRUE) && (cb_parms->axes_homed[ROLL] == TRUE)) {
-                //cb_parms->enabled = TRUE;
-                //md_parms->motor_drive_state = STATE_RUNNING;
                 md_parms->motor_drive_state = STATE_INITIALIZE_POSITION_LOOPS;
             }
             break;
@@ -306,26 +304,24 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
         case STATE_DISABLED:
             axis_parms->blink_state = BLINK_READY;
+            // Set park transformation angle to currently measured rotor electrical angle
+            md_parms->park_xform_parms.Angle = encoder_parms->elec_theta;
+
+            // Request 0 current on both id and iq
+            md_parms->pid_id.term.Ref = 0;
+            md_parms->pid_iq.term.Ref = 0;
 
             // If we're disabled, we should still send out our encoder values if we get a torque command.  We ignore the actual torque command,
             // but other things still expect to get updated encoder readings if they send torque commands
             if (*param_set[CAND_PID_TORQUE].sema) {
                 update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms, param_set);
             }
-
-            // Set park transformation angle to 0
-            md_parms->park_xform_parms.Angle = 0;
-
-            // Request 0 current on both id and iq
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = 0;
             break;
 
         case STATE_RECOVERABLE_FAULT:
             axis_parms->blink_state = BLINK_ERROR;
-
-            // Set park transformation angle to 0
-            md_parms->park_xform_parms.Angle = 0;
+            // Set park transformation angle to currently measured rotor electrical angle
+            md_parms->park_xform_parms.Angle = encoder_parms->elec_theta;
 
             // Request 0 current on both id and iq
             md_parms->pid_id.term.Ref = 0;

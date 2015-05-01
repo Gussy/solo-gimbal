@@ -80,9 +80,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             break;
 
         case CAND_CMD_RELAX:
-        	axis_parms->enable_flag = FALSE;
             md_parms->motor_drive_state = STATE_DISABLED;
-    		power_down_motor();
             break;
 
         case CAND_CMD_RESET:
