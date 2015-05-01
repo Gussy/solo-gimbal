@@ -41,16 +41,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
         break;
 
     case KINEMATICS_PASS:
-        // Unpack the gyro data into the correct axes, and apply the gyro offsets
-
-        // If the system anaylzer is enabled, output the new value here
-#ifdef ENABLE_RATE_LOOP_TUNING
-#ifdef USE_SYS_ANALYZER
-        SystemAnalyzerSendReceive(*SysAnalyzerDataPtr);
-#endif
-#endif
-
-        // Do gyro sign correction
+        // Unpack the gyro data into the correct axes, and apply the gyro offsets, Do gyro sign correction
         cb_parms->gyro_readings[AZ] = (raw_gyro_readings[AZ] * GyroSignMap[AZ]);
         cb_parms->gyro_readings[EL] = (raw_gyro_readings[EL] * GyroSignMap[EL]);
         cb_parms->gyro_readings[ROLL] = (raw_gyro_readings[ROLL] * GyroSignMap[ROLL]);

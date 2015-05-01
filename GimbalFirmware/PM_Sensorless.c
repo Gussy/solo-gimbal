@@ -1046,10 +1046,6 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 	//-----------------
 }
 
-#ifdef ENABLE_RATE_LOOP_TUNING
-int rate_toggle_limit = 10;
-#endif
-
 int mavlink_heartbeat_counter = 0;
 
 //-----------------------------------------
@@ -1071,45 +1067,6 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 			mavlink_heartbeat_counter = 0;
 		}
 	}
-
-#ifdef ENABLE_RATE_LOOP_TUNING
-	static int rate_toggle_counter = 0;
-	static int gpio_state = FALSE;
-	static int rate_toggle_state = 0;
-	static int16 next_rate_inject[AXIS_CNT] = {0, 0, 0};
-	if (board_hw_id == EL) { // EL axis is control board
-        if (rate_toggle_counter++ >= rate_toggle_limit) {
-        	if (rate_toggle_state == 0) {
-        		control_board_parms.tuning_rate_inject[AZ] = next_rate_inject[AZ];
-        		control_board_parms.tuning_rate_inject[EL] = next_rate_inject[EL];
-        		control_board_parms.tuning_rate_inject[ROLL] = next_rate_inject[ROLL];
-        		rate_toggle_state++;
-        	} else {
-        	    next_rate_inject[AZ] = -control_board_parms.tuning_rate_inject[AZ];
-        	    next_rate_inject[EL] = -control_board_parms.tuning_rate_inject[EL];
-        	    next_rate_inject[ROLL] = -control_board_parms.tuning_rate_inject[ROLL];
-        	    control_board_parms.tuning_rate_inject[AZ] = 0;
-        	    control_board_parms.tuning_rate_inject[EL] = 0;
-        	    control_board_parms.tuning_rate_inject[ROLL] = 0;
-        		rate_toggle_state = 0;
-        	}
-
-        	/*
-            if (gpio_state == TRUE) {
-            	GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
-            	GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
-            	gpio_state = FALSE;
-            } else {
-            	GpioDataRegs.GPASET.bit.GPIO28 = 1;
-				GpioDataRegs.GPASET.bit.GPIO29 = 1;
-            	gpio_state = TRUE;
-            }
-            */
-
-            rate_toggle_counter = 0;
-        }
-	}
-#endif
 
 	//-----------------
 	//the next time CpuTimer2 'counter' reaches Period value go to C1
