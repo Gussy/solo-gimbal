@@ -243,23 +243,6 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].param_type = MAV_PARAM_TYPE_REAL32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].float_data_ptr = &(flash_params.k_rate);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].access_type = GIMBAL_PARAM_READ_WRITE;
-
-
-#ifdef ENABLE_BALANCE_PROCEDURE
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_AXIS].param_id, "BAL_AXIS", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_AXIS].can_parameter_id = CAND_PID_BALANCE_AXIS;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GYRO_OFFSET_ROLL].can_parameter_destination_axis = CAND_ID_EL;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_AXIS].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_AXIS].float_data_ptr = &(flash_params.balance_axis);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_AXIS].access_type = GIMBAL_PARAM_READ_WRITE;
-
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_STEP_DURATION].param_id, "BAL_STEP_TIME", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_STEP_DURATION].can_parameter_id = CAND_PID_BALANCE_STEP_DURATION;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_STEP_DURATION].can_parameter_destination_axis = CAND_ID_EL;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_STEP_DURATION].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_STEP_DURATION].float_data_ptr = &(flash_params.balance_step_duration);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_BALANCE_STEP_DURATION].access_type = GIMBAL_PARAM_READ_WRITE;
-#endif
 }
 
 void handle_param_set(mavlink_message_t* received_msg)

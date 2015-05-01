@@ -307,10 +307,6 @@ Uint8 rate_cmd_el_flag = FALSE;
 Uint8 rate_cmd_rl_flag = FALSE;
 Uint8 gopro_get_request_flag = FALSE;
 Uint8 gopro_set_request_flag = FALSE;
-#ifdef ENABLE_BALANCE_PROCEDURE
-Uint8 balance_axis_flag = FALSE;
-Uint8 balance_step_duration_flag = FALSE;
-#endif
 
 ParamSet param_set[CAND_PID_LAST];
 
@@ -359,10 +355,6 @@ void init_param_set(void)
 	param_set[CAND_PID_RATE_CMD_RL].sema = &rate_cmd_rl_flag;
 	param_set[CAND_PID_GOPRO_GET_REQUEST].sema = &gopro_get_request_flag;
 	param_set[CAND_PID_GOPRO_SET_REQUEST].sema = &gopro_set_request_flag;
-	#ifdef ENABLE_BALANCE_PROCEDURE
-	    param_set[CAND_PID_BALANCE_AXIS].sema = &balance_axis_flag;
-	    param_set[CAND_PID_BALANCE_STEP_DURATION].sema = &balance_step_duration_flag;
-	#endif
 }
 
 Uint32 MissedInterrupts = 0;
@@ -482,13 +474,6 @@ void main(void)
     // Initialize the system analyzer input pointer here to an initial, valid value
     SysAnalyzerDataPtr = &(control_board_parms.corrected_gyro_readings[EL]);
     SysAnalyzerDataFloatPtr = &motor_drive_parms.iq_ref;
-#endif
-
-#ifdef ENABLE_BALANCE_PROCEDURE
-    // If we're running the balance procedure, pre-populate the angle targets with the starting balance angles
-    control_board_parms.angle_targets[AZ] = balance_proc_parms.balance_angles[AZ][0];
-    control_board_parms.angle_targets[EL] = balance_proc_parms.balance_angles[EL][0];
-    control_board_parms.angle_targets[ROLL] = balance_proc_parms.balance_angles[ROLL][0];
 #endif
 
     // Initialize the average power filter
@@ -1086,28 +1071,6 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 			mavlink_heartbeat_counter = 0;
 		}
 	}
-
-#ifdef ENABLE_BALANCE_PROCEDURE
-	if (axis_parms.run_motor) {
-        if (balance_proc_parms.balance_angle_counter++ > balance_proc_parms.balance_angle_counter_max) {
-            balance_proc_parms.balance_angle_counter = 0;
-            if (balance_proc_parms.current_direction == 0) {
-                balance_proc_parms.current_balance_angle_index++;
-                if (balance_proc_parms.current_balance_angle_index >= BALANCE_PROCEDURE_ANGLE_COUNT) {
-                    balance_proc_parms.current_direction = 1;
-                    balance_proc_parms.current_balance_angle_index -= 2; // Subtract 2 so that we don't repeat the last angle when we're going the other direction
-                }
-            } else {
-                balance_proc_parms.current_balance_angle_index--;
-                if (balance_proc_parms.current_balance_angle_index < 0) {
-                    balance_proc_parms.current_direction = 0;
-                    balance_proc_parms.current_balance_angle_index += 2; // Add 2 so that we don't repeat the last angle when we're going the other direction
-                }
-            }
-            control_board_parms.angle_targets[balance_proc_parms.balance_axis] = balance_proc_parms.balance_angles[balance_proc_parms.balance_axis][balance_proc_parms.current_balance_angle_index];
-        }
-	}
-#endif
 
 #ifdef ENABLE_RATE_LOOP_TUNING
 	static int rate_toggle_counter = 0;
