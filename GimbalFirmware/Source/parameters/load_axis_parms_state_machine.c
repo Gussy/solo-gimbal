@@ -14,112 +14,38 @@
 
 LoadParamEntry params_to_load[TOTAL_LOADABLE_PARAMS];
 
+#define INIT_PARAM(i,flag,can_id,mask) params_to_load[i].request_param = can_id;params_to_load[i].recvd_flags_loc = &(load_parms_state_info->flag);params_to_load[i].recvd_flag_mask = mask;
+
+
 void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info)
 {
     // Populate the entries in the parameter load table
-    params_to_load[0].request_param = CAND_PID_TORQUE_KP;
-    params_to_load[0].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
-    params_to_load[0].recvd_flag_mask = INIT_PARAM_TORQUE_PID_KP_RECVD;
-
-    params_to_load[1].request_param = CAND_PID_TORQUE_KI;
-    params_to_load[1].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
-    params_to_load[1].recvd_flag_mask = INIT_PARAM_TORQUE_PID_KI_RECVD;
-
-    params_to_load[2].request_param = CAND_PID_TORQUE_KD;
-    params_to_load[2].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
-    params_to_load[2].recvd_flag_mask = INIT_PARAM_TORQUE_PID_KD_RECVD;
-
-    params_to_load[3].request_param = CAND_PID_COMMUTATION_CALIBRATION_SLOPE;
-    params_to_load[3].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
-    params_to_load[3].recvd_flag_mask = INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD;
-
-    params_to_load[4].request_param = CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT;
-    params_to_load[4].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
-    params_to_load[4].recvd_flag_mask = INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD;
-
-    params_to_load[5].request_param = CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET;
-    params_to_load[5].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_2);
-    params_to_load[5].recvd_flag_mask = INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD;
-
-    params_to_load[6].request_param = CAND_PID_RATE_EL_P;
-    params_to_load[6].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[6].recvd_flag_mask = INIT_PARAM_RATE_PID_EL_P_RECVD;
-
-    params_to_load[7].request_param = CAND_PID_RATE_EL_I;
-    params_to_load[7].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[7].recvd_flag_mask = INIT_PARAM_RATE_PID_EL_I_RECVD;
-
-    params_to_load[8].request_param = CAND_PID_RATE_EL_D;
-    params_to_load[8].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[8].recvd_flag_mask = INIT_PARAM_RATE_PID_EL_D_RECVD;
-
-    params_to_load[9].request_param = CAND_PID_RATE_EL_WINDUP;
-    params_to_load[9].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[9].recvd_flag_mask = INIT_PARAM_RATE_PID_EL_WINDUP_RECVD;
-
-    params_to_load[10].request_param = CAND_PID_RATE_AZ_P;
-    params_to_load[10].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[10].recvd_flag_mask = INIT_PARAM_RATE_PID_AZ_P_RECVD;
-
-    params_to_load[11].request_param = CAND_PID_RATE_AZ_I;
-    params_to_load[11].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[11].recvd_flag_mask = INIT_PARAM_RATE_PID_AZ_I_RECVD;
-
-    params_to_load[12].request_param = CAND_PID_RATE_AZ_D;
-    params_to_load[12].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[12].recvd_flag_mask = INIT_PARAM_RATE_PID_AZ_D_RECVD;
-
-    params_to_load[13].request_param = CAND_PID_RATE_AZ_WINDUP;
-    params_to_load[13].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[13].recvd_flag_mask = INIT_PARAM_RATE_PID_AZ_WINDUP_RECVD;
-
-    params_to_load[14].request_param = CAND_PID_RATE_RL_P;
-    params_to_load[14].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[14].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_P_RECVD;
-
-    params_to_load[15].request_param = CAND_PID_RATE_RL_I;
-    params_to_load[15].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[15].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_I_RECVD;
-
-    params_to_load[16].request_param = CAND_PID_RATE_RL_D;
-    params_to_load[16].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[16].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_D_RECVD;
-
-    params_to_load[17].request_param = CAND_PID_RATE_RL_WINDUP;
-    params_to_load[17].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_1);
-    params_to_load[17].recvd_flag_mask = INIT_PARAM_RATE_PID_RL_WINDUP_RECVD;
-
-    params_to_load[18].request_param = CAND_PID_POS_AZ_P;
-    params_to_load[18].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[18].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_P_RECVD;
-
-    params_to_load[19].request_param = CAND_PID_POS_AZ_I;
-    params_to_load[19].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[19].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_I_RECVD;
-
-    params_to_load[20].request_param = CAND_PID_POS_AZ_D;
-    params_to_load[20].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[20].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_D_RECVD;
-
-    params_to_load[21].request_param = CAND_PID_POS_AZ_WINDUP;
-    params_to_load[21].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[21].recvd_flag_mask = INIT_PARAM_POS_PID_AZ_WINDUP_RECVD;
-
-    params_to_load[22].request_param = CAND_PID_POS_RL_P;
-    params_to_load[22].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[22].recvd_flag_mask = INIT_PARAM_POS_PID_RL_P_RECVD;
-
-    params_to_load[23].request_param = CAND_PID_POS_RL_I;
-    params_to_load[23].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[23].recvd_flag_mask = INIT_PARAM_POS_PID_RL_I_RECVD;
-
-    params_to_load[24].request_param = CAND_PID_POS_RL_D;
-    params_to_load[24].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[24].recvd_flag_mask = INIT_PARAM_POS_PID_RL_D_RECVD;
-
-    params_to_load[25].request_param = CAND_PID_POS_RL_WINDUP;
-    params_to_load[25].recvd_flags_loc = &(load_parms_state_info->init_param_recvd_flags_3);
-    params_to_load[25].recvd_flag_mask = INIT_PARAM_POS_PID_RL_WINDUP_RECVD;
+	INIT_PARAM( 0,init_param_recvd_flags_2, CAND_PID_TORQUE_KP,INIT_PARAM_TORQUE_PID_KP_RECVD);
+	INIT_PARAM( 1,init_param_recvd_flags_2, CAND_PID_TORQUE_KI,INIT_PARAM_TORQUE_PID_KI_RECVD);
+	INIT_PARAM( 2,init_param_recvd_flags_2, CAND_PID_TORQUE_KD,INIT_PARAM_TORQUE_PID_KD_RECVD);
+	INIT_PARAM( 3,init_param_recvd_flags_2, CAND_PID_COMMUTATION_CALIBRATION_SLOPE,INIT_PARAM_COMMUTATION_CALIBRATION_SLOPE_RECVD);
+	INIT_PARAM( 4,init_param_recvd_flags_2, CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT,INIT_PARAM_COMMUTATION_CALIBRATION_INTERCEPT_RECVD);
+	INIT_PARAM( 5,init_param_recvd_flags_2, CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET,INIT_PARAM_COMMUTATION_CALIBRATION_HOME_OFFSET_RECVD);
+	INIT_PARAM( 6,init_param_recvd_flags_1, CAND_PID_RATE_EL_P,INIT_PARAM_RATE_PID_EL_P_RECVD);
+	INIT_PARAM( 7,init_param_recvd_flags_1, CAND_PID_RATE_EL_I,INIT_PARAM_RATE_PID_EL_I_RECVD);
+	INIT_PARAM( 8,init_param_recvd_flags_1, CAND_PID_RATE_EL_D,INIT_PARAM_RATE_PID_EL_D_RECVD);
+	INIT_PARAM( 9,init_param_recvd_flags_1, CAND_PID_RATE_EL_WINDUP,INIT_PARAM_RATE_PID_EL_WINDUP_RECVD);
+	INIT_PARAM(10,init_param_recvd_flags_1, CAND_PID_RATE_AZ_P,INIT_PARAM_RATE_PID_AZ_P_RECVD);
+	INIT_PARAM(11,init_param_recvd_flags_1, CAND_PID_RATE_AZ_I,INIT_PARAM_RATE_PID_AZ_I_RECVD);
+	INIT_PARAM(12,init_param_recvd_flags_1, CAND_PID_RATE_AZ_D,INIT_PARAM_RATE_PID_AZ_D_RECVD);
+	INIT_PARAM(13,init_param_recvd_flags_1, CAND_PID_RATE_AZ_WINDUP,INIT_PARAM_RATE_PID_AZ_WINDUP_RECVD);
+	INIT_PARAM(14,init_param_recvd_flags_1, CAND_PID_RATE_RL_P,INIT_PARAM_RATE_PID_RL_P_RECVD);
+	INIT_PARAM(15,init_param_recvd_flags_1, CAND_PID_RATE_RL_I,INIT_PARAM_RATE_PID_RL_I_RECVD);
+	INIT_PARAM(16,init_param_recvd_flags_1, CAND_PID_RATE_RL_D,INIT_PARAM_RATE_PID_RL_D_RECVD);
+	INIT_PARAM(17,init_param_recvd_flags_1, CAND_PID_RATE_RL_WINDUP,INIT_PARAM_RATE_PID_RL_WINDUP_RECVD);
+	INIT_PARAM(18,init_param_recvd_flags_1, CAND_PID_POS_AZ_P,INIT_PARAM_POS_PID_AZ_P_RECVD);
+	INIT_PARAM(19,init_param_recvd_flags_1, CAND_PID_POS_AZ_I,INIT_PARAM_POS_PID_AZ_I_RECVD);
+	INIT_PARAM(20,init_param_recvd_flags_1, CAND_PID_POS_AZ_D,INIT_PARAM_POS_PID_AZ_D_RECVD);
+	INIT_PARAM(21,init_param_recvd_flags_1, CAND_PID_POS_AZ_WINDUP,INIT_PARAM_POS_PID_AZ_WINDUP_RECVD);
+	INIT_PARAM(22,init_param_recvd_flags_1, CAND_PID_POS_RL_P,INIT_PARAM_POS_PID_RL_P_RECVD);
+	INIT_PARAM(23,init_param_recvd_flags_1, CAND_PID_POS_RL_I,INIT_PARAM_POS_PID_RL_I_RECVD);
+	INIT_PARAM(24,init_param_recvd_flags_1, CAND_PID_POS_RL_D,INIT_PARAM_POS_PID_RL_D_RECVD);
+	INIT_PARAM(25,init_param_recvd_flags_1, CAND_PID_POS_RL_WINDUP,INIT_PARAM_POS_PID_RL_WINDUP_RECVD);
 
     if (GetBoardHWID() == EL) {
         load_parms_state_info->total_params_to_load = EL_PARAMS_TO_LOAD;
