@@ -233,16 +233,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         }
                         break;
 
-                    case CAND_EPID_FACTORY_TEST_PROGRESS:
-                        break;
-
-                    case CAND_EPID_FACTORY_TESTS_COMPLETE:
-                        // Disable the other two axes
-                        cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
-                        // Disable ourselves
-                        RelaxAZAxis();
-                        break;
-
                     case CAND_EPID_CALIBRATION_REQUIRED_STATUS:
                         if (msg.extended_param_length == 2) {
                             GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_required_status = (GIMBAL_AXIS_CALIBRATION_REQUIRED)(msg.extended_param[0] & 0x00FF);

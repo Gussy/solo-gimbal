@@ -23,6 +23,6 @@
 #define AZ_KEEP_OFF_STOP_SPAN_POSITIVE (AZ_KEEP_OFF_STOP_END_COUNT_POSITIVE - AZ_KEEP_OFF_STOP_START_COUNT_POSITIVE)
 #define AZ_KEEP_OFF_STOP_MAX_TORQUE 32767.0
 
-void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, BalanceProcedureParms* bal_proc_parms);
+void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set);
 
 #endif /* RATE_LOOPS_H_ */

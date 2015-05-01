@@ -23,8 +23,7 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         EncoderParms* encoder_parms,
         ParamSet* param_set,
         AveragePowerFilterParms* power_filter_parms,
-        LoadAxisParmsStateInfo* load_ap_state_info,
-        BalanceProcedureParms* balance_proc_parms)
+        LoadAxisParmsStateInfo* load_ap_state_info)
 {
     TorqueLoopStartTime = CpuTimer2Regs.TIM.all;
 

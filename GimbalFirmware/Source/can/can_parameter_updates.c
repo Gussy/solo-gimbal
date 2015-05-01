@@ -18,7 +18,7 @@
 int16 rate_cmds_received[3];
 Uint32 debug_output_decimation_count = 0;
 
-void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, BalanceProcedureParms* balance_proc_parms, EncoderParms* encoder_parms)
+void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data,  EncoderParms* encoder_parms)
 {
     IntOrFloat float_converter;
     // Check for updated rate loop PID params
@@ -291,36 +291,6 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
             send_mavlink_debug_data(debug_data);
         }
     }
-
-#ifdef ENABLE_BALANCE_PROCEDURE
-    if (*(param_set[CAND_PID_BALANCE_AXIS].sema) == TRUE) {
-        // Convert and set the new axis
-        IntOrFloat float_converter;
-        float_converter.uint32_val = param_set[CAND_PID_BALANCE_AXIS].param;
-        GimbalAxis new_axis = (GimbalAxis)float_converter.float_val;
-        balance_proc_parms->balance_axis = new_axis;
-
-        // Also reset the direction, step, and time counters when we get a new axis, so we begin
-        // at the start of the balance procedure for the new axis
-        balance_proc_parms->balance_angle_counter = 0;
-        balance_proc_parms->current_balance_angle_index = 0;
-        balance_proc_parms->current_direction = 0;
-
-        // Also update the target angle here so we immediately snap to the new position on the new axis
-        cb_parms->angle_targets[balance_proc_parms->balance_axis] = balance_proc_parms->balance_angles[balance_proc_parms->balance_axis][balance_proc_parms->current_balance_angle_index];
-
-        *(param_set[CAND_PID_BALANCE_AXIS].sema) = FALSE;
-    }
-
-    if (*(param_set[CAND_PID_BALANCE_STEP_DURATION].sema) == TRUE) {
-        // Convert and update the new counter max
-        IntOrFloat float_converter;
-        float_converter.uint32_val = param_set[CAND_PID_BALANCE_STEP_DURATION].param;
-        balance_proc_parms->balance_angle_counter_max = (int)(float_converter.float_val / 150.0); // The counter gets incremented every 150ms, and the parameter comes in as ms
-
-        *(param_set[CAND_PID_BALANCE_STEP_DURATION].sema) = FALSE;
-    }
-#endif
 
     // There are several sets of parameters that only make sense if we're the elevation board,
     // such as rate commands, gyro offsets, and gopro commands

@@ -110,22 +110,6 @@ void CANSendCalibrationProgress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS c
     }
 }
 
-void CANSendFactoryTestProgress(Uint8 test, Uint8 section, Uint8 progress, Uint8 status)
-{
-    Uint8 params[4];
-    params[0] = test;
-    params[1] = section;
-    params[2] = progress;
-    params[3] = status;
-
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_FACTORY_TEST_PROGRESS, params, 4);
-}
-
-void CANSendFactoryTestsComplete()
-{
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_FACTORY_TESTS_COMPLETE, NULL, 0);
-}
-
 void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status)
 {
     Uint8 params[2];

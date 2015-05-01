@@ -20,7 +20,7 @@ static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
 
 Uint16 telemetry_decimation_count = 0;
 
-void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, BalanceProcedureParms* bal_proc_parms)
+void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 {
     static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
     static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};

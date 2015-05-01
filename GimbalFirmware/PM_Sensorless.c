@@ -134,22 +134,6 @@ Uint32 GyroDataOverflowCount = 0;
 
 Uint16 IndexTimeOut = 0;
 
-BalanceProcedureParms balance_proc_parms = {
-    // Balance angle setpoints
-    {
-        //TODO: Temporarily limiting range of EL balance procedure to account for flex that constrains look down angle
-        //{6389, 6944, 7500, 7917, 8333, 8750, 9167, 9583, 0, 416, 833, 1250},
-        {8889, 9028, 9306, 9444, 9722, 9861, 0, 139, 417, 694, 972, 1250},
-        {9306, 9444, 9583, 9722, 9861, 9931, 0, 139, 278, 417, 556, 694},
-        {8889, 9028, 9306, 9444, 9722, 9861, 0, 139, 278, 556, 833, 1111}
-    },
-    0,      // Current balance angle index
-    0,      // Current balance angle counter
-    133,    // Balance angle counter max
-    0,      // Current direction (0 = negative to positive, 1 = positive to negative)
-    EL    // Balance axis
-};
-
 EncoderParms encoder_parms = {
     0,              // Raw theta
     0,              // Virtual counts
@@ -608,8 +592,7 @@ void main(void)
                     &encoder_parms,
                     param_set,
                     &power_filter_parms,
-                    &load_ap_state_info,
-                    &balance_proc_parms);
+                    &load_ap_state_info);
         }
 
         // If we're the elevation board, check to see if we need to run the rate loops
@@ -619,7 +602,7 @@ void main(void)
 
                 RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
 
-                RunRateLoops(&control_board_parms, param_set, &balance_proc_parms);
+                RunRateLoops(&control_board_parms, param_set);
 
                 // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
                 if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
@@ -637,7 +620,7 @@ void main(void)
         }
 
         // Update any parameters that have changed due to CAN messages
-        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &balance_proc_parms, &encoder_parms);
+        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &encoder_parms);
 
 		// Measure total main work timing
 		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;

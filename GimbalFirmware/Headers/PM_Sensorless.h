@@ -81,17 +81,6 @@ typedef struct {
     Uint8 *sema;
 } ParamSet;
 
-#define BALANCE_PROCEDURE_ANGLE_COUNT 12
-
-typedef struct {
-    int balance_angles[AXIS_CNT][BALANCE_PROCEDURE_ANGLE_COUNT];
-    int current_balance_angle_index;
-    int balance_angle_counter;
-    int balance_angle_counter_max;
-    int current_direction;
-    GimbalAxis balance_axis;
-} BalanceProcedureParms;
-
 #define ENCODER_MEDIAN_HISTORY_SIZE 6
 
 typedef struct {
