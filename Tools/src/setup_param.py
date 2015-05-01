@@ -51,10 +51,9 @@ def set_offsets(link, kind, offsets):
     
     
 def getAxisCalibrationParam(link, axis_enum):
-    home = fetch_param(link, "GMB_" + axis_enum + "_HOME")
     icept = fetch_param(link, "GMB_" + axis_enum + "_ICEPT")
     slope = fetch_param(link, "GMB_" + axis_enum + "_SLOPE")
-    return axis_enum, home.param_value, icept.param_value, slope.param_value
+    return axis_enum, icept.param_value, slope.param_value
 
 
 
