@@ -49,3 +49,5 @@ with open(args.image, "rb") as f:
 outputfile = os.path.join(args.outdir, "%s%s.%s" % (firmware_prefix, desc['version'], firmware_extension))
 with open(outputfile, 'w') as f:
 	f.write(json.dumps(desc, indent=4))
+
+print '\n\n\nFirmware released as '+ str(outputfile)
