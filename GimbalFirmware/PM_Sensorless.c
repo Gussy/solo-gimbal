@@ -915,8 +915,8 @@ void C1(void) // Update Status LEDs
 		break;
 
 	case BLINK_INIT:
-		// slow, .8Hz
-		if( (led_cnt%6) < 3 ) {
+		// slow, .8Hz, dudy cycle of 20%
+		if( (led_cnt%10) < 2 ) {
 			STATUS_LED_ON();
 		} else {
 			STATUS_LED_OFF();
@@ -924,6 +924,15 @@ void C1(void) // Update Status LEDs
 		break;
 
 	case BLINK_READY:
+		// slow, .5Hz , dudy cycle of 90%
+		if( (led_cnt%10) < 9 ) {
+			STATUS_LED_ON();
+		} else {
+			STATUS_LED_OFF();
+		}
+		break;
+
+	case BLINK_RUNNING:
 		STATUS_LED_ON();
 		break;
 

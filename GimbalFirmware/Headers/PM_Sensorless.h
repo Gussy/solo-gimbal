@@ -57,6 +57,7 @@ typedef enum {
     BLINK_NO_COMM,
     BLINK_INIT,
     BLINK_READY,
+	BLINK_RUNNING,
     BLINK_ERROR
 } BlinkState;
 
