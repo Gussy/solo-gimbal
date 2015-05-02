@@ -15,7 +15,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="out" artifactName="${ProjName}" buildProperties="" cleanCommand="${CG_CLEAN_CMD}" description="" id="com.ti.ccstudio.buildDefinitions.C2000.Debug.1812705686" name="Debug" parent="com.ti.ccstudio.buildDefinitions.C2000.Debug">
+				<configuration artifactExtension="out" artifactName="${ProjName}" buildProperties="" cleanCommand="${CG_CLEAN_CMD}" description="" id="com.ti.ccstudio.buildDefinitions.C2000.Debug.1812705686" name="Debug" parent="com.ti.ccstudio.buildDefinitions.C2000.Debug" postbuildStep="&quot;${CG_TOOL_HEX}&quot; --intel &quot;${BuildArtifactFileName}&quot; --outfile &quot;${BuildArtifactFileBaseName}_production.hex&quot; -order MS -romwidth 16" prebuildStep="cmd /C &quot;del ${BuildArtifactFileBaseName}_production.hex&quot;">
 					<folderInfo id="com.ti.ccstudio.buildDefinitions.C2000.Debug.1812705686." name="/" resourcePath="">
 						<toolChain id="com.ti.ccstudio.buildDefinitions.C2000_6.2.exe.DebugToolchain.1838310551" name="TI Build Tools" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.exe.DebugToolchain" targetTool="com.ti.ccstudio.buildDefinitions.C2000_6.2.exe.linkerDebug.417508481">
 							<option id="com.ti.ccstudio.buildDefinitions.core.OPT_TAGS.612352524" superClass="com.ti.ccstudio.buildDefinitions.core.OPT_TAGS" valueType="stringList">
@@ -36,9 +36,9 @@
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.FLOAT_SUPPORT.1988814901" name="Specify floating point support (--float_support)" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.FLOAT_SUPPORT" value="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.FLOAT_SUPPORT.fpu32" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.INCLUDE_PATH.2044468031" name="Add dir to #include search path (--include_path, -I)" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.INCLUDE_PATH" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_ROOT}/development_kits/~SupportFiles/F2806x_headers&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../../controlSUITE/development_kits/~SupportFiles/F2806x_headers&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/3DRGimbalFirmware/Headers}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${CONTROLSUITE_ROOT}/device_support/f2806x/v100/F2806x_common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../../controlSUITE/device_support/f2806x/v100/F2806x_common/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/F2806x_headers/include}&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DEBUGGING_MODEL.1053890704" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.C2000_6.2.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
