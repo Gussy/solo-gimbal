@@ -84,10 +84,9 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
             break;
 
         case CAND_CMD_RESET:
-        	/* only reset if in relaxed state */
-        	if ((axis_parms->enable_flag == FALSE)&&
-        		(md_parms->motor_drive_state == STATE_DISABLED)&&
-            	(GetBoardHWID() != AZ)) {
+        	axis_parms->enable_flag = FALSE;
+        	md_parms->motor_drive_state = STATE_DISABLED;
+        	if (GetBoardHWID() != AZ) {
         		// just making sure we are off
         		power_down_motor();
         		// enable watchdog and wait until it goes off
