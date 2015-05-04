@@ -1,4 +1,4 @@
-!define version "0.11.3"
+!define version "0.12.1"
 !define app_name "3DRGimbalFactoryApplication"
 
 ;Include Modern UI
