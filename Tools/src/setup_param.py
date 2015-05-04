@@ -5,6 +5,7 @@ Utility for loading firmware into the 3DR Gimbal.
 
 """
 from pymavlink.mavparm import MAVParmDict
+from pymavlink.dialects.v10.ardupilotmega import MAV_PARAM_TYPE_REAL32
 
 def fetch_param(link, param, timeout=10):
     # Get a parameter
@@ -17,11 +18,9 @@ def set_param(link, param_name, param_value):
     parameters = MAVParmDict()
     parameters.mavset(link.file, param_name, param_value,3);
 
-def commit_to_flash(link):
-    parameters = MAVParmDict()
-    
+def commit_to_flash(link):    
     # Commit the zeroed out calibration parameters to flash
-    parameters.mavset(link.file, "GMB_FLASH", 69.0, 3)
+    link.param_set_send(link.target_sysid, 0, "GMB_FLASH", 69.0, MAV_PARAM_TYPE_REAL32)
 
 def load_param_file(pid, link):
     parameters = MAVParmDict()
