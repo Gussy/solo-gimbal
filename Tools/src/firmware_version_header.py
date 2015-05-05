@@ -19,10 +19,15 @@ os_git_command = ""
 if sys.platform.startswith('linux'):
 	os_git_command = "git"
 elif sys.platform.startswith('win32'):
-	if 'PROGRAMFILES(X86)' in os.environ:
-		os_git_command = "\"" + os.environ['PROGRAMFILES(X86)'] + "\\Git\\bin\\git.exe" + "\""
-	else:
-		os_git_command = "\"" + os.environ['PROGRAMFILES'] + "\\Git\\bin\\git.exe" + "\""
+	# First, check if git is installed in AppData\Local (this seems to happen with some git installs)
+	if os.path.exists(os.environ['LOCALAPPDATA'] + "\\Programs\\git\\"):
+		os_git_command = "\"" + os.environ['LOCALAPPDATA'] + "\\Programs\\git\\git.exe" + "\""
+	else :
+		# If not, git is either in Program Files or Program Files (x86)
+		if 'PROGRAMFILES(X86)' in os.environ:
+			os_git_command = "\"" + os.environ['PROGRAMFILES(X86)'] + "\\Git\\bin\\git.exe" + "\""
+		else:
+			os_git_command = "\"" + os.environ['PROGRAMFILES'] + "\\Git\\bin\\git.exe" + "\""
 
 # Get the current git info
 cmd = " ".join([os_git_command, "describe", "--tags", "--dirty", "--long"])
