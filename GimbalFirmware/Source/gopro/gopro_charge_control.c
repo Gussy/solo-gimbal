@@ -65,6 +65,5 @@ void gp_update_charge_control(int16 proc_temperature, int16 batt_level)
 
 static void send_charge_event(GoProChargeControlEvent charge_event)
 {
-	//TODO: implement feedback for the gopro charge status
-    //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_GP_CHARGE_CONTROL_EVENT, (Uint8*)(&charge_event), 1);
+    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_GP_CHARGE_CONTROL_EVENT, (Uint8*)(&charge_event), 1);
 }
