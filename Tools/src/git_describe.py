@@ -24,8 +24,8 @@ if sys.platform.startswith('linux'):
 	os_git_command = "git"
 elif sys.platform.startswith('win32'):
 	# First, check if git is installed in AppData\Local (this seems to happen with some git installs)
-	if os.path.exists(os.environ['LOCALAPPDATA'] + "\\Programs\\git\\"):
-		os_git_command = "\"" + os.environ['LOCALAPPDATA'] + "\\Programs\\git\\git.exe" + "\""
+	if os.path.exists(os.environ['LOCALAPPDATA'] + "\\Programs\\Git\\"):
+		os_git_command = "\"" + os.environ['LOCALAPPDATA'] + "\\Programs\\Git\\bin\\git.exe" + "\""
 	else :
 		# If not, git is either in Program Files or Program Files (x86)
 		if 'PROGRAMFILES(X86)' in os.environ:
