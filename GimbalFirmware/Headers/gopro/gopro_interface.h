@@ -140,4 +140,9 @@ void gp_disable_hb_interface();
 void gp_enable_charging();
 void gp_disable_charging();
 
+void gp_enable_hb_interface();
+void gp_disable_hb_interface();
+void gp_enable_charging();
+void gp_disable_charging();
+
 #endif /* GOPRO_INTERFACE_H_ */

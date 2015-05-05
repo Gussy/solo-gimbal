@@ -23,11 +23,18 @@
 #include "helpers/fault_handling.h"
 #include "motor/motor_commutation.h"
 #include "can/can_parameter_updates.h"
+<<<<<<< HEAD
 #include "hardware/encoder.h"
 #include "hardware/led.h"
 #include "flash/flash.h"
 #include "flash/flash_init.h"
 #include "hardware/interrupts.h"
+=======
+#include "hardware/encoder.h"
+#include "hardware/led.h"
+#include "flash/flash.h"
+#include "gopro/gopro_charge_control.h"
+>>>>>>> 094b471... gopro: added temperature and charge level sensitive charge control logic
 
 #include <math.h>
 #include <string.h>
@@ -79,6 +86,7 @@ int16 TempOffset;
 int16 TempSlope;
 Uint8 board_hw_id = 0;
 int16 DcBusVoltage;
+Uint8 GoProBatteryLevel = 0;
 
 // Global timestamp counter.  Counts up by 1 every 100uS
 Uint32 global_timestamp_counter = 0;
@@ -356,6 +364,11 @@ void main(void)
 
         // Initialize the HeroBus interface
         init_gp_interface();
+
+        // Enable the GoPro HeroBus interface
+        gp_enable_hb_interface();
+        // Enable the GoPro charging interface
+        gp_enable_charging();
 
         // Initialize the beacon LED
         init_led();
@@ -847,6 +860,12 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
             response_buffer |= ((((Uint32)response.value) << 0) & 0x00FF00FF);
 
             cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_GET_RESPONSE, response_buffer);
+
+            // If this is a battery level response, capture the result so we can use it
+            // for the smart charging logic
+            if (response.cmd_id == GOPRO_COMMAND_BATTERY) {
+                GoProBatteryLevel = response.value;
+            }
         }
 
         if (gp_new_set_response_available()) {
@@ -871,6 +890,7 @@ int mavlink_heartbeat_counter = 0;
 void C3(void) // Read temperature and handle stopping motor on receipt of fault messages
 //-----------------------------------------
 {
+    static int gopro_charge_control_counter = 0;
 	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset) * (long)TempSlope))>>14) + 1)>>1;
 
 	DcBusVoltage = AdcResult.ADCRESULT14; // DC Bus voltage meas.
@@ -885,6 +905,17 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 			send_mavlink_heartbeat(mavlink_gimbal_info.mav_state, mavlink_gimbal_info.mav_mode);
 			mavlink_heartbeat_counter = 0;
 		}
+	}
+
+	// Monitor temperature and GoPro battery level every 5s to determine if we need to start or stop GoPro charging
+	if (board_hw_id == EL) {
+	    if (gopro_charge_control_counter++ >= 34) { // 34 = roughly every 5s, period of C3 is 150ms
+	        gp_update_charge_control(DegreesC, GoProBatteryLevel);
+	        gopro_charge_control_counter = 0;
+
+	        // Request GoPro battery level again, so it's up to date next time we update the charge control
+	        gp_get_request(GOPRO_COMMAND_BATTERY);
+	    }
 	}
 
 	//-----------------
