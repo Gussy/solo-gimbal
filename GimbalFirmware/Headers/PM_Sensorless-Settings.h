@@ -13,9 +13,6 @@ Incremental Build Level control file.
 =================================================================================  */
 #ifndef PROJ_SETTINGS_H
 
-#define USE_AVERAGE_POWER_FILTER
-#define ENABLE_AXIS_CALIBRATION_PROCEDURE
-
 #ifndef TRUE
 #define FALSE 0
 #define TRUE  1

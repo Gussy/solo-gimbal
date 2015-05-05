@@ -154,12 +154,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // Time out the calibration time.  After it has expired, transition to the next state
             md_parms->current_cal_timer++;
             if (md_parms->current_cal_timer > (((Uint32)ISR_FREQUENCY) * ((Uint32)CURRENT_CALIBRATION_TIME_MS))) {
-#ifdef ENABLE_AXIS_CALIBRATION_PROCEDURE
-                //md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
                 md_parms->motor_drive_state = STATE_CHECK_AXIS_CALIBRATION;
-#else
-                md_parms->motor_drive_state = STATE_HOMING;
-#endif
             }
             break;
 
