@@ -25,8 +25,6 @@
 #include "motor/motor_commutation.h"
 #include "can/can_parameter_updates.h"
 #include "hardware/encoder.h"
-#include "tests/factory_tests.h"
-#include "tests/test_axis_range_limits.h"
 #include "hardware/led.h"
 
 #include <math.h>
@@ -232,23 +230,6 @@ MotorDriveParms motor_drive_parms = {
     0,                              // Pre-init timer
     0,                              // Fault revive counter
     FALSE                           // Motor drive initialized
-};
-
-TestAxisRangeLimitsParms axis_range_limits_parms = {
-    EL,                                     // Test axis
-    RANGE_LIMITS_STATE_INIT,                // Test state
-    AXIS_RANGE_TEST_SECTION_EL_CHECK_NEG,   // Current Section
-    {-833.0, -555.0, -833.0},               // Axis range minimum
-    {833.0, 555.0, 833.0},                 // Axis range maximum
-    0.0,                                    // Current axis position
-    0.0,                                    // Position step
-    0,                                      // Status output decimation count
-    0                                       // Settle counter
-};
-
-FactoryTestsParms test_parms = {
-    TEST_AXIS_RANGE_LIMITS,     // Test type
-    &axis_range_limits_parms    // Axis range limits test parameters
 };
 
 Uint8 unused = FALSE;
