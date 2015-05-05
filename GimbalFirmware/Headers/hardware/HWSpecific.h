@@ -14,11 +14,6 @@ typedef enum {
     Z_AXIS
 } GyroAxis;
 
-#define ENCODER_COUNTS_PER_REV 10000
-#define COUNTS_PER_DEGREE ((float)ENCODER_COUNTS_PER_REV / 360.0)
-
-#define DEGREES_TO_COUNTS(x) (x * COUNTS_PER_DEGREE)
-
 // Map gyro axes to gimbal axes
 static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
         AZ,
