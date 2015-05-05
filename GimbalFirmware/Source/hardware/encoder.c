@@ -14,28 +14,14 @@ void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_pa
     }
 
     // AZ axis motor is mounted opposite of the encoder relative to the other two axes, so we need to invert it here if we're AZ
-#if (HW_REV == 1)
-    if (GetBoardHWID() == AZ) {
-#elif (HW_REV == 2)
     // On new hardware, EL is also flipped relative to what it was on the old hardware
     if ((GetBoardHWID() == AZ) || (GetBoardHWID() == EL)) {
-#endif
         encoder_parms->raw_theta = ANALOG_POT_MECH_DIVIDER - encoder_parms->raw_theta;
     }
 
     encoder_parms->mech_theta = ((float)encoder_parms->raw_theta) / ANALOG_POT_MECH_DIVIDER;
     encoder_parms->corrected_mech_theta = (encoder_parms->mech_theta - encoder_parms->calibration_intercept) / encoder_parms->calibration_slope;
     encoder_parms->elec_theta = encoder_parms->corrected_mech_theta - floor(encoder_parms->corrected_mech_theta);
-
-#ifdef ENABLE_CURRENT_TOGGLE
-    // Keep track of max and min corrected thetas seen
-    if (encoder_parms->corrected_mech_theta > CurrentThetaMax) {
-        CurrentThetaMax = encoder_parms->corrected_mech_theta;
-    }
-    if (encoder_parms->corrected_mech_theta < CurrentThetaMin) {
-        CurrentThetaMin = encoder_parms->corrected_mech_theta;
-    }
-#endif
 
     // Calculate the emulated encoder value to communicate back to the control board
     encoder_parms->virtual_counts = (encoder_parms->mech_theta * ((float)ENCODER_COUNTS_PER_REV)) -5000;

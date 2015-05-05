@@ -340,9 +340,7 @@ void main(void)
 			AxisCalibrationIntercepts[i] = flash_params.AxisCalibrationIntercepts[i];
 		}
 	}
-#if 0
-	write_flash();
-#endif
+
 	// Initialize CAN peripheral, and CAND backend
 	ECanInit();
 	if (cand_init() != CAND_SUCCESS) {
@@ -677,59 +675,10 @@ void A1(void) // Used to enable and disable the motor
 	//-------------------
 }
 
-#ifdef ENABLE_CURRENT_TOGGLE
-int iq_toggle_limit = 100;
-
-float ThetaMaxHistory[THETA_MAX_MIN_HISTORY_SIZE];
-float ThetaMinHistory[THETA_MAX_MIN_HISTORY_SIZE];
-float CurrentThetaMax = -100.0;
-float CurrentThetaMin = 100.0;
-int ThetaMaxMinHistoryIndex = 0;
-#endif
-
 //-----------------------------------------------------------------
 void A2(void) // SPARE (not used)
 //-----------------------------------------------------------------
 {
-#ifdef ENABLE_CURRENT_TOGGLE
-    static int iq_toggle_counter = 0;
-    static int gpio_state = FALSE;
-    static int toggle_state = 0;
-    static float next_iq_ref = 0.0;
-    if (++iq_toggle_counter >= iq_toggle_limit) {
-    	if (toggle_state == 0) {
-    		motor_drive_parms.iq_ref = next_iq_ref;
-    		toggle_state++;
-    	} else {
-    		next_iq_ref = -motor_drive_parms.iq_ref;
-    		motor_drive_parms.iq_ref = 0.0;
-    		toggle_state = 0;
-    	}
-
-        iq_toggle_counter = 0;
-
-        if (gpio_state == TRUE) {
-			GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
-			GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
-			gpio_state = FALSE;
-		} else {
-			GpioDataRegs.GPASET.bit.GPIO28 = 1;
-			GpioDataRegs.GPASET.bit.GPIO29 = 1;
-			gpio_state = TRUE;
-		}
-
-        // If we still have room in the min max theta array, log the current mins and maxes,
-        // then reset them for the next cycle
-        if (ThetaMaxMinHistoryIndex < THETA_MAX_MIN_HISTORY_SIZE) {
-            ThetaMaxHistory[ThetaMaxMinHistoryIndex] = CurrentThetaMax;
-            CurrentThetaMax = -100.0;
-            ThetaMinHistory[ThetaMaxMinHistoryIndex] = CurrentThetaMin;
-            CurrentThetaMin = 100.0;
-            ThetaMaxMinHistoryIndex++;
-        }
-    }
-#endif
-
     // If we miss more than 10 rate commands in a row (roughly 100ms),
     // disable the gimbal axes.  They'll be re-enabled when we get a new
     // rate command
@@ -764,20 +713,6 @@ void A3(void) // SPARE (not used)
 {
     // Need to call the gopro interface state machine periodically
     gp_interface_state_machine();
-
-#ifdef STANDALONE_MODE
-    // If we're operating in standalone mode, enable the gimbal after 5s
-	if (board_hw_id == AZ) {
-		if (!standalone_enabled) {
-			if (standalone_enable_counts++ >= standalone_enable_counts_max) {
-			    standalone_enabled = TRUE;
-				standalone_enable_counts = 0;
-				cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
-				EnableAZAxis();
-			}
-		}
-	}
-#endif
 
 	//-----------------
 	//the next time CpuTimer0 'counter' reaches Period value go to A1

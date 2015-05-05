@@ -24,23 +24,10 @@ Incremental Build Level control file.
 #define PI 3.14159265358979
 
 // Define the system frequency (MHz)
-#if (DSP2803x_DEVICE_H==1)
-#define SYSTEM_FREQUENCY 60
-#elif (DSP280x_DEVICE_H==1)
-#define SYSTEM_FREQUENCY 100
-#elif (F2806x_DEVICE_H==1)
 #define SYSTEM_FREQUENCY 80
-#endif
 
 //Define system Math Type
-// Select Floating Math Type for 2806x
-// Select IQ Math Type for 2803x 
-#if (DSP2803x_DEVICE_H==1)
-#define MATH_TYPE 0 
-#elif (F2806x_DEVICE_H==1)
 #define MATH_TYPE 1
-#endif
-
 
 // Define the ISR frequency (kHz)
 #define ISR_FREQUENCY 10
@@ -73,7 +60,5 @@ Incremental Build Level control file.
 #define CURRENT_CALIBRATION_TIME_MS 2000
 
 #define THETA_MAX_MIN_HISTORY_SIZE 100
-
-#define POSITION_LOOP_DEADBAND_COUNTS 10
 
 #endif 

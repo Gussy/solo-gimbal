@@ -112,11 +112,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // Once we're done loading our own parameters, we need to wait for the other axes to request and receive all of
             // their parameters
-#ifdef AZ_TEST
-            md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
-#else
             md_parms->motor_drive_state = STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED;
-#endif
             break;
 
         case STATE_REQUEST_AXIS_INIT_PARAMS:

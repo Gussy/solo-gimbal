@@ -39,17 +39,9 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).
         //  Connect inputs of the CLARKE module and call the clarke transformation macro
         // ------------------------------------------------------------------------------
-#ifdef F2806x_DEVICE_H
         md_parms->clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-md_parms->cal_offset_A)*2); // Phase A curr.
         md_parms->clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-md_parms->cal_offset_B)*2); // Phase B curr.
-#endif                                                         // ((ADCmeas(q12)/2^12)-0.5)*2
 
-#ifdef DSP2803x_DEVICE_H
-        md_parms->clarke_xform_parms.As=-(_IQ15toIQ((AdcResult.ADCRESULT1<<3)-md_parms->cal_offset_A)<<1);
-        md_parms->clarke_xform_parms.Bs=-(_IQ15toIQ((AdcResult.ADCRESULT2<<3)-md_parms->cal_offset_B)<<1);
-#endif
-
-#ifdef USE_AVERAGE_POWER_FILTER
         // Run an iteration of the average power filter
         // Scale -1 to +1 current to +/- full scale current, since power filter expects current in amps
         run_average_power_filter(power_filter_parms, md_parms->pid_iq.term.Ref * MAX_CURRENT);
@@ -59,7 +51,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
             reset_average_power_filter(power_filter_parms);
             AxisFault(CAND_FAULT_OVER_CURRENT, CAND_FAULT_TYPE_RECOVERABLE, cb_parms, md_parms, axis_parms);
         }
-#endif
 
         CLARKE_MACRO(md_parms->clarke_xform_parms)
 
@@ -78,22 +69,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         //    Connect inputs of the id PID controller and call the PID controller macro
         // ------------------------------------------------------------------------------
         // Limit the requested current to prevent burning up the motor
-#ifndef USE_AVERAGE_POWER_FILTER
-        if (md_parms->motor_drive_state == STATE_HOMING) {
-            // TODO: Temp for testing, allow higher currents during homing routine
-            if (md_parms->pid_id.term.Ref > CURRENT_LIMIT_HOMING) {
-                md_parms->pid_id.term.Ref = CURRENT_LIMIT_HOMING;
-            } else if (md_parms->pid_id.term.Ref < -CURRENT_LIMIT_HOMING) {
-                md_parms->pid_id.term.Ref = -CURRENT_LIMIT_HOMING;
-            }
-        } else {
-            if (md_parms->pid_id.term.Ref > CURRENT_LIMIT) {
-                md_parms->pid_id.term.Ref = CURRENT_LIMIT;
-            } else if (md_parms->pid_id.term.Ref < -CURRENT_LIMIT) {
-                md_parms->pid_id.term.Ref = -CURRENT_LIMIT;
-            }
-        }
-#endif
         md_parms->pid_id.term.Fbk = md_parms->park_xform_parms.Ds;
         PID_GR_MACRO(md_parms->pid_id)
 
@@ -101,22 +76,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         //    Connect inputs of the iq PID controller and call the PID controller macro
         // ------------------------------------------------------------------------------
         // Limit the requested current to prevent burning up the motor
-#ifndef USE_AVERAGE_POWER_FILTER
-        if (md_parms->motor_drive_state == STATE_HOMING) {
-            // TODO: Temp for testing, allow higher currents during homing routine
-            if (md_parms->pid_iq.term.Ref > CURRENT_LIMIT_HOMING) {
-                md_parms->pid_iq.term.Ref = CURRENT_LIMIT_HOMING;
-            } else if (md_parms->pid_iq.term.Ref < -CURRENT_LIMIT_HOMING) {
-                md_parms->pid_iq.term.Ref = -CURRENT_LIMIT_HOMING;
-            }
-        } else {
-            if (md_parms->pid_iq.term.Ref > CURRENT_LIMIT) {
-                md_parms->pid_iq.term.Ref = CURRENT_LIMIT;
-            } else if (md_parms->pid_iq.term.Ref < -CURRENT_LIMIT) {
-                md_parms->pid_iq.term.Ref = -CURRENT_LIMIT;
-            }
-        }
-#endif
         md_parms->pid_iq.term.Fbk = md_parms->park_xform_parms.Qs;
         PID_GR_MACRO(md_parms->pid_iq)
 
@@ -199,7 +158,5 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         MaxTorqueLoopElapsedTime = TorqueLoopElapsedTime;
     }
 
-    // TODO: Testing timing
-    //GpioDataRegs.GPACLEAR.bit.GPIO28 = 1; WARNING: Breaks GoPro Control on EL Board
     GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
 }

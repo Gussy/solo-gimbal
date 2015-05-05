@@ -17,10 +17,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
     static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
     static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
 
-#ifdef TEST_MAX_TORQUE
-    static int16 DigbyCount;
-#endif
-
     switch (cb_parms->rate_loop_pass) {
     case READ_GYRO_PASS:
         ReadGyro(&(raw_gyro_readings[GyroAxisMap[X_AXIS]]), &(raw_gyro_readings[GyroAxisMap[Y_AXIS]]), &(raw_gyro_readings[GyroAxisMap[Z_AXIS]]));

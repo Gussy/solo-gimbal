@@ -32,34 +32,6 @@ typedef struct {
 
 extern SECTOR Sector[8];
 
-#if (FLASH_F28069 || FLASH_F28068 || FLASH_F28067 || FLASH_F28066)
-#define FLASH_START_ADDR  0x3D8000
-SECTOR Sector[8]= {
-         (Uint16 *) 0x3D8000,(Uint16 *) 0x3DBFFF,
-         (Uint16 *) 0x3DC000,(Uint16 *) 0x3DFFFF,
-         (Uint16 *) 0x3E0000,(Uint16 *) 0x3E3FFF,
-         (Uint16 *) 0x3E4000,(Uint16 *) 0x3E7FFF,
-         (Uint16 *) 0x3E8000,(Uint16 *) 0x3EBFFF,
-         (Uint16 *) 0x3EC000,(Uint16 *) 0x3EFFFF,
-         (Uint16 *) 0x3F0000,(Uint16 *) 0x3F3FFF,
-         (Uint16 *) 0x3F4000,(Uint16 *) 0x3F7FFF,
-};
-
-#elif (FLASH_F28065 || FLASH_F28064 || FLASH_F28063 || FLASH_F28062)
-#define FLASH_START_ADDR  0x3E8000
-SECTOR Sector[8]= {
-         (Uint16 *) 0x3E8000,(Uint16 *) 0x3E9FFF,
-         (Uint16 *) 0x3EA000,(Uint16 *) 0x3EBFFF,
-         (Uint16 *) 0x3EC000,(Uint16 *) 0x3EDFFF,
-         (Uint16 *) 0x3EE000,(Uint16 *) 0x3EFFFF,
-         (Uint16 *) 0x3F0000,(Uint16 *) 0x3F1FFF,
-         (Uint16 *) 0x3F2000,(Uint16 *) 0x3F3FFF,
-         (Uint16 *) 0x3F4000,(Uint16 *) 0x3F5FFF,
-         (Uint16 *) 0x3F6000,(Uint16 *) 0x3F7FFF,
-};
-#endif
-
-
 /*---------------------------------------------------------------------------
    These key values are used to unlock the CSM by this example
    They are defined in Example_Flash2806x_CsmKeys.asm
@@ -385,16 +357,3 @@ int write_flash(void)
     }
     return 1;
 }
-
-#if 0
-/*------------------------------------------------------------------
-  Callback function - must be executed from outside flash/OTP
------------------------------------------------------------------*/
-#pragma CODE_SECTION(MyCallbackFunction,"ramfuncs");
-void MyCallbackFunction(void)
-{
-    // Toggle pin, service external watchdog etc
-    MyCallbackCounter++;
-    asm("    NOP");
-}
-#endif

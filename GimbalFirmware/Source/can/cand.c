@@ -240,16 +240,6 @@ CAND_Result cand_init(void)
 
 CAND_SenderID CAND_GetSenderID(void)
 {
-#ifdef FORCE_CAN_ID_TO_AZ
-    return CAND_ID_AZ;
-#endif
-#ifdef FORCE_CAN_ID_TO_EL
-    return CAND_ID_EL;
-#endif
-#ifdef FORCE_CAN_ID_TO_ROLL
-    return CAND_ID_ROLL;
-#endif
-
     switch (GetBoardHWID()) {
     	case 0:
     	    return CAND_ID_EL;

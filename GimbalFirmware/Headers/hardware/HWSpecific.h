@@ -1,8 +1,6 @@
 #ifndef HWSPECIFIC_H_
 #define HWSPECIFIC_H_
 
-#define HW_REV 2 // 1 is old hardware, 2 is new hardware
-
 typedef enum {
     EL = 0,
     AZ = 1,
@@ -28,25 +26,6 @@ static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
         ROLL
 };
 
-#if (HW_REV == 1)
-static const int GyroSignMap[AXIS_CNT] = {
-        -1, // EL
-        -1, // AZ
-        -1  // ROLL
-};
-
-static const int TorqueSignMap[AXIS_CNT] = {
-        -1, // EL
-        -1, // AZ
-        -1  // ROLL
-};
-
-static const int EncoderSignMap[AXIS_CNT] = {
-        -1, // EL
-        -1, // AZ
-        -1  // ROLL
-};
-#elif (HW_REV == 2)
 static const int GyroSignMap[AXIS_CNT] = {
         1, // EL
         1, // AZ
@@ -64,7 +43,6 @@ static const int EncoderSignMap[AXIS_CNT] = {
         -1, // AZ
         -1  // ROLL
 };
-#endif
 
 extern float AxisCalibrationSlopes[AXIS_CNT];
 extern float AxisCalibrationIntercepts[AXIS_CNT];
