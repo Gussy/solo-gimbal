@@ -255,7 +255,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             axis_parms->blink_state = BLINK_INIT;
             if ((cb_parms->encoder_value_received[AZ] == TRUE) &&
                     (cb_parms->encoder_value_received[EL] == TRUE) &&
-                    (cb_parms->encoder_value_received[ROLL == TRUE])) {
+                    (cb_parms->encoder_value_received[ROLL] == TRUE)) {
 
                 // Now we're ready to move to the disabled state
                 // We wait for a command to move to the running state
