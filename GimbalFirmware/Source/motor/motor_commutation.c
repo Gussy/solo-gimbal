@@ -185,12 +185,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
             EPwm2Regs.CMPA.half.CMPA=md_parms->pwm_gen_parms.PWM2out;  // PWM 2A - PhaseB
             EPwm3Regs.CMPA.half.CMPA=md_parms->pwm_gen_parms.PWM3out;  // PWM 3A - PhaseC
         }
-
-#ifdef ENABLE_CURRENT_TOGGLE
-#ifdef USE_SYS_ANALYZER
-        SystemAnalyzerSendReceive((int16)(*SysAnalyzerDataFloatPtr * 32768.0));
-#endif
-#endif
     }
 
     TorqueLoopEndTime = CpuTimer2Regs.TIM.all;

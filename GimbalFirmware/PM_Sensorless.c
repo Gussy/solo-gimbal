@@ -9,7 +9,6 @@
 #include "hardware/HWSpecific.h"
 #include "control/gyro_kinematics_correction.h"
 #include "control/PID.h"
-#include "hardware/system_analyzer.h"
 #include "control/average_power_filter.h"
 #include "control/running_average_filter.h"
 #include "hardware/uart.h"
@@ -31,8 +30,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#define USE_SYS_ANALYZER
 
 // Prototype statements for functions found within this file.
 void DeviceInit();
@@ -103,9 +100,6 @@ Uint32 MainWorkEndTimestamp = 0;
 Uint32 MainWorkElapsedTime = 0;
 Uint32 MaxMainWorkElapsedTime = 0;
 Uint16 BackTicker = 0;
-
-int16* SysAnalyzerDataPtr = NULL;
-float* SysAnalyzerDataFloatPtr = NULL;
 
 Uint16 DRV_RESET = 0;
 
@@ -418,14 +412,6 @@ void main(void)
         init_uart();
         init_mavlink();
     }
-
-    // If we're using the system analyzer, initialize it here
-#ifdef USE_SYS_ANALYZER
-    InitSystemAnalyzer();
-    // Initialize the system analyzer input pointer here to an initial, valid value
-    SysAnalyzerDataPtr = &(control_board_parms.corrected_gyro_readings[EL]);
-    SysAnalyzerDataFloatPtr = &motor_drive_parms.iq_ref;
-#endif
 
     // Initialize the average power filter
     // Current sample frequency is frequency of main ISR
