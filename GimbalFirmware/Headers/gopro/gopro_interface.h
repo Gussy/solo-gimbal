@@ -18,8 +18,6 @@
 
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
 #define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
-#define GP_BP_DET_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;}
-#define GP_BP_DET_HIGH() {GpioDataRegs.GPASET.bit.GPIO28 = 1;}
 
 #define GP_VON (GpioDataRegs.GPADAT.bit.GPIO6)
 
@@ -134,5 +132,10 @@ int gp_set_request(GPSetRequest* request);
 GPHeartbeatStatus gp_get_heartbeat_status();
 GPGetResponse gp_get_last_get_response();
 GPSetResponse gp_get_last_set_response();
+
+void gp_enable_hb_interface();
+void gp_disable_hb_interface();
+void gp_enable_charging();
+void gp_disable_charging();
 
 #endif /* GOPRO_INTERFACE_H_ */
