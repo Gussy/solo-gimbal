@@ -6,6 +6,7 @@ Utility for loading firmware into the 3DR Gimbal.
 """
 from pymavlink.mavparm import MAVParmDict
 from pymavlink.dialects.v10.ardupilotmega import MAV_PARAM_TYPE_REAL32
+from pymavlink.rotmat import Vector3
 
 def fetch_param(link, param, timeout=10):
     # Get a parameter
@@ -54,5 +55,12 @@ def getAxisCalibrationParam(link, axis_enum):
     slope = fetch_param(link, "GMB_" + axis_enum + "_SLOPE")
     return axis_enum, icept.param_value, slope.param_value
 
+
+
+def get_joint_offsets(link):
+    x = fetch_param(link, "GMB_OFF_JNT_X").param_value
+    y = fetch_param(link, "GMB_OFF_JNT_Y").param_value
+    z = fetch_param(link, "GMB_OFF_JNT_Z").param_value
+    return Vector3(x=x,y=y,z=z)
 
 
