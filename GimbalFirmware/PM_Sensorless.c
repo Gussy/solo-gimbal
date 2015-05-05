@@ -968,26 +968,6 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 		axis_parms.BIT_heartbeat_decimate = 6;	// ~1 Hz
 	}
 
-	//TODO: Deal with over-temp and over-current for 3DR hardware
-	// ROBBY SAYS THIS IS WRONG, DON'T USE
-	/*
-	//Fault is asserted low if: an over current, GVDD under voltage or overtemperature (>150 C die temp)
-	if (CH1Faultn == 0 && Faultmsgsent == 0) {
-	   cand_tx_fault(CAND_FLVL_ERR, CAND_FMOD_POWER, "501", 3);
-	   Faultmsgsent = 1;
-	} else if (CH1Faultn == 0) {
-		Faultmsgsent = 0;
-	}
-
-	//OTW is asserted if die temp is >125C
-	if (CH1OTWn == 0 && OTWmsgsent == 0) {
-	   cand_tx_fault(CAND_FLVL_ERR, CAND_FMOD_TEMP, "501", 3);
-	   OTWmsgsent = 1;
-	} else if (CH1Faultn == 0) {
-		OTWmsgsent = 0;
-	}
-	*/
-
 	// If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
 	if (board_hw_id == EL) {
 		if (gp_get_new_heartbeat_available()) {
@@ -1016,39 +996,6 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
             cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_SET_RESPONSE, response_buffer);
         }
 	}
-
-	/*
-	// Debug messages for monitoring of loop timing
-	static int debug_output_decimation = 0;
-    static int max_time_reset_counter = 0;
-    if (board_hw_id == EL) {
-        if (++debug_output_decimation >= 7) {
-            debug_output_decimation = 0;
-            Uint8 debug_info[4];
-            debug_info[0] = (MaxMainWorkElapsedTime >> 8) & 0x000000FF;
-            debug_info[1] = (MaxMainWorkElapsedTime & 0x000000FF);
-            debug_info[2] = (MissedInterrupts >> 8) & 0x000000FF;
-            debug_info[3] = (MissedInterrupts & 0x000000FF);
-            cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 4);
-
-            if (++max_time_reset_counter >= 5) {
-                max_time_reset_counter = 0;
-                MaxMainWorkElapsedTime = 0;
-            }
-        }
-    }
-    */
-	// TODO: Debug messages for determining which state el board is in
-	/*
-	static int debug_output_decimation = 0;
-	if (board_hw_id == EL) {
-	    if (++debug_output_decimation >= 7) {
-	        debug_output_decimation = 0;
-	        Uint8 debug_info = motor_drive_parms.motor_drive_state;
-	        cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, &debug_info, 1);
-	    }
-	}
-	*/
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
 	C_Task_Ptr = &C3;	
