@@ -1,10 +1,3 @@
-/*
- * gyro.h
- *
- *  Created on: Sep 10, 2014
- *      Author: abamberger
- */
-
 #ifndef GYRO_H_
 #define GYRO_H_
 

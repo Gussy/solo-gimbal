@@ -1,10 +1,3 @@
-/*
- * running_average_filter.c
- *
- *  Created on: Nov 25, 2014
- *      Author: abamberger
- */
-
 #include "control/running_average_filter.h"
 #include <string.h>
 

@@ -1,10 +1,3 @@
-/*
- * init_axis_parms_state_machine.c
- *
- *  Created on: Jan 9, 2015
- *      Author: abamberger
- */
-
 #include "parameters/load_axis_parms_state_machine.h"
 #include "can/cand.h"
 #include "can/cand_BitFields.h"

@@ -1,10 +1,3 @@
-/*
- * cand.h
- *
- *  Created on: Mar 6, 2014
- *      Author: rmorrill
- */
-
 #ifndef CAND_H_
 #define CAND_H_
 

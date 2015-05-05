@@ -1,10 +1,3 @@
-/*
- * encoder.c
- *
- *  Created on: Feb 11, 2015
- *      Author: abamberger
- */
-
 #include "PeripheralHeaderIncludes.h"
 #include "PM_Sensorless.h"
 #include "PM_Sensorless-Settings.h"

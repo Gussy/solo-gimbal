@@ -1,9 +1,3 @@
-//! @file ringbuf.c single ring buffer for buffered IO
-// Copyright 2012 Ascendent Engineering Solutions, LLC.
-// Project: AES 6DOF
-// Author: Robby Morrill
-// Started: 11/1/2012
-
 #include "helpers/ringbuf.h"
 
 /* Below ring buffers are ensured to only produce

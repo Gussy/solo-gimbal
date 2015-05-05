@@ -1,10 +1,3 @@
-/*
- * led.c
- *
- *  Created on: 01/03/2015
- *      Author: angus
- */
-
 #include "F2806x_EPwm_defines.h"
 #include "hardware/led.h"
 

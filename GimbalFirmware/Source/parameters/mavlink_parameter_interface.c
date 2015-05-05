@@ -1,10 +1,3 @@
-/*
- * mavlink_parameter_interface.c
- *
- *  Created on: Dec 16, 2014
- *      Author: abamberger
- */
-
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "parameters/mavlink_parameter_interface.h"
 #include "parameters/flash_params.h"

@@ -1,10 +1,3 @@
-/*
- * fault_handling.c
- *
- *  Created on: Feb 11, 2015
- *      Author: abamberger
- */
-
 #include "helpers/fault_handling.h"
 #include "hardware/device_init.h"
 #include "can/cand.h"

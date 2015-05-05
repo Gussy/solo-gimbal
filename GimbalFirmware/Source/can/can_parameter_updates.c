@@ -1,10 +1,3 @@
-/*
- * can_parameter_updates.c
- *
- *  Created on: Feb 11, 2015
- *      Author: abamberger
- */
-
 #include "PeripheralHeaderIncludes.h"
 #include "PM_Sensorless.h"
 #include "can/cand_BitFields.h"

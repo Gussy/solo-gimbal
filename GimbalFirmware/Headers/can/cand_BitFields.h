@@ -1,4 +1,3 @@
-
 #ifndef CAN_BITFIELDS_H
 #define CAN_BITFIELDS_H
 

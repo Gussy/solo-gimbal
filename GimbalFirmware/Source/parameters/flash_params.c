@@ -1,10 +1,3 @@
-/*
- * flash_params.c
- *
- *  Created on: Jan 5, 2015
- *      Author: ksmith
- */
-
 
 /*---- Flash API include file -------------------------------------------------*/
 //#define FLASH_F28062 1

@@ -1,17 +1,9 @@
-/*
- * rate_loops.c
- *
- *  Created on: Jan 7, 2015
- *      Author: abamberger
- */
-
 #include "control/rate_loops.h"
 #include "can/cb.h"
 #include "can/cand.h"
 #include "control/PID.h"
 #include "hardware/gyro.h"
 #include "control/gyro_kinematics_correction.h"
-#include "tests/factory_tests.h"
 #include "PM_Sensorless-Settings.h"
 
 static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);

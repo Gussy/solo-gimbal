@@ -1,9 +1,3 @@
-/*
- * gyro.c
- *
- *  Created on: Sep 10, 2014
- *      Author: abamberger
- */
 #include "hardware/gyro.h"
 #include "F2806x_Examples.h" // For DELAY_US
 

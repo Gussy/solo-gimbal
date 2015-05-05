@@ -1,10 +1,3 @@
-/*
- * ringbuf.h
- *
- *  Created on: Oct 13, 2014
- *      Author: abamberger
- */
-
 #ifndef RINGBUF_H_
 #define RINGBUF_H_
 

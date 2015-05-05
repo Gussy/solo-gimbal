@@ -1,11 +1,3 @@
-/*
- * adc.c
- *
- *  Created on: Feb 6, 2015
- *      Author: abamberger
- */
-
-
 #include "PeripheralHeaderIncludes.h"
 #include "f2806/f2806xileg_vdc_PM.h"
 

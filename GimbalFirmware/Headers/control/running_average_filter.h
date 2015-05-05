@@ -1,10 +1,3 @@
-/*
- * running_average_filter.h
- *
- *  Created on: Nov 25, 2014
- *      Author: abamberger
- */
-
 #ifndef RUNNING_AVERAGE_FILTER_H_
 #define RUNNING_AVERAGE_FILTER_H_
 

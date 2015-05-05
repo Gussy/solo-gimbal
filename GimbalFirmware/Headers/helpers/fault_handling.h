@@ -1,10 +1,3 @@
-/*
- * fault_handling.h
- *
- *  Created on: Feb 11, 2015
- *      Author: abamberger
- */
-
 #ifndef FAULT_HANDLING_H_
 #define FAULT_HANDLING_H_
 

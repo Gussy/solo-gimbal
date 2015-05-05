@@ -1,10 +1,3 @@
-/*
- * motor_drive_state_machine.h
- *
- *  Created on: Jan 7, 2015
- *      Author: abamberger
- */
-
 #ifndef MOTOR_DRIVE_STATE_MACHINE_H_
 #define MOTOR_DRIVE_STATE_MACHINE_H_
 

@@ -1,10 +1,3 @@
-/*
- * HWSpecific.c
- *
- *  Created on: Jan 10, 2015
- *      Author: abamberger
- */
-
 #include "hardware/HWSpecific.h"
 
 // All of these get initialized over CAN at boot time (from parameters stored in flash on the AZ axis),

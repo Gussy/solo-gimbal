@@ -1,11 +1,3 @@
-/*
- * gopro_interface.c
- *
- *  Created on: Jan 8, 2015
- *      Author: abamberger
- */
-
-
 #include "f2806x_int8.h"
 #include "gopro/gopro_interface.h"
 #include "PeripheralHeaderIncludes.h"

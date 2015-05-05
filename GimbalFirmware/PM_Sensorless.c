@@ -1,19 +1,3 @@
-/* ==============================================================================
-System Name:  	PM_Sensorless
-
-File Name:	  	PM_Sensorless.C
-
-Description:	Primary system file for the Real Implementation of Sensorless  
-          		Field Orientation Control for Three Phase Permanent-Magnet
-          		Synchronous Motor(s) (PMSM) 
-
-Originator:		Digital control systems Group - Texas Instruments
-
-Note: In this software, the default inverter is supposed to be DRV8412-EVM kit. 
-=====================================================================================
- History: 04-9-2010	Version 1.1: Support F2803x 
-=================================================================================  */
-
 #include "PM_Sensorless.h"
 #include "PM_Sensorless-Settings.h"
 #include "PeripheralHeaderIncludes.h"

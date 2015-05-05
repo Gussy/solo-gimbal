@@ -1,10 +1,3 @@
-/*
- * can_message_processor.c
- *
- *  Created on: Jan 7, 2015
- *      Author: abamberger
- */
-
 #include "can/can_message_processor.h"
 #include "PM_Sensorless-Settings.h"
 #include "PM_Sensorless.h"

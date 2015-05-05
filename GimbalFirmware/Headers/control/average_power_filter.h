@@ -1,10 +1,3 @@
-/*
- * average_power_filter.h
- *
- *  Created on: Nov 24, 2014
- *      Author: abamberger
- */
-
 #ifndef AVERAGE_POWER_FILTER_H_
 #define AVERAGE_POWER_FILTER_H_
 

@@ -1,10 +1,3 @@
-/*
- * can_parameter_updates.h
- *
- *  Created on: Feb 11, 2015
- *      Author: abamberger
- */
-
 #ifndef CAN_PARAMETER_UPDATES_H_
 #define CAN_PARAMETER_UPDATES_H_
 

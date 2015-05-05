@@ -1,9 +1,3 @@
-/*
- * cand.c
- *
- *  Created on: Mar 6, 2014
- *      Author: rmorrill
- */
 
 //#include "F2806x_Device.h"     // F2806x Headerfile Include File
 //#include "F2806x_Examples.h"   // F2806x Examples Include File

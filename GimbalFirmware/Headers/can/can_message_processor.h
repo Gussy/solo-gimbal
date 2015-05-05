@@ -1,10 +1,3 @@
-/*
- * can_message_processor.h
- *
- *  Created on: Jan 7, 2015
- *      Author: abamberger
- */
-
 #ifndef CAN_MESSAGE_PROCESSOR_H_
 #define CAN_MESSAGE_PROCESSOR_H_
 

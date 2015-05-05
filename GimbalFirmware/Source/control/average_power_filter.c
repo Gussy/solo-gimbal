@@ -1,10 +1,3 @@
-/*
- * average_power_filter.c
- *
- *  Created on: Nov 24, 2014
- *      Author: abamberger
- */
-
 #include <math.h>
 
 #include "PM_Sensorless-Settings.h"

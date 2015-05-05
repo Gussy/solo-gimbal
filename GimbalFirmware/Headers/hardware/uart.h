@@ -1,10 +1,3 @@
-/*
- * uart.h
- *
- *  Created on: Dec 9, 2014
- *      Author: abamberger
- */
-
 #ifndef UART_H_
 #define UART_H_
 

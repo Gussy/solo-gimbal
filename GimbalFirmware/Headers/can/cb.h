@@ -1,4 +1,3 @@
-
 #include "PeripheralHeaderIncludes.h"
 #include "can/cand.h"
 #include "mavlink_interface/gimbal_mavlink.h"

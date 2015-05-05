@@ -1,14 +1,3 @@
-//Parameters for Board2 and first test Knuckle
-//#define HWSpecificCalibratedAngle -133
-//#define HWSpecificCal_offset_A 0.49315
-//#define HWSpecificCal_offset_B 0.49470
-/*
- * HWSpecific.h
- *
- *  Created on: Mar 18, 2014
- *      Author: rmorrill
- */
-
 #ifndef HWSPECIFIC_H_
 #define HWSPECIFIC_H_
 

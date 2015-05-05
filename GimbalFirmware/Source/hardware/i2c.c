@@ -1,10 +1,3 @@
-/*
- * i2c.c
- *
- *  Created on: Jan 8, 2015
- *      Author: abamberger
- */
-
 #include "f2806x_int8.h"
 #include "hardware/i2c.h"
 #include "helpers/ringbuf.h"
@@ -173,7 +166,6 @@ interrupt void i2c_int_a_isr(void)
     // otherwise, we call the registered callback function
     switch (int_src) {
         // TODO: Add other handlers here if we start using any other interrupts
-
         default:
             // Call the callback with the value of the interrupt source register
             (*int_a_callback)(int_src);

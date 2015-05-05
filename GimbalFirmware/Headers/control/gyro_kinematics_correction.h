@@ -1,10 +1,3 @@
-/*
- * gyro_kinematics_correction.h
- *
- *  Created on: Sep 12, 2014
- *      Author: abamberger
- */
-
 #ifndef GYRO_KINEMATICS_CORRECTION_H_
 #define GYRO_KINEMATICS_CORRECTION_H_
 

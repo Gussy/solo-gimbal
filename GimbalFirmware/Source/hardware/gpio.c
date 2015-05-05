@@ -1,10 +1,3 @@
-/*
- * gpio.c
- *
- *  Created on: Nov 19, 2014
- *      Author: abamberger
- */
-
 #include "hardware/gpio.h"
 
 //NOTE: I promise this isn't as stupid as it looks.  These functions are currently used by the spi driver subsystem, where I wanted to be able to put the GPIO line

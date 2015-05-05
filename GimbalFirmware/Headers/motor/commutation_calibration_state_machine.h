@@ -1,10 +1,3 @@
-/*
- * commutation_calibration_state_machine.h
- *
- *  Created on: Jan 7, 2015
- *      Author: abamberger
- */
-
 #include "PM_Sensorless.h"
 #include "motor/motor_drive_state_machine.h"
 

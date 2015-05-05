@@ -1,10 +1,3 @@
-/*
- * mavlink_parameter_interface.h
- *
- *  Created on: Dec 16, 2014
- *      Author: abamberger
- */
-
 #ifndef MAVLINK_PARAMETER_INTERFACE_H_
 #define MAVLINK_PARAMETER_INTERFACE_H_
 

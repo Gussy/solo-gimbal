@@ -1,10 +1,3 @@
-/*
- * init_axis_parms_state_machine.h
- *
- *  Created on: Jan 9, 2015
- *      Author: abamberger
- */
-
 #ifndef INIT_AXIS_PARMS_STATE_MACHINE_H_
 #define INIT_AXIS_PARMS_STATE_MACHINE_H_
 

@@ -1,10 +1,3 @@
-/*
- * led.h
- *
- *  Created on: 01/03/2015
- *      Author: angus
- */
-
 #ifndef LED_H_
 #define LED_H_
 

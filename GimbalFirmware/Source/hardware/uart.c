@@ -1,10 +1,3 @@
-/*
- * uart.c
- *
- *  Created on: Dec 9, 2014
- *      Author: abamberger
- */
-
 #include "f2806x_int8.h"
 #include "hardware/uart.h"
 #include "helpers/ringbuf.h"

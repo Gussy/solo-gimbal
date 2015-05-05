@@ -1,10 +1,3 @@
-/*
- * PID.c
- *
- *  Created on: Sep 12, 2014
- *      Author: abamberger
- */
-
 #include "control/PID.h"
 
 #include <stdlib.h>

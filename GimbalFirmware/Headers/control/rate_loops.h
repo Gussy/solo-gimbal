@@ -1,10 +1,3 @@
-/*
- * rate_loops.h
- *
- *  Created on: Jan 7, 2015
- *      Author: abamberger
- */
-
 #ifndef RATE_LOOPS_H_
 #define RATE_LOOPS_H_
 

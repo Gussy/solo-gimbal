@@ -1,10 +1,3 @@
-/*
- * gopro_interface.h
- *
- *  Created on: Jan 8, 2015
- *      Author: abamberger
- */
-
 #ifndef GOPRO_INTERFACE_H_
 #define GOPRO_INTERFACE_H_
 

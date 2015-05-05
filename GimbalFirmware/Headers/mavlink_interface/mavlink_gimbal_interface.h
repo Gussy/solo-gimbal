@@ -1,10 +1,3 @@
-/*
- * mavlink_interface.h
- *
- *  Created on: Oct 10, 2014
- *      Author: abamberger
- */
-
 #ifndef MAVLINK_INTERFACE_H_
 #define MAVLINK_INTERFACE_H_
 

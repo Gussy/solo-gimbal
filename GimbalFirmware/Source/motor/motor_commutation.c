@@ -1,10 +1,3 @@
-/*
- * motor_commutation.c
- *
- *  Created on: Feb 11, 2015
- *      Author: abamberger
- */
-
 #include "PM_Sensorless.h"
 #include "PM_Sensorless-Settings.h"
 #include "motor/motor_drive_state_machine.h"

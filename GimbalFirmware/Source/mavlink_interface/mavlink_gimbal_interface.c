@@ -1,10 +1,3 @@
-/*
- * mavlink_interface.c
- *
- *  Created on: Oct 10, 2014
- *      Author: abamberger
- */
-
 #include "PM_Sensorless.h"
 #include "PM_Sensorless-Settings.h"
 

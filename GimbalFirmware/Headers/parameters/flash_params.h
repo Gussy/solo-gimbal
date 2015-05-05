@@ -1,10 +1,3 @@
-/*
- * flash_params.h
- *
- *  Created on: Jan 5, 2015
- *      Author: ksmith
- */
-
 #ifndef FLASH_PARAMS_H_
 #define FLASH_PARAMS_H_
 

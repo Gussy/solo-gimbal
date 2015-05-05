@@ -1,10 +1,3 @@
-/*
- * motor_commutation.h
- *
- *  Created on: Feb 11, 2015
- *      Author: abamberger
- */
-
 #ifndef MOTOR_COMMUTATION_H_
 #define MOTOR_COMMUTATION_H_
 

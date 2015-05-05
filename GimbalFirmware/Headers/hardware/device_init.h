@@ -1,10 +1,3 @@
-/*
- * device_init.h
- *
- *  Created on: Dec 9, 2014
- *      Author: abamberger
- */
-
 #ifndef DEVICE_INIT_H_
 #define DEVICE_INIT_H_
 

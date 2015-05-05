@@ -1,10 +1,3 @@
-/*
- * commutation_calibration_state_machine.c
- *
- *  Created on: Jan 7, 2015
- *      Author: abamberger
- */
-
 #include "motor/commutation_calibration_state_machine.h"
 #include "can/cand.h"
 #include "hardware/device_init.h"

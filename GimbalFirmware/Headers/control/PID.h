@@ -1,10 +1,3 @@
-/*
- * PID.h
- *
- *  Created on: Sep 12, 2014
- *      Author: abamberger
- */
-
 #ifndef PID_H_
 #define PID_H_
 

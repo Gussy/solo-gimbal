@@ -1,10 +1,3 @@
-/*
- * encoder.h
- *
- *  Created on: Feb 11, 2015
- *      Author: abamberger
- */
-
 #ifndef ENCODER_H_
 #define ENCODER_H_
 

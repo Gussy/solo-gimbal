@@ -1,10 +1,3 @@
-/*
- * gimbal_mavlink.h
- *
- *  Created on: Jan 13, 2015
- *      Author: abamberger
- */
-
 #ifndef GIMBAL_MAVLINK_H_
 #define GIMBAL_MAVLINK_H_
 

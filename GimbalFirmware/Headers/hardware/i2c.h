@@ -1,10 +1,3 @@
-/*
- * i2c.h
- *
- *  Created on: Jan 8, 2015
- *      Author: abamberger
- */
-
 #ifndef I2C_H_
 #define I2C_H_
 
