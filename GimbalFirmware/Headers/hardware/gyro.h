@@ -14,6 +14,7 @@
 void InitGyro();
 void ReadGyro(int16* gyro_x, int16* gyro_y, int16* gyro_z);
 void ReadAccel(int16* accel_x, int16* accel_y, int16* accel_z);
+int16 ReadTemp();
 Uint32 ReadGyroPass1();
 Uint32 ReadGyroPass2();
 //Uint8 ReadGyroIntStatus();
@@ -33,6 +34,8 @@ Uint32 ReadGyroPass2();
 #define MPU_ACCEL_YOUT_L_REG 0x3E
 #define MPU_ACCEL_ZOUT_H_REG 0x3F
 #define MPU_ACCEL_ZOUT_L_REG 0x40
+#define MPU_TEMP_OUT_H_REG 0x41
+#define MPU_TEMP_OUT_L_REG 0x42
 #define MPU_GYRO_XOUT_H_REG 0x43
 #define MPU_GYRO_XOUT_L_REG 0x44
 #define MPU_GYRO_YOUT_H_REG 0x45

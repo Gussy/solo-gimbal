@@ -37,6 +37,8 @@ void InitGyro()
 
     // Disable the temperature sensor, enable gyro x pll clock
     SpiWriteReg8Bit(&gyro_spi_desc, MPU_PWR_MGMT_1_REG, TEMP_SENSE_DISABLED | CLK_SRC_PLL_GYRO_X);
+    // TODO: Enabling temp sensor for testing
+    //SpiWriteReg8Bit(&gyro_spi_desc, MPU_PWR_MGMT_1_REG, TEMP_SENSE_ENABLED | CLK_SRC_PLL_GYRO_X);
 
     // Wait 10ms to wait for pll to settle
     DELAY_US(10 * 1000);
@@ -185,6 +187,45 @@ void ReadAccel(int16* accel_x, int16* accel_y, int16* accel_z)
     *accel_z = (int16)(((response3 << 8) & 0xFF00) | ((response4 >> 8) & 0x00FF));
 
     return;
+}
+
+int16 ReadTemp()
+{
+    Uint16 response1 = 0;
+    Uint16 response2 = 0;
+
+    // Take the slave select line low to begin the transaction
+    // NOTE: It's important to read all of these registers in one transaction
+    // to ensure that all data comes from the same sample (the MPU-6K guarantees
+    // this by returning results from a shadow register set that is only updated
+    // when the SPI interface is idle)
+    SSAssert(&gyro_spi_desc);
+
+    // Need at least 8ns set up time
+    DELAY_US(1);
+
+    // Perform the burst read of the temp sensor registers
+
+    // Read temp sensor high byte
+    response1 = SpiSendRecvAddressedReg(&gyro_spi_desc, MPU_TEMP_OUT_H_REG, 0x00, SPI_READ);
+
+    // Read temp sensor low byte (and 1 byte of garbage)
+    response2 = SpiSendRecvAddressedReg(&gyro_spi_desc, 0x00, 0x00, SPI_READ);
+
+    // Need at least 500ns hold time
+    DELAY_US(1);
+
+    // Take the slave select line high to complete the transaction
+    SSDeassert(&gyro_spi_desc);
+
+    // Unpack the raw value from the temp sensor
+    int16 raw_temp = ((response1 << 8) & 0xFF00) | ((response2 >> 8) & 0x00FF);
+
+    // Perform the scaling to put the reading in Degrees C
+    // Per the MPU6K datasheet, DegreesC = (TEMP_OUT / 340) + 36.53
+    // Doing the division last to preserve precision (36.53 * 340 = 12420.2)
+    int32 scaled_temp = ((int32)raw_temp + (int32)12420) / (int32)340;
+    return scaled_temp;
 }
 
 // Returns the x gyro high and low bytes, and the y gyro high byte
