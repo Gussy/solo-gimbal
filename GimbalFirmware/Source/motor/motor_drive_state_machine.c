@@ -282,7 +282,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         case STATE_INITIALIZE_POSITION_LOOPS:
             if ((cb_parms->encoder_value_received[AZ] == TRUE) &&
                     (cb_parms->encoder_value_received[EL] == TRUE) &&
-                    (cb_parms->encoder_value_received[ROLL == TRUE])) {
+                    (cb_parms->encoder_value_received[ROLL] == TRUE)) {
                 // Now that we've received all of the encoder values, we can go ahead and initialize the position loop filters
                 initialize_running_average_filter(pos_loop_stage_1,
                         CorrectEncoderError(cb_parms->encoder_readings[AZ]),
