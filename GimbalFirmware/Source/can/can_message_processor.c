@@ -188,14 +188,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         //NOTE: Using this for whatever debug info I'm looking for at the moment,
                         //so this parsing will change whenver I change whatever data I'm sending
                         char debug_msg[50];
-                        /*
-                        Uint16 max_loop_time = (((Uint16)msg.extended_param[0] << 8) & 0xFF00) |
-                                ((Uint16)msg.extended_param[1] & 0x00FF);
-                        Uint16 missed_interrupts = (((Uint16)msg.extended_param[2] << 8) & 0xFF00) |
-                                ((Uint16)msg.extended_param[3] & 0x00FF);
-                        snprintf(debug_msg, 50, "Max Time: %d, Missed Intr: %d", max_loop_time, missed_interrupts);
-                        */
-                        //snprintf(debug_msg, 50, "El state: %d", msg.extended_param[0]);
                         int16 error = (((Uint16)msg.extended_param[0] << 8) & 0xFF00) | ((Uint16)msg.extended_param[1] & 0x00FF);
                         int16 min = (((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF);
                         int16 encoder = (((Uint16)msg.extended_param[4] << 8) & 0xFF00) | ((Uint16)msg.extended_param[5] & 0x00FF);

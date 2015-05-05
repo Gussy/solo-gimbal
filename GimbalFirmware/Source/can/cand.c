@@ -1,9 +1,3 @@
-
-//#include "F2806x_Device.h"     // F2806x Headerfile Include File
-//#include "F2806x_Examples.h"   // F2806x Examples Include File
-
-//#include "F2806x_Gpio.h"     // F2806x Headerfile Include File
-
 #include "PeripheralHeaderIncludes.h"
 
 #include "can/cand_BitFields.h"

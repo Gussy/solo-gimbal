@@ -1,7 +1,3 @@
-
-/*---- Flash API include file -------------------------------------------------*/
-//#define FLASH_F28062 1
-
 #include "Flash2806x_API_Library.h"
 
 #include "parameters/flash_params.h"
@@ -86,9 +82,7 @@ extern Uint16 PRG_key7;
 #define  DINT   asm(" setc INTM")
 
 //TODO: Talk to 3DR and figure out how this was supposed to work
-//#define SW_VERSION ((unsigned long int)GitVersionMajorInt << 16) | (GitVersionMinorInt << 8) | GitVersionRevisionInt
 #define SW_VERSION 0x00000000
-
 struct flash_param_struct_0000 flash_params =
 {
     0x0000,                     // Flash Struct ID

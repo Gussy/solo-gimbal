@@ -285,15 +285,8 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
         Uint32 rate_cmds[3] = {0, 0, 0};
 
         // Copter mapping is X roll, Y el, Z az
-
-        //TODO: Make the axis mapping more robust and less confusing
-        // Gyro X rate
         rate_cmds[EL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.demanded_rate_z, (float)INT16_MIN, (float)INT16_MAX));
-
-        // Gyro Y rate
         rate_cmds[AZ] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.demanded_rate_y, (float)INT16_MIN, (float)INT16_MAX));
-
-        // Gyro Z rate
         rate_cmds[ROLL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.demanded_rate_x, (float)INT16_MIN, (float)INT16_MAX));
 
         cand_tx_multi_param(CAND_ID_EL, rate_cmd_pids, rate_cmds, 3);

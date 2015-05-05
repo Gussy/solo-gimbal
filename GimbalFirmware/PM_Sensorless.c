@@ -387,19 +387,6 @@ void main(void)
 	if ((board_hw_id == EL) || (board_hw_id == ROLL)) {
 	    InitAxisParmsLoader(&load_ap_state_info);
 	}
-    // Only used if running from FLASH
-    // Note that the variable FLASH is defined by the compiler
-    // (see TwoChannelBuck.pjt file)
-#ifdef FLASH
-    // Copy time critical code and Flash setup code to RAM
-    // The  RamfuncsLoadStart, RamfuncsLoadEnd, and RamfuncsRunStart
-    // symbols are created by the linker. Refer to the linker files.
-	MemCopy(&RamfuncsLoadStart, &RamfuncsLoadEnd, &RamfuncsRunStart);
-
-    // Call Flash Initialization to setup flash waitstates
-    // This function must reside in RAM
-	InitFlash();	// Call the flash wrapper init function
-#endif //(FLASH)
 
     // Timing sync for slow background tasks
     // Timer period definitions found in device specific PeripheralHeaderIncludes.h
@@ -429,7 +416,6 @@ void main(void)
 	ECap1Regs.CAP4 = SYSTEM_FREQUENCY*1000000*T/2;  //  Set Compare Value
 
     // Initialize ADC module
-    //ADC_MACRO();
 	init_adc();
 
     if (board_hw_id == EL) {
@@ -1113,7 +1099,3 @@ void RelaxAZAxis(void)
         motor_drive_parms.motor_drive_state = STATE_DISABLED;
     }
 }
-
-//===========================================================================
-// No more.
-//===========================================================================
