@@ -43,19 +43,16 @@ def clear_comutation_params(link):
 def get_SWVER_param(link):
     return fetch_param(link, "GMB_SWVER")
 
-
 def set_offsets(link, kind, offsets):    
     set_param(link, "GMB_OFF_"+kind+"_Y", offsets[0]);
     set_param(link, "GMB_OFF_"+kind+"_X", offsets[1]);
     set_param(link, "GMB_OFF_"+kind+"_Z", offsets[2]);
-    
+    commit_to_flash(link)
     
 def getAxisCalibrationParam(link, axis_enum):
     icept = fetch_param(link, "GMB_" + axis_enum + "_ICEPT")
     slope = fetch_param(link, "GMB_" + axis_enum + "_SLOPE")
     return axis_enum, icept.param_value, slope.param_value
-
-
 
 def get_joint_offsets(link):
     x = fetch_param(link, "GMB_OFF_JNT_X").param_value

@@ -21,7 +21,7 @@ def open_comm(port, baudrate):
     return link
 
 
-def wait_for_hearbeat(link):
+def wait_for_heartbeat(link):
     for i in range(5):
         link.heartbeat_send(0, 0, 0, 0, 0)
         if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1):

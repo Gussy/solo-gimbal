@@ -7,7 +7,7 @@ import sys, argparse
 
 from firmware_loader import update
 import setup_comutation, setup_home
-from setup_mavlink import open_comm, wait_for_hearbeat
+from setup_mavlink import open_comm, wait_for_heartbeat
 import setup_mavlink, setup_param
 from setup_read_sw_version import readSWver
 import setup_run
@@ -24,7 +24,6 @@ def handle_file(args, link):
     return
 
 def main():
-    global link
     parser = argparse.ArgumentParser()
     parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default='0.0.0.0:14550')
@@ -46,7 +45,7 @@ def main():
     # Open the serial port
     link = open_comm(args.port, 230400)
     
-    if wait_for_hearbeat(link) == None:
+    if wait_for_heartbeat(link) == None:
         print 'failed to comunicate to gimbal'
         return
 
@@ -67,9 +66,8 @@ def main():
         return
     elif args.forcecal:
         setup_comutation.resetCalibration(link)
-        time.sleep(1)
-        setup_mavlink.reset_gimbal(link)
-        time.sleep(4)
+        wait_for_heartbeat(link)
+        time.sleep(3)
         setup_comutation.calibrate(link)
         return
     elif args.show:
@@ -89,7 +87,6 @@ def main():
         return
     elif args.staticcal:
         setup_home.calibrate_joints(link)
-        time.sleep(1)
         setup_home.calibrate_gyro(link)
         return
     elif args.jointcalibration:
