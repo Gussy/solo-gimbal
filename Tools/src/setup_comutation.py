@@ -16,6 +16,12 @@ def printAxisCalibrationParam(link):
     print getAxisCalibrationParam(link, axis_enum[1])
     print getAxisCalibrationParam(link, axis_enum[2])
 
+def getAxisCalibrationParams(link):
+    pitch = getAxisCalibrationParam(link, axis_enum[0])
+    roll = getAxisCalibrationParam(link, axis_enum[1])
+    yaw = getAxisCalibrationParam(link, axis_enum[2])
+    return (pitch, roll, yaw)
+
 def resetCalibration(link):
     print 'Clearing old calibration values'
     setup_param.clear_comutation_params(link)    
