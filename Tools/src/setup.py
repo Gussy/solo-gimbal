@@ -82,7 +82,7 @@ def main():
         gyro_y = setup_param.fetch_param(link, "GMB_OFF_GYRO_Y").param_value
         gyro_x = setup_param.fetch_param(link, "GMB_OFF_GYRO_X").param_value
         gyro_z = setup_param.fetch_param(link, "GMB_OFF_GYRO_Z").param_value
-        print("sw_ver, pitch_icept, pitch_slope, roll_icept, roll_slope, yaw_icept, yaw_slope, joint_y, joint_x, joint_z, gyro_y, gyrgyro_y, gyro_x, gyro_x, gyro_z")
+        print("sw_ver, pitch_icept, pitch_slope, roll_icept, roll_slope, yaw_icept, yaw_slope, joint_y, joint_x, joint_z, gyro_y, gyro_x, gyro_z")
         print("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (ver, pitch_com[1], pitch_com[2], roll_com[1], roll_com[2], yaw_com[1], yaw_com[2], joint_y, joint_x, joint_z,gyro_y, gyro_x, gyro_z))
         return
     elif args.staticcal:
