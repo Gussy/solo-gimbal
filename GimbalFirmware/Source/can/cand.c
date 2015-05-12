@@ -43,7 +43,7 @@ void ECanInit( void )        // Initialize eCAN-A module
 	 to these registers could potentially corrupt the register contents or return
 	 false data. */
 
-	struct ECAN_REGS ECanaShadow;
+	volatile struct ECAN_REGS ECanaShadow;
 
     EALLOW;     // EALLOW enables access to protected bits
 
