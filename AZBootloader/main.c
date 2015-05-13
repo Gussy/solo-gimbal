@@ -214,6 +214,9 @@ Uint16 CAN_GetWordData()
    return wordData;
 }
 
+#define CAN_SEND_WORD_LED_TIMEOUT_1 500000
+#define CAN_SEND_WORD_LED_TIMEOUT_2 50000
+
 Uint16 CAN_SendWordData(Uint16 data)
 {
    ECanaMboxes.MBOX1.MDL.byte.BYTE0 = (data&0xFF);   // LS byte
@@ -228,9 +231,20 @@ Uint16 CAN_SendWordData(Uint16 data)
    struct ECAN_REGS ECanaShadow;
    // wait for it to be sent
    ECanaShadow.CANTRS.all = ECanaRegs.CANTRS.all;
-   Uint16 count = 0;
-   while ((ECanaShadow.CANTRS.bit.TRS1 == 1)&&(count < 0x100)) {
-	   ECanaShadow.CANTRS.all = ECanaRegs.CANTRS.all;
+   Uint32 timeout = 0;
+   Uint32 timeout_max = CAN_SEND_WORD_LED_TIMEOUT_1;
+   while ((ECanaShadow.CANTRS.bit.TRS1 == 1)) {
+       while ((ECanaShadow.CANTRS.bit.TRS1 == 1) && (timeout++ < timeout_max)) {
+           ECanaShadow.CANTRS.all = ECanaRegs.CANTRS.all;
+       }
+       // Blink the status LED to show that we're doing something
+       timeout = 0;
+       if (timeout_max == CAN_SEND_WORD_LED_TIMEOUT_1) {
+           timeout_max = CAN_SEND_WORD_LED_TIMEOUT_2;
+       } else {
+           timeout_max = CAN_SEND_WORD_LED_TIMEOUT_1;
+       }
+       STATUS_LED_TOGGLE();
    }
 
    return data;
@@ -247,7 +261,7 @@ Uint16 read_Data_and_Send()
 	Uint16 retval = 0;
 	retval = DATA[location++];
 	retval = ((retval & 0xFF00)>>8)|((retval & 0x00FF)<<8);
-	CAN_SendWordData(retval);
+	CAN_SendWordData(retval); // This will block until the send is successful
 	return retval;
 }
 
