@@ -3,47 +3,12 @@ AES gimbal software for C2000 uC
 
 ## Development
 Download and install the following softwares:
-* [controlSUITE](http://www.ti.com/tool/controlsuite)
 * [Code Composer Studio](http://www.ti.com/tool/ccstudio)
 
 ### Requirements
 * [Python](https://www.python.org/) must be installed and on the system PATH environment variable
 
 Import the project into CCS via ```File>Import>C/C++>CCS Projects```, and browse for the root source folder
-
-The active configuration should be FLASH. For that go to ```Project>Properties=>CCS General=>Manage Active Configurations``` select the FLASH option and click on ```Set Active```
-
-Under targetConfigs folder right-click the file ```TMS320F28062.ccxml``` to set as the active configuration.
-
-Under includes, open the file ```C:\ti\controlSUITE\development_kits/~/SupportFiles/F2806x_headers/PeripheralHeaderIncludes.h```
-
-Replace the following snippet on line 94
-
-```
-#ifndef DSP28_DATA_TYPES
-#define DSP28_DATA_TYPES
-typedef int             int16;
-typedef long            int32;
-typedef unsigned int    Uint16;
-typedef unsigned long   Uint32;
-typedef float           float32;
-typedef long double     float64;
-#endif
-```
-with
-```
-#ifndef DSP28_DATA_TYPES
-#define DSP28_DATA_TYPES
-typedef char            int8;
-typedef int             int16;
-typedef long            int32;
-typedef unsigned char   Uint8;
-typedef unsigned int    Uint16;
-typedef unsigned long   Uint32;
-typedef float           float32;
-typedef long double     float64;
-#endif
-```
 
 ### For "GitHub for Windows" users
 Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin\```
@@ -60,7 +25,7 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 ### GimbalFirmware
 
 1. Build the ```GimbalFirmware``` project using Code Composer Studio.
-2. (add steps for flashing GimbalFirmware only...?)
+2. To flash the firmware run ```./Tools/src/setup.py -h``` and follow the instructions there
 
 ### AZBootloader
 
@@ -71,27 +36,41 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 
 1. (todo)
 
-## Using MAVLink Bootloader
-
-1. Build the ```GimbalFirmware``` project using Code Composer Studio.
-2. Run the Python ```Tools\load_fw.py``` script (eg. ```python Tools\load_fw.py --port="COM7" Releases\gimbal_firmware_0.8.0.ax```).
-
-## Creating a release
-1. Build the ```GimbalFirmware``` project using Code Composer Studio.
-2. Tag the release using git and [SemVer](http://semver.org/) (eg ```git tag v1.0.5```)
-3. Make a firmware release package using ```Tools\make_release.bat``` or ```Tools\make_release.sh``` (If the hardware revision has changed, update it in the ```Tools\make_release.*``` files)
-4. Commit the firmware release and push it to GitHub
-5. Use the GitHub release tool to publish a new release (using the latest file in ```Releases```)
-
 # LED Patterns
 
 ## User LED (1 per board)
-
-* Fast (3Hz) - No Comms
-* Slow (0.8Hz) - Init
-* Solid - Ready
-* Error - Fast (3Hz), Pause after 3 cycles
+```
+These are the new blink state:
+BLINK_NO_COMM - fast ,3Hz, duty cycle of 50%
+BLINK_ERROR - fast, 3Hz, duty cycle 50%, pause after 3 cycles
+BLINK_INIT - slow, .8Hz, dudy cycle of 20%
+BLINK_READY - slow, .5Hz , dudy cycle of 90%
+BLINK_RUNNING - on all the time
+And those states are associated to the motor-drive-state-machine in the following order:
+BLINK_INIT // system being initialized
+        STATE_INIT:
+        STATE_WAIT_FOR_AXIS_HEARTBEATS:
+        STATE_LOAD_OWN_INIT_PARAMS:
+        STATE_REQUEST_AXIS_INIT_PARAMS:
+        STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED:
+        STATE_CALIBRATING_CURRENT_MEASUREMENTS:
+        STATE_CHECK_AXIS_CALIBRATION:
+        STATE_WAIT_FOR_AXIS_CALIBRATION_STATUS:
+        STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND:
+        STATE_TAKE_COMMUTATION_CALIBRATION_DATA:
+        STATE_HOMING:
+        STATE_WAIT_FOR_AXES_HOME:
+        STATE_INITIALIZE_POSITION_LOOPS:
+BLINK_RUNNING // system working
+        STATE_RUNNING:
+BLINK_READY // system initialized but idle, since there are no rate commands
+        STATE_DISABLED:
+BLINK_ERROR // system in an error state, usually an over-current
+        STATE_RECOVERABLE_FAULT:
+        STATE_UNRECOVERABLE_FAULT:
+```
 
 ## Beacon LED (Camera Carriage Board)
 
-Currently cyces between R/G/B combinations.
+* Blinking white on Bootloader
+* Glows green on power up for a couple of seconds
