@@ -39,36 +39,11 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 # LED Patterns
 
 ## User LED (1 per board)
-```
-These are the new blink state:
 BLINK_NO_COMM - fast ,3Hz, duty cycle of 50%
-BLINK_ERROR - fast, 3Hz, duty cycle 50%, pause after 3 cycles
-BLINK_INIT - slow, .8Hz, dudy cycle of 20%
-BLINK_READY - slow, .5Hz , dudy cycle of 90%
-BLINK_RUNNING - on all the time
-And those states are associated to the motor-drive-state-machine in the following order:
-BLINK_INIT // system being initialized
-        STATE_INIT:
-        STATE_WAIT_FOR_AXIS_HEARTBEATS:
-        STATE_LOAD_OWN_INIT_PARAMS:
-        STATE_REQUEST_AXIS_INIT_PARAMS:
-        STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED:
-        STATE_CALIBRATING_CURRENT_MEASUREMENTS:
-        STATE_CHECK_AXIS_CALIBRATION:
-        STATE_WAIT_FOR_AXIS_CALIBRATION_STATUS:
-        STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND:
-        STATE_TAKE_COMMUTATION_CALIBRATION_DATA:
-        STATE_HOMING:
-        STATE_WAIT_FOR_AXES_HOME:
-        STATE_INITIALIZE_POSITION_LOOPS:
-BLINK_RUNNING // system working
-        STATE_RUNNING:
-BLINK_READY // system initialized but idle, since there are no rate commands
-        STATE_DISABLED:
-BLINK_ERROR // system in an error state, usually an over-current
-        STATE_RECOVERABLE_FAULT:
-        STATE_UNRECOVERABLE_FAULT:
-```
+BLINK_ERROR - fast, 3Hz, duty cycle 50%, pause after 3 cycles - system in an error state, usually an over-current
+BLINK_INIT - slow, .8Hz, dudy cycle of 20%  - system being initialized
+BLINK_READY - slow, .5Hz , dudy cycle of 90% - system initialized but idle, since there are no rate commands
+BLINK_RUNNING - on all the time  - system working
 
 ## Beacon LED (Camera Carriage Board)
 
