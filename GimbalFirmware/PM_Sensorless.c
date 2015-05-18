@@ -1173,24 +1173,41 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
         }
     }
     */
+	// TODO: Debug messages for determining which state boards are in
 	/*
-	// TODO: Debug messages for determining which state rl board is in
 	static int debug_output_decimation = 0;
-	if (board_hw_id == AZ) {
-	    if (++debug_output_decimation >= 7) {
-	        debug_output_decimation = 0;
-	        //Uint8 debug_info = motor_drive_parms.motor_drive_state;
-	        //cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, &debug_info, 1);
+    if (++debug_output_decimation >= 7) {
+        switch (board_hw_id) {
+            case EL:
+            {
+                Uint8 debug_info[2];
+                debug_info[0] = EL;
+                debug_info[1] = motor_drive_parms.motor_drive_state;
+                cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 2);
+            }
+            break;
 
-	        char debug_msg[50];
+            case ROLL:
+            {
+                Uint8 debug_info[2];
+                debug_info[0] = ROLL;
+                debug_info[1] = motor_drive_parms.motor_drive_state;
+                cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_info, 2);
+            }
+            break;
 
-            // Current state debug
-            snprintf(debug_msg, 50, "EL HB: %d, RL HB: %d", axis_parms.other_axis_hb_recvd[EL], axis_parms.other_axis_hb_recvd[ROLL]);
+            case AZ:
+            {
+                char debug_msg[50];
+                snprintf(debug_msg, 50, "AZ State: %d", motor_drive_parms.motor_drive_state);
+                send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
+            }
+            break;
+        }
 
-            send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
-	    }
-	}
-	*/
+        debug_output_decimation = 0;
+    }
+    */
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
 	C_Task_Ptr = &C3;	
