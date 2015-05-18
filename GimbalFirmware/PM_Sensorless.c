@@ -413,9 +413,9 @@ void main(void)
 
     // Initialize the average power filter
     // Current sample frequency is frequency of main ISR
-    // Tau = 120 seconds per CW's calculations
-    // Current limit = 0.093 Amps^2 per CW's calculations
-    init_average_power_filter(&power_filter_parms, (ISR_FREQUENCY * 1000), 120, 0.093);
+    // Tau = 840 seconds per CW's calculations on 5/1/15
+    // Current limit = 0.2 Amps^2 per CW's calculations on 5/1/15
+    init_average_power_filter(&power_filter_parms, (ISR_FREQUENCY * 1000), 840, 0.2);
 
     // Initialize the encoder median history array with the 16-bit integer max value, so that the median
     // accumulation algorithm will work
