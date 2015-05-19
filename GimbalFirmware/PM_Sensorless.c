@@ -215,7 +215,8 @@ ControlBoardParms control_board_parms = {
     FALSE,                                                  // Initialized
     FALSE,                                                  // Enabled
     FALSE,                                                  // Running tests
-    0                                                       // Last gyro temperature
+    0,                                                      // Last gyro temperature
+    {0, 0, 0}                                               // Max torque command
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {

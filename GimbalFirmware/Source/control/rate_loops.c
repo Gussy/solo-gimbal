@@ -178,6 +178,19 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
             cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
 
+            // Keep track of maximum commanded torques
+            if (abs(cb_parms->motor_torques[AZ]) > cb_parms->max_torque_cmd[AZ]) {
+                cb_parms->max_torque_cmd[AZ] = abs(cb_parms->motor_torques[AZ]);
+            }
+
+            if (abs(cb_parms->motor_torques[EL]) > cb_parms->max_torque_cmd[EL]) {
+                cb_parms->max_torque_cmd[EL] = abs(cb_parms->motor_torques[EL]);
+            }
+
+            if (abs(cb_parms->motor_torques[ROLL]) > cb_parms->max_torque_cmd[ROLL]) {
+                cb_parms->max_torque_cmd[ROLL] = abs(cb_parms->motor_torques[ROLL]);
+            }
+
             // For AZ, we need to inject extra torque if we're getting close to either of the stops (because we have limited mechanical travel on AZ, and we
             // don't want to rail up against the stop).  To do this, outside of a deadband in the middle of travel, we linearly increase an extra torque injection
             // up to max torque as we get closer and closer to the stop.

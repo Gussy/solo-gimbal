@@ -16,6 +16,18 @@ typedef enum {
     TEST_AXIS_RANGE_LIMITS
 } TestType;
 
+typedef enum {
+    TEST_RESULT_NEG_RANGE_AZ,
+    TEST_RESULT_POS_RANGE_AZ,
+    TEST_RESULT_MAX_TORQUE_AZ,
+    TEST_RESULT_NEG_RANGE_EL,
+    TEST_RESULT_POS_RANGE_EL,
+    TEST_RESULT_MAX_TORQUE_EL,
+    TEST_RESULT_NEG_RANGE_RL,
+    TEST_RESULT_POS_RANGE_RL,
+    TEST_RESULT_MAX_TORQUE_RL
+} TestResult;
+
 typedef struct {
     TestType test_type;
     TestAxisRangeLimitsParms* axis_range_limits_parms;

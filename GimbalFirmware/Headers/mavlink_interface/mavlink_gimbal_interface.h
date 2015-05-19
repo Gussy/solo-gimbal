@@ -15,6 +15,7 @@
 #include "control/gyro_kinematics_correction.h"
 #include "motor/motor_drive_state_machine.h"
 #include "parameters/load_axis_parms_state_machine.h"
+#include "tests/factory_tests.h"
 
 typedef enum {
 	MAVLINK_STATE_PARSE_INPUT, MAVLINK_STATE_SEND_PARAM_LIST
@@ -76,6 +77,7 @@ void send_mavlink_home_offset_calibration_result(GIMBAL_AXIS_CALIBRATION_STATUS 
 void send_mavlink_factory_parameters_loaded();
 void send_mavlink_factory_test_progress(FACTORY_TEST test, Uint8 section, Uint8 progress, Uint8 status);
 void send_mavlink_axis_calibration_status(Uint8 az_needs_calibration, Uint8 el_needs_calibration, Uint8 rl_needs_calibration);
+void send_mavlink_test_result(TestResult test_result_id, float result_value);
 void send_mavlink_message(mavlink_message_t* msg);
 
 void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);

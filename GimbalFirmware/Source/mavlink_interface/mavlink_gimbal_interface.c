@@ -17,6 +17,7 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
+#include "tests/factory_tests.h"
 
 #include <stdio.h>
 
@@ -815,6 +816,18 @@ void send_mavlink_axis_calibration_status(Uint8 az_needs_calibration, Uint8 el_n
             el_needs_calibration,
             rl_needs_calibration);
     send_mavlink_message(&axis_calibration_status_msg);
+}
+
+void send_mavlink_test_result(TestResult test_result_id, float result_value)
+{
+    static mavlink_message_t test_result_msg;
+    mavlink_msg_debug_pack(gimbal_sysid,
+            MAV_COMP_ID_GIMBAL,
+            &test_result_msg,
+            0,
+            (uint8_t)test_result_id,
+            result_value);
+    send_mavlink_message(&test_result_msg);
 }
 
 void send_mavlink_message(mavlink_message_t* msg) {
