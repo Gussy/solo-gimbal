@@ -6,6 +6,7 @@
 #include "hardware/HWSpecific.h"
 #include "mavlink_interface/gimbal_mavlink.h"
 #include "hardware/device_init.h"
+#include "tests/factory_tests.h"
 
 #include <string.h>
 
@@ -133,6 +134,15 @@ void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status)
     params[1] = GetBoardHWID();
 
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_CALIBRATION_REQUIRED_STATUS, params, 2);
+}
+
+void CANSendTestResult(TestResult result_id, float result)
+{
+    Uint8 params[5];
+    params[0] = (Uint8)result_id;
+    memcpy(&(params[1]), &result, 4);
+
+    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_TEST_RESULT, params, 5);
 }
 
 void IFBSendVersionV2( DavinciVersion* v )
