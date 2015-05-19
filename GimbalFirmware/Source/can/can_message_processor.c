@@ -252,12 +252,13 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         } else if (msg.extended_param[0] == ROLL) {
                             snprintf(debug_msg, 50, "RL State: %d", msg.extended_param[1]);
                         }
-                        */
+
 
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                         */
                         {
                             int16 encoder = (int16)((((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF));
+                            int16 torque = (int16)((((Uint16)msg.extended_param[4] << 8) & 0xFF00) | ((Uint16)msg.extended_param[5] & 0x00FF));
                             char axis_name[3];
                             switch (msg.extended_param[0]) {
                                 case 0:
@@ -274,13 +275,13 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                                     break;
                             }
                             if (msg.extended_param[1] == 1) {
-                                snprintf(debug_msg, 50, "%s negative hard stop %d", axis_name, encoder);
+                                snprintf(debug_msg, 50, "%s negative hard stop %d max torque %d", axis_name, encoder, torque);
                             }
                             else if (msg.extended_param[1] == 2) {
-                                snprintf(debug_msg, 50, "%s positive hard stop %d", axis_name, encoder);
+                                snprintf(debug_msg, 50, "%s positive hard stop %d max torque %d", axis_name, encoder, torque);
                             }
                             else {
-                                snprintf(debug_msg, 50, "%s unknown %d", axis_name, encoder);
+                                snprintf(debug_msg, 50, "%s unknown %d %d", axis_name, encoder, torque);
                             }
                         }
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);

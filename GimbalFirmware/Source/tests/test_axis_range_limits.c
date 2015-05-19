@@ -64,7 +64,7 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                 }
                 test_parms->next_position_pause_point = -PAUSE_POINT_INCR;
                 test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_NEGATIVE_LIMIT;
-                // TODO reset max torques
+                ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
             }
             break;
 
@@ -111,14 +111,17 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
         case RANGE_LIMITS_STATE_CHECK_NEGATIVE_LIMIT:
             // TODO - for now just print limit to debug port and report success
             // old test is ifdef'd out below for reference
-            // TODO get max torque, save to test_parms, and report?
+            test_parms->motor_torque_max_neg[test_parms->test_axis] = GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+            ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
             {
-                Uint8 debug_data[4];
+                Uint8 debug_data[6];
                 debug_data[0] = test_parms->test_axis;
                 debug_data[1] = 1;
                 debug_data[2] = (test_parms->encoder_hard_stop_neg[test_parms->test_axis] >> 8) & 0x00FF;
                 debug_data[3] = (test_parms->encoder_hard_stop_neg[test_parms->test_axis] & 0x00FF);
-                cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_data, 4);
+                debug_data[4] = (test_parms->motor_torque_max_neg[test_parms->test_axis] >> 8) & 0x00FF;
+                debug_data[5] = (test_parms->motor_torque_max_neg[test_parms->test_axis] & 0x00FF);
+                cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_data, 6);
             }
             CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
 
@@ -187,7 +190,6 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                 last_encoder_position = test_parms->last_encoder_reading + 300; // 300 just guarantees hard stop won't be detected right away
                 test_parms->next_position_pause_point = PAUSE_POINT_INCR;
                 test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_POSITIVE_LIMIT;
-                // TODO reset max torques for positive limit or leave running from negative run?
             }
             break;
 
@@ -234,14 +236,16 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
         case RANGE_LIMITS_STATE_CHECK_POSITIVE_LIMIT:
             // TODO - for now just print limit to debug port and report success
             // old test is ifdef'd out below for reference
-            // TODO get max torque, save to test_parm, and report
+            test_parms->motor_torque_max_pos[test_parms->test_axis] = GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
             {
-                Uint8 debug_data[4];
+                Uint8 debug_data[6];
                 debug_data[0] = test_parms->test_axis;
                 debug_data[1] = 2;
                 debug_data[2] = (test_parms->encoder_hard_stop_plus[test_parms->test_axis] >> 8) & 0x00FF;
                 debug_data[3] = (test_parms->encoder_hard_stop_plus[test_parms->test_axis] & 0x00FF);
-                cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_data, 4);
+                debug_data[4] = (test_parms->motor_torque_max_pos[test_parms->test_axis] >> 8) & 0x00FF;
+                debug_data[5] = (test_parms->motor_torque_max_pos[test_parms->test_axis] & 0x00FF);
+                cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_data, 6);
             }
             CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
             test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_HOME_2;

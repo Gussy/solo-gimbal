@@ -72,8 +72,8 @@ typedef struct {
     float  next_position_pause_point;
     int16  encoder_hard_stop_neg[AXIS_CNT];
     int16  encoder_hard_stop_plus[AXIS_CNT];
-    int16  motor_torque_max[AXIS_CNT];
-    int16  motor_torque_min[AXIS_CNT];
+    int16  motor_torque_max_neg[AXIS_CNT];
+    int16  motor_torque_max_pos[AXIS_CNT];
 } TestAxisRangeLimitsParms;
 
 int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, ControlBoardParms* cb_parms);
