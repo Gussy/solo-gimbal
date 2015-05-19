@@ -115,14 +115,16 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             break;
 
         case ERROR_CALC_PASS:
+            #define POS_ERR_GAIN  4
+
             if (cb_parms->control_loop_type == RATE_MODE) {
                 cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
                 cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject[EL] - cb_parms->corrected_gyro_readings[EL];
                 cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
             } else {
-                cb_parms->axis_errors[AZ] = cb_parms->unfiltered_position_errors[AZ] - cb_parms->corrected_gyro_readings[AZ];
-                cb_parms->axis_errors[EL] = cb_parms->unfiltered_position_errors[EL] - cb_parms->corrected_gyro_readings[EL];
-                cb_parms->axis_errors[ROLL] = cb_parms->unfiltered_position_errors[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
+                cb_parms->axis_errors[AZ] = (cb_parms->unfiltered_position_errors[AZ] * POS_ERR_GAIN) - cb_parms->corrected_gyro_readings[AZ];
+                cb_parms->axis_errors[EL] = (cb_parms->unfiltered_position_errors[EL] * POS_ERR_GAIN) - cb_parms->corrected_gyro_readings[EL];
+                cb_parms->axis_errors[ROLL] = (cb_parms->unfiltered_position_errors[ROLL] * POS_ERR_GAIN) - cb_parms->corrected_gyro_readings[ROLL];
             }
 
             cb_parms->rate_loop_pass = TORQUE_OUT_PASS;
@@ -303,3 +305,6 @@ static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel)
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ACCEL_EL_TELEMETRY, accel_el_readings, 4);
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ACCEL_RL_TELEMETRY, accel_rl_readings, 4);
 }
+
+
+

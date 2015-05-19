@@ -3,15 +3,15 @@ System Name:  	PM_Sensorless
 
 File Name:	  	PM_Sensorless.C
 
-Description:	Primary system file for the Real Implementation of Sensorless  
+Description:	Primary system file for the Real Implementation of Sensorless
           		Field Orientation Control for Three Phase Permanent-Magnet
-          		Synchronous Motor(s) (PMSM) 
+          		Synchronous Motor(s) (PMSM)
 
 Originator:		Digital control systems Group - Texas Instruments
 
-Note: In this software, the default inverter is supposed to be DRV8412-EVM kit. 
+Note: In this software, the default inverter is supposed to be DRV8412-EVM kit.
 =====================================================================================
- History: 04-9-2010	Version 1.1: Support F2803x 
+ History: 04-9-2010	Version 1.1: Support F2803x
 =================================================================================  */
 
 #include "PM_Sensorless.h"
@@ -315,12 +315,18 @@ TestAxisRangeLimitsParms axis_range_limits_parms = {
     EL,                                     // Test axis
     RANGE_LIMITS_STATE_INIT,                // Test state
     AXIS_RANGE_TEST_SECTION_EL_CHECK_NEG,   // Current Section
-    {-833.0, -555.0, -833.0},               // Axis range minimum
-    {833.0, 555.0, 833.0},                 // Axis range maximum
+    {-4125.0, -1000.0, -1500.0},            // Axis range minimum
+    {1500.0, 875.0, 1500.0},                // Axis range maximum
     0.0,                                    // Current axis position
     0.0,                                    // Position step
     0,                                      // Status output decimation count
-    0                                       // Settle counter
+    0,                                      // Settle counter
+    0,                                      // last encoder reading
+    0.0,                                    // next position pause point
+    {0, 0, 0},                              // negative hard stops (encoder values)
+    {0, 0, 0},                              // positive hard stops (encoder values)
+    {0, 0, 0},                              // motor torque maximums
+    {0, 0, 0}                               // motor torque minimums
 };
 
 FactoryTestsParms test_parms = {
@@ -640,7 +646,7 @@ void main(void)
     motor_drive_parms.pid_id.param.Umax = _IQ(1.0);
     motor_drive_parms.pid_id.param.Umin = _IQ(-1.0);
 
-// Initialize the PID_GRANDO_CONTROLLER module for Iq 
+// Initialize the PID_GRANDO_CONTROLLER module for Iq
     motor_drive_parms.pid_iq.param.Kp = AxisTorqueLoopKp[board_hw_id];
     motor_drive_parms.pid_iq.param.Kr = _IQ(1.0);
     motor_drive_parms.pid_iq.param.Ki = AxisTorqueLoopKi[board_hw_id];
@@ -648,7 +654,7 @@ void main(void)
     motor_drive_parms.pid_iq.param.Km = _IQ(1.0);
     motor_drive_parms.pid_iq.param.Umax = _IQ(1.0);
     motor_drive_parms.pid_iq.param.Umin = _IQ(-1.0);
-	
+
 	// Get temp sensor calibration coefficients
 	TempOffset = getTempOffset();
 	TempSlope = getTempSlope();
@@ -843,7 +849,7 @@ void A1(void) // Used to enable and disable the motor
 	    GpioDataRegs.GPBCLEAR.bit.GPIO39 = 1;
 
 		axis_parms.run_motor = FALSE;
-		
+
 		EALLOW;
 	 	EPwm1Regs.TZFRC.bit.OST=1;
 		EPwm2Regs.TZFRC.bit.OST=1;
@@ -1019,7 +1025,7 @@ void B1(void) // SPARE
 {
 	//-----------------
 	//the next time CpuTimer1 'counter' reaches Period value go to B2
-	B_Task_Ptr = &B2;	
+	B_Task_Ptr = &B2;
 	//-----------------
 }
 
@@ -1039,7 +1045,7 @@ void B3(void) //  SPARE
 {
 	//-----------------
 	//the next time CpuTimer1 'counter' reaches Period value go to B1
-	B_Task_Ptr = &B1;	
+	B_Task_Ptr = &B1;
 	//-----------------
 }
 
@@ -1103,7 +1109,7 @@ void C1(void) // Update Status LEDs
 	}
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C2
-	C_Task_Ptr = &C2;	
+	C_Task_Ptr = &C2;
 	//-----------------
 }
 
@@ -1193,7 +1199,7 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 	*/
 
 	//the next time CpuTimer2 'counter' reaches Period value go to C3
-	C_Task_Ptr = &C3;	
+	C_Task_Ptr = &C3;
 	//-----------------
 }
 
@@ -1312,7 +1318,7 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 
 	//-----------------
 	//the next time CpuTimer2 'counter' reaches Period value go to C1
-	C_Task_Ptr = &C1;	
+	C_Task_Ptr = &C1;
 	//-----------------
 }
 

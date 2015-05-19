@@ -239,10 +239,40 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         */
 
                         // Temperature and GoPro battery level debug
+                        /*
                         int16 proc_temp = (int16)((((Uint16)msg.extended_param[0] << 8) & 0xFF00) | ((Uint16)msg.extended_param[1] & 0x00FF));
                         int16 gyro_temp = (int16)((((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF));
                         snprintf(debug_msg, 50, "Proc temp: %d, Gyro Temp: %d, Batt level: %d", proc_temp, gyro_temp, msg.extended_param[4]);
 
+                        send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
+                        */
+                        {
+                            int16 encoder = (int16)((((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF));
+                            char axis_name[3];
+                            switch (msg.extended_param[0]) {
+                                case 0:
+                                    strcpy(axis_name,"EL");
+                                    break;
+                                case 1:
+                                    strcpy(axis_name,"AZ");
+                                    break;
+                                case 2:
+                                    strcpy(axis_name,"RL");
+                                    break;
+                                default:
+                                    strcpy(axis_name,"??");
+                                    break;
+                            }
+                            if (msg.extended_param[1] == 1) {
+                                snprintf(debug_msg, 50, "%s negative hard stop %d", axis_name, encoder);
+                            }
+                            else if (msg.extended_param[1] == 2) {
+                                snprintf(debug_msg, 50, "%s positive hard stop %d", axis_name, encoder);
+                            }
+                            else {
+                                snprintf(debug_msg, 50, "%s unknown %d", axis_name, encoder);
+                            }
+                        }
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                     }
                     break;

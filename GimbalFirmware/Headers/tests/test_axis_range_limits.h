@@ -13,18 +13,25 @@
 #include "PeripheralHeaderIncludes.h"
 
 #define AXIS_MOVE_TIME_MS 5000
-#define AXIS_SETTLE_TIME_MS 7500
+#define AXIS_SETTLE_TIME_MS 5000
 #define ALLOWED_POSITION_ERROR_COUNTS 135.0
+
+#define HARDSTOP_SETTLE_TIME_MS 50
+#define MAX_STOPPED_ENCODER_CHANGE_ALLOWED 50         // same units as ControlBoardParms.encoder_readings
+#define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD  100 // same units as ControlBoardParms.encoder_readings
+
+#define PAUSE_POINT_INCR  125.0                       // units of axis position
+#define EL_AXIS_POS_STEP_SIZE   0.01666               // units of axis position
+#define RL_AXIS_POS_STEP_SIZE   0.01666               // units of axis position
+#define AZ_AXIS_POS_STEP_SIZE   0.0111                // units of axis position
 
 typedef enum {
     RANGE_LIMITS_STATE_INIT,
     RANGE_LIMITS_STATE_SETTLE_AT_HOME_1,
     RANGE_LIMITS_STATE_MOVE_TO_NEGATIVE_LIMIT,
-    RANGE_LIMITS_STATE_SETTLE_AT_NEGATIVE_LIMIT,
     RANGE_LIMITS_STATE_CHECK_NEGATIVE_LIMIT,
     RANGE_LIMITS_STATE_MOVE_TO_HOME_1,
     RANGE_LIMITS_STATE_MOVE_TO_POSITIVE_LIMIT,
-    RANGE_LIMITS_STATE_SETTLE_AT_POSITIVE_LIMIT,
     RANGE_LIMITS_STATE_CHECK_POSITIVE_LIMIT,
     RANGE_LIMITS_STATE_MOVE_TO_HOME_2,
     RANGE_LIMITS_STATE_SETTLE_AT_HOME_2,
@@ -61,6 +68,12 @@ typedef struct {
     float position_step;
     Uint32 status_output_decimation_count;
     Uint32 settle_counter;
+    int16  last_encoder_reading;
+    float  next_position_pause_point;
+    int16  encoder_hard_stop_neg[AXIS_CNT];
+    int16  encoder_hard_stop_plus[AXIS_CNT];
+    int16  motor_torque_max[AXIS_CNT];
+    int16  motor_torque_min[AXIS_CNT];
 } TestAxisRangeLimitsParms;
 
 int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, ControlBoardParms* cb_parms);
