@@ -115,7 +115,7 @@ signals:
     void factoryTestsStatus(int test, int test_section, int test_progress, int test_status);
     void gimbalAxisCalibrationStatus(bool yawAxisNeedsCalibration, bool pitchAxisNeedsCalibration, bool rollAxisNeedsCalibration);
     void gimbalStatusMessage(unsigned int severity, QString message);
-    void receivedTestStatus(TestResult result_id, float result);
+    void receivedTestStatus(unsigned char result_id, float result);
 
 private:
     QSerialPort* m_serialPort;

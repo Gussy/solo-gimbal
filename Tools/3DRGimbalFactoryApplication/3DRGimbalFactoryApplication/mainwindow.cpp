@@ -105,7 +105,7 @@ void MainWindow::on_connectButton_clicked()
     connect(this, SIGNAL(requestCalibrateAxesSetup(bool,bool,bool)), m_serialThreadObj, SLOT(requestCalibrateAxesSetup(bool,bool,bool)));
     connect(this, SIGNAL(requestCalibrateAxesPerform()), m_serialThreadObj, SLOT(requestCalibrateAxesPerform()));
     connect(m_serialThreadObj, SIGNAL(gimbalStatusMessage(uint,QString)), this, SLOT(receiveGimbalStatusMessage(uint,QString)));
-    connect(m_serialThreadObj, SIGNAL(receivedTestStatus(TestResult,float)), this, SIGNAL(receivedTestStatus(TestResult,float)));
+    connect(m_serialThreadObj, SIGNAL(receivedTestStatus(unsigned char,float)), this, SIGNAL(receivedTestStatus(unsigned char,float)));
     m_serialThread.start();
 
     // Disable the connect button, enable the disconnect button
@@ -483,7 +483,7 @@ void MainWindow::on_factoryTestsButton_clicked()
     AxisRangeTestDialog dialog;
     connect(this, SIGNAL(factoryTestsStatus(int,int,int,int)), &dialog, SLOT(receiveTestProgress(int,int,int,int)));
     connect(&dialog, SIGNAL(requestTestRetry()), this, SIGNAL(requestStartFactoryTests()));
-    connect(this, SIGNAL(receivedTestStatus(TestResult,float)), &dialog, SLOT(receiveTestStatus(TestResult,float)));
+    connect(this, SIGNAL(receivedTestStatus(unsigned char,float)), &dialog, SLOT(receiveTestStatus(unsigned char,float)));
     emit requestStartFactoryTests();
     dialog.exec();
 }

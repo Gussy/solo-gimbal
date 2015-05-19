@@ -140,7 +140,7 @@ void SerialInterfaceThread::handleInput()
 
                 default:
                     //emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, QString("Unknown message ID received: %1").arg(QString::number(received_msg.msgid)));
-                    qDebug() << "Unknown message ID received: " << received_msg.msgid << "\n";
+                    //qDebug() << "Unknown message ID received: " << received_msg.msgid << "\n";
                     break;
                 }
             }
@@ -643,9 +643,9 @@ void SerialInterfaceThread::handleDebug(mavlink_message_t *msg)
     mavlink_debug_t decoded_msg;
     mavlink_msg_debug_decode(msg, &decoded_msg);
 
-    TestResult result_id = static_cast<TestResult>(decoded_msg.ind);
-    emit receivedTestStatus(result_id, decoded_msg.value);
+    emit receivedTestStatus(decoded_msg.ind, decoded_msg.value);
 
+    TestResult result_id = static_cast<TestResult>(decoded_msg.ind);
     QString testResultID;
     switch (result_id) {
         case TEST_RESULT_NEG_RANGE_AZ:

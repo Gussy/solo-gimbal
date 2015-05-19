@@ -100,9 +100,11 @@ void AxisRangeTestDialog::setStepStatus(QLabel* statusLabel, int status)
     }
 }
 
-void AxisRangeTestDialog::receiveTestStatus(TestResult result_id, float result)
+void AxisRangeTestDialog::receiveTestStatus(unsigned char result_id, float result)
 {
-    switch (result_id) {
+    TestResult result_id_enum = static_cast<TestResult>(result_id);
+
+    switch (result_id_enum) {
         case TEST_RESULT_NEG_RANGE_AZ:
             ui->yawStop1->setText(QString::number(result));
             break;
