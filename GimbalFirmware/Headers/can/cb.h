@@ -3,6 +3,7 @@
 #include "can/cand.h"
 #include "mavlink_interface/gimbal_mavlink.h"
 #include "PM_Sensorless.h"
+#include "tests/factory_tests.h"
 
 typedef struct _DavinciVersion {
     uint8_t major;
@@ -35,5 +36,6 @@ void CANSendCalibrationProgress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS c
 void CANSendFactoryTestProgress(Uint8 test, Uint8 section, Uint8 progress, Uint8 status);
 void CANSendFactoryTestsComplete();
 void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status);
+void CANSendTestResult(TestResult result_id, float result);
 int16 GetMaxTorqueCmd(ControlBoardParms* cb_parms, GimbalAxis axis);
 void ResetMaxTorqueCmd(ControlBoardParms* cb_parms, GimbalAxis axis);

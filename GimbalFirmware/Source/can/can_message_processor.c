@@ -18,6 +18,7 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "helpers/fault_handling.h"
 #include "gopro/gopro_charge_control.h"
+#include "tests/factory_tests.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -324,6 +325,15 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                             }
 
                             send_mavlink_statustext(msg, severity);
+                        }
+                        break;
+
+                    case CAND_EPID_TEST_RESULT:
+                        if (msg.extended_param_length == 5) {
+                            TestResult result_id = (TestResult)msg.extended_param[0];
+                            IntOrFloat float_converter;
+                            float_converter.uint32_val = (((Uint32)msg.extended_param[1] << 24) & 0xFF000000) | (((Uint32)msg.extended_param[2] << 16) & 0x00FF0000) | (((Uint32)msg.extended_param[3] << 8) & 0x0000FF00) | ((Uint32)msg.extended_param[4] & 0x000000FF);
+                            send_mavlink_test_result(result_id, float_converter.float_val);
                         }
                         break;
                 }
