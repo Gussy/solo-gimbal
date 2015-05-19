@@ -12,6 +12,8 @@ import setup_mavlink, setup_param
 from setup_read_sw_version import readSWver
 import setup_run
 import time
+import numpy
+from setup_param import set_offsets
 
 def handle_file(args, link):
     fileExtension = str(args.file).split(".")[-1].lower()
@@ -88,6 +90,7 @@ def main():
     elif args.staticcal:
         setup_home.calibrate_joints(link)
         setup_home.calibrate_gyro(link)
+        set_offsets(link, 'ACC', numpy.zeros(3)) # Until we have accel cal zero the offsets on calibration
         return
     elif args.jointcalibration:
         setup_home.calibrate_joints(link)
