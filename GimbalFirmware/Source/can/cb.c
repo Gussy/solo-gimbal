@@ -139,8 +139,15 @@ void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status)
 void CANSendTestResult(TestResult result_id, float result)
 {
     Uint8 params[5];
+    memset(params, 0x00, 5);
     params[0] = (Uint8)result_id;
-    memcpy(&(params[1]), &result, 4);
+
+    IntOrFloat converter;
+    converter.float_val = result;
+    params[1] = (converter.uint32_val >> 24) & 0x000000FF;
+    params[2] = (converter.uint32_val >> 16) & 0x000000FF;
+    params[3] = (converter.uint32_val >> 8) & 0x000000FF;
+    params[4] = converter.uint32_val & 0x000000FF;
 
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_TEST_RESULT, params, 5);
 }

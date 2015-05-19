@@ -227,7 +227,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             break;
 
         case TELEM_OUT_PASS:
-            //SendDebug1ToAz(cb_parms->axis_errors[AZ], cb_parms->motor_torques[AZ], 0);
+            //SendDebug1ToAz(cb_parms->encoder_readings[AZ], cb_parms->encoder_readings[EL], cb_parms->encoder_readings[ROLL]);
 
             // Send encoder, gyro, and accelerometer telemetry at a decimated rate of 100Hz
             if (++telemetry_decimation_count >= TELEMETRY_DECIMATION_LIMIT) {
