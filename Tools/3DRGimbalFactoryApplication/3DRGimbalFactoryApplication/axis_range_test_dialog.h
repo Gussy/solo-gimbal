@@ -1,6 +1,8 @@
 #ifndef AXIS_RANGE_TEST_DIALOG_H
 #define AXIS_RANGE_TEST_DIALOG_H
 
+#include "serial_interface_thread.h"
+
 #include <QDialog>
 #include <QPixmap>
 #include <QLabel>
@@ -19,6 +21,7 @@ public:
 
 public slots:
     void receiveTestProgress(int, int test_section, int test_progress, int test_status);
+    void receiveTestStatus(TestResult result_id, float result);
     void reject();
 
 signals:

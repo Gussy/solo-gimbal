@@ -100,6 +100,59 @@ void AxisRangeTestDialog::setStepStatus(QLabel* statusLabel, int status)
     }
 }
 
+void AxisRangeTestDialog::receiveTestStatus(TestResult result_id, float result)
+{
+    switch (result_id) {
+        case TEST_RESULT_NEG_RANGE_AZ:
+            ui->yawStop1->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_POS_RANGE_AZ:
+            ui->yawStop2->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_AZ:
+            ui->yawMaxNegativeTorque->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_AZ:
+            ui->yawMaxPositiveTorque->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_NEG_RANGE_EL:
+            ui->pitchStop1->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_POS_RANGE_EL:
+            ui->pitchStop2->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_EL:
+            ui->pitchMaxNegativeTorque->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_EL:
+            ui->pitchMaxPositiveTorque->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_NEG_RANGE_RL:
+            ui->rollStop1->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_POS_RANGE_RL:
+            ui->rollStop2->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_RL:
+            ui->rollMaxNegativeTorque->setText(QString::number(result));
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_RL:
+            ui->rollMaxPositiveTorque->setText(QString::number(result));
+            break;
+    }
+}
+
 void AxisRangeTestDialog::on_okButton_clicked()
 {
     accept();
@@ -134,6 +187,20 @@ void AxisRangeTestDialog::resetTestUI()
     ui->yawCheckNegativeStatus->setPixmap(m_inProgressIcon);
     ui->yawCheckPositiveStatus->setPixmap(m_inProgressIcon);
     ui->yawReturnHomeStatus->setPixmap(m_inProgressIcon);
+
+    // Reset the stop and max torque indicators
+    ui->pitchStop1->setText("Waiting...");
+    ui->pitchStop2->setText("Waiting...");
+    ui->pitchMaxNegativeTorque->setText("Waiting...");
+    ui->pitchMaxPositiveTorque->setText("Waiting...");
+    ui->rollStop1->setText("Waiting...");
+    ui->rollStop2->setText("Waiting...");
+    ui->rollMaxNegativeTorque->setText("Waiting...");
+    ui->rollMaxPositiveTorque->setText("Waiting...");
+    ui->yawStop1->setText("Waiting...");
+    ui->yawStop2->setText("Waiting...");
+    ui->yawMaxNegativeTorque->setText("Waiting...");
+    ui->yawMaxPositiveTorque->setText("Waiting...");
 
     // Disable the ok and retry buttons
     ui->okButton->setEnabled(false);

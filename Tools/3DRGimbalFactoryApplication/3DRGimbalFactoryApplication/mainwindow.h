@@ -64,6 +64,7 @@ signals:
     void factoryTestsStatus(int test, int test_section, int test_progress, int test_status);
     void gimbalAxisCalibrationStatus(bool yawNeedsCalibration, bool pitchNeedsCalibration, bool rollNeedsCalibration);
     void requestAxisCalibrationStatus();
+    void receivedTestStatus(TestResult result_id, float result);
 
 private:
     Ui::MainWindow *ui;
