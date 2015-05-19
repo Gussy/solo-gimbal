@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>395</width>
-    <height>434</height>
+    <width>461</width>
+    <height>752</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,23 +20,17 @@
    <string>Axis Range Test</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="2">
-    <widget class="QLabel" name="pitchCheckPositiveStatus">
-     <property name="minimumSize">
-      <size>
-       <width>32</width>
-       <height>32</height>
-      </size>
-     </property>
+   <item row="10" column="1" colspan="2">
+    <widget class="QLabel" name="testStatus">
      <property name="text">
-      <string/>
+      <string>Test Running...</string>
      </property>
-     <property name="pixmap">
-      <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
-   <item row="10" column="0" colspan="3">
+   <item row="11" column="0" colspan="3">
     <widget class="QFrame" name="buttonsFrame">
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
@@ -93,275 +87,494 @@
      </layout>
     </widget>
    </item>
-   <item row="9" column="1" colspan="2">
-    <widget class="QLabel" name="testStatus">
-     <property name="text">
-      <string>Test Running...</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="2">
-    <widget class="QLabel" name="yawReturnHomeStatus">
-     <property name="minimumSize">
-      <size>
-       <width>32</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="2">
-    <widget class="QLabel" name="rollReturnHomeStatus">
-     <property name="minimumSize">
-      <size>
-       <width>32</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="2">
-    <widget class="QLabel" name="yawCheckNegativeStatus">
-     <property name="minimumSize">
-      <size>
-       <width>32</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="2">
-    <widget class="QLabel" name="pitchReturnHomeStatus">
-     <property name="minimumSize">
-      <size>
-       <width>32</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="2">
-    <widget class="QLabel" name="pitchCheckNegativeStatus">
-     <property name="minimumSize">
-      <size>
-       <width>32</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="2">
-    <widget class="QLabel" name="rollCheckNegativeStatus">
-     <property name="minimumSize">
-      <size>
-       <width>32</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1">
-    <widget class="QProgressBar" name="rollCheckNegativeProgress">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="1">
-    <widget class="QProgressBar" name="yawCheckNegativeProgress">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="2">
-    <widget class="QLabel" name="rollCheckPositiveStatus">
-     <property name="minimumSize">
-      <size>
-       <width>32</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <widget class="QProgressBar" name="rollReturnHomeProgress">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1">
-    <widget class="QProgressBar" name="rollCheckPositiveProgress">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="2">
-    <widget class="QLabel" name="yawCheckPositiveStatus">
-     <property name="minimumSize">
-      <size>
-       <width>32</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="pitchCheckPositive_label">
-     <property name="text">
-      <string>Pitch Check Positive Range:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="rollCheckNegative_label">
-     <property name="text">
-      <string>Roll Check Negative Range:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QProgressBar" name="pitchCheckPositiveProgress">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="pitchCheckNegative_label">
-     <property name="text">
-      <string>Pitch Check Negative Range:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="pitchReturnHome_label">
-     <property name="text">
-      <string>Pitch Return Home:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="rollCheckPositive_label">
-     <property name="text">
-      <string>Roll Check Positive Range:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="rollReturnHome_label">
-     <property name="text">
-      <string>Roll Return Home:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="0">
-    <widget class="QLabel" name="yawCheckNegative_label">
-     <property name="text">
-      <string>Yaw Check Negative Range:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="0">
-    <widget class="QLabel" name="yawCheckPositive_label">
-     <property name="text">
-      <string>Yaw Check Positive Range:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="0">
-    <widget class="QLabel" name="yawReturnHome_label">
-     <property name="text">
-      <string>Yaw Return Home:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QProgressBar" name="pitchCheckNegativeProgress">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1">
-    <widget class="QProgressBar" name="pitchReturnHomeProgress">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="1">
-    <widget class="QProgressBar" name="yawCheckPositiveProgress">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="1">
-    <widget class="QProgressBar" name="yawReturnHomeProgress">
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="0">
+   <item row="10" column="0">
     <widget class="QLabel" name="testStatus_label">
      <property name="text">
       <string>Test Status:</string>
      </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="3">
+    <widget class="QGroupBox" name="pitchGroup">
+     <property name="title">
+      <string>Pitch</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="2">
+       <widget class="QLabel" name="pitchCheckNegativeStatus">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="pitchCheckNegative_label">
+        <property name="text">
+         <string>Pitch Check Negative Range:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QProgressBar" name="pitchCheckNegativeProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1" colspan="2">
+       <widget class="QLabel" name="pitchMaxNegativeTorque">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1" colspan="2">
+       <widget class="QLabel" name="pitchStop2">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QProgressBar" name="pitchReturnHomeProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QProgressBar" name="pitchCheckPositiveProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="pitchCheckPositive_label">
+        <property name="text">
+         <string>Pitch Check Positive Range:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="pitchReturnHome_label">
+        <property name="text">
+         <string>Pitch Return Home:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="pitchReturnHomeStatus">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="pitchCheckPositiveStatus">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1" colspan="2">
+       <widget class="QLabel" name="pitchStop1">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="pitchStop1_label">
+        <property name="text">
+         <string>Stop 1:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="pitchStop2_label">
+        <property name="text">
+         <string>Stop 2:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="pitchMaxNegativeTorque_label">
+        <property name="text">
+         <string>Max Negative Travel Torque:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="pitchMaxPositiveTorque_label">
+        <property name="text">
+         <string>Max Positive Travel Torque:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1" colspan="2">
+       <widget class="QLabel" name="pitchMaxPositiveTorque">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+     <zorder>pitchCheckNegative_label</zorder>
+     <zorder>pitchCheckNegative_label</zorder>
+     <zorder>pitchCheckNegativeProgress</zorder>
+     <zorder>pitchCheckNegativeStatus</zorder>
+     <zorder>pitchCheckPositive_label</zorder>
+     <zorder>pitchCheckPositiveProgress</zorder>
+     <zorder>pitchCheckPositiveStatus</zorder>
+     <zorder>pitchReturnHome_label</zorder>
+     <zorder>pitchReturnHomeProgress</zorder>
+     <zorder>pitchReturnHomeStatus</zorder>
+     <zorder>pitchStop1_label</zorder>
+     <zorder>pitchStop2_label</zorder>
+     <zorder>pitchMaxNegativeTorque_label</zorder>
+     <zorder>pitchStop1</zorder>
+     <zorder>pitchStop2</zorder>
+     <zorder>pitchMaxNegativeTorque</zorder>
+     <zorder>pitchMaxPositiveTorque_label</zorder>
+     <zorder>pitchMaxPositiveTorque</zorder>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="3">
+    <widget class="QGroupBox" name="rollGroup">
+     <property name="title">
+      <string>Roll</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="2">
+       <widget class="QLabel" name="rollCheckNegativeStatus">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1" colspan="2">
+       <widget class="QLabel" name="rollMaxNegativeTorque">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QProgressBar" name="rollCheckNegativeProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="rollCheckNegative_label">
+        <property name="text">
+         <string>Roll Check Negative Range:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1" colspan="2">
+       <widget class="QLabel" name="rollStop2">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="rollStop1_label">
+        <property name="text">
+         <string>Stop 1:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="rollStop2_label">
+        <property name="text">
+         <string>Stop 2:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="rollMaxNegativeTorque_label">
+        <property name="text">
+         <string>Max Negative Travel Torque:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1" colspan="2">
+       <widget class="QLabel" name="rollStop1">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="rollCheckPositiveStatus">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QProgressBar" name="rollCheckPositiveProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="rollCheckPositive_label">
+        <property name="text">
+         <string>Roll Check Positive Range:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="rollReturnHome_label">
+        <property name="text">
+         <string>Roll Return Home:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QProgressBar" name="rollReturnHomeProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="rollReturnHomeStatus">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="rollMaxPositiveTorque_label">
+        <property name="text">
+         <string>Max Positive Travel Torque:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1" colspan="2">
+       <widget class="QLabel" name="rollMaxPositiveTorque">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="3">
+    <widget class="QGroupBox" name="yawGroup">
+     <property name="title">
+      <string>Yaw</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="2" column="0">
+       <widget class="QLabel" name="yawReturnHome_label">
+        <property name="text">
+         <string>Yaw Return Home:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1" colspan="2">
+       <widget class="QLabel" name="yawStop1">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1" colspan="2">
+       <widget class="QLabel" name="yawStop2">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1" colspan="2">
+       <widget class="QLabel" name="yawMaxNegativeTorque">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="yawStop1_label">
+        <property name="text">
+         <string>Stop 1:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="yawStop2_label">
+        <property name="text">
+         <string>Stop 2:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="yawMaxNegativeTorque_label">
+        <property name="text">
+         <string>Max Negative Travel Torque:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="yawCheckNegativeStatus">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QProgressBar" name="yawReturnHomeProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QProgressBar" name="yawCheckNegativeProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="yawCheckNegative_label">
+        <property name="text">
+         <string>Yaw Check Negative Range:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="yawCheckPositiveStatus">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="yawCheckPositive_label">
+        <property name="text">
+         <string>Yaw Check Positive Range:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QProgressBar" name="yawCheckPositiveProgress">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="yawReturnHomeStatus">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="images.qrc">:/icons/32x32/Images/Ellipsis_32x32.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="yawMaxPositiveTorque_label">
+        <property name="text">
+         <string>Max Positive Travel Torque:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1" colspan="2">
+       <widget class="QLabel" name="yawMaxPositiveTorque">
+        <property name="text">
+         <string>Waiting...</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>

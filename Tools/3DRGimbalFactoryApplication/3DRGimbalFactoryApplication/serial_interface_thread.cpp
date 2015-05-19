@@ -134,6 +134,10 @@ void SerialInterfaceThread::handleInput()
                     handleReportAxisCalibrationStatus(&received_msg);
                     break;
 
+                case MAVLINK_MSG_ID_DEBUG:
+                    handleDebug(&received_msg);
+                    break;
+
                 default:
                     //emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, QString("Unknown message ID received: %1").arg(QString::number(received_msg.msgid)));
                     qDebug() << "Unknown message ID received: " << received_msg.msgid << "\n";
@@ -486,11 +490,13 @@ void SerialInterfaceThread::handleFactoryTestsProgress(mavlink_message_t* msg)
     mavlink_gimbal_report_factory_tests_progress_t decoded_msg;
     mavlink_msg_gimbal_report_factory_tests_progress_decode(msg, &decoded_msg);
 
+    /*
     emit gimbalStatusMessage(MAV_SEVERITY_DEBUG,
                              QString("Factory test progress: Test: %1, Test Section: %2, Section Progress: %3, Test Status: %4").arg(QString::number(decoded_msg.test),
                                                                                                                                      QString::number(decoded_msg.test_section),
                                                                                                                                      QString::number(decoded_msg.test_section_progress),
                                                                                                                                      QString::number(decoded_msg.test_status)));
+    */
 
     emit factoryTestsStatus(decoded_msg.test, decoded_msg.test_section, decoded_msg.test_section_progress, decoded_msg.test_status);
 
@@ -630,6 +636,68 @@ void SerialInterfaceThread::handleReportAxisCalibrationStatus(mavlink_message_t 
                                          (decoded_msg.pitch_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE),
                                          (decoded_msg.roll_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE));
     }
+}
+
+void SerialInterfaceThread::handleDebug(mavlink_message_t *msg)
+{
+    mavlink_debug_t decoded_msg;
+    mavlink_msg_debug_decode(msg, &decoded_msg);
+
+    TestResult result_id = static_cast<TestResult>(decoded_msg.ind);
+    emit receivedTestStatus(result_id, decoded_msg.value);
+
+    QString testResultID;
+    switch (result_id) {
+        case TEST_RESULT_NEG_RANGE_AZ:
+            testResultID = "Negative Range AZ";
+            break;
+
+        case TEST_RESULT_POS_RANGE_AZ:
+            testResultID = "Positive Range AZ";
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_AZ:
+            testResultID = "Negative Max Torque AZ";
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_AZ:
+            testResultID = "Positive Max Torque AZ";
+            break;
+
+        case TEST_RESULT_NEG_RANGE_EL:
+            testResultID = "Negative Range EL";
+            break;
+
+        case TEST_RESULT_POS_RANGE_EL:
+            testResultID = "Positive Range EL";
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_EL:
+            testResultID = "Negative Max Torque EL";
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_EL:
+            testResultID = "Positive Max Torque EL";
+            break;
+
+        case TEST_RESULT_NEG_RANGE_RL:
+            testResultID = "Negative Range RL";
+            break;
+
+        case TEST_RESULT_POS_RANGE_RL:
+            testResultID = "Positive Range RL";
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_RL:
+            testResultID = "Negative Max Torque RL";
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_RL:
+            testResultID = "Positive Max Torque RL";
+            break;
+    }
+
+    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, QString("Received test result %1 (%2) with value %3").arg(QString::number(result_id), testResultID, QString::number(decoded_msg.value)));
 }
 
 void SerialInterfaceThread::retryAxesCalibration()

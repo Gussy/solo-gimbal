@@ -46,6 +46,21 @@ enum  AxisRangeLimitsTestSection {
     AXIS_RANGE_TEST_SECTION_AZ_RETURN_HOME
 };
 
+typedef enum {
+    TEST_RESULT_NEG_RANGE_AZ = 0,
+    TEST_RESULT_POS_RANGE_AZ,
+    TEST_RESULT_NEG_MAX_TORQUE_AZ,
+    TEST_RESULT_POS_MAX_TORQUE_AZ,
+    TEST_RESULT_NEG_RANGE_EL,
+    TEST_RESULT_POS_RANGE_EL,
+    TEST_RESULT_NEG_MAX_TORQUE_EL,
+    TEST_RESULT_POS_MAX_TORQUE_EL,
+    TEST_RESULT_NEG_RANGE_RL,
+    TEST_RESULT_POS_RANGE_RL,
+    TEST_RESULT_NEG_MAX_TORQUE_RL,
+    TEST_RESULT_POS_MAX_TORQUE_RL
+} TestResult;
+
 typedef union {
     uint32_t uint32_value;
     float float_value;
@@ -100,6 +115,7 @@ signals:
     void factoryTestsStatus(int test, int test_section, int test_progress, int test_status);
     void gimbalAxisCalibrationStatus(bool yawAxisNeedsCalibration, bool pitchAxisNeedsCalibration, bool rollAxisNeedsCalibration);
     void gimbalStatusMessage(unsigned int severity, QString message);
+    void receivedTestStatus(TestResult result_id, float result);
 
 private:
     QSerialPort* m_serialPort;
@@ -132,6 +148,7 @@ private:
     void handleHomeOffsetCalibrationResult(mavlink_message_t* msg);
     void handleFactoryTestsProgress(mavlink_message_t* msg);
     void handleReportAxisCalibrationStatus(mavlink_message_t* msg);
+    void handleDebug(mavlink_message_t* msg);
     void sendLoadFirmwareStart(int numPackets);
     void sendCalibrateHomeOffsets();
     void sendParamRequest(QString paramName);
