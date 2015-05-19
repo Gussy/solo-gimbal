@@ -243,6 +243,16 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         int16 proc_temp = (int16)((((Uint16)msg.extended_param[0] << 8) & 0xFF00) | ((Uint16)msg.extended_param[1] & 0x00FF));
                         int16 gyro_temp = (int16)((((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF));
                         snprintf(debug_msg, 50, "Proc temp: %d, Gyro Temp: %d, Batt level: %d", proc_temp, gyro_temp, msg.extended_param[4]);
+                        */
+
+                        // Current state debug
+                        /*
+                        if (msg.extended_param[0] == EL) {
+                            snprintf(debug_msg, 50, "EL State: %d", msg.extended_param[1]);
+                        } else if (msg.extended_param[0] == ROLL) {
+                            snprintf(debug_msg, 50, "RL State: %d", msg.extended_param[1]);
+                        }
+                        */
 
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                         */

@@ -10,6 +10,8 @@
 
 #include <math.h>
 
+#define ENABLE_RELATIVE_KINEMATICS
+
 //static float theta_rate = 0;
 //static float theta_old = 0;
 static float phi = 0;
@@ -22,9 +24,15 @@ int do_gyro_correction(int16* gyro_in, int16* encoder_in, int16* gyro_out)
 
     //theta_rate = 100*1689.7212928*second_order_filter(theta,fv,1833.046411055, -1833.046411055, 0, -0.222030941, 0);
 
+#if defined (ENABLE_INERTIAL_KINEMATICS)
     gyro_out[ROLL] = gyro_in[ROLL] * cos(theta) + gyro_in[AZ] * sin(theta);
     gyro_out[EL] = gyro_in[EL];
     gyro_out[AZ] = -1 * sin(theta) * cos(phi) * gyro_in[ROLL] + sin(phi) * gyro_in[EL] + cos(phi) * cos(theta) * gyro_in[AZ]; //-1*sin(phi)*theta_rate;
+#elif defined (ENABLE_RELATIVE_KINEMATICS)
+    gyro_out[ROLL]  =                 cos(theta)*gyro_in[ROLL] + 0*gyro_in[EL] +               sin(theta)*gyro_in[AZ] ;
+    gyro_out[EL]    =        sin(theta)*tan(phi)*gyro_in[ROLL] + 1*gyro_in[EL] + (-1)*cos(theta)*tan(phi)*gyro_in[AZ];
+    gyro_out[AZ]    = (-1)*(sin(theta)/cos(phi))*gyro_in[ROLL] + 0*gyro_in[EL] +    (cos(theta)/cos(phi))*gyro_in[AZ];
+#endif
 
     return 0;
 }

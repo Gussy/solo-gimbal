@@ -163,6 +163,7 @@ typedef struct {
     Uint8 enabled;
     Uint8 running_tests;
     int16 last_gyro_temp;
+    int16 max_torque_cmd[AXIS_CNT];
 } ControlBoardParms;
 
 typedef struct {

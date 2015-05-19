@@ -92,6 +92,7 @@ void SerialInterfaceThread::handleInput()
                         emit receivedHeartbeat();
                         m_interfaceState = INTERFACE_INDICATED_CODE_LOADED;
                     }
+                    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, "Received Gimbal Heartbeat");
                     break;
 
                 case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
@@ -101,6 +102,7 @@ void SerialInterfaceThread::handleInput()
                     } else if (m_interfaceState == INTERFACE_LOADING_CODE) {
                         handleDataTransmissionHandshake(&received_msg);
                     }
+                    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, "Received Data Transmission Handshake");
                     break;
 
                 case MAVLINK_MSG_ID_GIMBAL_AXIS_CALIBRATION_PROGRESS:
@@ -120,6 +122,7 @@ void SerialInterfaceThread::handleInput()
                     break;
 
                 case MAVLINK_MSG_ID_GIMBAL_FACTORY_PARAMETERS_LOADED:
+                    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, "Gimbal factory parameters loaded");
                     emit factoryParametersLoaded();
                     break;
 
@@ -132,6 +135,7 @@ void SerialInterfaceThread::handleInput()
                     break;
 
                 default:
+                    //emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, QString("Unknown message ID received: %1").arg(QString::number(received_msg.msgid)));
                     qDebug() << "Unknown message ID received: " << received_msg.msgid << "\n";
                     break;
                 }
@@ -227,6 +231,36 @@ void SerialInterfaceThread::handleGimbalAxisCalibrationProgress(mavlink_message_
 {
     mavlink_gimbal_axis_calibration_progress_t decoded_msg;
     mavlink_msg_gimbal_axis_calibration_progress_decode(msg, &decoded_msg);
+    QString calibrationStatus;
+    switch (decoded_msg.calibration_status) {
+        case GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED:
+            calibrationStatus = "Succeeded";
+            break;
+
+        case GIMBAL_AXIS_CALIBRATION_STATUS_FAILED:
+            calibrationStatus = "Failed";
+            break;
+
+        case GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS:
+            calibrationStatus = "In Progress";
+            break;
+    }
+    QString calibrationAxis;
+    switch (decoded_msg.calibration_axis) {
+        case GIMBAL_AXIS_PITCH:
+            calibrationAxis = "Pitch";
+            break;
+
+        case GIMBAL_AXIS_ROLL:
+            calibrationAxis = "Roll";
+            break;
+
+        case GIMBAL_AXIS_YAW:
+            calibrationAxis = "Yaw";
+            break;
+    }
+
+    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, QString("Axis %1 calibration status: %2, progress: %3").arg(calibrationAxis, calibrationStatus, QString::number(decoded_msg.calibration_progress)));
 
     switch (decoded_msg.calibration_axis) {
         case GIMBAL_AXIS_PITCH:
@@ -348,6 +382,9 @@ void SerialInterfaceThread::handleParamValue(mavlink_message_t *msg)
 {
     mavlink_param_value_t decoded_msg;
     mavlink_msg_param_value_decode(msg, &decoded_msg);
+
+    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, QString("Received gimbal param %1 with value %2").arg(QString(decoded_msg.param_id), QString::number(decoded_msg.param_value)));
+
     if (QString(decoded_msg.param_id) == QString("SYSID_SWVER")) {
         IntOrFloat float_converter;
         float_converter.float_value = decoded_msg.param_value;
@@ -449,6 +486,12 @@ void SerialInterfaceThread::handleFactoryTestsProgress(mavlink_message_t* msg)
     mavlink_gimbal_report_factory_tests_progress_t decoded_msg;
     mavlink_msg_gimbal_report_factory_tests_progress_decode(msg, &decoded_msg);
 
+    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG,
+                             QString("Factory test progress: Test: %1, Test Section: %2, Section Progress: %3, Test Status: %4").arg(QString::number(decoded_msg.test),
+                                                                                                                                     QString::number(decoded_msg.test_section),
+                                                                                                                                     QString::number(decoded_msg.test_section_progress),
+                                                                                                                                     QString::number(decoded_msg.test_status)));
+
     emit factoryTestsStatus(decoded_msg.test, decoded_msg.test_section, decoded_msg.test_section_progress, decoded_msg.test_status);
 
     /*
@@ -528,12 +571,60 @@ void SerialInterfaceThread::handleReportAxisCalibrationStatus(mavlink_message_t 
     mavlink_gimbal_report_axis_calibration_status_t decoded_msg;
     mavlink_msg_gimbal_report_axis_calibration_status_decode(msg, &decoded_msg);
 
+    QString yawCalibrationStatus;
+    QString pitchCalibrationStatus;
+    QString rollCalibrationStatus;
+
+    switch (decoded_msg.yaw_requires_calibration) {
+    case GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN:
+        yawCalibrationStatus = "Unknown";
+        break;
+
+    case GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE:
+        yawCalibrationStatus = "False";
+        break;
+
+    case GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE:
+        yawCalibrationStatus = "True";
+        break;
+    }
+
+    switch (decoded_msg.pitch_requires_calibration) {
+    case GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN:
+        pitchCalibrationStatus = "Unknown";
+        break;
+
+    case GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE:
+        pitchCalibrationStatus = "False";
+        break;
+
+    case GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE:
+        pitchCalibrationStatus = "True";
+        break;
+    }
+
+    switch (decoded_msg.roll_requires_calibration) {
+    case GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN:
+        rollCalibrationStatus = "Unknown";
+        break;
+
+    case GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE:
+        rollCalibrationStatus = "False";
+        break;
+
+    case GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE:
+        rollCalibrationStatus = "True";
+        break;
+    }
+
+    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, QString("Yaw requires cal: %1, Pitch requires cal: %2, Roll requires cal: %3").arg(yawCalibrationStatus, pitchCalibrationStatus, rollCalibrationStatus));
+
     // If any of the axis calibration statuses are unknown, resend the request.  Otherwise,
     // let the rest of the application know the calibration status for all axes
     if ((decoded_msg.yaw_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) ||
         (decoded_msg.pitch_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) ||
         (decoded_msg.roll_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN)) {
-        requestAxisCalibrationStatus();
+        //requestAxisCalibrationStatus();
     } else {
         emit gimbalAxisCalibrationStatus((decoded_msg.yaw_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE),
                                          (decoded_msg.pitch_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE),
@@ -590,6 +681,20 @@ void SerialInterfaceThread::handleHomeOffsetCalibrationResult(mavlink_message_t*
 {
     mavlink_gimbal_home_offset_calibration_result_t decoded_msg;
     mavlink_msg_gimbal_home_offset_calibration_result_decode(msg, &decoded_msg);
+
+    QString calibrationResult;
+    switch (decoded_msg.calibration_result) {
+        case GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED:
+            calibrationResult = "Succeeded";
+            break;
+
+        case GIMBAL_AXIS_CALIBRATION_STATUS_FAILED:
+            calibrationResult = "Failed";
+            break;
+    }
+
+    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, QString("Home offset calibration result: %1").arg(calibrationResult));
+
     if (decoded_msg.calibration_result == GIMBAL_AXIS_CALIBRATION_STATUS_SUCCEEDED) {
         emit homeOffsetCalibrationFinished(true);
 

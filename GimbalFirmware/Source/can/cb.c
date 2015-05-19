@@ -170,3 +170,13 @@ void IFBSendVersionV2( DavinciVersion* v )
 		sw_version_state = VERSION_MAJOR;
 	}
 }
+
+int16 GetMaxTorqueCmd(ControlBoardParms* cb_parms, GimbalAxis axis)
+{
+    return cb_parms->max_torque_cmd[axis];
+}
+
+void ResetMaxTorqueCmd(ControlBoardParms* cb_parms, GimbalAxis axis)
+{
+    cb_parms->max_torque_cmd[axis] = 0;
+}

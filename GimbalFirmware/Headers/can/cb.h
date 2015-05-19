@@ -35,3 +35,5 @@ void CANSendCalibrationProgress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS c
 void CANSendFactoryTestProgress(Uint8 test, Uint8 section, Uint8 progress, Uint8 status);
 void CANSendFactoryTestsComplete();
 void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status);
+int16 GetMaxTorqueCmd(ControlBoardParms* cb_parms, GimbalAxis axis);
+void ResetMaxTorqueCmd(ControlBoardParms* cb_parms, GimbalAxis axis);
