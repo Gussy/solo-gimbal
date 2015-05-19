@@ -102,6 +102,9 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
             if (test_parms->status_output_decimation_count++ >= 1000) {
                 test_parms->status_output_decimation_count = 0;
                 Uint8 progress = (Uint8)((test_parms->current_axis_position / test_parms->axis_range_min[test_parms->test_axis]) * 100.0);
+                if (progress >= 100) {
+                    progress = 99;
+                }
                 CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, progress, AXIS_RANGE_TEST_STATUS_IN_PROGRESS);
             }
 
@@ -109,68 +112,42 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
             break;
 
         case RANGE_LIMITS_STATE_CHECK_NEGATIVE_LIMIT:
-            // TODO - for now just print limit to debug port and report success
-            // old test is ifdef'd out below for reference
-            test_parms->motor_torque_max_neg[test_parms->test_axis] = GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
-            ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
             {
-                Uint8 debug_data[6];
-                debug_data[0] = test_parms->test_axis;
-                debug_data[1] = 1;
-                debug_data[2] = (test_parms->encoder_hard_stop_neg[test_parms->test_axis] >> 8) & 0x00FF;
-                debug_data[3] = (test_parms->encoder_hard_stop_neg[test_parms->test_axis] & 0x00FF);
-                debug_data[4] = (test_parms->motor_torque_max_neg[test_parms->test_axis] >> 8) & 0x00FF;
-                debug_data[5] = (test_parms->motor_torque_max_neg[test_parms->test_axis] & 0x00FF);
-                cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_data, 6);
-            }
-            CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
+                TestResult result_id_encoder;
+                TestResult result_id_torque;
+                AxisRangeLimitsTestSection next_section;
 
-            test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_HOME_1;
-            switch (test_parms->test_axis) {
-                case AZ:
-                    test_parms->current_section = AXIS_RANGE_TEST_SECTION_AZ_CHECK_POS;
-                    break;
+                switch (test_parms->test_axis) {
+                    case AZ:
+                        next_section = AXIS_RANGE_TEST_SECTION_AZ_CHECK_POS;
+                        result_id_encoder = TEST_RESULT_NEG_RANGE_AZ;
+                        result_id_torque = TEST_RESULT_NEG_MAX_TORQUE_AZ;
+                        break;
 
-                case EL:
-                    test_parms->current_section = AXIS_RANGE_TEST_SECTION_EL_CHECK_POS;
-                    break;
+                    case EL:
+                        next_section = AXIS_RANGE_TEST_SECTION_EL_CHECK_POS;
+                        result_id_encoder = TEST_RESULT_NEG_RANGE_EL;
+                        result_id_torque = TEST_RESULT_NEG_MAX_TORQUE_EL;
+                        break;
 
-                case ROLL:
-                    test_parms->current_section = AXIS_RANGE_TEST_SECTION_RL_CHECK_POS;
-                    break;
-            }
-            #ifdef OLD_CODE
-            // here's how it used to be done...
-            {
-                float error = fabs(test_parms->axis_range_min[test_parms->test_axis] - (float)(cb_parms->encoder_readings[test_parms->test_axis]));
-
-                if (error > (float)(ALLOWED_POSITION_ERROR_COUNTS)) {
-                    send_error_and_reset_parms(test_parms, cb_parms, AXIS_RANGE_TEST_STATUS_FAILED_NEGATIVE);
-                    return -1;
+                    case ROLL:
+                        next_section = AXIS_RANGE_TEST_SECTION_RL_CHECK_POS;
+                        result_id_encoder = TEST_RESULT_NEG_RANGE_RL;
+                        result_id_torque = TEST_RESULT_NEG_MAX_TORQUE_RL;
+                        break;
                 }
-                else {
-                    CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
+                CANSendTestResult(result_id_encoder, (float)test_parms->encoder_hard_stop_neg[test_parms->test_axis]);
 
-                    // Pre-compute the position step for the next move
-                    test_parms->position_step = fabs(test_parms->axis_range_min[test_parms->test_axis]) / ((float)ISR_FREQUENCY * (float)AXIS_MOVE_TIME_MS);
+                test_parms->motor_torque_max_neg[test_parms->test_axis] = -GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+                ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
 
-                    test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_HOME_1;
-                    switch (test_parms->test_axis) {
-                        case AZ:
-                            test_parms->current_section = AXIS_RANGE_TEST_SECTION_AZ_CHECK_POS;
-                            break;
+                CANSendTestResult(result_id_torque, (float)test_parms->motor_torque_max_neg[test_parms->test_axis]);
 
-                        case EL:
-                            test_parms->current_section = AXIS_RANGE_TEST_SECTION_EL_CHECK_POS;
-                            break;
+                CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
 
-                        case ROLL:
-                            test_parms->current_section = AXIS_RANGE_TEST_SECTION_RL_CHECK_POS;
-                            break;
-                    }
-                }
+                test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_HOME_1;
+                test_parms->current_section = next_section;
             }
-            #endif // OLD_CODE
             break;
 
         case RANGE_LIMITS_STATE_MOVE_TO_HOME_1:
@@ -180,6 +157,9 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
             if (test_parms->status_output_decimation_count++ >= 1000) {
                 test_parms->status_output_decimation_count = 0;
                 Uint8 progress = (Uint8)((1.0 - (test_parms->current_axis_position / test_parms->axis_range_min[test_parms->test_axis])) * 50.0);
+                if (progress > 50) {
+                    progress = 50;
+                }
                 CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, progress, AXIS_RANGE_TEST_STATUS_IN_PROGRESS);
             }
 
@@ -227,6 +207,9 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
             if (test_parms->status_output_decimation_count++ >= 1000) {
                 test_parms->status_output_decimation_count = 0;
                 Uint8 progress = (Uint8)(50.0 + ((test_parms->current_axis_position / test_parms->axis_range_max[test_parms->test_axis]) * 50.0));
+                if (progress >= 100) {
+                    progress = 99;
+                }
                 CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, progress, AXIS_RANGE_TEST_STATUS_IN_PROGRESS);
             }
 
@@ -234,64 +217,41 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
             break;
 
         case RANGE_LIMITS_STATE_CHECK_POSITIVE_LIMIT:
-            // TODO - for now just print limit to debug port and report success
-            // old test is ifdef'd out below for reference
-            test_parms->motor_torque_max_pos[test_parms->test_axis] = GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
             {
-                Uint8 debug_data[6];
-                debug_data[0] = test_parms->test_axis;
-                debug_data[1] = 2;
-                debug_data[2] = (test_parms->encoder_hard_stop_plus[test_parms->test_axis] >> 8) & 0x00FF;
-                debug_data[3] = (test_parms->encoder_hard_stop_plus[test_parms->test_axis] & 0x00FF);
-                debug_data[4] = (test_parms->motor_torque_max_pos[test_parms->test_axis] >> 8) & 0x00FF;
-                debug_data[5] = (test_parms->motor_torque_max_pos[test_parms->test_axis] & 0x00FF);
-                cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, debug_data, 6);
-            }
-            CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
-            test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_HOME_2;
-            switch (test_parms->test_axis) {
-                case AZ:
-                    test_parms->current_section = AXIS_RANGE_TEST_SECTION_AZ_RETURN_HOME;
-                    break;
+                TestResult result_id_encoder;
+                TestResult result_id_torque;
+                AxisRangeLimitsTestSection next_section;
 
-                case EL:
-                    test_parms->current_section = AXIS_RANGE_TEST_SECTION_EL_RETURN_HOME;
-                    break;
+                switch (test_parms->test_axis) {
+                    case AZ:
+                        next_section = AXIS_RANGE_TEST_SECTION_AZ_RETURN_HOME;
+                        result_id_encoder = TEST_RESULT_POS_RANGE_AZ;
+                        result_id_torque = TEST_RESULT_POS_MAX_TORQUE_AZ;
+                        break;
 
-                case ROLL:
-                    test_parms->current_section = AXIS_RANGE_TEST_SECTION_RL_RETURN_HOME;
-                    break;
-            }
-            #ifdef OLD_CODE
-            {
-                float error = fabs(test_parms->axis_range_max[test_parms->test_axis] - (float)(cb_parms->encoder_readings[test_parms->test_axis]));
+                    case EL:
+                        next_section = AXIS_RANGE_TEST_SECTION_EL_RETURN_HOME;
+                        result_id_encoder = TEST_RESULT_POS_RANGE_EL;
+                        result_id_torque = TEST_RESULT_POS_MAX_TORQUE_EL;
+                        break;
 
-                if (error > (float)ALLOWED_POSITION_ERROR_COUNTS) {
-                    send_error_and_reset_parms(test_parms, cb_parms, AXIS_RANGE_TEST_STATUS_FAILED_POSITIVE);
-                    return -1;
-                } else {
-                    CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
-
-                    // Pre-compute the position step for the next move
-                    test_parms->position_step = fabs(test_parms->current_axis_position) / ((float)ISR_FREQUENCY * (float)AXIS_MOVE_TIME_MS);
-
-                    test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_HOME_2;
-                    switch (test_parms->test_axis) {
-                        case AZ:
-                            test_parms->current_section = AXIS_RANGE_TEST_SECTION_AZ_RETURN_HOME;
-                            break;
-
-                        case EL:
-                            test_parms->current_section = AXIS_RANGE_TEST_SECTION_EL_RETURN_HOME;
-                            break;
-
-                        case ROLL:
-                            test_parms->current_section = AXIS_RANGE_TEST_SECTION_RL_RETURN_HOME;
-                            break;
-                    }
+                    case ROLL:
+                        next_section = AXIS_RANGE_TEST_SECTION_RL_RETURN_HOME;
+                        result_id_encoder = TEST_RESULT_POS_RANGE_RL;
+                        result_id_torque = TEST_RESULT_POS_MAX_TORQUE_RL;
+                        break;
                 }
+                CANSendTestResult(result_id_encoder, (float)test_parms->encoder_hard_stop_plus[test_parms->test_axis]);
+
+                test_parms->motor_torque_max_pos[test_parms->test_axis] = GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+
+                CANSendTestResult(result_id_torque, (float)test_parms->motor_torque_max_pos[test_parms->test_axis]);
+
+                CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
+
+                test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_HOME_2;
+                test_parms->current_section = next_section;
             }
-            #endif // OLD_CODE
             break;
 
         case RANGE_LIMITS_STATE_MOVE_TO_HOME_2:
@@ -302,6 +262,9 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
             if (test_parms->status_output_decimation_count++ >= 1000) {
                 test_parms->status_output_decimation_count = 0;
                 Uint8 progress = (Uint8)((1.0 - (test_parms->current_axis_position / test_parms->axis_range_max[test_parms->test_axis])) * 100.0);
+                if (progress >= 100) {
+                    progress = 99;
+                }
                 CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, progress, AXIS_RANGE_TEST_STATUS_IN_PROGRESS);
             }
 
@@ -320,7 +283,6 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
 
         case RANGE_LIMITS_STATE_CHECK_HOME_POSITION:
             {
-                // TODO are we checking home position?
                 int16 error = abs(cb_parms->encoder_readings[test_parms->test_axis]);
 
                 if (error > ALLOWED_POSITION_ERROR_COUNTS) {
