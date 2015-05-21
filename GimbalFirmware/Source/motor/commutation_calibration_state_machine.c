@@ -6,6 +6,7 @@
 #include "mavlink_interface/gimbal_mavlink.h"
 #include "can/cb.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
+#include "PM_Sensorless-Settings.h"
 
 static void send_calibration_progress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status);
 
@@ -28,8 +29,7 @@ static void calc_slope_intercept(CommutationCalibrationParms* cc_parms, int star
 	*intercept = average_intercept;
 }
 
-
-_iq IdRefLockCommutationCalibration = _IQ(0.18); // 0.5A if 2.75A max scale is correct
+_iq IdRefLockCommutationCalibration = _IQ(0.495/MAX_CURRENT); // = 0.495A
 
 Uint8 calibration_progress = 0;
 
