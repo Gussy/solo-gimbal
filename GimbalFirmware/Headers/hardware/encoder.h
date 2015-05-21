@@ -25,5 +25,7 @@
 #define ANGLE_TOLERANCE_AZ		(0.06457*1)
 
 void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms);
+int nearHardStopTop(EncoderParms* encoder_parms);
+int nearHardStopBottom(EncoderParms* encoder_parms);
 
 #endif /* ENCODER_H_ */

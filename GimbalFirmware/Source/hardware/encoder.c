@@ -78,3 +78,42 @@ void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_pa
         cb_parms->encoder_value_received[EL] = TRUE;
     }
 }
+
+
+/**
+ * Is axis near from top mech hardstop
+ * This lose definition allows us to not have to compensate for the home position offsets
+ */
+int nearHardStopTop(EncoderParms* encoder_parms) {
+	switch (GetBoardHWID()) {
+	default:
+	case AZ:
+		return encoder_parms->mech_theta
+				> (0.5 + RADIANS_TO_REV(ANGLE_MAX_AZ - ANGLE_TOLERANCE_AZ));
+	case ROLL:
+		return encoder_parms->mech_theta
+				> (0.5 + RADIANS_TO_REV(ANGLE_MAX_ROLL - ANGLE_TOLERANCE_ROLL));
+	case EL:
+		return encoder_parms->mech_theta
+				> (0.5 + RADIANS_TO_REV(ANGLE_MAX_EL - ANGLE_TOLERANCE_EL));
+	}
+}
+
+/**
+ * Is axis near from bottom mech hardstop
+ * This lose definition allows us to not have to compensate for the home position offsets
+ */
+int nearHardStopBottom(EncoderParms* encoder_parms) {
+	switch (GetBoardHWID()) {
+	default:
+	case AZ:
+		return encoder_parms->mech_theta
+				< (0.5 + RADIANS_TO_REV(ANGLE_MIN_AZ + ANGLE_TOLERANCE_AZ));
+	case ROLL:
+		return encoder_parms->mech_theta
+				< (0.5 + RADIANS_TO_REV(ANGLE_MIN_ROLL + ANGLE_TOLERANCE_ROLL));
+	case EL:
+		return encoder_parms->mech_theta
+				< (0.5 + RADIANS_TO_REV(ANGLE_MIN_EL + ANGLE_TOLERANCE_EL));
+	}
+}
