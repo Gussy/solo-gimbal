@@ -13,7 +13,8 @@
 #include "PM_Sensorless.h"
 
 typedef enum {
-    TEST_AXIS_RANGE_LIMITS
+    TEST_AXIS_RANGE_LIMITS = 0,
+    TEST_GYRO_LIMITS
 } TestType;
 
 typedef enum {

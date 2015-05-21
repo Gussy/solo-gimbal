@@ -818,6 +818,8 @@
         </description>
         <field name="target_system" type="uint8_t">System ID</field>
         <field name="target_component" type="uint8_t">Component ID</field>
+        <field name="test_id" type="uint8_t">ID of test to perform</field>
+        <field name="test_arg" type="uint8_t">Arbitrary argument to be passed to test</field>
     </message>
 
     <message name="GIMBAL_REPORT_FACTORY_TESTS_PROGRESS" id="210">
