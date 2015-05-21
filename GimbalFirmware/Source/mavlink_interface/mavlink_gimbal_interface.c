@@ -163,7 +163,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 		// reset
 		extern void WDogEnable(void);
 		WDogEnable();
-		
+
 		EALLOW;
 		// Cause a device reset by writing incorrect values into WDCHK
 		SysCtrlRegs.WDCR = 0x0010;
@@ -187,7 +187,7 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			case MAVLINK_MSG_ID_HEARTBEAT:
 				if (heartbeats_received ==0){ // Grab the compid from the first heartbeat message received
 					gimbal_sysid = received_msg.sysid;
-				}				
+				}
 				heartbeats_received++;
 				break;
 
@@ -546,6 +546,8 @@ static void handle_gimbal_erase_flash(mavlink_message_t* msg)
 
 static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardParms* cb_parms)
 {
+    Uint8 params[2];
+
     mavlink_gimbal_perform_factory_tests_t decoded_msg;
     mavlink_msg_gimbal_perform_factory_tests_decode(msg, &decoded_msg);
 
@@ -561,7 +563,10 @@ static void handle_perform_factory_tests(mavlink_message_t* msg, ControlBoardPar
         EnableAZAxis();
 
         // Command the EL axis to start the factory tests
-        cand_tx_command(CAND_ID_EL, CAND_CMD_START_FACTORY_TESTS);
+        params[0] = decoded_msg.test_id;
+        params[1] = decoded_msg.test_arg;
+
+        cand_tx_extended_param(CAND_ID_EL, CAND_EPID_START_FACTORY_TEST, params, 2);
     }
 }
 

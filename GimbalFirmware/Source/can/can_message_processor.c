@@ -32,7 +32,7 @@ void WDogEnable(void)
     EDIS;
 }
 
-void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, EncoderParms* encoder_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info)
+void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, EncoderParms* encoder_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info, FactoryTestsParms* test_parms)
 {
     static int fault_cnt = 0;
     static int cmd_cnt = 0;
@@ -117,11 +117,6 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
             // Transition to the calibrate home offsets state, which will do the actual home offset calibration
             md_parms->motor_drive_state = STATE_CALIBRATE_HOME_OFFSETS;
-            break;
-
-        case CAND_CMD_START_FACTORY_TESTS:
-            // Transition to the factory tests state
-            cb_parms->running_tests = TRUE;
             break;
 
         case CAND_CMD_CALIBRATE_AXES:
@@ -300,6 +295,14 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                             Uint8 calibration_progress = msg.extended_param[0] & 0x00FF;
                             GIMBAL_AXIS_CALIBRATION_STATUS calibration_status = (GIMBAL_AXIS_CALIBRATION_STATUS)(msg.extended_param[1] & 0x00FF);
                             send_mavlink_calibration_progress(calibration_progress, GIMBAL_AXIS_ROLL, calibration_status);
+                        }
+                        break;
+
+                    case CAND_EPID_START_FACTORY_TEST:
+                        if (msg.extended_param_length == 2) {
+                            if (ProcessFactoryTestArgumentsSuccessful(test_parms, msg.extended_param[0], msg.extended_param[1])) {
+                                cb_parms->running_tests = TRUE;
+                            }
                         }
                         break;
 
