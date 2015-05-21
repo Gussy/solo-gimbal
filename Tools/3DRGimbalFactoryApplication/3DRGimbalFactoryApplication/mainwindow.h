@@ -60,7 +60,7 @@ signals:
                                     unsigned long serialNumber3);
     void factoryParametersLoaded();
     void requestEraseGimbalFlash();
-    void requestStartFactoryTests();
+    void requestStartFactoryTests(unsigned char test_id, unsigned char test_arg);
     void factoryTestsStatus(int test, int test_section, int test_progress, int test_status);
     void gimbalAxisCalibrationStatus(bool yawNeedsCalibration, bool pitchNeedsCalibration, bool rollNeedsCalibration);
     void requestAxisCalibrationStatus();

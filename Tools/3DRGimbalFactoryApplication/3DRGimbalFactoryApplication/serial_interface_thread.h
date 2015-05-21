@@ -26,6 +26,11 @@ enum GimbalInterfaceState {
     INTERFACE_CALIBRATING_GIMBAL_AZ
 };
 
+enum TestType {
+    TEST_AXIS_RANGE_LIMITS = 0,
+    TEST_GYRO_LIMITS
+};
+
 enum  AxisRangeLimitsTestStatus {
     AXIS_RANGE_TEST_STATUS_IN_PROGRESS = 0,
     AXIS_RANGE_TEST_STATUS_SUCCEEDED,
@@ -46,7 +51,7 @@ enum  AxisRangeLimitsTestSection {
     AXIS_RANGE_TEST_SECTION_AZ_RETURN_HOME
 };
 
-typedef enum {
+enum TestResult {
     TEST_RESULT_NEG_RANGE_AZ = 0,
     TEST_RESULT_POS_RANGE_AZ,
     TEST_RESULT_NEG_MAX_TORQUE_AZ,
@@ -59,7 +64,7 @@ typedef enum {
     TEST_RESULT_POS_RANGE_RL,
     TEST_RESULT_NEG_MAX_TORQUE_RL,
     TEST_RESULT_POS_MAX_TORQUE_RL
-} TestResult;
+};
 
 typedef union {
     uint32_t uint32_value;
@@ -95,7 +100,7 @@ public slots:
                                     unsigned long serialNumber3);
     void requestFactoryParameters();
     void requestGimbalEraseFlash();
-    void requestGimbalFactoryTests();
+    void requestGimbalFactoryTests(unsigned char test_id, unsigned char test_arg);
     void requestCalibrationParameters();
     void requestAxisCalibrationStatus();
 

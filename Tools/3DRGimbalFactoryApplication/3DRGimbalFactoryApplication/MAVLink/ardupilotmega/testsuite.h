@@ -2242,12 +2242,14 @@ static void mavlink_test_gimbal_perform_factory_tests(uint8_t system_id, uint8_t
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
 	mavlink_gimbal_perform_factory_tests_t packet_in = {
-		5,72
+		5,72,139,206
     };
 	mavlink_gimbal_perform_factory_tests_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         	packet1.target_system = packet_in.target_system;
         	packet1.target_component = packet_in.target_component;
+        	packet1.test_id = packet_in.test_id;
+        	packet1.test_arg = packet_in.test_arg;
         
         
 
@@ -2257,12 +2259,12 @@ static void mavlink_test_gimbal_perform_factory_tests(uint8_t system_id, uint8_t
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_gimbal_perform_factory_tests_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component );
+	mavlink_msg_gimbal_perform_factory_tests_pack(system_id, component_id, &msg , packet1.target_system , packet1.target_component , packet1.test_id , packet1.test_arg );
 	mavlink_msg_gimbal_perform_factory_tests_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_gimbal_perform_factory_tests_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component );
+	mavlink_msg_gimbal_perform_factory_tests_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.target_system , packet1.target_component , packet1.test_id , packet1.test_arg );
 	mavlink_msg_gimbal_perform_factory_tests_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -2275,7 +2277,7 @@ static void mavlink_test_gimbal_perform_factory_tests(uint8_t system_id, uint8_t
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_gimbal_perform_factory_tests_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component );
+	mavlink_msg_gimbal_perform_factory_tests_send(MAVLINK_COMM_1 , packet1.target_system , packet1.target_component , packet1.test_id , packet1.test_arg );
 	mavlink_msg_gimbal_perform_factory_tests_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }

@@ -863,7 +863,7 @@ void SerialInterfaceThread::sendPeriodicRateCmd()
     sendMavlinkMessage(&m_zeroRateCmd);
 }
 
-void SerialInterfaceThread::requestGimbalFactoryTests()
+void SerialInterfaceThread::requestGimbalFactoryTests(unsigned char test_id, unsigned char test_arg)
 {
     // Start the rate commands timer to start sending rate commands to the gimbal
     // The gimbal will not drive motors without periodic rate commands
@@ -875,7 +875,9 @@ void SerialInterfaceThread::requestGimbalFactoryTests()
                                            0,
                                            &start_factory_tests_msg,
                                            MAVLINK_GIMBAL_SYSTEM_ID,
-                                           MAV_COMP_ID_GIMBAL);
+                                           MAV_COMP_ID_GIMBAL,
+                                           test_id,
+                                           test_arg);
     sendMavlinkMessage(&start_factory_tests_msg);
 }
 

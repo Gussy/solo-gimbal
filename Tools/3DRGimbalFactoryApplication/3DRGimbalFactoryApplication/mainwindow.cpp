@@ -98,7 +98,7 @@ void MainWindow::on_connectButton_clicked()
     connect(this, SIGNAL(setGimbalFactoryParameters(unsigned short,unsigned char,unsigned char,unsigned char,unsigned char,unsigned char,ulong,ulong,ulong)), m_serialThreadObj, SLOT(setGimbalFactoryParameters(unsigned short,unsigned char,unsigned char,unsigned char,unsigned char,unsigned char,ulong,ulong,ulong)));
     connect(m_serialThreadObj, SIGNAL(factoryParametersLoaded()), this, SIGNAL(factoryParametersLoaded()));
     connect(this, SIGNAL(requestEraseGimbalFlash()), m_serialThreadObj, SLOT(requestGimbalEraseFlash()));
-    connect(this, SIGNAL(requestStartFactoryTests()), m_serialThreadObj, SLOT(requestGimbalFactoryTests()));
+    connect(this, SIGNAL(requestStartFactoryTests(unsigned char, unsigned char)), m_serialThreadObj, SLOT(requestGimbalFactoryTests(unsigned char, unsigned char)));
     connect(m_serialThreadObj, SIGNAL(factoryTestsStatus(int,int,int,int)), this, SIGNAL(factoryTestsStatus(int,int,int,int)));
     connect(m_serialThreadObj, SIGNAL(gimbalAxisCalibrationStatus(bool,bool,bool)), this, SIGNAL(gimbalAxisCalibrationStatus(bool,bool,bool)));
     connect(this, SIGNAL(requestAxisCalibrationStatus()), m_serialThreadObj, SLOT(requestAxisCalibrationStatus()));
@@ -484,7 +484,7 @@ void MainWindow::on_factoryTestsButton_clicked()
     connect(this, SIGNAL(factoryTestsStatus(int,int,int,int)), &dialog, SLOT(receiveTestProgress(int,int,int,int)));
     connect(&dialog, SIGNAL(requestTestRetry()), this, SIGNAL(requestStartFactoryTests()));
     connect(this, SIGNAL(receivedTestStatus(unsigned char,float)), &dialog, SLOT(receiveTestStatus(unsigned char,float)));
-    emit requestStartFactoryTests();
+    emit requestStartFactoryTests(TEST_AXIS_RANGE_LIMITS, 0);
     dialog.exec();
 }
 
