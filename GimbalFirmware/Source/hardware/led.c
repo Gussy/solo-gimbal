@@ -22,6 +22,7 @@ static LED_EPWM_INFO epwm6_info;
 
 static LED_MODE	state_mode;
 static LED_RGBA state_rgba;
+static LED_RGBA state_alternate_rgba;
 static Uint16 state_duration;
 static Uint16 blink_toggle = 0;
 static Uint32 fade_in_step_counter = 0;
@@ -182,6 +183,7 @@ void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration)
 
 		case LED_MODE_BLINK:
 		case LED_MODE_BLINK_FOREVER:
+        case LED_MODE_BLINK_ALTERNATE_COLOR:
 			disable_epwm_interrupts();
 			state_rgba = color;
 			state_duration = duration;
@@ -198,16 +200,29 @@ void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration)
 	}
 }
 
+
+void led_set_alternate_color(LED_RGBA color)
+{
+    state_alternate_rgba = color;
+}
+
+
 void led_update_state(void)
 {
-	if(state_mode == LED_MODE_BLINK || state_mode == LED_MODE_BLINK_FOREVER){
+    if(state_mode == LED_MODE_BLINK || state_mode == LED_MODE_BLINK_FOREVER || state_mode == LED_MODE_BLINK_ALTERNATE_COLOR){
 		// Toggle the LED
 		if(blink_toggle == 0) {
 			set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, state_rgba.alpha);
 			blink_toggle = 1;
 			state_duration--;
-		} else {
-			set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, 0);
+        }
+        else {
+            if (state_mode == LED_MODE_BLINK_ALTERNATE_COLOR) {
+                set_rgba(state_alternate_rgba.red, state_alternate_rgba.green, state_alternate_rgba.blue, state_alternate_rgba.alpha);
+            }
+            else {
+                set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, 0);
+            }
 			blink_toggle = 0;
 
 			// End a blink animation

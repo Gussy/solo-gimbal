@@ -28,7 +28,7 @@ enum GimbalInterfaceState {
 
 enum TestType {
     TEST_AXIS_RANGE_LIMITS = 0,
-    TEST_GYRO_LIMITS
+    TEST_GYRO_HEALTH
 };
 
 enum  AxisRangeLimitsTestStatus {

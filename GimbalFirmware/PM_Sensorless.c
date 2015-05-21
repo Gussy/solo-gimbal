@@ -330,9 +330,19 @@ TestAxisRangeLimitsParms axis_range_limits_parms = {
     {0, 0, 0}                               // motor torque minimums
 };
 
+TestGyroHealthParms gyro_health_limits_parms = {
+    GYRO_HEALTH_STATE_INIT,                 // Test state
+    GYROS_NEVER_FAILED,                     // Test status
+    0,                                      // settle counter
+    {300, 300, 300},                        // maximum gyro limits
+    {-300, -300, -300}                      // minimum gyro limits
+};
+
 FactoryTestsParms test_parms = {
-    TEST_AXIS_RANGE_LIMITS,     // Test type
-    &axis_range_limits_parms    // Axis range limits test parameters
+    //TEST_AXIS_RANGE_LIMITS,     // Test type
+    TEST_GYRO_HEALTH,           // Test type    TODO
+    &axis_range_limits_parms,   // Axis range limits test parameters
+    &gyro_health_limits_parms   // Gyro health limits test parameters
 };
 
 Uint8 unused = FALSE;
@@ -721,7 +731,7 @@ void main(void)
             global_timestamp_counter++;
 
             // If we're the elevation board, and we're running factory tests, run an iteration of them here to update the motor commutation loop inputs
-            if ((board_hw_id == EL) && control_board_parms.running_tests) {
+            if ((board_hw_id == EL) && control_board_parms.running_tests && (test_parms.test_type == TEST_AXIS_RANGE_LIMITS)) {
                 if (RunFactoryTestsIteration(&test_parms, &motor_drive_parms, &control_board_parms, &axis_parms, &encoder_parms) == 1) {
                     // A return value of 1 means factory tests are finished running.  Inform the AZ board that we're done
                     control_board_parms.running_tests = FALSE;
@@ -753,6 +763,13 @@ void main(void)
                 // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
                 if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
                     GyroDataReadyFlag = FALSE;
+                    if (control_board_parms.running_tests && (test_parms.test_type == TEST_GYRO_HEALTH)) {
+                        if (RunFactoryTestsIteration(&test_parms, &motor_drive_parms, &control_board_parms, &axis_parms, &encoder_parms) == 1) {
+                            // A return value of 1 means factory tests are finished running.  Inform the AZ board that we're done
+                            control_board_parms.running_tests = FALSE;
+                            CANSendFactoryTestsComplete();
+                        }
+                    }
                 }
 
                 RateLoopEndTimestamp = CpuTimer2Regs.TIM.all;
