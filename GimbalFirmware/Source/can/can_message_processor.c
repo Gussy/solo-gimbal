@@ -258,31 +258,29 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                         */
                         {
-                            int16 encoder = (int16)((((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF));
-                            int16 torque = (int16)((((Uint16)msg.extended_param[4] << 8) & 0xFF00) | ((Uint16)msg.extended_param[5] & 0x00FF));
-                            char axis_name[3];
+                            int16 gyro = (int16)((((Uint16)msg.extended_param[1] << 8) & 0xFF00) | ((Uint16)msg.extended_param[2] & 0x00FF));
                             switch (msg.extended_param[0]) {
                                 case 0:
-                                    strcpy(axis_name,"EL");
+                                    snprintf(debug_msg, 50, "EL min %d", gyro);
                                     break;
-                                case 1:
-                                    strcpy(axis_name,"AZ");
+                                case 1  :
+                                    snprintf(debug_msg, 50, "EL max %d", gyro);
                                     break;
                                 case 2:
-                                    strcpy(axis_name,"RL");
+                                    snprintf(debug_msg, 50, "AZ min %d", gyro);
+                                    break;
+                                case 3  :
+                                    snprintf(debug_msg, 50, "AZ max %d", gyro);
+                                    break;
+                                case 4:
+                                    snprintf(debug_msg, 50, "RL min %d", gyro);
+                                    break;
+                                case 5  :
+                                    snprintf(debug_msg, 50, "RL max %d", gyro);
                                     break;
                                 default:
-                                    strcpy(axis_name,"??");
+                                    snprintf(debug_msg, 50, "Settled");
                                     break;
-                            }
-                            if (msg.extended_param[1] == 1) {
-                                snprintf(debug_msg, 50, "%s negative hard stop %d max torque %d", axis_name, encoder, torque);
-                            }
-                            else if (msg.extended_param[1] == 2) {
-                                snprintf(debug_msg, 50, "%s positive hard stop %d max torque %d", axis_name, encoder, torque);
-                            }
-                            else {
-                                snprintf(debug_msg, 50, "%s unknown %d %d", axis_name, encoder, torque);
                             }
                         }
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);

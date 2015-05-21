@@ -26,6 +26,7 @@ typedef enum {
 	LED_MODE_FADE_IN_BLINK_3,
 	LED_MODE_BLINK,
 	LED_MODE_BLINK_FOREVER,
+    LED_MODE_BLINK_ALTERNATE_COLOR,
 	LED_MODE_DISCO
 } LED_MODE;
 
@@ -53,6 +54,7 @@ void init_led_periph(void);
 void init_led_interrupts(void);
 
 void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration);
+void led_set_alternate_color(LED_RGBA color);
 void led_update_state(void);
 
 interrupt void led_epwm5_isr(void);
