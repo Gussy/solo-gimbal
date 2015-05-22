@@ -94,6 +94,8 @@ private slots:
     void on_eraseGimbalFlashButton_clicked();
     void on_factoryTestsButton_clicked();
     void on_showHideGimbalMessagesButton_clicked();
+    void on_startGyroHealthTestButton_clicked();
+    void on_stopGyroHealthTestButton_clicked();
 };
 
 #endif // MAINWINDOW_H

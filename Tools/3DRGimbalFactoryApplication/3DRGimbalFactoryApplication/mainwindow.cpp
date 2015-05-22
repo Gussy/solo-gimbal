@@ -482,7 +482,7 @@ void MainWindow::on_factoryTestsButton_clicked()
 {
     AxisRangeTestDialog dialog;
     connect(this, SIGNAL(factoryTestsStatus(int,int,int,int)), &dialog, SLOT(receiveTestProgress(int,int,int,int)));
-    connect(&dialog, SIGNAL(requestTestRetry()), this, SIGNAL(requestStartFactoryTests()));
+    connect(&dialog, SIGNAL(requestTestRetry(unsigned char, unsigned char)), this, SIGNAL(requestStartFactoryTests(unsigned char, unsigned char)));
     connect(this, SIGNAL(receivedTestStatus(unsigned char,float)), &dialog, SLOT(receiveTestStatus(unsigned char,float)));
     emit requestStartFactoryTests(TEST_AXIS_RANGE_LIMITS, 0);
     dialog.exec();
@@ -501,6 +501,16 @@ void MainWindow::on_showHideGimbalMessagesButton_clicked()
         ui->showHideGimbalMessagesButton->setText("Hide Gimbal Messages");
         m_gimbalMessagesVisible = true;
     }
+}
+
+void MainWindow::on_startGyroHealthTestButton_clicked()
+{
+    emit requestStartFactoryTests(TEST_GYRO_HEALTH, START_TEST);
+}
+
+void MainWindow::on_stopGyroHealthTestButton_clicked()
+{
+    emit requestStartFactoryTests(TEST_GYRO_HEALTH, STOP_TEST);
 }
 
 void MainWindow::gimbalRequiresCalibration(bool requiresCalibration)
@@ -544,6 +554,8 @@ void MainWindow::setUIGimbalConnected()
     ui->setUnitParametersButton->setEnabled(true);
     ui->eraseGimbalFlashButton->setEnabled(true);
     ui->factoryTestsButton->setEnabled(true);
+    ui->startGyroHealthTestButton->setEnabled(true);
+    ui->stopGyroHealthTestButton->setEnabled(true);
 }
 
 void MainWindow::setUIGimbalDisconnected()
@@ -557,6 +569,8 @@ void MainWindow::setUIGimbalDisconnected()
     ui->setUnitParametersButton->setEnabled(false);
     ui->eraseGimbalFlashButton->setEnabled(false);
     ui->factoryTestsButton->setEnabled(false);
+    ui->startGyroHealthTestButton->setEnabled(false);
+    ui->stopGyroHealthTestButton->setEnabled(false);
 }
 
 void MainWindow::closeEvent(QCloseEvent *)

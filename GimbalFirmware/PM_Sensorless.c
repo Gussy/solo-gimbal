@@ -339,8 +339,8 @@ TestGyroHealthParms gyro_health_limits_parms = {
 };
 
 FactoryTestsParms test_parms = {
-    //TEST_AXIS_RANGE_LIMITS,     // Test type
-    TEST_GYRO_HEALTH,           // Test type    TODO
+    TEST_AXIS_RANGE_LIMITS,     // Test type
+    //TEST_GYRO_HEALTH,           // Test type    TODO
     &axis_range_limits_parms,   // Axis range limits test parameters
     &gyro_health_limits_parms   // Gyro health limits test parameters
 };

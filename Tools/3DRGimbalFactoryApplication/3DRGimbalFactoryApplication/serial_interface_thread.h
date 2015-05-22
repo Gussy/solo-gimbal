@@ -31,6 +31,11 @@ enum TestType {
     TEST_GYRO_HEALTH
 };
 
+enum TestArg {
+    START_TEST = 0,
+    STOP_TEST
+};
+
 enum  AxisRangeLimitsTestStatus {
     AXIS_RANGE_TEST_STATUS_IN_PROGRESS = 0,
     AXIS_RANGE_TEST_STATUS_SUCCEEDED,

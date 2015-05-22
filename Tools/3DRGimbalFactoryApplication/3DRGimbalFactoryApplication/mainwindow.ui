@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>580</width>
-    <height>660</height>
+    <height>718</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -256,6 +256,26 @@
        <string>Calibration</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_4">
+       <item row="3" column="0">
+        <widget class="QPushButton" name="eraseGimbalFlashButton">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Erase Gimbal Flash</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QPushButton" name="factoryTestsButton">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Run Axis Limits Test</string>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="0">
         <widget class="QPushButton" name="runAxisCalibrationButton">
          <property name="enabled">
@@ -286,23 +306,26 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
-        <widget class="QPushButton" name="eraseGimbalFlashButton">
+       <item row="5" column="0">
+        <widget class="QPushButton" name="startGyroHealthTestButton">
          <property name="enabled">
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>Erase Gimbal Flash</string>
+          <string>Start Gyro Health Test</string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="QPushButton" name="factoryTestsButton">
+       <item row="6" column="0">
+        <widget class="QPushButton" name="stopGyroHealthTestButton">
          <property name="enabled">
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>Run Axis Limits Test</string>
+          <string>Stop Gyro Health Test</string>
          </property>
         </widget>
        </item>
