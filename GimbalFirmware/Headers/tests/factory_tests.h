@@ -13,9 +13,16 @@
 #include "PM_Sensorless.h"
 
 typedef enum {
+
     TEST_AXIS_RANGE_LIMITS,
     TEST_GYRO_HEALTH
+
 } TestType;
+
+typedef enum {
+    TEST_ARG_START,
+    TEST_ARG_STOP
+} TestArgument;
 
 typedef enum {
     GYRO_HEALTH_STATE_INIT,
@@ -56,9 +63,11 @@ typedef enum {
 typedef struct {
     TestType test_type;
     TestAxisRangeLimitsParms* axis_range_limits_parms;
-    TestGyroHealthParms* gyro_health_limits_parms;
+    TestGyroHealthParms* gyro_health_parms;
 } FactoryTestsParms;
 
-int RunFactoryTestsIteration(FactoryTestsParms* test_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, AxisParms* axis_parms, EncoderParms* encoder_parms);
+int ProcessFactoryTestArgumentsSuccessful(FactoryTestsParms* test_parms, uint8_t test_type, uint8_t test_argument);
+void RunFactoryTestsMotorLoop(FactoryTestsParms* test_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, AxisParms* axis_parms, EncoderParms* encoder_parms);
+void RunFactoryTestsRateLoop(FactoryTestsParms* test_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, AxisParms* axis_parms, EncoderParms* encoder_parms);
 
 #endif /* FACTORY_TESTS_H_ */
