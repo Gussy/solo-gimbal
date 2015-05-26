@@ -17,13 +17,14 @@
 #define ALLOWED_POSITION_ERROR_COUNTS 135.0
 
 #define HARDSTOP_SETTLE_TIME_MS 50
-#define MAX_STOPPED_ENCODER_CHANGE_ALLOWED 50         // same units as ControlBoardParms.encoder_readings
-#define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD  100 // same units as ControlBoardParms.encoder_readings
+#define MAX_STOPPED_ENCODER_CHANGE_ALLOWED 25         // same units as ControlBoardParms.encoder_readings
+#define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD  45  // same units as ControlBoardParms.encoder_readings
+#define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW  35  // same units as ControlBoardParms.encoder_readings
 
-#define PAUSE_POINT_INCR  125.0                       // units of axis position
+#define PAUSE_POINT_INCR  62.5                        // units of axis position (encoder counts)
 #define EL_AXIS_POS_STEP_SIZE   0.01666               // units of axis position
 #define RL_AXIS_POS_STEP_SIZE   0.01666               // units of axis position
-#define AZ_AXIS_POS_STEP_SIZE   0.0111                // units of axis position
+#define AZ_AXIS_POS_STEP_SIZE   0.01666               // units of axis position
 
 typedef enum {
     RANGE_LIMITS_STATE_INIT,

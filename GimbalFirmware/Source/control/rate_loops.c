@@ -115,14 +115,15 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set, RunningAvgFi
             break;
 
         case ERROR_CALC_PASS:
-            #define POS_ERR_GAIN  4
+            #define POS_ERR_GAIN      4
+            #define POS_ERR_GAIN_YAW  12
 
             if (cb_parms->control_loop_type == RATE_MODE) {
                 cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
                 cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject[EL] - cb_parms->corrected_gyro_readings[EL];
                 cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
             } else {
-                cb_parms->axis_errors[AZ] = (cb_parms->unfiltered_position_errors[AZ] * POS_ERR_GAIN) - cb_parms->corrected_gyro_readings[AZ];
+                cb_parms->axis_errors[AZ] = (cb_parms->unfiltered_position_errors[AZ] * POS_ERR_GAIN_YAW) - cb_parms->corrected_gyro_readings[AZ];
                 cb_parms->axis_errors[EL] = (cb_parms->unfiltered_position_errors[EL] * POS_ERR_GAIN) - cb_parms->corrected_gyro_readings[EL];
                 cb_parms->axis_errors[ROLL] = (cb_parms->unfiltered_position_errors[ROLL] * POS_ERR_GAIN) - cb_parms->corrected_gyro_readings[ROLL];
             }

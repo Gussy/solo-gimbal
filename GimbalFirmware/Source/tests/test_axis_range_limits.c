@@ -25,7 +25,8 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
 #define ENCODER_COUNTS_PER_DEGREE   27
 #define ENCODER_OFF_STOP            (4 * ENCODER_COUNTS_PER_DEGREE)
 
-    TestResult                 result_id_encoder;
+    TestResult                 result_id_encoder_range;
+    TestResult                 result_id_encoder_asymmetry;
     TestResult                 result_id_torque;
     AxisRangeLimitsTestSection next_section;
     static int16  last_encoder_position;
@@ -85,7 +86,12 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                     else {
                         // stopped moving at this position
                         // if haven't moved much since the last position, we're at a hard stop
-                        if (fabs(last_encoder_position - test_parms->last_encoder_reading) < HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD) {
+                        int16  stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD;
+
+                        if (test_parms->test_axis == AZ) {
+                            stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW;
+                        }
+                        if (fabs(last_encoder_position - test_parms->last_encoder_reading) < stop_threshold) {
                             // we've reached the hard stop, save the encoder value and move to the next state
                             test_parms->encoder_hard_stop_neg[test_parms->test_axis] = test_parms->last_encoder_reading;
                             test_parms->status_output_decimation_count = 0;
@@ -117,28 +123,21 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
             break;
 
         case RANGE_LIMITS_STATE_CHECK_NEGATIVE_LIMIT:
+            CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
             switch (test_parms->test_axis) {
                 case AZ:
-                    next_section = AXIS_RANGE_TEST_SECTION_AZ_CHECK_POS;
-                    result_id_encoder = TEST_RESULT_NEG_RANGE_AZ;
+                    test_parms->current_section = AXIS_RANGE_TEST_SECTION_AZ_CHECK_POS;
                     break;
 
                 case EL:
-                    next_section = AXIS_RANGE_TEST_SECTION_EL_CHECK_POS;
-                    result_id_encoder = TEST_RESULT_NEG_RANGE_EL;
+                    test_parms->current_section = AXIS_RANGE_TEST_SECTION_EL_CHECK_POS;
                     break;
 
                 case ROLL:
-                    next_section = AXIS_RANGE_TEST_SECTION_RL_CHECK_POS;
-                    result_id_encoder = TEST_RESULT_NEG_RANGE_RL;
+                    test_parms->current_section = AXIS_RANGE_TEST_SECTION_RL_CHECK_POS;
                     break;
             }
-            CANSendTestResult(result_id_encoder, (float)test_parms->encoder_hard_stop_neg[test_parms->test_axis]);
-
-            CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
-
             test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_HOME_1;
-            test_parms->current_section = next_section;
             break;
 
         case RANGE_LIMITS_STATE_MOVE_TO_HOME_1:
@@ -176,7 +175,12 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                     else {
                         // stopped moving at this position
                         // if haven't moved much since the last position, we're at a hard stop
-                        if (fabs(last_encoder_position - test_parms->last_encoder_reading) < HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD) {
+                        int16  stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD;
+
+                        if (test_parms->test_axis == AZ) {
+                            stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW;
+                        }
+                        if (fabs(last_encoder_position - test_parms->last_encoder_reading) < stop_threshold) {
                             // we've reached the hard stop, save the encoder value and move to the next state
                             test_parms->encoder_hard_stop_plus[test_parms->test_axis] = test_parms->last_encoder_reading;
                             test_parms->status_output_decimation_count = 0;
@@ -208,29 +212,8 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
             break;
 
         case RANGE_LIMITS_STATE_CHECK_POSITIVE_LIMIT:
-            switch (test_parms->test_axis) {
-                case AZ:
-                    next_section = AXIS_RANGE_TEST_SECTION_AZ_RETURN_HOME;
-                    result_id_encoder = TEST_RESULT_POS_RANGE_AZ;
-                    break;
-
-                case EL:
-                    next_section = AXIS_RANGE_TEST_SECTION_EL_RETURN_HOME;
-                    result_id_encoder = TEST_RESULT_POS_RANGE_EL;
-                    break;
-
-                case ROLL:
-                    next_section = AXIS_RANGE_TEST_SECTION_RL_RETURN_HOME;
-                    result_id_encoder = TEST_RESULT_POS_RANGE_RL;
-                    break;
-            }
-            CANSendTestResult(result_id_encoder, (float)test_parms->encoder_hard_stop_plus[test_parms->test_axis]);
-
             CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 100, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
-
             test_parms->test_state = RANGE_LIMITS_STATE_MOVE_OFF_POS_STOP;
-            //test_parms->current_section = next_section;  TODO
-            //CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 0, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
             break;
 
         case RANGE_LIMITS_STATE_MOVE_OFF_POS_STOP:
@@ -239,6 +222,34 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                 cb_parms->angle_targets[test_parms->test_axis] = (int16)test_parms->current_axis_position;
             }
             else {
+                switch (test_parms->test_axis) {
+                    case AZ:
+                        next_section = AXIS_RANGE_TEST_SECTION_AZ_RETURN_HOME;
+                        result_id_encoder_range = TEST_RESULT_ENCODER_RANGE_AZ;
+                        result_id_encoder_asymmetry = TEST_RESULT_ENCODER_ASYMMETRY_AZ;
+                        break;
+
+                    case EL:
+                        next_section = AXIS_RANGE_TEST_SECTION_EL_RETURN_HOME;
+                        result_id_encoder_range = TEST_RESULT_ENCODER_RANGE_EL;
+                        result_id_encoder_asymmetry = TEST_RESULT_ENCODER_ASYMMETRY_EL;
+                        break;
+
+                    case ROLL:
+                        next_section = AXIS_RANGE_TEST_SECTION_RL_RETURN_HOME;
+                        result_id_encoder_range = TEST_RESULT_ENCODER_RANGE_RL;
+                        result_id_encoder_asymmetry = TEST_RESULT_ENCODER_ASYMMETRY_RL;
+                        break;
+                }
+                // total encoder range
+                CANSendTestResult(result_id_encoder_range,
+                                  ((float)test_parms->encoder_hard_stop_plus[test_parms->test_axis] - (float)test_parms->encoder_hard_stop_neg[test_parms->test_axis]));
+                // how asymmetric the pos & neg axes are (zero is perfectly balanced between positive and negative axes)
+                CANSendTestResult(result_id_encoder_asymmetry,
+                                  ((float)test_parms->encoder_hard_stop_plus[test_parms->test_axis] + (float)test_parms->encoder_hard_stop_neg[test_parms->test_axis]));
+
+                // test_parms->current_section = next_section;     TODO?
+                //CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 0, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
                 ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
                 test_parms->test_state = RANGE_LIMITS_STATE_CHECK_NEGATIVE_TORQUE_POS_TO_HOME;
             }
