@@ -163,7 +163,7 @@ void AxisRangeTestDialog::on_okButton_clicked()
 void AxisRangeTestDialog::on_retryButton_clicked()
 {
     resetTestUI();
-    emit requestTestRetry();
+    emit requestTestRetry(TEST_AXIS_RANGE_LIMITS, 0);
 }
 
 void AxisRangeTestDialog::resetTestUI()

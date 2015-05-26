@@ -25,7 +25,7 @@ public slots:
     void reject();
 
 signals:
-    void requestTestRetry();
+    void requestTestRetry(unsigned char test_id, unsigned char test_arg);
 
 private:
     Ui::AxisRangeTestDialog *ui;
