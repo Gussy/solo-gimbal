@@ -19,3 +19,4 @@ Tools/3DRGimbalFactoryApplication/build-*/
 *.pyc
 *~
 *mav.tlog*
+*.autosave
