@@ -648,12 +648,12 @@ void SerialInterfaceThread::handleDebug(mavlink_message_t *msg)
     TestResult result_id = static_cast<TestResult>(decoded_msg.ind);
     QString testResultID;
     switch (result_id) {
-        case TEST_RESULT_NEG_RANGE_AZ:
-            testResultID = "Negative Range AZ";
+        case TEST_RESULT_ENCODER_RANGE_AZ:
+            testResultID = "Mechanical Range AZ";
             break;
 
-        case TEST_RESULT_POS_RANGE_AZ:
-            testResultID = "Positive Range AZ";
+        case TEST_RESULT_ENCODER_ASYMMETRY_AZ:
+            testResultID = "Mechanical Range Asymmetry AZ";
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_AZ:
@@ -664,12 +664,12 @@ void SerialInterfaceThread::handleDebug(mavlink_message_t *msg)
             testResultID = "Positive Max Torque AZ";
             break;
 
-        case TEST_RESULT_NEG_RANGE_EL:
-            testResultID = "Negative Range EL";
+        case TEST_RESULT_ENCODER_RANGE_EL:
+            testResultID = "Mechanical Range EL";
             break;
 
-        case TEST_RESULT_POS_RANGE_EL:
-            testResultID = "Positive Range EL";
+        case TEST_RESULT_ENCODER_ASYMMETRY_EL:
+            testResultID = "Mechanical Range Asymmetry EL";
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_EL:
@@ -680,12 +680,12 @@ void SerialInterfaceThread::handleDebug(mavlink_message_t *msg)
             testResultID = "Positive Max Torque EL";
             break;
 
-        case TEST_RESULT_NEG_RANGE_RL:
-            testResultID = "Negative Range RL";
+        case TEST_RESULT_ENCODER_RANGE_RL:
+            testResultID = "Mechanical Range RL";
             break;
 
-        case TEST_RESULT_POS_RANGE_RL:
-            testResultID = "Positive Range RL";
+        case TEST_RESULT_ENCODER_ASYMMETRY_RL:
+            testResultID = "Mechanical Range Asymmetry RL";
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_RL:

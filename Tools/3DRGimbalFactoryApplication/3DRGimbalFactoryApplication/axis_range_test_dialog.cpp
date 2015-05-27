@@ -105,12 +105,12 @@ void AxisRangeTestDialog::receiveTestStatus(unsigned char result_id, float resul
     TestResult result_id_enum = static_cast<TestResult>(result_id);
 
     switch (result_id_enum) {
-        case TEST_RESULT_NEG_RANGE_AZ:
-            ui->yawStop1->setText(QString::number(result));
+        case TEST_RESULT_ENCODER_RANGE_AZ:
+            ui->yawMechanicalRange->setText(QString::number(result));
             break;
 
-        case TEST_RESULT_POS_RANGE_AZ:
-            ui->yawStop2->setText(QString::number(result));
+        case TEST_RESULT_ENCODER_ASYMMETRY_AZ:
+            ui->yawMechanicalRangeAsymmetry->setText(QString::number(result));
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_AZ:
@@ -121,12 +121,12 @@ void AxisRangeTestDialog::receiveTestStatus(unsigned char result_id, float resul
             ui->yawMaxPositiveTorque->setText(QString::number(result));
             break;
 
-        case TEST_RESULT_NEG_RANGE_EL:
-            ui->pitchStop1->setText(QString::number(result));
+        case TEST_RESULT_ENCODER_RANGE_EL:
+            ui->pitchMechanicalRange->setText(QString::number(result));
             break;
 
-        case TEST_RESULT_POS_RANGE_EL:
-            ui->pitchStop2->setText(QString::number(result));
+        case TEST_RESULT_ENCODER_ASYMMETRY_EL:
+            ui->pitchMechanicalRangeAsymmetry->setText(QString::number(result));
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_EL:
@@ -137,12 +137,12 @@ void AxisRangeTestDialog::receiveTestStatus(unsigned char result_id, float resul
             ui->pitchMaxPositiveTorque->setText(QString::number(result));
             break;
 
-        case TEST_RESULT_NEG_RANGE_RL:
-            ui->rollStop1->setText(QString::number(result));
+        case TEST_RESULT_ENCODER_RANGE_RL:
+            ui->rollMechanicalRange->setText(QString::number(result));
             break;
 
-        case TEST_RESULT_POS_RANGE_RL:
-            ui->rollStop2->setText(QString::number(result));
+        case TEST_RESULT_ENCODER_ASYMMETRY_RL:
+            ui->rollMechanicalRangeAsymmetry->setText(QString::number(result));
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_RL:
@@ -191,16 +191,16 @@ void AxisRangeTestDialog::resetTestUI()
     ui->yawReturnHomeStatus->setPixmap(m_inProgressIcon);
 
     // Reset the stop and max torque indicators
-    ui->pitchStop1->setText("Waiting...");
-    ui->pitchStop2->setText("Waiting...");
+    ui->pitchMechanicalRange->setText("Waiting...");
+    ui->pitchMechanicalRangeAsymmetry->setText("Waiting...");
     ui->pitchMaxNegativeTorque->setText("Waiting...");
     ui->pitchMaxPositiveTorque->setText("Waiting...");
-    ui->rollStop1->setText("Waiting...");
-    ui->rollStop2->setText("Waiting...");
+    ui->rollMechanicalRange->setText("Waiting...");
+    ui->rollMechanicalRangeAsymmetry->setText("Waiting...");
     ui->rollMaxNegativeTorque->setText("Waiting...");
     ui->rollMaxPositiveTorque->setText("Waiting...");
-    ui->yawStop1->setText("Waiting...");
-    ui->yawStop2->setText("Waiting...");
+    ui->yawMechanicalRange->setText("Waiting...");
+    ui->yawMechanicalRangeAsymmetry->setText("Waiting...");
     ui->yawMaxNegativeTorque->setText("Waiting...");
     ui->yawMaxPositiveTorque->setText("Waiting...");
 
