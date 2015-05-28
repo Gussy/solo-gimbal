@@ -13,13 +13,24 @@ parser = argparse.ArgumentParser(description="Utility for generating a version h
 parser.add_argument("output", help="image output file")
 args = parser.parse_args()
 
+# Determine the shell git command based on the current platform
+# For windows, we assume that the git binary is in the default install location
+os_git_command = ""
+if sys.platform.startswith('linux'):
+	os_git_command = "git"
+elif sys.platform.startswith('win32'):
+	if 'PROGRAMFILES(X86)' in os.environ:
+		os_git_command = "\"" + os.environ['PROGRAMFILES(X86)'] + "\\Git\\bin\\git.exe" + "\""
+	else:
+		os_git_command = "\"" + os.environ['PROGRAMFILES'] + "\\Git\\bin\\git.exe" + "\""
+
 # Get the current git info
-cmd = " ".join(["git", "describe", "--tags", "--dirty", "--long"])
+cmd = " ".join([os_git_command, "describe", "--tags", "--dirty", "--long"])
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
 git_identity = str(p.read().strip())
 p.close()
 
-cmd = " ".join(["git", "branch", "--list"])
+cmd = " ".join([os_git_command, "branch", "--list"])
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
 git_branch = str(p.read().strip().split('*')[1].split('\n')[0].strip())
 p.close()
