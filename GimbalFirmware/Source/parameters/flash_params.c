@@ -90,21 +90,21 @@ struct flash_param_struct_0000 flash_params =
     },
     // Rate PID P gains
     {
-        3.0,    // EL
-        0.5,    // AZ
-        5.0     // ROLL
+        3.5,    // EL
+        4.0,    // AZ
+        4.0     // ROLL
     },
     // Rate PID I gains
     {
-        0.5,   // EL
-        0.0,    // AZ
-        0.5     // ROLL
+        0.25,   // EL
+        1.0,    // AZ
+        0.75    // ROLL
     },
     // Rate PID D gains
     {
         0.1,    // EL
-        7.0,    // AZ
-        0.1     // ROLL
+        0.1,    // AZ
+        1.0     // ROLL
     },
     // Rate PID windup limits
     {
