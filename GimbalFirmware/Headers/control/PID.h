@@ -55,7 +55,7 @@ typedef struct {
 
 extern PIDData_Float rate_pid_loop_float[AXIS_CNT];
 
-float UpdatePID_Float(GimbalAxis axis, float error);
+float UpdatePID_Float(GimbalAxis axis, float error, float p_detune_ratio, float i_detune_ratio, float d_detune_ratio);
 
 
 #endif /* PID_H_ */

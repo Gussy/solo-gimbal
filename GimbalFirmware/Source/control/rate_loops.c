@@ -73,9 +73,15 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             // Run PID rate loops
 
         	// Compute the new motor torque commands
-            cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->axis_errors[AZ]) * TorqueSignMap[AZ];
-            cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL]) * TorqueSignMap[EL];
-            cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL]) * TorqueSignMap[ROLL];
+            if ((cb_parms->encoder_readings[EL] < EL_DETUNE_LIMIT_NEG) || (cb_parms->encoder_readings[EL] > EL_DETUNE_LIMIT_POS)) {
+                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->axis_errors[AZ], GainDetuneCoefficients[AZ][0], GainDetuneCoefficients[AZ][1], GainDetuneCoefficients[AZ][2]) * TorqueSignMap[AZ];
+                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL], GainDetuneCoefficients[EL][0], GainDetuneCoefficients[EL][1], GainDetuneCoefficients[EL][2]) * TorqueSignMap[EL];
+                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL], GainDetuneCoefficients[ROLL][0], GainDetuneCoefficients[ROLL][1], GainDetuneCoefficients[ROLL][2]) * TorqueSignMap[ROLL];
+            } else {
+                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->axis_errors[AZ], 1.0, 1.0, 1.0) * TorqueSignMap[AZ];
+                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL], 1.0, 1.0, 1.0) * TorqueSignMap[EL];
+                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
+            }
 
             // Send out motor torques
             MDBSendTorques(cb_parms->motor_torques[AZ], cb_parms->motor_torques[ROLL]);

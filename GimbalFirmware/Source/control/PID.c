@@ -9,7 +9,7 @@ PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 }
 };
 
-float UpdatePID_Float(GimbalAxis axis, float error)
+float UpdatePID_Float(GimbalAxis axis, float error, float p_detune_ratio, float i_detune_ratio, float d_detune_ratio)
 {
     float pTerm, dTerm, iTerm, result;
     float deltaError;
@@ -21,7 +21,7 @@ float UpdatePID_Float(GimbalAxis axis, float error)
     PIDInfo = &rate_pid_loop_float[axis];
 
     // Calcuate proportional gain, gain * current error
-    pTerm = PIDInfo->gainP * error;
+    pTerm = (PIDInfo->gainP * p_detune_ratio) * error;
 
     // Calculate integral gain, gain * accumulation of historical error
     PIDInfo->integralCumulative += error;
@@ -33,7 +33,7 @@ float UpdatePID_Float(GimbalAxis axis, float error)
         PIDInfo->integralCumulative = PIDInfo->integralMin;
     }
 
-    iTerm = PIDInfo->gainI * PIDInfo->integralCumulative;
+    iTerm = (PIDInfo->gainI * i_detune_ratio) * PIDInfo->integralCumulative;
 
     // Calculate derivative gain, gain * difference in error
     if(PIDInfo->gainD) {
@@ -41,7 +41,7 @@ float UpdatePID_Float(GimbalAxis axis, float error)
 
         deltaError = (deltaError * PIDInfo->dTermAlpha) + ((1.0 - PIDInfo->dTermAlpha) * PIDInfo->errorPrevious);
 
-        dTerm = deltaError * PIDInfo->gainD;
+        dTerm = deltaError * (PIDInfo->gainD * d_detune_ratio);
     } else  {
         dTerm = 0;
     }
