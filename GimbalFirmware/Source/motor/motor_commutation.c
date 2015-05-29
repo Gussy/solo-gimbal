@@ -36,10 +36,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
                 load_ap_state_info);
 
 
-		// Not inside operational limit, reduce max. torque because we are going to hit the hardstop
-        if (nearHardStopTop(encoder_parms)||nearHardStopBottom(encoder_parms)) {
-        	md_parms->pid_iq.term.Ref = 0;
-		}
 
         // ------------------------------------------------------------------------------
         //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).
