@@ -34,6 +34,7 @@ struct flash_param_struct_0000 {
 	float offset_accelerometer[AXIS_CNT];
 	float offset_gyro[AXIS_CNT];
 	float k_rate;
+	float broadcast_msgs;
 	float balance_axis;
 	float balance_step_duration;
 };

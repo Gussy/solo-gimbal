@@ -236,6 +236,12 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].param_type = MAV_PARAM_TYPE_REAL32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].float_data_ptr = &(flash_params.k_rate);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].param_id, "GMB_BROADCAST", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].float_data_ptr = &(flash_params.broadcast_msgs);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].access_type = GIMBAL_PARAM_READ_WRITE;
 }
 
 void handle_param_set(mavlink_message_t* received_msg)
