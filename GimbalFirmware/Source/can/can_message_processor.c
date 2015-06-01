@@ -252,6 +252,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
 
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                         */
+                        /*
                         {
                             int16 gyro = (int16)((((Uint16)msg.extended_param[1] << 8) & 0xFF00) | ((Uint16)msg.extended_param[2] & 0x00FF));
                             switch (msg.extended_param[0]) {
@@ -278,6 +279,13 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                                     break;
                             }
                         }
+                        */
+
+                        int16 last_encoder_position = (int16)((((Uint16)msg.extended_param[0] << 8) & 0xFF00) | ((Uint16)msg.extended_param[1] & 0x00FF));
+                        int16 last_encoder_reading = (int16)((((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF));
+                        int16 angle_target = (int16)((((Uint16)msg.extended_param[4] << 8) & 0xFF00) | ((Uint16)msg.extended_param[5] & 0x00FF));
+
+                        snprintf(debug_msg, 50, "Pos: %d, Rdg: %d, Diff: %d, Tgt: %d", last_encoder_position, last_encoder_reading, abs(last_encoder_position - last_encoder_reading), angle_target);
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
                     }
                     break;

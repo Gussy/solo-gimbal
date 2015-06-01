@@ -18,8 +18,8 @@
 
 #define HARDSTOP_SETTLE_TIME_MS 50
 #define MAX_STOPPED_ENCODER_CHANGE_ALLOWED 25         // same units as ControlBoardParms.encoder_readings
-#define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD  45  // same units as ControlBoardParms.encoder_readings
-#define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW  35  // same units as ControlBoardParms.encoder_readings
+#define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD  10 //45  // same units as ControlBoardParms.encoder_readings
+#define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW 10 //35  // same units as ControlBoardParms.encoder_readings
 
 #define PAUSE_POINT_INCR  62.5                        // units of axis position (encoder counts)
 #define EL_AXIS_POS_STEP_SIZE   0.01666               // units of axis position

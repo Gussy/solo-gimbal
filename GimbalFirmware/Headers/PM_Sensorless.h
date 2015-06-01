@@ -149,7 +149,7 @@ typedef struct {
     int16 position_deadband_hysteresis_positive[AXIS_CNT];
     int16 position_deadband_hysteresis_negative[AXIS_CNT];
     int16 axis_errors[AXIS_CNT];
-    Uint16 angle_targets[AXIS_CNT];
+    int16 angle_targets[AXIS_CNT];
     CAND_FaultCode last_axis_fault[AXIS_CNT];
     Uint8 encoder_value_received[AXIS_CNT];
     Uint16 axes_homed[AXIS_CNT];

@@ -79,11 +79,10 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                 // wait here for a bit
                 if (test_parms->settle_counter++ >= ((Uint32)ISR_FREQUENCY * (Uint32)HARDSTOP_SETTLE_TIME_MS)) {
                     test_parms->settle_counter = 0;
-                    if (fabs(test_parms->last_encoder_reading - cb_parms->encoder_readings[test_parms->test_axis]) > MAX_STOPPED_ENCODER_CHANGE_ALLOWED) {
+                    if (abs(test_parms->last_encoder_reading - cb_parms->encoder_readings[test_parms->test_axis]) > MAX_STOPPED_ENCODER_CHANGE_ALLOWED) {
                         // still moving so keep waiting
                         test_parms->last_encoder_reading = cb_parms->encoder_readings[test_parms->test_axis];
-                    }
-                    else {
+                    } else {
                         // stopped moving at this position
                         // if haven't moved much since the last position, we're at a hard stop
                         int16  stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD;
@@ -91,7 +90,20 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                         if (test_parms->test_axis == AZ) {
                             stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW;
                         }
-                        if (fabs(last_encoder_position - test_parms->last_encoder_reading) < stop_threshold) {
+
+                        //TODO: For debug
+                        /*
+                        Uint8 params[6];
+                        params[0] = (last_encoder_position >> 8) & 0x00FF;
+                        params[1] = (last_encoder_position & 0x00FF);
+                        params[2] = (test_parms->last_encoder_reading >> 8) & 0x00FF;
+                        params[3] = (test_parms->last_encoder_reading & 0x00FF);
+                        params[4] = (cb_parms->angle_targets[test_parms->test_axis] >> 8) & 0x00FF;
+                        params[5] = (cb_parms->angle_targets[test_parms->test_axis] & 0x00FF);
+                        cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, params, 6);
+                        */
+
+                        if (abs(last_encoder_position - test_parms->last_encoder_reading) < stop_threshold) {
                             // we've reached the hard stop, save the encoder value and move to the next state
                             test_parms->encoder_hard_stop_neg[test_parms->test_axis] = test_parms->last_encoder_reading;
                             test_parms->status_output_decimation_count = 0;
@@ -104,12 +116,13 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                         test_parms->next_position_pause_point -= PAUSE_POINT_INCR;
                     }
                 }
-            }
-            else {
+            } else {
                 // not paused so take a step
                 test_parms->current_axis_position -= test_parms->position_step;
                 cb_parms->angle_targets[test_parms->test_axis] = (int16)test_parms->current_axis_position;
             }
+
+
             if (test_parms->status_output_decimation_count++ >= 1000) {
                 test_parms->status_output_decimation_count = 0;
                 Uint8 progress = (Uint8)((test_parms->current_axis_position / test_parms->axis_range_min[test_parms->test_axis]) * 100.0);
@@ -168,11 +181,10 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                 // wait here for a bit
                 if (test_parms->settle_counter++ >= ((Uint32)ISR_FREQUENCY * (Uint32)HARDSTOP_SETTLE_TIME_MS)) {
                     test_parms->settle_counter = 0;
-                    if (fabs(test_parms->last_encoder_reading - cb_parms->encoder_readings[test_parms->test_axis]) > MAX_STOPPED_ENCODER_CHANGE_ALLOWED) {
+                    if (abs(test_parms->last_encoder_reading - cb_parms->encoder_readings[test_parms->test_axis]) > MAX_STOPPED_ENCODER_CHANGE_ALLOWED) {
                         // still moving so keep waiting
                         test_parms->last_encoder_reading = cb_parms->encoder_readings[test_parms->test_axis];
-                    }
-                    else {
+                    } else {
                         // stopped moving at this position
                         // if haven't moved much since the last position, we're at a hard stop
                         int16  stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD;
@@ -180,7 +192,20 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                         if (test_parms->test_axis == AZ) {
                             stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW;
                         }
-                        if (fabs(last_encoder_position - test_parms->last_encoder_reading) < stop_threshold) {
+
+                        //TODO: For debug
+                        /*
+                        Uint8 params[6];
+                        params[0] = (last_encoder_position >> 8) & 0x00FF;
+                        params[1] = (last_encoder_position & 0x00FF);
+                        params[2] = (test_parms->last_encoder_reading >> 8) & 0x00FF;
+                        params[3] = (test_parms->last_encoder_reading & 0x00FF);
+                        params[4] = (cb_parms->angle_targets[test_parms->test_axis] >> 8) & 0x00FF;
+                        params[5] = (cb_parms->angle_targets[test_parms->test_axis] & 0x00FF);
+                        cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, params, 6);
+                        */
+
+                        if (abs(last_encoder_position - test_parms->last_encoder_reading) < stop_threshold) {
                             // we've reached the hard stop, save the encoder value and move to the next state
                             test_parms->encoder_hard_stop_plus[test_parms->test_axis] = test_parms->last_encoder_reading;
                             test_parms->status_output_decimation_count = 0;
@@ -193,12 +218,12 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                         test_parms->next_position_pause_point += PAUSE_POINT_INCR;
                     }
                 }
-            }
-            else {
+            } else {
                 // not paused so take a step
                 test_parms->current_axis_position += test_parms->position_step;
                 cb_parms->angle_targets[test_parms->test_axis] = (int16)test_parms->current_axis_position;
             }
+
             if (test_parms->status_output_decimation_count++ >= 1000) {
                 test_parms->status_output_decimation_count = 0;
                 Uint8 progress = (Uint8)(50.0 + ((test_parms->current_axis_position / test_parms->axis_range_max[test_parms->test_axis]) * 50.0));

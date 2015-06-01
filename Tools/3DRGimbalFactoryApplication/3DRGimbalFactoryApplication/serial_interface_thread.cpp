@@ -92,7 +92,7 @@ void SerialInterfaceThread::handleInput()
                         emit receivedHeartbeat();
                         m_interfaceState = INTERFACE_INDICATED_CODE_LOADED;
                     }
-                    emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, "Received Gimbal Heartbeat");
+                    //emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, "Received Gimbal Heartbeat");
                     break;
 
                 case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
