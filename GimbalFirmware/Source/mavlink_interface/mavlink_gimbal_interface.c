@@ -350,10 +350,12 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
 void send_mavlink_gimbal_feedback() {
 	static mavlink_message_t feedback_msg;
 
+	uint8_t target_id = (flash_params.broadcast_msgs)?MAV_COMP_ID_ALL:gimbal_sysid;
+
 	// Copter mapping is X roll, Y el, Z az
 	mavlink_msg_gimbal_report_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL,
 			&feedback_msg,
-			0,
+			target_id,
 			0,
 			0.01f,
 			latest_gyro_telemetry[ROLL],
