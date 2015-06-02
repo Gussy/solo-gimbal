@@ -1,4 +1,4 @@
-!define version "0.12.1"
+!define version "0.12.1-AxisLimitsTest"
 !define app_name "3DRGimbalFactoryApplication"
 
 ;Include Modern UI
