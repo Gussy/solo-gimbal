@@ -80,7 +80,19 @@ typedef struct {
     int16  encoder_hard_stop_plus[AXIS_CNT];
     int16  motor_torque_max_neg[AXIS_CNT];
     int16  motor_torque_max_pos[AXIS_CNT];
+    int16  motor_torque_max_neg_loc[AXIS_CNT];
+    int16  motor_torque_max_pos_loc[AXIS_CNT];
+    float  motor_torque_avg_neg[AXIS_CNT];
+    float  motor_torque_avg_pos[AXIS_CNT];
 } TestAxisRangeLimitsParms;
+
+typedef struct {
+    int16 last_torque_cmd;
+    int16 max_motor_torque_cmd;
+    int16 max_motor_torque_cmd_loc;
+    Uint32 motor_torque_accum;
+    Uint32 motor_torque_accum_nsamps;
+} TorqueDataMonitor;
 
 int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, ControlBoardParms* cb_parms);
 

@@ -13,9 +13,18 @@
 
 #include <math.h>
 
+TorqueDataMonitor torque_data = {
+    0,      // Last torque command
+    0,      // Max motor torque command
+    0,      // Max motor torque command location
+    0,      // Motor torque average accumulator
+    0       // Motor torque accumulator number of samples
+};
+
 // local prototypes
 static void send_error_and_reset_parms(TestAxisRangeLimitsParms* test_parms, ControlBoardParms* cb_parms, AxisRangeLimitsTestStatus error);
-
+static void update_torque_data(TorqueDataMonitor* torque_data, ControlBoardParms* cb_parms, GimbalAxis test_axis);
+static void clear_torque_data(TorqueDataMonitor* torque_data);
 
 //
 // Test the full range of movement on all 3 axes
@@ -27,9 +36,10 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
 
     TestResult                 result_id_encoder_range;
     TestResult                 result_id_encoder_asymmetry;
-    TestResult                 result_id_torque;
     AxisRangeLimitsTestSection next_section;
     static int16  last_encoder_position;
+
+    update_torque_data(&torque_data, cb_parms, test_parms->test_axis);
 
     switch (test_parms->test_state) {
         case RANGE_LIMITS_STATE_INIT:
@@ -39,6 +49,7 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
             test_parms->status_output_decimation_count = 0;
             test_parms->settle_counter = 0;
             test_parms->current_section = AXIS_RANGE_TEST_SECTION_EL_CHECK_NEG;
+            clear_torque_data(&torque_data);
 
             // Switch to position mode for this test
             cb_parms->control_loop_type = POSITION_MODE;
@@ -90,18 +101,6 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                         if (test_parms->test_axis == AZ) {
                             stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW;
                         }
-
-                        //TODO: For debug
-                        /*
-                        Uint8 params[6];
-                        params[0] = (last_encoder_position >> 8) & 0x00FF;
-                        params[1] = (last_encoder_position & 0x00FF);
-                        params[2] = (test_parms->last_encoder_reading >> 8) & 0x00FF;
-                        params[3] = (test_parms->last_encoder_reading & 0x00FF);
-                        params[4] = (cb_parms->angle_targets[test_parms->test_axis] >> 8) & 0x00FF;
-                        params[5] = (cb_parms->angle_targets[test_parms->test_axis] & 0x00FF);
-                        cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, params, 6);
-                        */
 
                         if (abs(last_encoder_position - test_parms->last_encoder_reading) < stop_threshold) {
                             // we've reached the hard stop, save the encoder value and move to the next state
@@ -193,18 +192,6 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                             stop_threshold = HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW;
                         }
 
-                        //TODO: For debug
-                        /*
-                        Uint8 params[6];
-                        params[0] = (last_encoder_position >> 8) & 0x00FF;
-                        params[1] = (last_encoder_position & 0x00FF);
-                        params[2] = (test_parms->last_encoder_reading >> 8) & 0x00FF;
-                        params[3] = (test_parms->last_encoder_reading & 0x00FF);
-                        params[4] = (cb_parms->angle_targets[test_parms->test_axis] >> 8) & 0x00FF;
-                        params[5] = (cb_parms->angle_targets[test_parms->test_axis] & 0x00FF);
-                        cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, params, 6);
-                        */
-
                         if (abs(last_encoder_position - test_parms->last_encoder_reading) < stop_threshold) {
                             // we've reached the hard stop, save the encoder value and move to the next state
                             test_parms->encoder_hard_stop_plus[test_parms->test_axis] = test_parms->last_encoder_reading;
@@ -275,7 +262,8 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
 
                 // test_parms->current_section = next_section;     TODO?
                 //CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 0, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
-                ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+                //ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+                clear_torque_data(&torque_data);
                 test_parms->test_state = RANGE_LIMITS_STATE_CHECK_NEGATIVE_TORQUE_POS_TO_HOME;
             }
             break;
@@ -296,22 +284,32 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                 cb_parms->angle_targets[test_parms->test_axis] = (int16)test_parms->current_axis_position;
             }
             else {
-                test_parms->motor_torque_max_neg[test_parms->test_axis] = -GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+                //test_parms->motor_torque_max_neg[test_parms->test_axis] = -GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+                test_parms->motor_torque_max_neg[test_parms->test_axis] = -torque_data.max_motor_torque_cmd;
+                test_parms->motor_torque_max_neg_loc[test_parms->test_axis] = torque_data.max_motor_torque_cmd_loc;
+                test_parms->motor_torque_avg_neg[test_parms->test_axis] = -((float)torque_data.motor_torque_accum / (float)torque_data.motor_torque_accum_nsamps);
+
                 switch (test_parms->test_axis) {
                     case AZ:
-                        result_id_torque = TEST_RESULT_NEG_MAX_TORQUE_AZ;
+                        CANSendTestResult(TEST_RESULT_NEG_MAX_TORQUE_AZ, (float)test_parms->motor_torque_max_neg[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_NEG_MAX_TORQUE_LOC_AZ, (float)test_parms->motor_torque_max_neg_loc[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_NEG_AVG_TORQUE_AZ, test_parms->motor_torque_avg_neg[test_parms->test_axis]);
                         break;
 
                     case EL:
-                        result_id_torque = TEST_RESULT_NEG_MAX_TORQUE_EL;
+                        CANSendTestResult(TEST_RESULT_NEG_MAX_TORQUE_EL, (float)test_parms->motor_torque_max_neg[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_NEG_MAX_TORQUE_LOC_EL, (float)test_parms->motor_torque_max_neg_loc[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_NEG_AVG_TORQUE_EL, test_parms->motor_torque_avg_neg[test_parms->test_axis]);
                         break;
 
                     case ROLL:
-                        result_id_torque = TEST_RESULT_NEG_MAX_TORQUE_RL;
+                        CANSendTestResult(TEST_RESULT_NEG_MAX_TORQUE_RL, (float)test_parms->motor_torque_max_neg[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_NEG_MAX_TORQUE_LOC_RL, (float)test_parms->motor_torque_max_neg_loc[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_NEG_AVG_TORQUE_RL, test_parms->motor_torque_avg_neg[test_parms->test_axis]);
                         break;
                 }
-                CANSendTestResult(result_id_torque, (float)test_parms->motor_torque_max_neg[test_parms->test_axis]);
-                ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+                //ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+                clear_torque_data(&torque_data);
                 test_parms->test_state = RANGE_LIMITS_STATE_CHECK_POSITIVE_TORQUE_NEG_TO_HOME;
             }
             break;
@@ -332,24 +330,33 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                 cb_parms->angle_targets[test_parms->test_axis] = (int16)test_parms->current_axis_position;
             }
             else {
+                //test_parms->motor_torque_max_pos[test_parms->test_axis] = GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
+                test_parms->motor_torque_max_pos[test_parms->test_axis] = torque_data.max_motor_torque_cmd;
+                test_parms->motor_torque_max_pos_loc[test_parms->test_axis] = torque_data.max_motor_torque_cmd_loc;
+                test_parms->motor_torque_avg_pos[test_parms->test_axis] = (float)torque_data.motor_torque_accum / (float)torque_data.motor_torque_accum_nsamps;
+
                 switch (test_parms->test_axis) {
                     case AZ:
+                        CANSendTestResult(TEST_RESULT_POS_MAX_TORQUE_AZ, (float)test_parms->motor_torque_max_pos[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_POS_MAX_TORQUE_LOC_AZ, (float)test_parms->motor_torque_max_pos_loc[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_POS_AVG_TORQUE_AZ, test_parms->motor_torque_avg_pos[test_parms->test_axis]);
                         next_section = AXIS_RANGE_TEST_SECTION_AZ_RETURN_HOME;
-                        result_id_torque = TEST_RESULT_POS_MAX_TORQUE_AZ;
                         break;
 
                     case EL:
+                        CANSendTestResult(TEST_RESULT_POS_MAX_TORQUE_EL, (float)test_parms->motor_torque_max_pos[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_POS_MAX_TORQUE_LOC_EL, (float)test_parms->motor_torque_max_pos_loc[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_POS_AVG_TORQUE_EL, test_parms->motor_torque_avg_pos[test_parms->test_axis]);
                         next_section = AXIS_RANGE_TEST_SECTION_EL_RETURN_HOME;
-                        result_id_torque = TEST_RESULT_POS_MAX_TORQUE_EL;
                         break;
 
                     case ROLL:
+                        CANSendTestResult(TEST_RESULT_POS_MAX_TORQUE_RL, (float)test_parms->motor_torque_max_pos[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_POS_MAX_TORQUE_LOC_RL, (float)test_parms->motor_torque_max_pos_loc[test_parms->test_axis]);
+                        CANSendTestResult(TEST_RESULT_POS_AVG_TORQUE_RL, test_parms->motor_torque_avg_pos[test_parms->test_axis]);
                         next_section = AXIS_RANGE_TEST_SECTION_RL_RETURN_HOME;
-                        result_id_torque = TEST_RESULT_POS_MAX_TORQUE_RL;
                         break;
                 }
-                test_parms->motor_torque_max_pos[test_parms->test_axis] = GetMaxTorqueCmd(cb_parms, test_parms->test_axis);
-                CANSendTestResult(result_id_torque, (float)test_parms->motor_torque_max_pos[test_parms->test_axis]);
 
                 test_parms->test_state = RANGE_LIMITS_STATE_MOVE_TO_HOME_2;
 
@@ -438,5 +445,30 @@ static void send_error_and_reset_parms(TestAxisRangeLimitsParms* test_parms, Con
     cb_parms->angle_targets[ROLL] = 0;
     cb_parms->control_loop_type = RATE_MODE;
     test_parms->test_state = RANGE_LIMITS_STATE_INIT;
+}
+
+static void update_torque_data(TorqueDataMonitor* torque_data, ControlBoardParms* cb_parms, GimbalAxis test_axis)
+{
+    // First, check if the new torque command is the same as the last torque command.  No need to add new data if it's the same as the last cycle
+    // This will be helpful because this will be called at the torque loop rate (10kHz), but the torque command is only updated at the rate loop rate (1kHz)
+    if (cb_parms->motor_torques[test_axis] != torque_data->last_torque_cmd) {
+        if (abs(cb_parms->motor_torques[test_axis]) > torque_data->max_motor_torque_cmd) {
+            torque_data->max_motor_torque_cmd = abs(cb_parms->motor_torques[test_axis]);
+            torque_data->max_motor_torque_cmd_loc = cb_parms->encoder_readings[test_axis];
+        }
+        torque_data->motor_torque_accum += abs(cb_parms->motor_torques[test_axis]);
+        torque_data->motor_torque_accum_nsamps++;
+
+        torque_data->last_torque_cmd = cb_parms->motor_torques[test_axis];
+    }
+}
+
+static void clear_torque_data(TorqueDataMonitor* torque_data)
+{
+    torque_data->last_torque_cmd = 0;
+    torque_data->max_motor_torque_cmd = 0;
+    torque_data->max_motor_torque_cmd_loc = 0;
+    torque_data->motor_torque_accum = 0;
+    torque_data->motor_torque_accum_nsamps = 0;
 }
 

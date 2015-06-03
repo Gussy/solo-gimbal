@@ -327,7 +327,11 @@ TestAxisRangeLimitsParms axis_range_limits_parms = {
     {0, 0, 0},                              // negative hard stops (encoder values)
     {0, 0, 0},                              // positive hard stops (encoder values)
     {0, 0, 0},                              // motor torque maximums
-    {0, 0, 0}                               // motor torque minimums
+    {0, 0, 0},                              // motor torque minimums
+    {0, 0, 0},                              // Negative direction max motor torque locations
+    {0, 0, 0},                              // Positive direction max motor torque locations
+    {0.0, 0.0, 0.0},                        // Negative direction torque averages
+    {0.0, 0.0, 0.0}                         // Positive direction torque averages
 };
 
 TestGyroHealthParms gyro_health_limits_parms = {
