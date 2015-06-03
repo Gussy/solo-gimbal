@@ -34,8 +34,16 @@ private:
     QPixmap m_successIcon;
     QPixmap m_failureIcon;
 
+    const double ENCODER_COUNTS_PER_DEG;
+    const double TORQUE_HALF_SCALE;
+    const double MAX_CURRENT_HALF_SCALE;
+    const double MOTOR_NM_PER_A;
+    const double OZ_IN_PER_NM;
+
+
     void setStepStatus(QLabel *statusLabel, int status);
     void resetTestUI();
+    double gimbalTorqueToOzIn(double gimbalTorque);
 
 private slots:
     void on_retryButton_clicked();

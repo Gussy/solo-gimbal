@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>461</width>
-    <height>752</height>
+    <width>582</width>
+    <height>748</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -130,20 +130,6 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="1" colspan="2">
-       <widget class="QLabel" name="pitchMaxNegativeTorque">
-        <property name="text">
-         <string>Waiting...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1" colspan="2">
-       <widget class="QLabel" name="pitchMechanicalRangeAsymmetry">
-        <property name="text">
-         <string>Waiting...</string>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="1">
        <widget class="QProgressBar" name="pitchReturnHomeProgress">
         <property name="value">
@@ -204,46 +190,140 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="1" colspan="2">
-       <widget class="QLabel" name="pitchMechanicalRange">
-        <property name="text">
-         <string>Waiting...</string>
+      <item row="3" column="0" colspan="3">
+       <widget class="QFrame" name="pitchResultsFrame">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
         </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="pitchMechanicalRange_label">
-        <property name="text">
-         <string>Mechanical Range:</string>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
         </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="pitchMechanicalRangeAsymmetry_label">
-        <property name="text">
-         <string>Mechanical Range Asymmetry:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="pitchMaxNegativeTorque_label">
-        <property name="text">
-         <string>Max Negative Travel Torque:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="pitchMaxPositiveTorque_label">
-        <property name="text">
-         <string>Max Positive Travel Torque:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="1" colspan="2">
-       <widget class="QLabel" name="pitchMaxPositiveTorque">
-        <property name="text">
-         <string>Waiting...</string>
-        </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item row="2" column="0">
+          <widget class="QLabel" name="pitchMaxNegativeTorque_label">
+           <property name="text">
+            <string>Negative Torque Max:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="pitchMechanicalRangeAsymmetry_label">
+           <property name="text">
+            <string>Mechanical Range Asymmetry:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="pitchMechanicalRangeAsymmetry">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="pitchMaxNegativeTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="4">
+          <widget class="QLabel" name="pitchAverageNegativeTorque_label">
+           <property name="text">
+            <string>Average:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="pitchMaxPositiveTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLabel" name="pitchMaxNegativeTorqueLocation_label">
+           <property name="text">
+            <string>Max Location:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="pitchMechanicalRange_label">
+           <property name="text">
+            <string>Mechanical Range:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="pitchMechanicalRange">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="pitchMaxPositiveTorque_label">
+           <property name="text">
+            <string>Max Positive Travel Torque:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="3">
+          <widget class="QLabel" name="pitchMaxNegativeTorqueLocation">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="5">
+          <widget class="QLabel" name="pitchAverageNegativeTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLabel" name="pitchMaxPositiveTorqueLocation_label">
+           <property name="text">
+            <string>Max Location:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
+          <widget class="QLabel" name="pitchMaxPositiveTorqueLocation">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="4">
+          <widget class="QLabel" name="pitchAveragePositiveTorque_label">
+           <property name="text">
+            <string>Average:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="5">
+          <widget class="QLabel" name="pitchAveragePositiveTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
@@ -256,14 +336,7 @@
      <zorder>pitchReturnHome_label</zorder>
      <zorder>pitchReturnHomeProgress</zorder>
      <zorder>pitchReturnHomeStatus</zorder>
-     <zorder>pitchMechanicalRange_label</zorder>
-     <zorder>pitchMechanicalRangeAsymmetry_label</zorder>
-     <zorder>pitchMaxNegativeTorque_label</zorder>
-     <zorder>pitchMechanicalRange</zorder>
-     <zorder>pitchMechanicalRangeAsymmetry</zorder>
-     <zorder>pitchMaxNegativeTorque</zorder>
-     <zorder>pitchMaxPositiveTorque_label</zorder>
-     <zorder>pitchMaxPositiveTorque</zorder>
+     <zorder>pitchResultsFrame</zorder>
     </widget>
    </item>
    <item row="1" column="0" colspan="3">
@@ -288,20 +361,6 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="1" colspan="2">
-       <widget class="QLabel" name="rollMaxNegativeTorque">
-        <property name="text">
-         <string>Waiting...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QProgressBar" name="rollCheckNegativeProgress">
-        <property name="value">
-         <number>0</number>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="0">
        <widget class="QLabel" name="rollCheckNegative_label">
         <property name="text">
@@ -309,38 +368,10 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="1" colspan="2">
-       <widget class="QLabel" name="rollMechanicalRangeAsymmetry">
-        <property name="text">
-         <string>Waiting...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="rollMechanicalRange_label">
-        <property name="text">
-         <string>Mechanical Range:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="rollMechanicalRangeAsymmetry_label">
-        <property name="text">
-         <string>Mechanical Range Asymmetry:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="rollMaxNegativeTorque_label">
-        <property name="text">
-         <string>Max Negative Travel Torque:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1" colspan="2">
-       <widget class="QLabel" name="rollMechanicalRange">
-        <property name="text">
-         <string>Waiting...</string>
+      <item row="0" column="1">
+       <widget class="QProgressBar" name="rollCheckNegativeProgress">
+        <property name="value">
+         <number>0</number>
         </property>
        </widget>
       </item>
@@ -404,18 +435,140 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="rollMaxPositiveTorque_label">
-        <property name="text">
-         <string>Max Positive Travel Torque:</string>
+      <item row="3" column="0" colspan="3">
+       <widget class="QFrame" name="rollResultsFrame">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
         </property>
-       </widget>
-      </item>
-      <item row="6" column="1" colspan="2">
-       <widget class="QLabel" name="rollMaxPositiveTorque">
-        <property name="text">
-         <string>Waiting...</string>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
         </property>
+        <layout class="QGridLayout" name="gridLayout_6">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item row="0" column="1">
+          <widget class="QLabel" name="rollMechanicalRange">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="rollMechanicalRangeAsymmetry_label">
+           <property name="text">
+            <string>Mechanical Range Asymmetry:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="rollMechanicalRange_label">
+           <property name="text">
+            <string>Mechanical Range:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="rollMechanicalRangeAsymmetry">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="rollMaxNegativeTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLabel" name="rollMaxNegativeTorqueLocation_label">
+           <property name="text">
+            <string>Max Location:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="3">
+          <widget class="QLabel" name="rollMaxNegativeTorqueLocation">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="4">
+          <widget class="QLabel" name="rollAverageNegativeTorque_label">
+           <property name="text">
+            <string>Average:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="rollMaxNegativeTorque_label">
+           <property name="text">
+            <string>Max Negative Travel Torque:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="rollMaxPositiveTorque_label">
+           <property name="text">
+            <string>Max Positive Travel Torque:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="rollMaxPositiveTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="5">
+          <widget class="QLabel" name="rollAverageNegativeTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLabel" name="rollMaxPositiveTorqueLocation_label">
+           <property name="text">
+            <string>Max Location:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
+          <widget class="QLabel" name="rollMaxPositiveTorqueLocation">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="4">
+          <widget class="QLabel" name="rollAveragePositiveTorque_label">
+           <property name="text">
+            <string>Average:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="5">
+          <widget class="QLabel" name="rollAveragePositiveTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
@@ -431,48 +584,6 @@
        <widget class="QLabel" name="yawReturnHome_label">
         <property name="text">
          <string>Return Home:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1" colspan="2">
-       <widget class="QLabel" name="yawMechanicalRange">
-        <property name="text">
-         <string>Waiting...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1" colspan="2">
-       <widget class="QLabel" name="yawMechanicalRangeAsymmetry">
-        <property name="text">
-         <string>Waiting...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1" colspan="2">
-       <widget class="QLabel" name="yawMaxNegativeTorque">
-        <property name="text">
-         <string>Waiting...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="yawMechanicalRange_label">
-        <property name="text">
-         <string>Mechanical Range:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="yawMechanicalRangeAsymmetry_label">
-        <property name="text">
-         <string>Mechanical Range Asymmetry:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="yawMaxNegativeTorque_label">
-        <property name="text">
-         <string>Max Negative Travel Torque:</string>
         </property>
        </widget>
       </item>
@@ -559,18 +670,140 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="yawMaxPositiveTorque_label">
-        <property name="text">
-         <string>Max Positive Travel Torque:</string>
+      <item row="3" column="0" colspan="3">
+       <widget class="QFrame" name="yawResultsFrame">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
         </property>
-       </widget>
-      </item>
-      <item row="6" column="1" colspan="2">
-       <widget class="QLabel" name="yawMaxPositiveTorque">
-        <property name="text">
-         <string>Waiting...</string>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
         </property>
+        <layout class="QGridLayout" name="gridLayout_7">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item row="0" column="1">
+          <widget class="QLabel" name="yawMechanicalRange">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLabel" name="yawMaxNegativeTorqueLocation_label">
+           <property name="text">
+            <string>Max Location:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="3">
+          <widget class="QLabel" name="yawMaxNegativeTorqueLocation">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="4">
+          <widget class="QLabel" name="yawAverageNegativeTorque_label">
+           <property name="text">
+            <string>Average:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="yawMechanicalRangeAsymmetry_label">
+           <property name="text">
+            <string>Mechanical Range Asymmetry:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="yawMaxNegativeTorque_label">
+           <property name="text">
+            <string>Max Negative Travel Torque:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="yawMaxPositiveTorque_label">
+           <property name="text">
+            <string>Max Positive Travel Torque:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="yawMechanicalRangeAsymmetry">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="yawMaxNegativeTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="yawMaxPositiveTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="yawMechanicalRange_label">
+           <property name="text">
+            <string>Mechanical Range:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="5">
+          <widget class="QLabel" name="yawAverageNegativeTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLabel" name="yawMaxPositiveTorqueLocation_label">
+           <property name="text">
+            <string>Max Location:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
+          <widget class="QLabel" name="yawMaxPositiveTorqueLocation">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="4">
+          <widget class="QLabel" name="yawAveragePositiveTorque_label">
+           <property name="text">
+            <string>Average:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="5">
+          <widget class="QLabel" name="yawAveragePositiveTorque">
+           <property name="text">
+            <string>Waiting...</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>

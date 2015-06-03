@@ -5,7 +5,12 @@
 
 AxisRangeTestDialog::AxisRangeTestDialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::AxisRangeTestDialog)
+    ui(new Ui::AxisRangeTestDialog),
+    ENCODER_COUNTS_PER_DEG(27.78),
+    TORQUE_HALF_SCALE(32767.0),
+    MAX_CURRENT_HALF_SCALE(2.75),
+    MOTOR_NM_PER_A(21.3),
+    OZ_IN_PER_NM(0.1416)
 {
     // Disable all of the title bar buttons (so the user can't close the dialog from the title bar)
     setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
@@ -106,51 +111,99 @@ void AxisRangeTestDialog::receiveTestStatus(unsigned char result_id, float resul
 
     switch (result_id_enum) {
         case TEST_RESULT_ENCODER_RANGE_AZ:
-            ui->yawMechanicalRange->setText(QString::number(result));
+            ui->yawMechanicalRange->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
             break;
 
         case TEST_RESULT_ENCODER_ASYMMETRY_AZ:
-            ui->yawMechanicalRangeAsymmetry->setText(QString::number(result));
+            ui->yawMechanicalRangeAsymmetry->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_AZ:
-            ui->yawMaxNegativeTorque->setText(QString::number(result));
+            ui->yawMaxNegativeTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
             break;
 
         case TEST_RESULT_POS_MAX_TORQUE_AZ:
-            ui->yawMaxPositiveTorque->setText(QString::number(result));
+            ui->yawMaxPositiveTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
             break;
 
         case TEST_RESULT_ENCODER_RANGE_EL:
-            ui->pitchMechanicalRange->setText(QString::number(result));
+            ui->pitchMechanicalRange->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
             break;
 
         case TEST_RESULT_ENCODER_ASYMMETRY_EL:
-            ui->pitchMechanicalRangeAsymmetry->setText(QString::number(result));
+            ui->pitchMechanicalRangeAsymmetry->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_EL:
-            ui->pitchMaxNegativeTorque->setText(QString::number(result));
+            ui->pitchMaxNegativeTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
             break;
 
         case TEST_RESULT_POS_MAX_TORQUE_EL:
-            ui->pitchMaxPositiveTorque->setText(QString::number(result));
+            ui->pitchMaxPositiveTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
             break;
 
         case TEST_RESULT_ENCODER_RANGE_RL:
-            ui->rollMechanicalRange->setText(QString::number(result));
+            ui->rollMechanicalRange->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
             break;
 
         case TEST_RESULT_ENCODER_ASYMMETRY_RL:
-            ui->rollMechanicalRangeAsymmetry->setText(QString::number(result));
+            ui->rollMechanicalRangeAsymmetry->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_RL:
-            ui->rollMaxNegativeTorque->setText(QString::number(result));
+            ui->rollMaxNegativeTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
             break;
 
         case TEST_RESULT_POS_MAX_TORQUE_RL:
-            ui->rollMaxPositiveTorque->setText(QString::number(result));
+            ui->rollMaxPositiveTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_LOC_AZ:
+            ui->yawMaxNegativeTorqueLocation->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_LOC_EL:
+            ui->pitchMaxNegativeTorqueLocation->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_LOC_RL:
+            ui->rollMaxNegativeTorqueLocation->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_LOC_AZ:
+            ui->yawMaxPositiveTorqueLocation->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_LOC_EL:
+            ui->pitchMaxPositiveTorqueLocation->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_LOC_RL:
+            ui->rollMaxPositiveTorqueLocation->setText(QString::number(result / ENCODER_COUNTS_PER_DEG) + "°");
+            break;
+
+        case TEST_RESULT_NEG_AVG_TORQUE_AZ:
+            ui->yawAverageNegativeTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
+            break;
+
+        case TEST_RESULT_NEG_AVG_TORQUE_EL:
+            ui->pitchAverageNegativeTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
+            break;
+
+        case TEST_RESULT_NEG_AVG_TORQUE_RL:
+            ui->rollAverageNegativeTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
+            break;
+
+        case TEST_RESULT_POS_AVG_TORQUE_AZ:
+            ui->yawAveragePositiveTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
+            break;
+
+        case TEST_RESULT_POS_AVG_TORQUE_EL:
+            ui->pitchAveragePositiveTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
+            break;
+
+        case TEST_RESULT_POS_AVG_TORQUE_RL:
+            ui->rollAveragePositiveTorque->setText(QString::number(gimbalTorqueToOzIn(result)) + " oz-in");
             break;
     }
 }
@@ -190,19 +243,31 @@ void AxisRangeTestDialog::resetTestUI()
     ui->yawCheckPositiveStatus->setPixmap(m_inProgressIcon);
     ui->yawReturnHomeStatus->setPixmap(m_inProgressIcon);
 
-    // Reset the stop and max torque indicators
+    // Reset the stop and torque data indicators
     ui->pitchMechanicalRange->setText("Waiting...");
     ui->pitchMechanicalRangeAsymmetry->setText("Waiting...");
     ui->pitchMaxNegativeTorque->setText("Waiting...");
     ui->pitchMaxPositiveTorque->setText("Waiting...");
+    ui->pitchMaxNegativeTorqueLocation->setText("Waiting...");
+    ui->pitchMaxPositiveTorqueLocation->setText("Waiting...");
+    ui->pitchAverageNegativeTorque->setText("Waiting...");
+    ui->pitchAveragePositiveTorque->setText("Waiting...");
     ui->rollMechanicalRange->setText("Waiting...");
     ui->rollMechanicalRangeAsymmetry->setText("Waiting...");
     ui->rollMaxNegativeTorque->setText("Waiting...");
     ui->rollMaxPositiveTorque->setText("Waiting...");
+    ui->rollMaxNegativeTorqueLocation->setText("Waiting...");
+    ui->rollMaxPositiveTorqueLocation->setText("Waiting...");
+    ui->rollAverageNegativeTorque->setText("Waiting...");
+    ui->rollAveragePositiveTorque->setText("Waiting...");
     ui->yawMechanicalRange->setText("Waiting...");
     ui->yawMechanicalRangeAsymmetry->setText("Waiting...");
     ui->yawMaxNegativeTorque->setText("Waiting...");
     ui->yawMaxPositiveTorque->setText("Waiting...");
+    ui->yawMaxNegativeTorqueLocation->setText("Waiting...");
+    ui->yawMaxPositiveTorqueLocation->setText("Waiting...");
+    ui->yawAverageNegativeTorque->setText("Waiting...");
+    ui->yawAveragePositiveTorque->setText("Waiting...");
 
     // Disable the ok and retry buttons
     ui->okButton->setEnabled(false);
@@ -215,5 +280,10 @@ void AxisRangeTestDialog::resetTestUI()
 void AxisRangeTestDialog::reject()
 {
     // Overriding this to prevent default behavior of escape key causing dialog to exit
+}
+
+double AxisRangeTestDialog::gimbalTorqueToOzIn(double gimbalTorque)
+{
+    return ((gimbalTorque / TORQUE_HALF_SCALE) * MAX_CURRENT_HALF_SCALE) * MOTOR_NM_PER_A * OZ_IN_PER_NM;
 }
 

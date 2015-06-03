@@ -664,6 +664,22 @@ void SerialInterfaceThread::handleDebug(mavlink_message_t *msg)
             testResultID = "Positive Max Torque AZ";
             break;
 
+        case TEST_RESULT_NEG_MAX_TORQUE_LOC_AZ:
+            testResultID = "Negative Max Torque Location AZ";
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_LOC_AZ:
+            testResultID = "Positive Max Torque Location AZ";
+            break;
+
+        case TEST_RESULT_NEG_AVG_TORQUE_AZ:
+            testResultID = "Negative Avg Torque AZ";
+            break;
+
+        case TEST_RESULT_POS_AVG_TORQUE_AZ:
+            testResultID = "Positive Avg Torque AZ";
+            break;
+
         case TEST_RESULT_ENCODER_RANGE_EL:
             testResultID = "Mechanical Range EL";
             break;
@@ -680,6 +696,22 @@ void SerialInterfaceThread::handleDebug(mavlink_message_t *msg)
             testResultID = "Positive Max Torque EL";
             break;
 
+        case TEST_RESULT_NEG_MAX_TORQUE_LOC_EL:
+            testResultID = "Negative Max Torque Location EL";
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_LOC_EL:
+            testResultID = "Positive Max Torque Location EL";
+            break;
+
+        case TEST_RESULT_NEG_AVG_TORQUE_EL:
+            testResultID = "Negative Avg Torque EL";
+            break;
+
+        case TEST_RESULT_POS_AVG_TORQUE_EL:
+            testResultID = "Positive Avg Torque EL";
+            break;
+
         case TEST_RESULT_ENCODER_RANGE_RL:
             testResultID = "Mechanical Range RL";
             break;
@@ -694,6 +726,26 @@ void SerialInterfaceThread::handleDebug(mavlink_message_t *msg)
 
         case TEST_RESULT_POS_MAX_TORQUE_RL:
             testResultID = "Positive Max Torque RL";
+            break;
+
+        case TEST_RESULT_NEG_MAX_TORQUE_LOC_RL:
+            testResultID = "Negative Max Torque Location RL";
+            break;
+
+        case TEST_RESULT_POS_MAX_TORQUE_LOC_RL:
+            testResultID = "Positive Max Torque Location RL";
+            break;
+
+        case TEST_RESULT_NEG_AVG_TORQUE_RL:
+            testResultID = "Negative Avg Torque RL";
+            break;
+
+        case TEST_RESULT_POS_AVG_TORQUE_RL:
+            testResultID = "Positive Avg Torque RL";
+            break;
+
+        default:
+            testResultID = "Unknown";
             break;
     }
 
