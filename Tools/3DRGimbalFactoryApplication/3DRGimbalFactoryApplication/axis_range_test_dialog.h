@@ -67,7 +67,7 @@ private:
     const double MAX_CURRENT_HALF_SCALE;
     const double MOTOR_NM_PER_A;
     const double OZ_IN_PER_NM;
-    const QString TAB = \t;
+    const QString TAB;
 
 
     void setStepStatus(QLabel *statusLabel, int status);
