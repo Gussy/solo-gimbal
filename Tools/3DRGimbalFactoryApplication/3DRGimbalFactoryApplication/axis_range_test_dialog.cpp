@@ -10,7 +10,8 @@ AxisRangeTestDialog::AxisRangeTestDialog(QWidget *parent) :
     TORQUE_HALF_SCALE(32767.0),
     MAX_CURRENT_HALF_SCALE(2.75),
     MOTOR_NM_PER_A(21.3),
-    OZ_IN_PER_NM(0.1416)
+    OZ_IN_PER_NM(0.1416),
+    TAB("\t")
 {
     // Disable all of the title bar buttons (so the user can't close the dialog from the title bar)
     setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
