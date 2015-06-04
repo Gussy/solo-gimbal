@@ -33,13 +33,41 @@ private:
     QPixmap m_inProgressIcon;
     QPixmap m_successIcon;
     QPixmap m_failureIcon;
-    QString tabDelimitedText;
+
+    QString m_pitchMechRange;
+    QString m_pitchMechSymm;
+    QString m_pitchMaxNegTorq;
+    QString m_pitchMaxNegTorqLoc;
+    QString m_pitchAvgNegTorq;
+    QString m_pitchMaxPosTorq;
+    QString m_pitchMaxPosTorqLoc;
+    QString m_pitchAvgPosTorq;
+
+    QString m_rollMechRange;
+    QString m_rollMechSymm;
+    QString m_rollMaxNegTorq;
+    QString m_rollMaxNegTorqLoc;
+    QString m_rollAvgNegTorq;
+    QString m_rollMaxPosTorq;
+    QString m_rollMaxPosTorqLoc;
+    QString m_rollAvgPosTorq;
+
+    QString m_yawMechRange;
+    QString m_yawMechSymm;
+    QString m_yawMaxNegTorq;
+    QString m_yawMaxNegTorqLoc;
+    QString m_yawAvgNegTorq;
+    QString m_yawMaxPosTorq;
+    QString m_yawMaxPosTorqLoc;
+    QString m_yawAvgPosTorq;
+
 
     const double ENCODER_COUNTS_PER_DEG;
     const double TORQUE_HALF_SCALE;
     const double MAX_CURRENT_HALF_SCALE;
     const double MOTOR_NM_PER_A;
     const double OZ_IN_PER_NM;
+    const QString TAB = \t;
 
 
     void setStepStatus(QLabel *statusLabel, int status);
