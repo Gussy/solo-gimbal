@@ -33,6 +33,7 @@ private:
     QPixmap m_inProgressIcon;
     QPixmap m_successIcon;
     QPixmap m_failureIcon;
+    QString tabDelimitedText;
 
     const double ENCODER_COUNTS_PER_DEG;
     const double TORQUE_HALF_SCALE;
