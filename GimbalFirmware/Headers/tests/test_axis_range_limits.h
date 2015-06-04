@@ -21,10 +21,12 @@
 #define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD  10 //45  // same units as ControlBoardParms.encoder_readings
 #define HARDSTOP_INT_ENCODER_DETECTION_THRESHOLD_YAW 10 //35  // same units as ControlBoardParms.encoder_readings
 
-#define PAUSE_POINT_INCR  62.5                        // units of axis position (encoder counts)
-#define EL_AXIS_POS_STEP_SIZE   0.01666               // units of axis position
-#define RL_AXIS_POS_STEP_SIZE   0.01666               // units of axis position
-#define AZ_AXIS_POS_STEP_SIZE   0.01666               // units of axis position
+//#define PAUSE_POINT_INCR  62.5                        // units of axis position (encoder counts)
+#define PAUSE_POINT_INCR  150                        // units of axis position (encoder counts)
+#define EL_AXIS_POS_STEP_SIZE_FIND_STOPS   0.06               // units of axis position
+#define RL_AXIS_POS_STEP_SIZE_FIND_STOPS   0.06               // units of axis position
+#define AZ_AXIS_POS_STEP_SIZE_FIND_STOPS   0.06               // units of axis position
+#define AXIS_POS_STEP_SIZE_MEASURE_TORQUE  0.01666
 
 typedef enum {
     RANGE_LIMITS_STATE_INIT,

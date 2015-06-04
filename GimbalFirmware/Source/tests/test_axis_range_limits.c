@@ -68,16 +68,18 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
                 test_parms->settle_counter = 0;
                 test_parms->last_encoder_reading = cb_parms->encoder_readings[test_parms->test_axis];
                 last_encoder_position = test_parms->last_encoder_reading + 300; // 300 just guarantees hard stop won't be detected right away
+
+                // Move more quickly while finding stops to give axes extra momentum
                 switch (test_parms->test_axis) {
                     case EL :
-                        test_parms->position_step = EL_AXIS_POS_STEP_SIZE;
+                        test_parms->position_step = EL_AXIS_POS_STEP_SIZE_FIND_STOPS;
                         break;
                     case ROLL :
-                        test_parms->position_step = RL_AXIS_POS_STEP_SIZE;
+                        test_parms->position_step = RL_AXIS_POS_STEP_SIZE_FIND_STOPS;
                         break;
                     case AZ :
                     default :
-                        test_parms->position_step = AZ_AXIS_POS_STEP_SIZE;
+                        test_parms->position_step = AZ_AXIS_POS_STEP_SIZE_FIND_STOPS;
                         break;
                 }
                 test_parms->next_position_pause_point = -PAUSE_POINT_INCR;
@@ -262,6 +264,10 @@ int RunTestAxisRangeLimitsIteration(TestAxisRangeLimitsParms* test_parms, Contro
 
                 // test_parms->current_section = next_section;     TODO?
                 //CANSendFactoryTestProgress(FACTORY_TEST_AXIS_RANGE_LIMITS, test_parms->current_section, 0, AXIS_RANGE_TEST_STATUS_SUCCEEDED);
+
+                // Move more slowly while measuring torque
+                test_parms->position_step = AXIS_POS_STEP_SIZE_MEASURE_TORQUE;
+
                 //ResetMaxTorqueCmd(cb_parms, test_parms->test_axis);
                 clear_torque_data(&torque_data);
                 test_parms->test_state = RANGE_LIMITS_STATE_CHECK_NEGATIVE_TORQUE_POS_TO_HOME;
