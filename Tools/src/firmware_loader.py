@@ -14,15 +14,25 @@ from setup_mavlink import wait_handshake, reset_into_bootloader, \
 
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
-
-def update(binary, link):
-    print (# Load the binary image into a byte array
-        "Application binary: %s" % binary)
-    hexfile = load_firmware(binary)
-    binary = append_checksum(hexfile)
-# Wait for a handshake from the gimbal which contains the payload length
-    sys.stdout.write("Uploading firmware to gimbal ")
+def print_and_flush(string):
+    """the flush is required to refresh the screen on Ubuntu"""
+    sys.stdout.write(string)
     sys.stdout.flush()
+
+def decode_bootloader_version(msg):
+    """The first message handshake contains the bootloader version int the height field as a 16bit int"""
+    version_major = (msg.height >> 8) & 0xff
+    version_minor = msg.height & 0xff
+    string = '\n(BL Ver %i.%i)\n' % (version_major, version_minor)
+    return string
+
+def update(firmware_file, link):
+# Load the firmware_file image into a byte array
+    print_and_flush("Application firmware_file: %s\n" % firmware_file)
+    image = load_firmware(firmware_file)
+    binary = append_checksum(image)
+# Wait for a handshake from the gimbal which contains the payload length
+    print_and_flush("Uploading firmware to gimbal ")
     finished = False
     timeout_counter = 0
 # Loop until we are finished
@@ -33,11 +43,10 @@ def update(binary, link):
     # Signal the target to reset into bootloader mode
             reset_into_bootloader(link)
     # Handshake timed out
-            sys.stdout.write('.')
-            sys.stdout.flush()
+            print_and_flush('.')
     # Timeout after ~10 seconds without messages
             if timeout_counter > 10:
-                print ("\nNot response from gimbal, exiting.")
+                print_and_flush("\nNot response from gimbal, exiting.\n")
                 sys.exit(1)
             timeout_counter += 1
         else:
@@ -46,10 +55,7 @@ def update(binary, link):
             payload_length = msg.payload
             # Print the bootloader version on the first data handshake
             if sequence_number == 0:
-                version_major = (msg.height >> 8) & 0xff
-                version_minor = msg.height & 0xff
-                print ('\n(BL Ver %i.%i)' % (version_major, version_minor))
-                sys.stdout.flush()
+                print_and_flush(decode_bootloader_version(msg))
             # Calculate the window of data to send
             start_idx = sequence_number * payload_length
             end_idx = (sequence_number + 1) * payload_length
@@ -66,18 +72,16 @@ def update(binary, link):
             # If the entire image buffer has been sent, exit this loop
             if end_idx >= len(binary):
                 finished = True
-            sys.stdout.write("!")
-            sys.stdout.flush()
+            print_and_flush("!")
     
 # Send an "end of transmission" signal to the target, to cause a target reset
     while True:
         reset_into_bootloader(link)
-        msg = wait_handshake(link.file, timeout=10)
-        sys.stdout.flush()    
+        msg = wait_handshake(link.file, timeout=10)  
         if msg == None:
-            print(" timeout")
+            print_and_flush(" timeout\n")
             break
         if msg.width == 0xFFFF:
-            print(" OK")
+            print_and_flush(" OK\n")
             break
     
