@@ -26,7 +26,17 @@ def wait_for_heartbeat(link):
         link.heartbeat_send(0, 0, 0, 0, 0)
         if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1):
             return True        
-        
+
+def wait_handshake(m, timeout=1):
+    '''wait for a handshake so we know the target system IDs'''
+    msg = m.recv_match(
+        type='DATA_TRANSMISSION_HANDSHAKE',
+        blocking=True,
+        timeout=timeout)
+    if msg != None:
+        if(msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL):
+            return msg
+    return None
 
 def get_current_joint_angles(link):
     while(True):
@@ -67,6 +77,12 @@ def reset_gimbal(link):
     else:
         print 'failed to reboot'
         return False 
+
+def reset_into_bootloader(link):
+    return link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
+
+def send_bootloader_data(link, sequence_number, data):
+    return link.encapsulated_data_send(sequence_number, data)
 
 def getCalibrationState(link):
     while(True):
