@@ -8,8 +8,7 @@ Utility for loading firmware into the 3DR Gimbal.
 import sys
 
 from firmware_helper import append_checksum, load_firmware
-from setup_mavlink import wait_handshake, reset_into_bootloader, \
-    send_bootloader_data
+import setup_mavlink
 
 
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
@@ -26,31 +25,36 @@ def decode_bootloader_version(msg):
     string = '\n(BL Ver %i.%i)\n' % (version_major, version_minor)
     return string
 
-def update(firmware_file, link):
-# Load the firmware_file image into a byte array
-    print_and_flush("Application firmware_file: %s\n" % firmware_file)
-    image = load_firmware(firmware_file)
-    binary = append_checksum(image)
-# Wait for a handshake from the gimbal which contains the payload length
-    print_and_flush("Uploading firmware to gimbal ")
-    finished = False
-    timeout_counter = 0
-# Loop until we are finished
-    while (finished == False):
-        # Wait for target to reset into bootloader mode
-        msg = wait_handshake(link.file)
+def start_bootloader(link):
+    """Wait for target to reset into bootloader mode"""
+    timeout_counter = 0;
+    while(True):        
+        msg = setup_mavlink.wait_handshake(link.file)
         if (msg == None):
-    # Signal the target to reset into bootloader mode
-            reset_into_bootloader(link)
-    # Handshake timed out
+            # Signal the target to reset into bootloader mode
+            setup_mavlink.reset_into_bootloader(link)
+            # Handshake timed out
             print_and_flush('.')
-    # Timeout after ~10 seconds without messages
+            # Timeout after ~10 seconds without messages
             if timeout_counter > 10:
                 print_and_flush("\nNot response from gimbal, exiting.\n")
                 sys.exit(1)
             timeout_counter += 1
         else:
-            timeout_counter = 0
+            return    
+
+
+def upload_data(link, binary):
+    finished = False
+    # Loop until we are finished
+    while finished == False:
+        # Wait for target to reset into bootloader mode
+        msg = setup_mavlink.wait_handshake(link.file, timeout=5)
+        if (msg == None):
+            # Handshake timed out
+            print_and_flush("\nNot response from gimbal, exiting.\n")
+            sys.exit(1)
+        else:
             sequence_number = msg.width
             payload_length = msg.payload
             # Print the bootloader version on the first data handshake
@@ -68,20 +72,32 @@ def update(firmware_file, link):
             if len(data) < MAVLINK_ENCAPSULATED_DATA_LENGTH:
                 data.extend([0] * (MAVLINK_ENCAPSULATED_DATA_LENGTH - len(data)))
             # Send the data with the corrosponding sequence number
-            send_bootloader_data(link, sequence_number, data)
+            setup_mavlink.send_bootloader_data(link, sequence_number, data)
             # If the entire image buffer has been sent, exit this loop
             if end_idx >= len(binary):
                 finished = True
             print_and_flush("!")
-    
-# Send an "end of transmission" signal to the target, to cause a target reset
+            
+def finish_upload(link):
+    """Send an "end of transmission" signal to the target, to cause a target reset""" 
     while True:
-        reset_into_bootloader(link)
-        msg = wait_handshake(link.file, timeout=10)  
+        setup_mavlink.reset_into_bootloader(link)
+        msg = setup_mavlink.wait_handshake(link.file, timeout=10)  
         if msg == None:
             print_and_flush(" timeout\n")
             break
         if msg.width == 0xFFFF:
             print_and_flush(" OK\n")
-            break
+            break    
+
+def update(firmware_file, link):
+    print_and_flush("Application firmware_file: %s\n" % firmware_file)
+    image = load_firmware(firmware_file)
+    binary = append_checksum(image)
+    
+    print_and_flush("Uploading firmware to gimbal ")    
+    
+    start_bootloader(link)          
+    upload_data(link, binary)
+    finish_upload(link)
     
