@@ -257,6 +257,39 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_4">
        <item row="3" column="0">
+        <widget class="QPushButton" name="setUnitParametersButton">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Set Unit Parameters</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QPushButton" name="startGyroHealthTestButton">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Start Gyro Health Test</string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QPushButton" name="stopGyroHealthTestButton">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Stop Gyro Health Test</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
         <widget class="QPushButton" name="eraseGimbalFlashButton">
          <property name="enabled">
           <bool>false</bool>
@@ -266,7 +299,7 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="5" column="0">
         <widget class="QPushButton" name="factoryTestsButton">
          <property name="enabled">
           <bool>false</bool>
@@ -286,7 +319,7 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item row="2" column="0">
         <widget class="QPushButton" name="setHomePositionsButton">
          <property name="enabled">
           <bool>false</bool>
@@ -296,36 +329,13 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
-        <widget class="QPushButton" name="setUnitParametersButton">
+       <item row="1" column="0">
+        <widget class="QPushButton" name="runWobbleTestButton">
          <property name="enabled">
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>Set Unit Parameters</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QPushButton" name="startGyroHealthTestButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Start Gyro Health Test</string>
-         </property>
-         <property name="checkable">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0">
-        <widget class="QPushButton" name="stopGyroHealthTestButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Stop Gyro Health Test</string>
+          <string>Run Wobble Test</string>
          </property>
         </widget>
        </item>

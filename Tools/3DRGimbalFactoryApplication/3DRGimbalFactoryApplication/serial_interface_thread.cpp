@@ -138,6 +138,10 @@ void SerialInterfaceThread::handleInput()
                     handleDebug(&received_msg);
                     break;
 
+                case MAVLINK_MSG_ID_GIMBAL_REPORT:
+                    handleGimbalReport(&received_msg);
+                    break;
+
                 default:
                     //emit gimbalStatusMessage(MAV_SEVERITY_DEBUG, QString("Unknown message ID received: %1").arg(QString::number(received_msg.msgid)));
                     //qDebug() << "Unknown message ID received: " << received_msg.msgid << "\n";
@@ -636,6 +640,16 @@ void SerialInterfaceThread::handleReportAxisCalibrationStatus(mavlink_message_t 
                                          (decoded_msg.pitch_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE),
                                          (decoded_msg.roll_requires_calibration == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE));
     }
+}
+
+void SerialInterfaceThread::handleGimbalReport(mavlink_message_t *msg)
+{
+    mavlink_gimbal_report_t decoded_msg;
+    mavlink_msg_gimbal_report_decode(msg, &decoded_msg);
+
+    //qDebug() << "Delta X: " << QString::number(decoded_msg.delta_angle_x) << "\n";
+
+    emit receivedGimbalReport(decoded_msg.delta_angle_x, decoded_msg.delta_angle_y, decoded_msg.delta_angle_z);
 }
 
 void SerialInterfaceThread::handleDebug(mavlink_message_t *msg)

@@ -138,6 +138,7 @@ signals:
     void gimbalAxisCalibrationStatus(bool yawAxisNeedsCalibration, bool pitchAxisNeedsCalibration, bool rollAxisNeedsCalibration);
     void gimbalStatusMessage(unsigned int severity, QString message);
     void receivedTestStatus(unsigned char result_id, float result);
+    void receivedGimbalReport(float x_delta, float y_delta, float z_delta);
 
 private:
     QSerialPort* m_serialPort;
@@ -174,6 +175,7 @@ private:
     void sendLoadFirmwareStart(int numPackets);
     void sendCalibrateHomeOffsets();
     void sendParamRequest(QString paramName);
+    void handleGimbalReport(mavlink_message_t* msg);
 
 private slots:
     void sendPeriodicRateCmd();

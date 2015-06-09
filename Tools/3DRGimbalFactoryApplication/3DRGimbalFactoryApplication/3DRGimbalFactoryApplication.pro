@@ -25,7 +25,8 @@ SOURCES += main.cpp\
     timevalidator.cpp \
     axis_range_test_dialog.cpp \
     axis_calibration_status_dialog.cpp \
-    choose_axes_to_calibrate_dialog.cpp
+    choose_axes_to_calibrate_dialog.cpp \
+    wobble_test_dialog.cpp
 
 HEADERS  += mainwindow.h \
     MAVLink/ardupilotmega/ardupilotmega.h \
@@ -208,7 +209,8 @@ HEADERS  += mainwindow.h \
     axis_range_test_dialog.h \
     version.h \
     axis_calibration_status_dialog.h \
-    choose_axes_to_calibrate_dialog.h
+    choose_axes_to_calibrate_dialog.h \
+    wobble_test_dialog.h
 
 FORMS    += mainwindow.ui \
     load_firmware_dialog.ui \
@@ -217,7 +219,8 @@ FORMS    += mainwindow.ui \
     enter_factory_parameters_dialog.ui \
     axis_range_test_dialog.ui \
     axis_calibration_status_dialog.ui \
-    choose_axes_to_calibrate_dialog.ui
+    choose_axes_to_calibrate_dialog.ui \
+    wobble_test_dialog.ui
 
 RESOURCES += \
     images.qrc

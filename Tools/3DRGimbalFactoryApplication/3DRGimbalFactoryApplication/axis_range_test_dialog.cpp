@@ -116,147 +116,123 @@ void AxisRangeTestDialog::receiveTestStatus(unsigned char result_id, float resul
 
     switch (result_id_enum) {
         case TEST_RESULT_ENCODER_RANGE_AZ://yaw mech range
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->yawMechanicalRange->setText(temp + "°");
-            m_yawMechRange = temp;
+            m_yawMechRange = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->yawMechanicalRange->setText(m_yawMechRange + "°");
             break;
 
         case TEST_RESULT_ENCODER_ASYMMETRY_AZ://yaw asymm
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->yawMechanicalRangeAsymmetry->setText(temp + "°");
-            m_yawMechSymm = temp;
+            m_yawMechSymm = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->yawMechanicalRangeAsymmetry->setText(m_yawMechSymm + "°");
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_AZ://yaw neg max torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->yawMaxNegativeTorque->setText(temp + " oz-in");
-            m_yawMaxNegTorq = temp;
+            m_yawMaxNegTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->yawMaxNegativeTorque->setText(m_yawMaxNegTorq + " oz-in");
             break;
 
         case TEST_RESULT_POS_MAX_TORQUE_AZ://yaw pos max torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->yawMaxPositiveTorque->setText(temp + " oz-in");
-            m_yawMaxPosTorq = temp;
+            m_yawMaxPosTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->yawMaxPositiveTorque->setText(m_yawMaxPosTorq + " oz-in");
             break;
 
         case TEST_RESULT_ENCODER_RANGE_EL://pitch mech range
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->pitchMechanicalRange->setText(temp + "°");
-            m_pitchMechRange = temp;
+            m_pitchMechRange = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->pitchMechanicalRange->setText(m_pitchMechRange + "°");
             break;
 
         case TEST_RESULT_ENCODER_ASYMMETRY_EL://pitch asymm
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->pitchMechanicalRangeAsymmetry->setText(temp + "°");
-            m_pitchMechSymm = temp;
+            m_pitchMechSymm = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->pitchMechanicalRangeAsymmetry->setText(m_pitchMechSymm + "°");
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_EL://pitch neg max torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->pitchMaxNegativeTorque->setText(temp + " oz-in");
-            m_pitchMaxNegTorq = temp;
+            m_pitchMaxNegTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->pitchMaxNegativeTorque->setText(m_pitchMaxNegTorq + " oz-in");
             break;
 
         case TEST_RESULT_POS_MAX_TORQUE_EL://pitch pos max torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->pitchMaxPositiveTorque->setText(temp + " oz-in");
-            m_pitchMaxPosTorq = temp;
+            m_pitchMaxPosTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->pitchMaxPositiveTorque->setText(m_pitchMaxPosTorq + " oz-in");
             break;
 
         case TEST_RESULT_ENCODER_RANGE_RL://roll mech range
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->rollMechanicalRange->setText(temp + "°");
-            m_rollMechRange = temp;
+            m_rollMechRange = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->rollMechanicalRange->setText(m_rollMechRange + "°");
             break;
 
         case TEST_RESULT_ENCODER_ASYMMETRY_RL://roll asymm
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->rollMechanicalRangeAsymmetry->setText(temp + "°");
-            m_rollMechSymm = temp;
+            m_rollMechSymm = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->rollMechanicalRangeAsymmetry->setText(m_rollMechSymm + "°");
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_RL://roll neg max torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->rollMaxNegativeTorque->setText(temp + " oz-in");
-            m_rollMaxNegTorq = temp;
+            m_rollMaxNegTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->rollMaxNegativeTorque->setText(m_rollMaxNegTorq + " oz-in");
             break;
 
         case TEST_RESULT_POS_MAX_TORQUE_RL://roll pos max torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->rollMaxPositiveTorque->setText(temp + " oz-in");
-            m_rollMaxPosTorq = temp;
+            m_rollMaxPosTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->rollMaxPositiveTorque->setText(m_rollMaxPosTorq + " oz-in");
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_LOC_AZ://yaw neg max torq loc
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->yawMaxNegativeTorqueLocation->setText(temp + "°");
-            m_yawMaxNegTorqLoc = temp;
+            m_yawMaxNegTorqLoc = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->yawMaxNegativeTorqueLocation->setText(m_yawMaxNegTorqLoc + "°");
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_LOC_EL://pitch neg max torq loc
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->pitchMaxNegativeTorqueLocation->setText(temp + "°");
-            m_pitchMaxNegTorqLoc = temp;
+            m_pitchMaxNegTorqLoc = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->pitchMaxNegativeTorqueLocation->setText(m_pitchMaxNegTorqLoc + "°");
             break;
 
         case TEST_RESULT_NEG_MAX_TORQUE_LOC_RL://roll neg max torq loc
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->rollMaxNegativeTorqueLocation->setText(temp + "°");
-            m_rollMaxNegTorqLoc = temp;
+            m_rollMaxNegTorqLoc = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->rollMaxNegativeTorqueLocation->setText(m_rollMaxNegTorqLoc + "°");
             break;
 
         case TEST_RESULT_POS_MAX_TORQUE_LOC_AZ://yaw pos max torq loc
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->yawMaxPositiveTorqueLocation->setText(temp + "°");
-            m_yawMaxPosTorqLoc = temp;
+            m_yawMaxPosTorqLoc = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->yawMaxPositiveTorqueLocation->setText(m_yawMaxPosTorqLoc + "°");
             break;
 
         case TEST_RESULT_POS_MAX_TORQUE_LOC_EL://pitch pos max torq loc
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->pitchMaxPositiveTorqueLocation->setText(temp + "°");
-            m_pitchMaxPosTorqLoc = temp;
+            m_pitchMaxPosTorqLoc = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->pitchMaxPositiveTorqueLocation->setText(m_pitchMaxPosTorqLoc + "°");
             break;
 
         case TEST_RESULT_POS_MAX_TORQUE_LOC_RL://roll pos max torq loc
-            temp = QString::number(result / ENCODER_COUNTS_PER_DEG);
-            ui->rollMaxPositiveTorqueLocation->setText(temp + "°");
-            m_rollMaxPosTorqLoc = temp;
+            m_rollMaxPosTorqLoc = QString::number(result / ENCODER_COUNTS_PER_DEG);
+            ui->rollMaxPositiveTorqueLocation->setText(m_rollMaxPosTorqLoc + "°");
             break;
 
         case TEST_RESULT_NEG_AVG_TORQUE_AZ://yaw neg avg torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->yawAverageNegativeTorque->setText(temp + " oz-in");
-            m_yawAvgNegTorq = temp;
+            m_yawAvgNegTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->yawAverageNegativeTorque->setText(m_yawAvgNegTorq + " oz-in");
             break;
 
         case TEST_RESULT_NEG_AVG_TORQUE_EL://pitch neg avg torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->pitchAverageNegativeTorque->setText(temp + " oz-in");
-            m_pitchAvgNegTorq = temp;
+            m_pitchAvgNegTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->pitchAverageNegativeTorque->setText(m_pitchAvgNegTorq + " oz-in");
             break;
 
         case TEST_RESULT_NEG_AVG_TORQUE_RL://roll neg avg torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->rollAverageNegativeTorque->setText(temp + " oz-in");
-            m_rollAvgNegTorq = temp;
+            m_rollAvgNegTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->rollAverageNegativeTorque->setText(m_rollAvgNegTorq + " oz-in");
             break;
 
         case TEST_RESULT_POS_AVG_TORQUE_AZ://yaw pos avg torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->yawAveragePositiveTorque->setText(temp + " oz-in");
-            m_yawAvgPosTorq = temp;
+            m_yawAvgPosTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->yawAveragePositiveTorque->setText(m_yawAvgPosTorq + " oz-in");
             break;
 
         case TEST_RESULT_POS_AVG_TORQUE_EL://pitch pos avg torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->pitchAveragePositiveTorque->setText(temp + " oz-in");
-            m_pitchAvgPosTorq = temp;
+            m_pitchAvgPosTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->pitchAveragePositiveTorque->setText(m_pitchAvgPosTorq + " oz-in");
             break;
 
         case TEST_RESULT_POS_AVG_TORQUE_RL://roll pos avg torq
-            temp = QString::number(gimbalTorqueToOzIn(result));
-            ui->rollAveragePositiveTorque->setText(temp + " oz-in");
-            m_rollAvgPosTorq = temp;
+            m_rollAvgPosTorq = QString::number(gimbalTorqueToOzIn(result));
+            ui->rollAveragePositiveTorque->setText(m_rollAvgPosTorq + " oz-in");
             break;
     }
 }

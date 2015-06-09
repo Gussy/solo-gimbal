@@ -49,6 +49,7 @@ signals:
     void requestHomeOffsetCalibration();
     void sendNewHomeOffsets(int yawOffset, int pitchOffset, int rollOffset);
     void requestFactoryParameters();
+    void requestGimbalReport();
     void setGimbalFactoryParameters(unsigned short assyYear,
                                     unsigned char assyMonth,
                                     unsigned char assyDay,
@@ -65,6 +66,7 @@ signals:
     void gimbalAxisCalibrationStatus(bool yawNeedsCalibration, bool pitchNeedsCalibration, bool rollNeedsCalibration);
     void requestAxisCalibrationStatus();
     void receivedTestStatus(unsigned char result_id, float result);
+    void receivedGimbalReport(float x_delta, float y_delta, float z_delta);
 
 private:
     Ui::MainWindow *ui;
@@ -96,6 +98,7 @@ private slots:
     void on_showHideGimbalMessagesButton_clicked();
     void on_startGyroHealthTestButton_clicked();
     void on_stopGyroHealthTestButton_clicked();
+    void on_runWobbleTestButton_clicked();
 };
 
 #endif // MAINWINDOW_H

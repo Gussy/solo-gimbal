@@ -9,6 +9,7 @@
 #include "axis_calibration_status_dialog.h"
 #include "choose_axes_to_calibrate_dialog.h"
 #include "version.h"
+#include "wobble_test_dialog.h"
 
 #include <QSerialPort>
 #include <QSerialPortInfo>
@@ -106,6 +107,7 @@ void MainWindow::on_connectButton_clicked()
     connect(this, SIGNAL(requestCalibrateAxesPerform()), m_serialThreadObj, SLOT(requestCalibrateAxesPerform()));
     connect(m_serialThreadObj, SIGNAL(gimbalStatusMessage(uint,QString)), this, SLOT(receiveGimbalStatusMessage(uint,QString)));
     connect(m_serialThreadObj, SIGNAL(receivedTestStatus(unsigned char,float)), this, SIGNAL(receivedTestStatus(unsigned char,float)));
+    connect(m_serialThreadObj, SIGNAL(receivedGimbalReport(float, float, float)), this, SIGNAL(receivedGimbalReport(float, float, float)));//R
     m_serialThread.start();
 
     // Disable the connect button, enable the disconnect button
@@ -488,6 +490,15 @@ void MainWindow::on_factoryTestsButton_clicked()
     dialog.exec();
 }
 
+void MainWindow::on_runWobbleTestButton_clicked()
+{
+    WobbleTestDialog dialog;
+
+    connect(this, SIGNAL(receivedGimbalReport(float, float, float)), &dialog, SLOT(receivedGimbalReport(float, float, float)));
+    //emit requestGimbalReport();//TODO, necessary??
+    dialog.exec();
+}
+
 void MainWindow::on_showHideGimbalMessagesButton_clicked()
 {
     if (m_gimbalMessagesVisible) {
@@ -538,6 +549,7 @@ void MainWindow::setUIGimbalConnectedNeedsCalibration()
     ui->firmwareImage->setEnabled(true);
     ui->firmwareImageBrowseButton->setEnabled(true);
     ui->runAxisCalibrationButton->setEnabled(true);
+    ui->runWobbleTestButton->setEnabled(true);
     ui->setHomePositionsButton->setEnabled(true);
     ui->setUnitParametersButton->setEnabled(true);
     ui->eraseGimbalFlashButton->setEnabled(true);
@@ -550,6 +562,7 @@ void MainWindow::setUIGimbalConnected()
     ui->firmwareImage->setEnabled(true);
     ui->firmwareImageBrowseButton->setEnabled(true);
     ui->runAxisCalibrationButton->setEnabled(true);
+    ui->runWobbleTestButton->setEnabled(true);
     ui->setHomePositionsButton->setEnabled(true);
     ui->setUnitParametersButton->setEnabled(true);
     ui->eraseGimbalFlashButton->setEnabled(true);
@@ -565,6 +578,7 @@ void MainWindow::setUIGimbalDisconnected()
     ui->firmwareImage->setEnabled(false);
     ui->firmwareImageBrowseButton->setEnabled(false);
     ui->runAxisCalibrationButton->setEnabled(false);
+    ui->runWobbleTestButton->setEnabled(false);
     ui->setHomePositionsButton->setEnabled(false);
     ui->setUnitParametersButton->setEnabled(false);
     ui->eraseGimbalFlashButton->setEnabled(false);
