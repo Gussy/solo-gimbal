@@ -6,7 +6,7 @@
 
 QT       += core gui serialport
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
 TARGET = 3DRGimbalFactoryApplication
 TEMPLATE = app
@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     axis_range_test_dialog.cpp \
     axis_calibration_status_dialog.cpp \
     choose_axes_to_calibrate_dialog.cpp \
-    wobble_test_dialog.cpp
+    wobble_test_dialog.cpp \
+    qcustomplot.cpp
 
 HEADERS  += mainwindow.h \
     MAVLink/ardupilotmega/ardupilotmega.h \
@@ -210,7 +211,8 @@ HEADERS  += mainwindow.h \
     version.h \
     axis_calibration_status_dialog.h \
     choose_axes_to_calibrate_dialog.h \
-    wobble_test_dialog.h
+    wobble_test_dialog.h \
+    qcustomplot.h
 
 FORMS    += mainwindow.ui \
     load_firmware_dialog.ui \
