@@ -33,7 +33,7 @@ def start_bootloader(link):
         print_and_flush("Target already in bootloader mode\n")
         return    
     else:
-        print_and_flush("Restarting in bootloader mode\n")
+        print_and_flush("Restarting target in bootloader mode\n")
     
     timeout_counter = 0;
     while(True):
@@ -50,8 +50,6 @@ def start_bootloader(link):
         else:
             print_and_flush('\n')
             break
-                
-
 
 
 def send_block(link, binary, msg):
@@ -90,7 +88,10 @@ def upload_data(link, binary):
     while (end_idx < len(binary)):
         msg = get_handshake_msg(link,timeout=10)        
         end_idx = send_block(link, binary, msg)
-        print_and_flush("!")   
+        
+        text = "\rUpload %2.2fkB of %2.2fkB - %d%%     " % (end_idx/1024.0, len(binary)/1024.0, (100.0*end_idx)/len(binary))
+        print_and_flush(text)
+    print_and_flush('\n')   
         
             
 def finish_upload(link):
@@ -99,10 +100,10 @@ def finish_upload(link):
         setup_mavlink.reset_into_bootloader(link)
         msg = setup_mavlink.wait_handshake(link.file, timeout=10)  
         if msg == None:
-            print_and_flush(" timeout\n")
+            print_and_flush("Timeout\n")
             break
         if msg.width == 0xFFFF:
-            print_and_flush(" OK\n")
+            print_and_flush("Upload successful\n")
             break    
 
 def update(firmware_file, link):
