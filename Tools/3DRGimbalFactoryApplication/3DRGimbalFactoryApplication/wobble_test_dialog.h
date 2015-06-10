@@ -35,6 +35,7 @@ private:
     const int RANGE;
     bool m_pause;
 
+    QString m_xMaxDeltaAllowed;
     QString m_xDelta;
     QString m_xMaxDelta;
     QString m_xMaxDeltaTime;
@@ -44,6 +45,7 @@ private:
     int m_xCount;
     const float X_MAX_DELTA_ALLOWED;
 
+    QString m_yMaxDeltaAllowed;
     QString m_yDelta;
     QString m_yMaxDelta;
     QString m_yMaxDeltaTime;
@@ -53,6 +55,7 @@ private:
     int m_yCount;
     const float Y_MAX_DELTA_ALLOWED;
 
+    QString m_zMaxDeltaAllowed;
     QString m_zDelta;
     QString m_zMaxDelta;
     QString m_zMaxDeltaTime;
@@ -68,6 +71,7 @@ private slots:
     void on_closeButton_clicked();
     void on_pauseButton_clicked();
     void on_resumeButton_clicked();
+    void on_refreshSetpointsButton_clicked();
 };
 
 #endif // WOBBLE_TEST_DIALOG_H

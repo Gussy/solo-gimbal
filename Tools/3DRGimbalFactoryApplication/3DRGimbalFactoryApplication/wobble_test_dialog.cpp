@@ -27,6 +27,7 @@ WobbleTestDialog::WobbleTestDialog(QWidget *parent) :
     m_xMaxDeltaTime = "00:00:00";
     m_xMinDelta = "0";
     m_xNumFails = "0";
+    m_xMaxDeltaAllowed = "0.001";
 
     m_yCount = 0;
     m_yFailOccurred = false;
@@ -35,6 +36,7 @@ WobbleTestDialog::WobbleTestDialog(QWidget *parent) :
     m_yMaxDeltaTime = "00:00:00";
     m_yMinDelta = "0";
     m_yNumFails = "0";
+    m_yMaxDeltaAllowed = "0.001";
 
     m_zCount = 0;
     m_zFailOccurred = false;
@@ -43,6 +45,8 @@ WobbleTestDialog::WobbleTestDialog(QWidget *parent) :
     m_zMaxDeltaTime = "00:00:00";
     m_zMinDelta = "0";
     m_zNumFails = "0";
+    m_zMaxDeltaAllowed = "0.001";
+
     m_pause = false;
     ui->resumeButton->setEnabled(false);
     ui->pauseButton->setEnabled(true);
@@ -83,7 +87,7 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
         ui->customPlot->graph(2)->addData(key, m_xMinDelta.toFloat());
 
         //if we've failed this run or it's been 10 counts since adding point to plot, refresh plot
-        if(deltaX > X_MAX_DELTA_ALLOWED || m_xCount == COUNTS){
+        if(deltaX > m_xMaxDeltaAllowed.toFloat() || m_xCount == COUNTS){
             if(m_xCount == 10){
                 m_xCount = 0;
             }
@@ -91,7 +95,7 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
             m_xDelta = QString::number(deltaX);
             ui->xDelta->setText(m_xDelta);
 
-            if(deltaX > X_MAX_DELTA_ALLOWED){
+            if(deltaX > m_xMaxDeltaAllowed.toFloat()){
                 m_xNumFails = QString::number(m_xNumFails.toInt() + 1);
                 m_xFailOccurred = true;
                 ui->customPlot->setBackground(Qt::red);
@@ -106,11 +110,11 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
                     ui->customPlot->setBackground(Qt::yellow);
                 }
                 else{
-                    ui->customPlot->setBackground(Qt::white);
+                    ui->customPlot->setBackground(Qt::green);
                 }
             }
 
-            if(deltaX > m_xMaxDelta.toDouble()){
+            if(deltaX > m_xMaxDelta.toFloat()){
                 m_xMaxDelta = m_xDelta;
             }
 
@@ -153,7 +157,7 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
         ui->customPlot_2->graph(1)->addData(key, m_yMaxDelta.toFloat());
         ui->customPlot_2->graph(2)->addData(key, m_yMinDelta.toFloat());
 
-        if(deltaY > Y_MAX_DELTA_ALLOWED || m_yCount == COUNTS){
+        if(deltaY > m_yMaxDeltaAllowed.toFloat() || m_yCount == COUNTS){
             if(m_yCount == 10){
                 m_yCount = 0;
             }
@@ -161,7 +165,7 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
             m_yDelta = QString::number(deltaY);
             ui->yDelta->setText(m_yDelta);
 
-            if(deltaY > Y_MAX_DELTA_ALLOWED){
+            if(deltaY > m_yMaxDeltaAllowed.toFloat()){
                 m_yNumFails = QString::number(m_yNumFails.toInt() + 1);
                 m_yFailOccurred = true;
                 ui->customPlot_2->setBackground(Qt::red);
@@ -176,11 +180,11 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
                     ui->customPlot_2->setBackground(Qt::yellow);
                 }
                 else{
-                    ui->customPlot_2->setBackground(Qt::white);
+                    ui->customPlot_2->setBackground(Qt::green);
                 }
             }
 
-            if(deltaY > m_yMaxDelta.toDouble()){
+            if(deltaY > m_yMaxDelta.toFloat()){
                 m_yMaxDelta = m_yDelta;
             }
 
@@ -222,7 +226,7 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
         ui->customPlot_3->graph(1)->addData(key, m_zMaxDelta.toFloat());
         ui->customPlot_3->graph(2)->addData(key, m_zMinDelta.toFloat());
 
-        if(deltaZ > Z_MAX_DELTA_ALLOWED || m_zCount == COUNTS){
+        if(deltaZ > m_zMaxDeltaAllowed.toFloat() || m_zCount == COUNTS){
             if(m_zCount == 10){
                 m_zCount = 0;
             }
@@ -230,7 +234,7 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
             m_zDelta = QString::number(deltaZ);
             ui->zDelta->setText(m_zDelta);
 
-            if(deltaZ > Z_MAX_DELTA_ALLOWED){
+            if(deltaZ >  m_zMaxDeltaAllowed.toFloat()){
                 m_zNumFails = QString::number(m_zNumFails.toInt() + 1);
                 m_zFailOccurred = true;//TODO, make background red if fail occurred
                 ui->customPlot_3->setBackground(Qt::red);
@@ -245,11 +249,11 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
                     ui->customPlot_3->setBackground(Qt::yellow);
                 }
                 else{
-                    ui->customPlot_3->setBackground(Qt::white);
+                    ui->customPlot_3->setBackground(Qt::green);
                 }
             }
 
-            if(deltaZ > m_zMaxDelta.toDouble()){
+            if(deltaZ > m_zMaxDelta.toFloat()){
                 m_zMaxDelta = m_zDelta;
             }
 
@@ -277,9 +281,6 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
 
 void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
 {
-#if QT_VERSION < QT_VERSION_CHECK(4, 7, 0)
-  QMessageBox::critical(this, "", "You're using Qt < 4.7, the realtime data demo needs functions that are available with Qt 4.7 to work properly");
-#endif
   // include this section to fully disable antialiasing for higher performance:
 
   customPlot->setNotAntialiasedElements(QCP::aeAll);
@@ -288,10 +289,17 @@ void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
   customPlot->xAxis->setTickLabelFont(font);
   customPlot->yAxis->setTickLabelFont(font);
   customPlot->legend->setFont(font);
-  customPlot->setBackground(Qt::white);
   customPlot->axisRect()->setBackground(Qt::white);
+  customPlot->setBackground(Qt::green);
   customPlot->yAxis->setRangeLower(-0.0001);
   customPlot->yAxis->setRangeUpper(0.0001);
+  customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
+  customPlot->xAxis->setDateTimeFormat("hh:mm:ss");
+  customPlot->xAxis->setAutoTickStep(false);
+  customPlot->xAxis->setTickStep(5);
+  customPlot->axisRect()->setupFullAxesBox();
+  customPlot->setBackground(Qt::red);
+  customPlot->axisRect()->setBackground(Qt::white);
   //
 
   customPlot->addGraph(); // blue line (data)
@@ -302,55 +310,14 @@ void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
 
   customPlot->addGraph(); //min watermark
   customPlot->graph(2)->setPen(QPen(Qt::green));
-  //customPlot->graph(0)->setBrush(QBrush(QColor(240, 255, 200)));
-  //customPlot->graph(0)->setAntialiasedFill(false);
-//  customPlot_2->addGraph(); // red line
-//  customPlot_2->graph(0)->setPen(QPen(Qt::red));
-//  customPlot_3->addGraph(); // green line
-//  customPlot_3->graph(0)->setPen(QPen(Qt::green));
 
-//  customPlot->addGraph(); // blue dot
-//  customPlot->graph(3)->setPen(QPen(Qt::blue));
-//  customPlot->graph(3)->setLineStyle(QCPGraph::lsNone);
-//  customPlot->graph(3)->setScatterStyle(QCPScatterStyle::ssDisc);
-//  customPlot->addGraph(); // red dot
-//  customPlot->graph(4)->setPen(QPen(Qt::red));
-//  customPlot->graph(4)->setLineStyle(QCPGraph::lsNone);
-//  customPlot->graph(4)->setScatterStyle(QCPScatterStyle::ssDisc);
-
-//  customPlot->addGraph(); // green dot
-//  customPlot->graph(5)->setPen(QPen(Qt::green));
-//  customPlot->graph(5)->setLineStyle(QCPGraph::lsNone);
-//  customPlot->graph(5)->setScatterStyle(QCPScatterStyle::ssDisc);
-
-  customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-  customPlot->xAxis->setDateTimeFormat("hh:mm:ss");
-  customPlot->xAxis->setAutoTickStep(false);
-  customPlot->xAxis->setTickStep(5);
-  customPlot->axisRect()->setupFullAxesBox();
-
-//  customPlot_2->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-//  customPlot_2->xAxis->setDateTimeFormat("hh:mm:ss");
-//  customPlot_2->xAxis->setAutoTickStep(false);
-//  customPlot_2->xAxis->setTickStep(2);
-//  customPlot_2->axisRect()->setupFullAxesBox();
-
-//  customPlot_3->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-//  customPlot_3->xAxis->setDateTimeFormat("hh:mm:ss");
-//  customPlot_3->xAxis->setAutoTickStep(false);
-//  customPlot_3->xAxis->setTickStep(2);
-//  customPlot_3->axisRect()->setupFullAxesBox();
 
 
   // make left and bottom axes transfer their ranges to right and top axes:
   connect(customPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->xAxis2, SLOT(setRange(QCPRange)));
   connect(customPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->yAxis2, SLOT(setRange(QCPRange)));
 
-//  connect(customPlot_2->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot_2->xAxis2, SLOT(setRange(QCPRange)));
-//  connect(customPlot_2->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot_2->yAxis2, SLOT(setRange(QCPRange)));
 
-//  connect(customPlot_3->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot_3->xAxis2, SLOT(setRange(QCPRange)));
-//  connect(customPlot_3->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot_3->yAxis2, SLOT(setRange(QCPRange)));
 }
 
 void WobbleTestDialog::on_closeButton_clicked()
@@ -372,4 +339,42 @@ void WobbleTestDialog::on_resumeButton_clicked()
     ui->resumeButton->setEnabled(false);
 }
 
+void WobbleTestDialog::on_refreshSetpointsButton_clicked()
+{
+    m_xMaxDeltaAllowed = ui->xMaxDeltaAllowed->toPlainText();
+    m_yMaxDeltaAllowed = ui->yMaxDeltaAllowed->toPlainText();
+    m_zMaxDeltaAllowed = ui->zMaxDeltaAllowed->toPlainText();
+
+    setupPlot(ui->customPlot);
+    setupPlot(ui->customPlot_2);
+    setupPlot(ui->customPlot_3);
+
+    m_xCount = 0;
+    m_xFailOccurred = false;
+    m_xDelta = "0";
+    m_xMaxDelta = "0";
+    m_xMaxDeltaTime = "00:00:00";
+    m_xMinDelta = "0";
+    m_xNumFails = "0";
+
+    m_yCount = 0;
+    m_yFailOccurred = false;
+    m_yDelta = "0";
+    m_yMaxDelta = "0";
+    m_yMaxDeltaTime = "00:00:00";
+    m_yMinDelta = "0";
+    m_yNumFails = "0";
+
+    m_zCount = 0;
+    m_zFailOccurred = false;
+    m_zDelta = "0";
+    m_zMaxDelta = "0";
+    m_zMaxDeltaTime = "00:00:00";
+    m_zMinDelta = "0";
+    m_zNumFails = "0";
+
+    m_pause = false;
+    ui->resumeButton->setEnabled(false);
+    ui->pauseButton->setEnabled(true);
+}
 
