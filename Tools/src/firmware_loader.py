@@ -26,23 +26,30 @@ def decode_bootloader_version(msg):
     return string
 
 def start_bootloader(link):
-    """Wait for target to reset into bootloader mode"""
+    """Check if target is in booloader, if not reset into bootloader mode"""
+    
+    msg = setup_mavlink.wait_handshake(link.file, timeout=1)
+    if (msg is not None):
+        print_and_flush("Target already in bootloader mode\n")
+        return    
+    else:
+        print_and_flush("Restarting in bootloader mode\n")
+    
     timeout_counter = 0;
-    while(True):        
-        msg = setup_mavlink.wait_handshake(link.file)
-        if (msg == None):
-            # Signal the target to reset into bootloader mode
-            setup_mavlink.reset_into_bootloader(link)
-            # Handshake timed out
+    while(True):
+        # Signal the target to reset into bootloader mode
+        setup_mavlink.reset_into_bootloader(link)
+        msg = setup_mavlink.wait_handshake(link.file, timeout=1)
+        timeout_counter += 1
+        
+        if (msg is None):
             print_and_flush('.')
-            # Timeout after ~10 seconds without messages
             if timeout_counter > 10:
                 print_and_flush("\nNot response from gimbal, exiting.\n")
                 sys.exit(1)
-            timeout_counter += 1
         else:
-            return    
-
+            break
+                
 
 def upload_data(link, binary):
     finished = False
@@ -93,9 +100,7 @@ def finish_upload(link):
 def update(firmware_file, link):
     print_and_flush("Application firmware_file: %s\n" % firmware_file)
     image = load_firmware(firmware_file)
-    binary = append_checksum(image)
-    
-    print_and_flush("Uploading firmware to gimbal ")    
+    binary = append_checksum(image)  
     
     start_bootloader(link)          
     upload_data(link, binary)
