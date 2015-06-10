@@ -31,6 +31,8 @@ private:
     Ui::WobbleTestDialog *ui;
 
     const int COUNTS;
+    const int RANGE;
+
     QString m_xDelta;
     QString m_xMaxDelta;
     QString m_xMaxDeltaTime;
@@ -61,7 +63,7 @@ private:
     void setupPlot(QCustomPlot *customPlot);
 
 private slots:
-    void on_okButton_clicked();
+    void on_closeButton_clicked();
 };
 
 #endif // WOBBLE_TEST_DIALOG_H

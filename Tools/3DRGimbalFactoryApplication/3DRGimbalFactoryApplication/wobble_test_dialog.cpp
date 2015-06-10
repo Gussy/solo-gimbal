@@ -9,7 +9,8 @@ WobbleTestDialog::WobbleTestDialog(QWidget *parent) :
     X_MAX_DELTA_ALLOWED(0.01),
     Y_MAX_DELTA_ALLOWED(0.01),
     Z_MAX_DELTA_ALLOWED(0.01),
-    COUNTS(10)
+    COUNTS(10),
+    RANGE(8)
 {
     // Disable all of the title bar buttons (so the user can't close the dialog from the title bar)
     setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
@@ -30,6 +31,19 @@ WobbleTestDialog::~WobbleTestDialog()
 void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float deltaZ)
 {
     double key = QDateTime::currentDateTime().toMSecsSinceEpoch()/1000.0;
+
+    if(deltaX > m_xMaxDelta.toFloat()){
+        m_xMaxDelta = QString::number(deltaX);
+        ui->customPlot->yAxis->setRangeUpper(m_xMaxDelta.toDouble() + (m_xMaxDelta.toDouble()/5));
+    }
+
+    if(deltaX < m_xMinDelta.toFloat()){
+        m_xMinDelta = QString::number(deltaX);
+        ui->customPlot->yAxis->setRangeLower(m_xMinDelta.toDouble() + (m_xMinDelta.toDouble()/5));
+    }
+
+    ui->customPlot->graph(1)->addData(key, m_xMaxDelta.toFloat());
+    ui->customPlot->graph(2)->addData(key, m_xMinDelta.toFloat());
 
     if(deltaX > X_MAX_DELTA_ALLOWED || m_xCount == COUNTS){
         if(m_xCount == 10){
@@ -65,16 +79,34 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
         // add data to lines:
         ui->customPlot->graph(0)->addData(key, deltaX);
         // remove data of lines that's outside visible range:
-        ui->customPlot->graph(0)->removeDataBefore(key-4);
+        ui->customPlot->graph(0)->removeDataBefore(key-RANGE);
         // rescale value (vertical) axis to fit the current data:
-        ui->customPlot->graph(0)->rescaleValueAxis();
+        ui->customPlot->graph(0)->rescaleValueAxis(true);
         // make key axis range scroll with the data (at a constant range size of 16):
-        ui->customPlot->xAxis->setRange(key+0.25, 4, Qt::AlignRight);
+        ui->customPlot->xAxis->setRange(key+0.25, RANGE, Qt::AlignRight);
         ui->customPlot->replot();
         m_xCount++;
     }
     else{
         m_xCount++;
+    }
+
+
+
+
+
+    ui->customPlot_2->graph(1)->addData(key, m_yMaxDelta.toFloat());
+    ui->customPlot_2->graph(2)->addData(key, m_yMinDelta.toFloat());
+
+
+    if(deltaY > m_yMaxDelta.toFloat()){
+        m_yMaxDelta = QString::number(deltaY);
+        ui->customPlot_2->yAxis->setRangeUpper(m_yMaxDelta.toDouble() + (m_yMaxDelta.toDouble()/5));
+    }
+
+    if(deltaY < m_yMinDelta.toFloat()){
+        m_yMinDelta = QString::number(deltaY);
+        ui->customPlot_2->yAxis->setRangeLower(m_yMinDelta.toDouble() + (m_yMinDelta.toDouble()/5));
     }
 
     if(deltaY > Y_MAX_DELTA_ALLOWED || m_yCount == COUNTS){
@@ -111,17 +143,37 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
         // add data to lines:
         ui->customPlot_2->graph(0)->addData(key, deltaY);
         // remove data of lines that's outside visible range:
-        ui->customPlot_2->graph(0)->removeDataBefore(key-4);
+        ui->customPlot_2->graph(0)->removeDataBefore(key-RANGE);
         // rescale value (vertical) axis to fit the current data:
-        ui->customPlot_2->graph(0)->rescaleValueAxis();
+        ui->customPlot_2->graph(0)->rescaleValueAxis(true);
         // make key axis range scroll with the data (at a constant range size of 16):
-        ui->customPlot_2->xAxis->setRange(key+0.25, 4, Qt::AlignRight);
+        ui->customPlot_2->xAxis->setRange(key+0.25, RANGE, Qt::AlignRight);
         ui->customPlot_2->replot();
         m_yCount++;
     }
     else{
         m_yCount++;
     }
+
+
+
+
+
+
+
+
+    if(deltaZ > m_zMaxDelta.toFloat()){
+        m_zMaxDelta = QString::number(deltaZ);
+        ui->customPlot_3->yAxis->setRangeUpper(m_zMaxDelta.toDouble() + (m_zMaxDelta.toDouble()/5));
+    }
+
+    if(deltaZ < m_zMinDelta.toFloat()){
+        m_zMinDelta = QString::number(deltaZ);
+        ui->customPlot_3->yAxis->setRangeLower(m_zMinDelta.toDouble() + (m_zMinDelta.toDouble()/5));
+    }
+
+    ui->customPlot_3->graph(1)->addData(key, m_zMaxDelta.toFloat());
+    ui->customPlot_3->graph(2)->addData(key, m_zMinDelta.toFloat());
 
     if(deltaZ > Z_MAX_DELTA_ALLOWED || m_zCount == COUNTS){
         if(m_zCount == 10){
@@ -157,11 +209,11 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
         // add data to lines:
         ui->customPlot_3->graph(0)->addData(key, deltaZ);
         // remove data of lines that's outside visible range:
-        ui->customPlot_3->graph(0)->removeDataBefore(key-4);
+        ui->customPlot_3->graph(0)->removeDataBefore(key-RANGE);
         // rescale value (vertical) axis to fit the current data:
-        ui->customPlot_3->graph(0)->rescaleValueAxis();
+        ui->customPlot_3->graph(0)->rescaleValueAxis(true);
         // make key axis range scroll with the data (at a constant range size of 16):
-        ui->customPlot_3->xAxis->setRange(key+0.25, 4, Qt::AlignRight);
+        ui->customPlot_3->xAxis->setRange(key+0.25, RANGE, Qt::AlignRight);
         ui->customPlot_3->replot();
         m_zCount++;
     }
@@ -186,8 +238,14 @@ void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
   customPlot->legend->setFont(font);
   //
 
-  customPlot->addGraph(); // blue line
+  customPlot->addGraph(); // blue line (data)
   customPlot->graph(0)->setPen(QPen(Qt::blue));
+
+  customPlot->addGraph(); //max watermark
+  customPlot->graph(1)->setPen(QPen(Qt::red));
+
+  customPlot->addGraph(); //min watermark
+  customPlot->graph(2)->setPen(QPen(Qt::green));
   //customPlot->graph(0)->setBrush(QBrush(QColor(240, 255, 200)));
   //customPlot->graph(0)->setAntialiasedFill(false);
 //  customPlot_2->addGraph(); // red line
@@ -239,7 +297,7 @@ void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
 //  connect(customPlot_3->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot_3->yAxis2, SLOT(setRange(QCPRange)));
 }
 
-void WobbleTestDialog::on_okButton_clicked()
+void WobbleTestDialog::on_closeButton_clicked()
 {
     accept();
 }
