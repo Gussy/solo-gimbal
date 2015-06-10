@@ -18,6 +18,8 @@
 
 #include "F2806x_SysCtrl.h"
 
+#include "memory_map.h"
+
 #pragma    DATA_SECTION(m_mavlink_buffer,"DMARAML5");
 #pragma    DATA_SECTION(m_mavlink_status,"DMARAML5");
 
@@ -43,12 +45,10 @@ Uint16 endRam;
 // Must be an even number or the uint8_t[] to uint16_t[] conversion will fail
 #define ENCAPSULATED_DATA_LENGTH 	252
 
-#define MAIN_APPLICATION_ADDRESS	0x3DC000
-
 #define BOOTLOADER_KEY_VALUE_8BIT	0x08AA
 
 #define BOOTLOADER_VERSION_MAJOR	0x02
-#define BOOTLOADER_VERSION_MINOR	0x03
+#define BOOTLOADER_VERSION_MINOR	0x04
 #define BOOTLOADER_VERSION			((BOOTLOADER_VERSION_MAJOR << 8) | BOOTLOADER_VERSION_MINOR)
 
 void CAN_Init()
@@ -551,7 +551,7 @@ Uint32 MAVLINK_Flash()
 	int getting_messages = 0;
 	Uint16 seq = 0, length;
 	FLASH_ST FlashStatus = {0};
-	Uint16  *Flash_ptr = (Uint16 *)MAIN_APPLICATION_ADDRESS;     // Pointer to a location in flash
+	Uint16  *Flash_ptr = (Uint16 *)APP_START;     // Pointer to a location in flash
     Uint16 blink_counter = 0;
     int idx1 = 0;
     Uint16 idx2 = 0;
@@ -618,35 +618,36 @@ Uint32 MAVLINK_Flash()
 
 								// Fast toggle the LED
 								STATUS_LED_TOGGLE();
+								if (Flash_ptr <= APP_END) {
+									// Unlock and erase flash with first packet
+									if(seq == 0) {
+										Example_CsmUnlock();
 
-								// Unlock and erase flash with first packet
-								if(seq == 0) {
-									Example_CsmUnlock();
+										/* don't erase SECTOR A */
+										Flash_Erase(SECTORB, &FlashStatus);
+										STATUS_LED_TOGGLE();
+										Flash_Erase(SECTORC, &FlashStatus);
+										STATUS_LED_TOGGLE();
+										Flash_Erase(SECTORD, &FlashStatus);
+										STATUS_LED_TOGGLE();
+										Flash_Erase(SECTORE, &FlashStatus);
+										STATUS_LED_TOGGLE();
+										Flash_Erase(SECTORF, &FlashStatus);
+										STATUS_LED_TOGGLE();
+										Flash_Erase(SECTORG, &FlashStatus);
+										STATUS_LED_TOGGLE();
+										/* don't erase SECTOR H */
 
-									/* don't erase SECTOR A */
-									Flash_Erase(SECTORB, &FlashStatus);
-									STATUS_LED_TOGGLE();
-									Flash_Erase(SECTORC, &FlashStatus);
-									STATUS_LED_TOGGLE();
-									Flash_Erase(SECTORD, &FlashStatus);
-									STATUS_LED_TOGGLE();
-									Flash_Erase(SECTORE, &FlashStatus);
-									STATUS_LED_TOGGLE();
-									Flash_Erase(SECTORF, &FlashStatus);
-									STATUS_LED_TOGGLE();
-									Flash_Erase(SECTORG, &FlashStatus);
-									STATUS_LED_TOGGLE();
-									/* don't erase SECTOR H */
-
-									// write data to flash
-									Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
-									Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
-									seq++;
-								} else {
-									// write data to flash
-									Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
-									Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
-									seq++;
+										// write data to flash
+										Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
+										Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
+										seq++;
+									} else {
+										// write data to flash
+										Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
+										Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
+										seq++;
+									}
 								}
 							}
 						} else if(inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE) {
