@@ -16,10 +16,10 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>520</x>
-     <y>740</y>
-     <width>141</width>
-     <height>32</height>
+     <x>590</x>
+     <y>750</y>
+     <width>81</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="orientation">
@@ -32,8 +32,8 @@
   <widget class="QLabel" name="xDelta">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>230</y>
+     <x>80</x>
+     <y>200</y>
      <width>61</width>
      <height>21</height>
     </rect>
@@ -58,8 +58,8 @@
   <widget class="QLabel" name="xDelta_label">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>230</y>
+     <x>30</x>
+     <y>200</y>
      <width>51</width>
      <height>20</height>
     </rect>
@@ -87,7 +87,7 @@
      <x>30</x>
      <y>20</y>
      <width>631</width>
-     <height>201</height>
+     <height>171</height>
     </rect>
    </property>
   </widget>
@@ -97,7 +97,7 @@
      <x>30</x>
      <y>260</y>
      <width>631</width>
-     <height>201</height>
+     <height>171</height>
     </rect>
    </property>
   </widget>
@@ -115,7 +115,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>470</y>
+     <y>440</y>
      <width>51</width>
      <height>21</height>
     </rect>
@@ -128,7 +128,7 @@
    <property name="geometry">
     <rect>
      <x>80</x>
-     <y>470</y>
+     <y>440</y>
      <width>71</width>
      <height>21</height>
     </rect>
@@ -140,8 +140,8 @@
   <widget class="QLabel" name="xFailTime_Label">
    <property name="geometry">
     <rect>
-     <x>230</x>
-     <y>220</y>
+     <x>220</x>
+     <y>190</y>
      <width>151</width>
      <height>41</height>
     </rect>
@@ -154,7 +154,7 @@
    <property name="geometry">
     <rect>
      <x>230</x>
-     <y>460</y>
+     <y>430</y>
      <width>151</width>
      <height>41</height>
     </rect>
@@ -179,8 +179,8 @@
   <widget class="QLabel" name="xNumFails_Label">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>220</y>
+     <x>480</x>
+     <y>190</y>
      <width>151</width>
      <height>41</height>
     </rect>
@@ -193,7 +193,7 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>460</y>
+     <y>430</y>
      <width>151</width>
      <height>41</height>
     </rect>
@@ -218,8 +218,8 @@
   <widget class="QLabel" name="xFailTime">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>220</y>
+     <x>360</x>
+     <y>190</y>
      <width>71</width>
      <height>41</height>
     </rect>
@@ -231,8 +231,8 @@
   <widget class="QLabel" name="xNumFails">
    <property name="geometry">
     <rect>
-     <x>610</x>
-     <y>220</y>
+     <x>600</x>
+     <y>190</y>
      <width>71</width>
      <height>41</height>
     </rect>
@@ -245,7 +245,7 @@
    <property name="geometry">
     <rect>
      <x>370</x>
-     <y>460</y>
+     <y>430</y>
      <width>71</width>
      <height>41</height>
     </rect>
@@ -258,7 +258,7 @@
    <property name="geometry">
     <rect>
      <x>610</x>
-     <y>460</y>
+     <y>430</y>
      <width>71</width>
      <height>41</height>
     </rect>
@@ -291,6 +291,71 @@
    </property>
    <property name="text">
     <string>null</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>0</y>
+     <width>61</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Roll</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>240</y>
+     <width>61</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Pitch</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>480</y>
+     <width>61</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Yaw</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pauseButton">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>750</y>
+     <width>71</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Pause</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="resumeButton">
+   <property name="geometry">
+    <rect>
+     <x>444</x>
+     <y>750</y>
+     <width>71</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Resume</string>
    </property>
   </widget>
  </widget>

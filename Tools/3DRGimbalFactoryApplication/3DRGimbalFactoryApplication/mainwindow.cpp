@@ -107,7 +107,7 @@ void MainWindow::on_connectButton_clicked()
     connect(this, SIGNAL(requestCalibrateAxesPerform()), m_serialThreadObj, SLOT(requestCalibrateAxesPerform()));
     connect(m_serialThreadObj, SIGNAL(gimbalStatusMessage(uint,QString)), this, SLOT(receiveGimbalStatusMessage(uint,QString)));
     connect(m_serialThreadObj, SIGNAL(receivedTestStatus(unsigned char,float)), this, SIGNAL(receivedTestStatus(unsigned char,float)));
-    connect(m_serialThreadObj, SIGNAL(receivedGimbalReport(float, float, float)), this, SIGNAL(receivedGimbalReport(float, float, float)));//R
+    connect(m_serialThreadObj, SIGNAL(receivedGimbalReport(float, float, float)), this, SIGNAL(receivedGimbalReport(float, float, float)));
     m_serialThread.start();
 
     // Disable the connect button, enable the disconnect button
@@ -495,9 +495,9 @@ void MainWindow::on_runWobbleTestButton_clicked()
     WobbleTestDialog dialog;
 
     connect(this, SIGNAL(receivedGimbalReport(float, float, float)), &dialog, SLOT(receivedGimbalReport(float, float, float)));
-    //emit requestGimbalReport();//TODO, necessary??
     dialog.exec();
 }
+
 
 void MainWindow::on_showHideGimbalMessagesButton_clicked()
 {
@@ -592,3 +592,4 @@ void MainWindow::closeEvent(QCloseEvent *)
     // Ask the serial interface thread to stop
     emit closeSerialInterface();
 }
+

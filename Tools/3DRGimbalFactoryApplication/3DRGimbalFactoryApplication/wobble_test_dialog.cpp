@@ -1,5 +1,6 @@
 #include "wobble_test_dialog.h"
 #include "ui_wobble_test_dialog.h"
+#include "mainwindow.h"
 
 #include "serial_interface_thread.h"
 
@@ -10,7 +11,7 @@ WobbleTestDialog::WobbleTestDialog(QWidget *parent) :
     Y_MAX_DELTA_ALLOWED(0.01),
     Z_MAX_DELTA_ALLOWED(0.01),
     COUNTS(10),
-    RANGE(8)
+    RANGE(16)
 {
     // Disable all of the title bar buttons (so the user can't close the dialog from the title bar)
     setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
@@ -18,9 +19,31 @@ WobbleTestDialog::WobbleTestDialog(QWidget *parent) :
     setupPlot(ui->customPlot);
     setupPlot(ui->customPlot_2);
     setupPlot(ui->customPlot_3);
-    m_xCount = COUNTS;
-    m_yCount = COUNTS;
-    m_zCount = COUNTS;
+
+    m_xCount = 0;
+    m_xFailOccurred = false;
+    m_xDelta = "0";
+    m_xMaxDelta = "0";
+    m_xMaxDeltaTime = "00:00:00";
+    m_xMinDelta = "0";
+    m_xNumFails = "0";
+
+    m_yCount = 0;
+    m_yFailOccurred = false;
+    m_yDelta = "0";
+    m_yMaxDelta = "0";
+    m_yMaxDeltaTime = "00:00:00";
+    m_yMinDelta = "0";
+    m_yNumFails = "0";
+
+    m_zCount = 0;
+    m_zFailOccurred = false;
+    m_zDelta = "0";
+    m_zMaxDelta = "0";
+    m_zMaxDeltaTime = "00:00:00";
+    m_zMinDelta = "0";
+    m_zNumFails = "0";
+
 }
 
 WobbleTestDialog::~WobbleTestDialog()
@@ -30,21 +53,31 @@ WobbleTestDialog::~WobbleTestDialog()
 
 void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float deltaZ)
 {
-    double key = QDateTime::currentDateTime().toMSecsSinceEpoch()/1000.0;
+    QDateTime logTime = QDateTime::currentDateTime();
+    double key = logTime.toMSecsSinceEpoch()/1000.0;
 
+
+
+    /*
+     *
+     *handle everything for roll
+     *
+     */
+    //adjust watermarks if necessary
     if(deltaX > m_xMaxDelta.toFloat()){
         m_xMaxDelta = QString::number(deltaX);
-        ui->customPlot->yAxis->setRangeUpper(m_xMaxDelta.toDouble() + (m_xMaxDelta.toDouble()/5));
+        ui->customPlot->yAxis->setRangeUpper(m_xMaxDelta.toDouble() + (m_xMaxDelta.toDouble()/5));//second term a buffer above watermark
     }
 
     if(deltaX < m_xMinDelta.toFloat()){
         m_xMinDelta = QString::number(deltaX);
-        ui->customPlot->yAxis->setRangeLower(m_xMinDelta.toDouble() + (m_xMinDelta.toDouble()/5));
+        ui->customPlot->yAxis->setRangeLower(m_xMinDelta.toDouble() + (m_xMinDelta.toDouble()/5));//second term a buffer below watermark
     }
-
+    //plot watermarks
     ui->customPlot->graph(1)->addData(key, m_xMaxDelta.toFloat());
     ui->customPlot->graph(2)->addData(key, m_xMinDelta.toFloat());
 
+    //if we've failed this run or it's been 10 counts since adding point to plot, refresh plot
     if(deltaX > X_MAX_DELTA_ALLOWED || m_xCount == COUNTS){
         if(m_xCount == 10){
             m_xCount = 0;
@@ -55,11 +88,13 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
 
         if(deltaX > X_MAX_DELTA_ALLOWED){
             m_xNumFails = QString::number(m_xNumFails.toInt() + 1);
-            m_xFailOccurred = true;//TODO, make background red if fail occurred
+            m_xFailOccurred = true;
             ui->customPlot->setBackground(Qt::red);
             ui->customPlot->axisRect()->setBackground(Qt::white);
             ui->xNumFails->setText(m_xNumFails);
             m_xCount = 0;
+            m_xMaxDeltaTime = logTime.toString("hh:mm:ss.zzz");
+            ui->xFailTime->setText(m_xMaxDeltaTime);
         }
         else{
             if(m_xFailOccurred){
@@ -72,8 +107,6 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
 
         if(deltaX > m_xMaxDelta.toDouble()){
             m_xMaxDelta = m_xDelta;
-            m_xMaxDeltaTime = QString::number(key);
-            ui->xFailTime->setText(m_xMaxDeltaTime);
         }
 
         // add data to lines:
@@ -93,12 +126,11 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
 
 
 
-
-
-    ui->customPlot_2->graph(1)->addData(key, m_yMaxDelta.toFloat());
-    ui->customPlot_2->graph(2)->addData(key, m_yMinDelta.toFloat());
-
-
+    /*
+     *
+     *handle everything for pitch
+     *
+     */
     if(deltaY > m_yMaxDelta.toFloat()){
         m_yMaxDelta = QString::number(deltaY);
         ui->customPlot_2->yAxis->setRangeUpper(m_yMaxDelta.toDouble() + (m_yMaxDelta.toDouble()/5));
@@ -108,6 +140,9 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
         m_yMinDelta = QString::number(deltaY);
         ui->customPlot_2->yAxis->setRangeLower(m_yMinDelta.toDouble() + (m_yMinDelta.toDouble()/5));
     }
+
+    ui->customPlot_2->graph(1)->addData(key, m_yMaxDelta.toFloat());
+    ui->customPlot_2->graph(2)->addData(key, m_yMinDelta.toFloat());
 
     if(deltaY > Y_MAX_DELTA_ALLOWED || m_yCount == COUNTS){
         if(m_yCount == 10){
@@ -124,6 +159,8 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
             ui->customPlot_2->axisRect()->setBackground(Qt::white);
             ui->yNumFails->setText(m_yNumFails);
             m_yCount = 0;
+            m_yMaxDeltaTime = logTime.toString("hh:mm:ss.zzz");
+            ui->yFailTime->setText(m_yMaxDeltaTime);
         }
         else{
             if(m_yFailOccurred){
@@ -136,8 +173,6 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
 
         if(deltaY > m_yMaxDelta.toDouble()){
             m_yMaxDelta = m_yDelta;
-            m_yMaxDeltaTime = QString::number(key);
-            ui->yFailTime->setText(m_yMaxDeltaTime);
         }
 
         // add data to lines:
@@ -156,12 +191,11 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
     }
 
 
-
-
-
-
-
-
+    /*
+     *
+     *handle everything for yaw
+     *
+     */
     if(deltaZ > m_zMaxDelta.toFloat()){
         m_zMaxDelta = QString::number(deltaZ);
         ui->customPlot_3->yAxis->setRangeUpper(m_zMaxDelta.toDouble() + (m_zMaxDelta.toDouble()/5));
@@ -190,6 +224,8 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
             ui->customPlot_3->axisRect()->setBackground(Qt::white);
             ui->zNumFails->setText(m_zNumFails);
             m_zCount = 0;
+            m_zMaxDeltaTime = logTime.toString("hh:mm:ss.zzz");
+            ui->zFailTime->setText(m_zMaxDeltaTime);
         }
         else{
             if(m_zFailOccurred){
@@ -202,8 +238,6 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
 
         if(deltaZ > m_zMaxDelta.toDouble()){
             m_zMaxDelta = m_zDelta;
-            m_zMaxDeltaTime = QString::number(key);
-            ui->zFailTime->setText(m_zMaxDeltaTime);
         }
 
         // add data to lines:
@@ -236,6 +270,10 @@ void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
   customPlot->xAxis->setTickLabelFont(font);
   customPlot->yAxis->setTickLabelFont(font);
   customPlot->legend->setFont(font);
+  customPlot->setBackground(Qt::white);
+  customPlot->axisRect()->setBackground(Qt::white);
+  customPlot->yAxis->setRangeLower(0.0001);
+  customPlot->yAxis->setRangeUpper(0.0001);
   //
 
   customPlot->addGraph(); // blue line (data)
@@ -268,7 +306,7 @@ void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
 //  customPlot->graph(5)->setScatterStyle(QCPScatterStyle::ssDisc);
 
   customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-  customPlot->xAxis->setDateTimeFormat("hh:mm:ss");
+  customPlot->xAxis->setDateTimeFormat("hh:mm:ss.zzz");
   customPlot->xAxis->setAutoTickStep(false);
   customPlot->xAxis->setTickStep(2);
   customPlot->axisRect()->setupFullAxesBox();
@@ -302,5 +340,14 @@ void WobbleTestDialog::on_closeButton_clicked()
     accept();
 }
 
+void WobbleTestDialog::on_pauseButton_clicked()
+{
+
+}
+
+void WobbleTestDialog::on_resumeButton_clicked()
+{
+
+}
 
 

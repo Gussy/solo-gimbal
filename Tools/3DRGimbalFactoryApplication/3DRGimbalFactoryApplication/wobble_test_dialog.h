@@ -3,6 +3,7 @@
 
 #include "serial_interface_thread.h"
 #include "qcustomplot.h"
+#include "mainwindow.h"
 
 #include <QDialog>
 #include <QPixmap>
@@ -64,6 +65,8 @@ private:
 
 private slots:
     void on_closeButton_clicked();
+    void on_pauseButton_clicked();
+    void on_resumeButton_clicked();
 };
 
 #endif // WOBBLE_TEST_DIALOG_H
