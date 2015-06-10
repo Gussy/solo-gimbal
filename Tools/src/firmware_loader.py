@@ -22,7 +22,7 @@ def decode_bootloader_version(msg):
     """The first message handshake contains the bootloader version int the height field as a 16bit int"""
     version_major = (msg.height >> 8) & 0xff
     version_minor = msg.height & 0xff
-    string = '\n(BL Ver %i.%i)\n' % (version_major, version_minor)
+    string = '(BL Ver %i.%i)\n' % (version_major, version_minor)
     return string
 
 def start_bootloader(link):
@@ -48,42 +48,50 @@ def start_bootloader(link):
                 print_and_flush("\nNot response from gimbal, exiting.\n")
                 sys.exit(1)
         else:
+            print_and_flush('\n')
             break
                 
 
+
+
+def send_block(link, binary, msg):
+    sequence_number = msg.width
+    payload_length = msg.payload
+    # Calculate the window of data to send
+    start_idx = sequence_number * payload_length
+    end_idx = (sequence_number + 1) * payload_length
+    # Clamp the end index from overflowing
+    if (end_idx > len(binary)):
+        end_idx = len(binary)
+    # Slice the binary image
+    data = binary[start_idx:end_idx]
+    # Pad the data to fit the mavlink message
+    if len(data) < MAVLINK_ENCAPSULATED_DATA_LENGTH:
+        data.extend([0] * (MAVLINK_ENCAPSULATED_DATA_LENGTH - len(data)))
+    # Send the data with the corrosponding sequence number
+    setup_mavlink.send_bootloader_data(link, sequence_number, data)
+    return end_idx
+
+
+def get_handshake_msg(link, timeout=5):
+    msg = setup_mavlink.wait_handshake(link.file, timeout)
+    if (msg == None):
+        # Handshake timed out
+        print_and_flush("\nNot response from gimbal, exiting.\n")
+        sys.exit(1)
+    return msg
+
 def upload_data(link, binary):
-    finished = False
+    msg = get_handshake_msg(link, timeout=10)    
+    print_and_flush(decode_bootloader_version(msg))
+    
     # Loop until we are finished
-    while finished == False:
-        # Wait for target to reset into bootloader mode
-        msg = setup_mavlink.wait_handshake(link.file, timeout=5)
-        if (msg == None):
-            # Handshake timed out
-            print_and_flush("\nNot response from gimbal, exiting.\n")
-            sys.exit(1)
-        else:
-            sequence_number = msg.width
-            payload_length = msg.payload
-            # Print the bootloader version on the first data handshake
-            if sequence_number == 0:
-                print_and_flush(decode_bootloader_version(msg))
-            # Calculate the window of data to send
-            start_idx = sequence_number * payload_length
-            end_idx = (sequence_number + 1) * payload_length
-            # Clamp the end index from overflowing
-            if (end_idx > len(binary)):
-                end_idx = len(binary)
-            # Slice the binary image
-            data = binary[start_idx:end_idx]
-            # Pad the data to fit the mavlink message
-            if len(data) < MAVLINK_ENCAPSULATED_DATA_LENGTH:
-                data.extend([0] * (MAVLINK_ENCAPSULATED_DATA_LENGTH - len(data)))
-            # Send the data with the corrosponding sequence number
-            setup_mavlink.send_bootloader_data(link, sequence_number, data)
-            # If the entire image buffer has been sent, exit this loop
-            if end_idx >= len(binary):
-                finished = True
-            print_and_flush("!")
+    end_idx = 0
+    while (end_idx < len(binary)):
+        msg = get_handshake_msg(link,timeout=10)        
+        end_idx = send_block(link, binary, msg)
+        print_and_flush("!")   
+        
             
 def finish_upload(link):
     """Send an "end of transmission" signal to the target, to cause a target reset""" 
