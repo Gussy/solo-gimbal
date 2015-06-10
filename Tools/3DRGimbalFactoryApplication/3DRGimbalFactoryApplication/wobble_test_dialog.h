@@ -33,6 +33,7 @@ private:
 
     const int COUNTS;
     const int RANGE;
+    bool m_pause;
 
     QString m_xDelta;
     QString m_xMaxDelta;
