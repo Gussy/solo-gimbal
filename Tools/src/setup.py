@@ -8,13 +8,12 @@ import sys, argparse
 from firmware_loader import update
 import setup_comutation, setup_home
 from setup_mavlink import open_comm, wait_for_heartbeat
-import setup_mavlink, setup_param
+import setup_mavlink, setup_param, setup_check
 from setup_read_sw_version import readSWver
 import setup_run
 import time
 import numpy
 from setup_param import set_offsets
-import setup_check
 
 def handle_file(args, link):
     fileExtension = str(args.file).split(".")[-1].lower()
@@ -73,7 +72,7 @@ def main():
         setup_comutation.calibrate(link)
         return
     elif args.show:
-        setup_check.setup_check(link)
+        setup_check.show(link)
         return
     elif args.staticcal:
         setup_home.calibrate_joints(link)

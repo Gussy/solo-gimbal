@@ -2,7 +2,7 @@ import setup_comutation
 from setup_read_sw_version import readSWver
 import setup_param
 
-def setup_check(link):
+def show(link):
     ver = readSWver(link)
     pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
     joint = setup_param.get_offsets(link, 'JNT')
