@@ -8,7 +8,8 @@ import sys, argparse
 from firmware_loader import update
 import setup_comutation, setup_home
 from setup_mavlink import open_comm, wait_for_heartbeat
-import setup_mavlink, setup_param, setup_check
+import setup_mavlink, setup_param
+import setup_validate
 from setup_read_sw_version import readSWver
 import setup_run
 import time
@@ -73,10 +74,10 @@ def main():
         setup_comutation.calibrate(link)
         return
     elif args.show:
-        setup_check.show(link)
+        setup_validate.show(link)
         return
     elif args.validate:
-        setup_check.validate(link)
+        setup_validate.validate(link)
         return
     elif args.staticcal:
         setup_home.calibrate_joints(link)
