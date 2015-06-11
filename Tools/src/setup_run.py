@@ -29,7 +29,7 @@ def run(link):
 
 def align(link):
     i=0
-    offsets = setup_param.get_joint_offsets(link)
+    offsets = setup_param.get_offsets(link, 'JNT')
     target = Vector3()
     while(True):
         report = setup_mavlink.get_gimbal_report(link)

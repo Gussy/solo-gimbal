@@ -54,16 +54,16 @@ def set_offsets(link, kind, offsets):
     set_param(link, "GMB_OFF_"+kind+"_X", offsets[1]);
     set_param(link, "GMB_OFF_"+kind+"_Z", offsets[2]);
     commit_to_flash(link)
+
+def get_offsets(link, kind):   
+    x = fetch_param(link, "GMB_OFF_"+kind+"_X").param_value;
+    y = fetch_param(link, "GMB_OFF_"+kind+"_Y").param_value;    
+    z = fetch_param(link, "GMB_OFF_"+kind+"_Z").param_value;
+    return Vector3(x=x,y=y,z=z)
     
 def getAxisCalibrationParam(link, axis_enum):
     icept = fetch_param(link, "GMB_" + axis_enum + "_ICEPT")
     slope = fetch_param(link, "GMB_" + axis_enum + "_SLOPE")
     return axis_enum, icept.param_value, slope.param_value
-
-def get_joint_offsets(link):
-    x = fetch_param(link, "GMB_OFF_JNT_X").param_value
-    y = fetch_param(link, "GMB_OFF_JNT_Y").param_value
-    z = fetch_param(link, "GMB_OFF_JNT_Z").param_value
-    return Vector3(x=x,y=y,z=z)
 
 
