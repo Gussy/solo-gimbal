@@ -74,9 +74,29 @@ def validate_accelerometers(link):
     else:
         print 'Accelerometer\t- FAIL - redo accelerometer calibration (-a)'
 
+def validate_gain_axis(link,axis,p_e,i_e,d_e):
+    p, i, d = setup_param.get_gains(link, axis)
+    return (abs(p - p_e) < 1e-6 and
+            abs(i - i_e) < 1e-6 and
+            abs(d - d_e) < 1e-6)
+
+def validate_k_rate(link, value):
+    k_rate = setup_param.fetch_param(link, "GMB_K_RATE").param_value
+    return (abs(k_rate - value) < 1e-6)
+
+def validate_gains(link):
+    if (validate_gain_axis(link, 'PITCH', 3.50, 0.25, 0.10) and
+        validate_gain_axis(link, 'ROLL',  4.00, 0.75, 1.00) and
+        validate_gain_axis(link, 'YAW',   4.00, 1.00, 0.10) and
+        validate_k_rate(link,10.0)):
+        print 'Gains   \t- PASS'
+    else:
+        print 'Gains   \t- FAIL'
+
 def validate(link):
     validate_version(link)
     validate_comutation(link)
     validate_joints(link)
     validate_gyros(link)
     validate_accelerometers(link)
+    validate_gains(link)

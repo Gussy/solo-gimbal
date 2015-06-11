@@ -60,6 +60,12 @@ def get_offsets(link, kind):
     y = fetch_param(link, "GMB_OFF_"+kind+"_Y").param_value;    
     z = fetch_param(link, "GMB_OFF_"+kind+"_Z").param_value;
     return Vector3(x=x,y=y,z=z)
+
+def get_gains(link, kind):   
+    P = fetch_param(link, "GMB_"+kind+"_P").param_value;
+    I = fetch_param(link, "GMB_"+kind+"_I").param_value;    
+    D = fetch_param(link, "GMB_"+kind+"_D").param_value;
+    return (P,I,D)
     
 def getAxisCalibrationParam(link, axis_enum):
     icept = fetch_param(link, "GMB_" + axis_enum + "_ICEPT")
