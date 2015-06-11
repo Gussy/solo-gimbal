@@ -3,6 +3,42 @@ from setup_read_sw_version import readSWver
 import setup_param
 from distutils.version import LooseVersion
 
+EXPECTED_VERSION = '0.15.2'
+
+EXPECTED_PITCH_ICEPT_MAX = 0.30
+EXPECTED_PITCH_ICEPT_MIN = 0.10
+EXPECTED_PITCH_SLOPE_MAX = 0.14
+EXPECTED_PITCH_SLOPE_MIN = 0.12
+EXPECTED_ROLL_ICEPT_MIN = 0.35
+EXPECTED_ROLL_ICEPT_MAX = 0.51
+EXPECTED_ROLL_SLOPE_MAX = 0.14
+EXPECTED_ROLL_SLOPE_MIN = 0.11
+EXPECTED_YAW_ICEPT_MAX = 0.54
+EXPECTED_YAW_ICEPT_MIN = 0.40
+EXPECTED_YAW_SLOPE_MAX = 0.12
+EXPECTED_YAW_SLOPE_MIN = 0.10
+
+EXPECTED_JOINT_X_MAX = 0.12
+EXPECTED_JOINT_X_MIN = -0.02
+EXPECTED_JOINT_Y_MAX = 0.15
+EXPECTED_JOINT_Y_MIN = -0.07
+EXPECTED_JOINT_Z_MAX = 0.18
+EXPECTED_JOINT_Z_MIN = -0.18
+
+EXPECTED_GYRO = 5E-04
+
+GAIN_TOLERANCE = 1e-6
+EXPECTED_PITCH_P = 3.50
+EXPECTED_PITCH_I = 0.25
+EXPECTED_PITCH_D = 0.10
+EXPECTED_ROLL_P = 4.00
+EXPECTED_ROLL_I = 0.75
+EXPECTED_ROLL_D = 1.00
+EXPECTED_YAW_P = 4.00
+EXPECTED_YAW_I = 1.00
+EXPECTED_YAW_D = 0.10
+EXPECTED_K_RATE = 10.0
+
 def show(link):
     ver = readSWver(link)
     pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
@@ -16,7 +52,7 @@ def show(link):
 
 def validate_version(link):
     ver = LooseVersion(readSWver(link))
-    ver_expected = LooseVersion('0.15.2')
+    ver_expected = LooseVersion(EXPECTED_VERSION)
     if ver >= ver_expected:
         print 'Version \t- PASS'
     else:
@@ -36,9 +72,9 @@ def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
 def validate_comutation(link):
     "The acceptable range values where collected from the batch of DVT1 gimbals"
     pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
-    if (validate_comutation_axis(link, pitch_com, 0.30, 0.10, 0.14, 0.12) and 
-        validate_comutation_axis(link, roll_com,  0.51, 0.35, 0.14, 0.11) and 
-        validate_comutation_axis(link,yaw_com,    0.54, 0.40, 0.12, 0.10)):
+    if (validate_comutation_axis(link, pitch_com, EXPECTED_PITCH_ICEPT_MAX, EXPECTED_PITCH_ICEPT_MIN, EXPECTED_PITCH_SLOPE_MAX, EXPECTED_PITCH_SLOPE_MIN) and 
+        validate_comutation_axis(link, roll_com, EXPECTED_ROLL_ICEPT_MAX, EXPECTED_ROLL_ICEPT_MIN, EXPECTED_ROLL_SLOPE_MAX, EXPECTED_ROLL_SLOPE_MIN) and 
+        validate_comutation_axis(link, yaw_com, EXPECTED_YAW_ICEPT_MAX, EXPECTED_YAW_ICEPT_MIN, EXPECTED_YAW_SLOPE_MAX, EXPECTED_YAW_SLOPE_MIN)):
         print 'Comutation \t- PASS'
     else:
         print 'Comutation \t- FAIL - please redo the comutation calibration (-c)'
@@ -47,9 +83,9 @@ def validate_comutation(link):
 def validate_joints(link):
     "The acceptable range values where collected from the batch of DVT1 gimbals"
     joint = setup_param.get_offsets(link, 'JNT')
-    if ((joint.x <= 0.12) and (joint.x >= -0.02) and (joint.x != 0) and
-        (joint.y <= 0.15) and (joint.y >= -0.07) and (joint.y != 0) and
-        (joint.z <= 0.18) and (joint.z >= -0.18) and (joint.z != 0)):
+    if ((joint.x <= EXPECTED_JOINT_X_MAX) and (joint.x >= EXPECTED_JOINT_X_MIN) and (joint.x != 0) and
+        (joint.y <= EXPECTED_JOINT_Y_MAX) and (joint.y >= EXPECTED_JOINT_Y_MIN) and (joint.y != 0) and
+        (joint.z <= EXPECTED_JOINT_Z_MAX) and (joint.z >= EXPECTED_JOINT_Z_MIN) and (joint.z != 0)):
         print 'Joints  \t- PASS'
     else:
         print 'Joints  \t- FAIL - redo joint calibration (-j)'
@@ -57,9 +93,9 @@ def validate_joints(link):
 def validate_gyros(link):
     "The acceptable range values where collected from the batch of DVT1 gimbals"
     gyro = setup_param.get_offsets(link, 'GYRO')
-    if ((gyro.x <= 5E-04) and (gyro.x >= -5E-04) and (gyro.x != 0) and
-        (gyro.y <= 5E-04) and (gyro.y >= -5E-04) and (gyro.y != 0) and
-        (gyro.z <= 5E-04) and (gyro.z >= -5E-04) and (gyro.z != 0)):
+    if ((gyro.x <= EXPECTED_GYRO) and (gyro.x >= -EXPECTED_GYRO) and (gyro.x != 0) and
+        (gyro.y <= EXPECTED_GYRO) and (gyro.y >= -EXPECTED_GYRO) and (gyro.y != 0) and
+        (gyro.z <= EXPECTED_GYRO) and (gyro.z >= -EXPECTED_GYRO) and (gyro.z != 0)):
         print 'Gyros   \t- PASS'
     else:
         print 'Gyros   \t- FAIL - redo gyro calibration (-g)'
@@ -76,19 +112,19 @@ def validate_accelerometers(link):
 
 def validate_gain_axis(link,axis,p_e,i_e,d_e):
     p, i, d = setup_param.get_gains(link, axis)
-    return (abs(p - p_e) < 1e-6 and
-            abs(i - i_e) < 1e-6 and
-            abs(d - d_e) < 1e-6)
+    return (abs(p - p_e) < GAIN_TOLERANCE and
+            abs(i - i_e) < GAIN_TOLERANCE and
+            abs(d - d_e) < GAIN_TOLERANCE)
 
 def validate_k_rate(link, value):
     k_rate = setup_param.fetch_param(link, "GMB_K_RATE").param_value
-    return (abs(k_rate - value) < 1e-6)
+    return (abs(k_rate - value) < GAIN_TOLERANCE)
 
 def validate_gains(link):
-    if (validate_gain_axis(link, 'PITCH', 3.50, 0.25, 0.10) and
-        validate_gain_axis(link, 'ROLL',  4.00, 0.75, 1.00) and
-        validate_gain_axis(link, 'YAW',   4.00, 1.00, 0.10) and
-        validate_k_rate(link,10.0)):
+    if (validate_gain_axis(link, 'PITCH', EXPECTED_PITCH_P, EXPECTED_PITCH_I, EXPECTED_PITCH_D) and
+        validate_gain_axis(link, 'ROLL',  EXPECTED_ROLL_P, EXPECTED_ROLL_I, EXPECTED_ROLL_D) and
+        validate_gain_axis(link, 'YAW',   EXPECTED_YAW_P, EXPECTED_YAW_I, EXPECTED_YAW_D) and
+        validate_k_rate(link,EXPECTED_K_RATE)):
         print 'Gains   \t- PASS'
     else:
         print 'Gains   \t- FAIL'
