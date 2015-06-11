@@ -1,15 +1,18 @@
 #include "wobble_test_dialog.h"
 #include "ui_wobble_test_dialog.h"
 #include "mainwindow.h"
-
 #include "serial_interface_thread.h"
+
+#include <QTime>
+
+
 
 WobbleTestDialog::WobbleTestDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::WobbleTestDialog),
-    X_MAX_DELTA_ALLOWED(0.01),
-    Y_MAX_DELTA_ALLOWED(0.01),
-    Z_MAX_DELTA_ALLOWED(0.01),
+//    X_MAX_DELTA_ALLOWED(0.01),
+//    Y_MAX_DELTA_ALLOWED(0.01),
+//    Z_MAX_DELTA_ALLOWED(0.01),
     COUNTS(10),
     RANGE(30)
 {
@@ -51,6 +54,7 @@ WobbleTestDialog::WobbleTestDialog(QWidget *parent) :
     ui->resumeButton->setEnabled(false);
     ui->pauseButton->setEnabled(true);
 
+    m_timerTemp = 0;
 }
 
 WobbleTestDialog::~WobbleTestDialog()
@@ -64,8 +68,7 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
     {
         QDateTime logTime = QDateTime::currentDateTime();
         double key = logTime.toMSecsSinceEpoch()/1000.0;
-
-
+        double max = 0;
 
         /*
          *
@@ -75,13 +78,15 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
         //adjust watermarks if necessary
         if(deltaX > m_xMaxDelta.toFloat()){
             m_xMaxDelta = QString::number(deltaX);
-            ui->customPlot->yAxis->setRangeUpper(m_xMaxDelta.toDouble() + (m_xMaxDelta.toDouble()/5));//second term a buffer above watermark
         }
 
         if(deltaX < m_xMinDelta.toFloat()){
             m_xMinDelta = QString::number(deltaX);
-            ui->customPlot->yAxis->setRangeLower(m_xMinDelta.toDouble() + (m_xMinDelta.toDouble()/5));//second term a buffer below watermark
         }
+
+        max = qMax(qAbs(m_xMaxDelta.toDouble()),qAbs(m_xMinDelta.toDouble()));
+        ui->customPlot->yAxis->setRange(1.2 * max, -1.2 * max);
+
         //plot watermarks
         ui->customPlot->graph(1)->addData(key, m_xMaxDelta.toFloat());
         ui->customPlot->graph(2)->addData(key, m_xMinDelta.toFloat());
@@ -125,9 +130,9 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
             ui->customPlot->graph(1)->removeDataBefore(key-RANGE);
             ui->customPlot->graph(2)->removeDataBefore(key-RANGE);
             // rescale value (vertical) axis to fit the current data:
-            ui->customPlot->graph(0)->rescaleValueAxis(true);
-            ui->customPlot->graph(1)->rescaleValueAxis(true);
-            ui->customPlot->graph(2)->rescaleValueAxis(true);
+//            ui->customPlot->graph(0)->rescaleValueAxis(true);
+//            ui->customPlot->graph(1)->rescaleValueAxis(true);
+//            ui->customPlot->graph(2)->rescaleValueAxis(true);
             // make key axis range scroll with the data (at a constant range size of 16):
             ui->customPlot->xAxis->setRange(key+0.25, RANGE, Qt::AlignRight);
             ui->customPlot->replot();
@@ -146,13 +151,14 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
          */
         if(deltaY > m_yMaxDelta.toFloat()){
             m_yMaxDelta = QString::number(deltaY);
-            ui->customPlot_2->yAxis->setRangeUpper(m_yMaxDelta.toDouble() + (m_yMaxDelta.toDouble()/5));
         }
 
         if(deltaY < m_yMinDelta.toFloat()){
             m_yMinDelta = QString::number(deltaY);
-            ui->customPlot_2->yAxis->setRangeLower(m_yMinDelta.toDouble() + (m_yMinDelta.toDouble()/5));
         }
+
+        max = qMax(qAbs(m_yMaxDelta.toDouble()),qAbs(m_yMinDelta.toDouble()));
+        ui->customPlot_2->yAxis->setRange(1.2 * max, -1.2 * max);
 
         ui->customPlot_2->graph(1)->addData(key, m_yMaxDelta.toFloat());
         ui->customPlot_2->graph(2)->addData(key, m_yMinDelta.toFloat());
@@ -195,9 +201,9 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
             ui->customPlot_2->graph(1)->removeDataBefore(key-RANGE);
             ui->customPlot_2->graph(2)->removeDataBefore(key-RANGE);
             // rescale value (vertical) axis to fit the current data:
-            ui->customPlot_2->graph(0)->rescaleValueAxis(true);
-            ui->customPlot_2->graph(1)->rescaleValueAxis(true);
-            ui->customPlot_2->graph(2)->rescaleValueAxis(true);
+//            ui->customPlot_2->graph(0)->rescaleValueAxis(true);
+//            ui->customPlot_2->graph(1)->rescaleValueAxis(true);
+//            ui->customPlot_2->graph(2)->rescaleValueAxis(true);
             // make key axis range scroll with the data (at a constant range size of 16):
             ui->customPlot_2->xAxis->setRange(key+0.25, RANGE, Qt::AlignRight);
             ui->customPlot_2->replot();
@@ -215,13 +221,14 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
          */
         if(deltaZ > m_zMaxDelta.toFloat()){
             m_zMaxDelta = QString::number(deltaZ);
-            ui->customPlot_3->yAxis->setRangeUpper(m_zMaxDelta.toDouble() + (m_zMaxDelta.toDouble()/5));
         }
 
         if(deltaZ < m_zMinDelta.toFloat()){
             m_zMinDelta = QString::number(deltaZ);
-            ui->customPlot_3->yAxis->setRangeLower(m_zMinDelta.toDouble() + (m_zMinDelta.toDouble()/5));
         }
+
+        max = qMax(qAbs(m_zMaxDelta.toDouble()),qAbs(m_zMinDelta.toDouble()));
+        ui->customPlot_3->yAxis->setRange(1.2 * max, -1.2 * max);
 
         ui->customPlot_3->graph(1)->addData(key, m_zMaxDelta.toFloat());
         ui->customPlot_3->graph(2)->addData(key, m_zMinDelta.toFloat());
@@ -264,9 +271,9 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
             ui->customPlot_3->graph(1)->removeDataBefore(key-RANGE);
             ui->customPlot_3->graph(2)->removeDataBefore(key-RANGE);
             // rescale value (vertical) axis to fit the current data:
-            ui->customPlot_3->graph(0)->rescaleValueAxis(true);
-            ui->customPlot_3->graph(1)->rescaleValueAxis(true);
-            ui->customPlot_3->graph(2)->rescaleValueAxis(true);
+//            ui->customPlot_3->graph(0)->rescaleValueAxis(true);
+//            ui->customPlot_3->graph(1)->rescaleValueAxis(true);
+//            ui->customPlot_3->graph(2)->rescaleValueAxis(true);
             // make key axis range scroll with the data (at a constant range size of 16):
             ui->customPlot_3->xAxis->setRange(key+0.25, RANGE, Qt::AlignRight);
             ui->customPlot_3->replot();
@@ -275,6 +282,11 @@ void WobbleTestDialog::receivedGimbalReport(float deltaX, float deltaY, float de
         else{
             m_zCount++;
         }
+
+        QTime displayTime = QTime::QTime(0, 0, 0, 0);
+        displayTime = displayTime.addMSecs((int)(m_timerTemp + m_elapsedTime.elapsed()));
+        ui->displayTimer->setText(displayTime.toString("hh:mm:ss.zzz"));
+
     }
 
 }
@@ -291,8 +303,8 @@ void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
   customPlot->legend->setFont(font);
   customPlot->axisRect()->setBackground(Qt::white);
   customPlot->setBackground(Qt::green);
-  customPlot->yAxis->setRangeLower(-0.0001);
-  customPlot->yAxis->setRangeUpper(0.0001);
+  customPlot->yAxis->setRangeLower(-0.045);
+  customPlot->yAxis->setRangeUpper(0.045);
   customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
   customPlot->xAxis->setDateTimeFormat("hh:mm:ss");
   customPlot->xAxis->setAutoTickStep(false);
@@ -310,12 +322,12 @@ void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
 
   customPlot->addGraph(); //min watermark
   customPlot->graph(2)->setPen(QPen(Qt::green));
-
+  m_elapsedTime.start();
 
 
   // make left and bottom axes transfer their ranges to right and top axes:
-  connect(customPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->xAxis2, SLOT(setRange(QCPRange)));
-  connect(customPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->yAxis2, SLOT(setRange(QCPRange)));
+//  connect(customPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->xAxis2, SLOT(setRange(QCPRange)));
+//  connect(customPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->yAxis2, SLOT(setRange(QCPRange)));
 
 
 }
@@ -330,6 +342,7 @@ void WobbleTestDialog::on_pauseButton_clicked()
     m_pause = true;
     ui->pauseButton->setEnabled(false);
     ui->resumeButton->setEnabled(true);
+    m_timerTemp = m_timerTemp + m_elapsedTime.elapsed();
 }
 
 void WobbleTestDialog::on_resumeButton_clicked()
@@ -337,6 +350,7 @@ void WobbleTestDialog::on_resumeButton_clicked()
     m_pause = false;
     ui->pauseButton->setEnabled(true);
     ui->resumeButton->setEnabled(false);
+    m_elapsedTime.restart();
 }
 
 void WobbleTestDialog::on_refreshSetpointsButton_clicked()
@@ -373,6 +387,7 @@ void WobbleTestDialog::on_refreshSetpointsButton_clicked()
     m_zMinDelta = "0";
     m_zNumFails = "0";
 
+    m_elapsedTime.restart();
     m_pause = false;
     ui->resumeButton->setEnabled(false);
     ui->pauseButton->setEnabled(true);

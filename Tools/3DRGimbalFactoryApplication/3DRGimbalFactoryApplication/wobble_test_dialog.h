@@ -8,7 +8,7 @@
 #include <QDialog>
 #include <QPixmap>
 #include <QLabel>
-
+#include <QTime>
 
 
 namespace Ui {
@@ -34,6 +34,9 @@ private:
     const int COUNTS;
     const int RANGE;
     bool m_pause;
+    QElapsedTimer m_elapsedTime;
+    double m_timerTemp;
+    QTime m_totalElapsed;
 
     QString m_xMaxDeltaAllowed;
     QString m_xDelta;
@@ -43,7 +46,7 @@ private:
     QString m_xNumFails;
     bool m_xFailOccurred;
     int m_xCount;
-    const float X_MAX_DELTA_ALLOWED;
+//    const float X_MAX_DELTA_ALLOWED;
 
     QString m_yMaxDeltaAllowed;
     QString m_yDelta;
@@ -53,7 +56,7 @@ private:
     QString m_yNumFails;
     bool m_yFailOccurred;
     int m_yCount;
-    const float Y_MAX_DELTA_ALLOWED;
+//    const float Y_MAX_DELTA_ALLOWED;
 
     QString m_zMaxDeltaAllowed;
     QString m_zDelta;
@@ -63,7 +66,8 @@ private:
     QString m_zNumFails;
     bool m_zFailOccurred;
     int m_zCount;
-    const float Z_MAX_DELTA_ALLOWED;
+//    const float Z_MAX_DELTA_ALLOWED;
+
 
     void setupPlot(QCustomPlot *customPlot);
 

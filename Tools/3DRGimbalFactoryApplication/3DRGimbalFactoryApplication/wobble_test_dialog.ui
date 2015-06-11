@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>685</width>
-    <height>831</height>
+    <height>788</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>600</x>
-     <y>800</y>
+     <x>590</x>
+     <y>750</y>
      <width>81</width>
      <height>21</height>
     </rect>
@@ -46,7 +46,7 @@
    <property name="geometry">
     <rect>
      <x>80</x>
-     <y>710</y>
+     <y>680</y>
      <width>71</width>
      <height>21</height>
     </rect>
@@ -72,7 +72,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>710</y>
+     <y>680</y>
      <width>61</width>
      <height>20</height>
     </rect>
@@ -107,7 +107,7 @@
      <x>30</x>
      <y>500</y>
      <width>631</width>
-     <height>201</height>
+     <height>171</height>
     </rect>
    </property>
   </widget>
@@ -167,7 +167,7 @@
    <property name="geometry">
     <rect>
      <x>230</x>
-     <y>700</y>
+     <y>670</y>
      <width>151</width>
      <height>41</height>
     </rect>
@@ -206,7 +206,7 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>700</y>
+     <y>670</y>
      <width>151</width>
      <height>41</height>
     </rect>
@@ -271,7 +271,7 @@
    <property name="geometry">
     <rect>
      <x>380</x>
-     <y>700</y>
+     <y>670</y>
      <width>71</width>
      <height>41</height>
     </rect>
@@ -284,7 +284,7 @@
    <property name="geometry">
     <rect>
      <x>610</x>
-     <y>700</y>
+     <y>670</y>
      <width>71</width>
      <height>41</height>
     </rect>
@@ -335,8 +335,8 @@
   <widget class="QPushButton" name="pauseButton">
    <property name="geometry">
     <rect>
-     <x>530</x>
-     <y>800</y>
+     <x>520</x>
+     <y>750</y>
      <width>71</width>
      <height>21</height>
     </rect>
@@ -348,8 +348,8 @@
   <widget class="QPushButton" name="resumeButton">
    <property name="geometry">
     <rect>
-     <x>454</x>
-     <y>800</y>
+     <x>444</x>
+     <y>750</y>
      <width>71</width>
      <height>21</height>
     </rect>
@@ -361,8 +361,8 @@
   <widget class="QPlainTextEdit" name="xMaxDeltaAllowed">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>790</y>
+     <x>10</x>
+     <y>740</y>
      <width>71</width>
      <height>31</height>
     </rect>
@@ -371,8 +371,8 @@
   <widget class="QPlainTextEdit" name="yMaxDeltaAllowed">
    <property name="geometry">
     <rect>
-     <x>100</x>
-     <y>790</y>
+     <x>90</x>
+     <y>740</y>
      <width>71</width>
      <height>31</height>
     </rect>
@@ -381,8 +381,8 @@
   <widget class="QPlainTextEdit" name="zMaxDeltaAllowed">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>790</y>
+     <x>170</x>
+     <y>740</y>
      <width>71</width>
      <height>31</height>
     </rect>
@@ -391,8 +391,8 @@
   <widget class="QLabel" name="xMaxDeltaAllowed_Label">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>770</y>
+     <x>20</x>
+     <y>720</y>
      <width>47</width>
      <height>13</height>
     </rect>
@@ -404,8 +404,8 @@
   <widget class="QLabel" name="yMaxDeltaAllowed_label">
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>770</y>
+     <x>100</x>
+     <y>720</y>
      <width>47</width>
      <height>13</height>
     </rect>
@@ -417,8 +417,8 @@
   <widget class="QLabel" name="zMaxDeltaAllowed_label">
    <property name="geometry">
     <rect>
-     <x>190</x>
-     <y>770</y>
+     <x>180</x>
+     <y>720</y>
      <width>47</width>
      <height>13</height>
     </rect>
@@ -430,14 +430,40 @@
   <widget class="QPushButton" name="refreshSetpointsButton">
    <property name="geometry">
     <rect>
-     <x>260</x>
-     <y>800</y>
+     <x>250</x>
+     <y>750</y>
      <width>101</width>
      <height>21</height>
     </rect>
    </property>
    <property name="text">
     <string>Refresh Setpoints</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="displayTimer_label">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>720</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Elapsed Time:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="displayTimer">
+   <property name="geometry">
+    <rect>
+     <x>530</x>
+     <y>720</y>
+     <width>91</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>null</string>
    </property>
   </widget>
  </widget>
