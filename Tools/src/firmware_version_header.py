@@ -5,7 +5,7 @@ Utility for generating a version header file
 
 """
 
-import argparse, subprocess, os, sys, glob
+import argparse, subprocess, os, sys, glob, re
 
 
 # Parse commandline arguments
@@ -48,7 +48,8 @@ p.close()
 
 cmd = " ".join([os_git_command, "branch", "--list"])
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
-git_branch = str(p.read().strip().split('*')[1].split('\n')[0].strip())
+re_branch = re.search(ur"\*\s(.*)\n", str(p.read()))
+git_branch = re_branch.group(1)
 p.close()
 
 git_tag = git_identity.split('-')[0]
