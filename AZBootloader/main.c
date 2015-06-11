@@ -48,7 +48,7 @@ Uint16 endRam;
 #define BOOTLOADER_KEY_VALUE_8BIT	0x08AA
 
 #define BOOTLOADER_VERSION_MAJOR	0x02
-#define BOOTLOADER_VERSION_MINOR	0x04
+#define BOOTLOADER_VERSION_MINOR	0x05
 #define BOOTLOADER_VERSION			((BOOTLOADER_VERSION_MAJOR << 8) | BOOTLOADER_VERSION_MINOR)
 
 void CAN_Init()
@@ -618,7 +618,7 @@ Uint32 MAVLINK_Flash()
 
 								// Fast toggle the LED
 								STATUS_LED_TOGGLE();
-								if (Flash_ptr <= APP_END) {
+								if (Flash_ptr <= (Uint16*)APP_END) {
 									// Unlock and erase flash with first packet
 									if(seq == 0) {
 										Example_CsmUnlock();
