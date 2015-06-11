@@ -5,6 +5,7 @@ from pymavlink import mavutil
 
 from pymavlink.mavutil import mavlink
 import setup_comutation
+from pymavlink.rotmat import Vector3
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
@@ -44,7 +45,7 @@ def get_current_joint_angles(link):
         if msg_gimbal is None:
             return None
         else:
-            return [msg_gimbal.joint_el, msg_gimbal.joint_roll, msg_gimbal.joint_az]
+            return Vector3([msg_gimbal.joint_roll, msg_gimbal.joint_el, msg_gimbal.joint_az])
         
 def get_current_delta_angles(link):
     while(True):
@@ -52,7 +53,7 @@ def get_current_delta_angles(link):
         if msg_gimbal is None:
             return None
         else:
-            return [msg_gimbal.delta_angle_y, msg_gimbal.delta_angle_x, msg_gimbal.delta_angle_z]
+            return Vector3([msg_gimbal.delta_angle_x, msg_gimbal.delta_angle_y, msg_gimbal.delta_angle_z])
 
 def get_current_delta_velocity(link):
     while(True):
@@ -60,7 +61,7 @@ def get_current_delta_velocity(link):
         if msg_gimbal is None:
             return None
         else:
-            return [msg_gimbal.delta_velocity_y, msg_gimbal.delta_velocity_x, msg_gimbal.delta_velocity_z]
+            return Vector3([msg_gimbal.delta_velocity_x, msg_gimbal.delta_velocity_y, msg_gimbal.delta_velocity_z])
 
 def get_gimbal_report(link):
     msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)

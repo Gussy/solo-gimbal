@@ -50,9 +50,9 @@ def get_SWVER_param(link):
     return fetch_param(link, "GMB_SWVER")
 
 def set_offsets(link, kind, offsets):    
-    set_param(link, "GMB_OFF_"+kind+"_Y", offsets[0]);
-    set_param(link, "GMB_OFF_"+kind+"_X", offsets[1]);
-    set_param(link, "GMB_OFF_"+kind+"_Z", offsets[2]);
+    set_param(link, "GMB_OFF_"+kind+"_X", offsets.x);
+    set_param(link, "GMB_OFF_"+kind+"_Y", offsets.y);
+    set_param(link, "GMB_OFF_"+kind+"_Z", offsets.z);
     commit_to_flash(link)
 
 def get_offsets(link, kind):   
