@@ -30,6 +30,7 @@ def main():
     parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default='0.0.0.0:14550')
     parser.add_argument("-s", "--show", help="Show all useful gimbal parameters", action='store_true')
+    parser.add_argument("-v", "--validate", help="Check gimbal parameters to see if they have valid values", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
     parser.add_argument("--run", help="run a quick test of the gimbal", action='store_true')
     parser.add_argument("--align", help="move the gimbal to the home position", action='store_true')
@@ -73,6 +74,9 @@ def main():
         return
     elif args.show:
         setup_check.show(link)
+        return
+    elif args.validate:
+        setup_check.validate(link)
         return
     elif args.staticcal:
         setup_home.calibrate_joints(link)

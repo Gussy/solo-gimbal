@@ -1,6 +1,7 @@
 import setup_comutation
 from setup_read_sw_version import readSWver
 import setup_param
+from distutils.version import LooseVersion
 
 def show(link):
     ver = readSWver(link)
@@ -11,3 +12,15 @@ def show(link):
     k_rate = setup_param.fetch_param(link, "GMB_K_RATE").param_value
     print "sw_ver, pitch_icept, pitch_slope, roll_icept, roll_slope, yaw_icept, yaw_slope, joint_z, joint_y, joint_z, gyro_x, gyro_y, gyro_z, acc_x, acc_y, acc_z, k_rate"
     print "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (ver, pitch_com[1], pitch_com[2], roll_com[1], roll_com[2], yaw_com[1], yaw_com[2], joint.x, joint.y, joint.z, gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z, k_rate)
+    
+
+def validate_version(link):
+    ver = LooseVersion(readSWver(link))
+    ver_expected = LooseVersion('0.15.2')
+    if ver >= ver_expected:
+        print 'Version \t- PASS'
+    else:
+        print 'Version \t- FAIL - please update with software ' + str(ver_expected) + ' or newer'
+
+def validate(link):
+    validate_version(link)
