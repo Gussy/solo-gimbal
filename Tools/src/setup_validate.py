@@ -2,8 +2,11 @@ import setup_comutation
 from setup_read_sw_version import readSWver
 import setup_param
 from distutils.version import LooseVersion
+from pymavlink.mavparm import MAVParmDict
+import setup_mavlink
 
 EXPECTED_VERSION = '0.15.2'
+EXPECTED_BROADCAST = 0
 
 EXPECTED_PITCH_ICEPT_MAX = 0.30
 EXPECTED_PITCH_ICEPT_MIN = 0.10
@@ -127,7 +130,7 @@ def validate_gains(link):
         validate_k_rate(link,EXPECTED_K_RATE)):
         print 'Gains   \t- PASS'
     else:
-        print 'Gains   \t- FAIL'
+        print 'Gains   \t- FAIL - restore parameters to default values (-d)'
 
 def validate(link):
     validate_version(link)
@@ -136,3 +139,20 @@ def validate(link):
     validate_gyros(link)
     validate_accelerometers(link)
     validate_gains(link)
+
+def restore_defaults(link):
+    parameters = MAVParmDict()
+    parameters.mavset(link.file, "GMB_PITCH_P", EXPECTED_PITCH_P);
+    parameters.mavset(link.file, "GMB_PITCH_I", EXPECTED_PITCH_I);
+    parameters.mavset(link.file, "GMB_PITCH_D", EXPECTED_PITCH_D);
+    parameters.mavset(link.file, "GMB_ROLL_P", EXPECTED_ROLL_P);
+    parameters.mavset(link.file, "GMB_ROLL_I", EXPECTED_ROLL_I);
+    parameters.mavset(link.file, "GMB_ROLL_D", EXPECTED_ROLL_D);
+    parameters.mavset(link.file, "GMB_YAW_P", EXPECTED_YAW_P);
+    parameters.mavset(link.file, "GMB_YAW_I", EXPECTED_YAW_I);
+    parameters.mavset(link.file, "GMB_YAW_D", EXPECTED_YAW_D);
+    parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);
+    parameters.mavset(link.file, "GMB_BROADCAST", EXPECTED_BROADCAST);    
+    setup_param.commit_to_flash(link)
+    setup_mavlink.reset_gimbal(link)
+    print 'Parameters restored to default values'
