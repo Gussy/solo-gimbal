@@ -388,7 +388,17 @@ void WobbleTestDialog::on_refreshSetpointsButton_clicked()
     m_zNumFails = "0";
 
     m_elapsedTime.restart();
+    m_timerTemp = 0;
     m_pause = false;
+    ui->xDelta->setText("null");
+    ui->xFailTime->setText("null");
+    ui->xNumFails->setText("null");
+    ui->yDelta->setText("null");
+    ui->yFailTime->setText("null");
+    ui->yNumFails->setText("null");
+    ui->zDelta->setText("null");
+    ui->zFailTime->setText("null");
+    ui->zNumFails->setText("null");
     ui->resumeButton->setEnabled(false);
     ui->pauseButton->setEnabled(true);
 }
