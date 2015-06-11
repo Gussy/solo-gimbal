@@ -5,7 +5,7 @@ Utility for generating a version header file
 
 """
 
-import argparse, subprocess
+import argparse, subprocess, os, sys, glob
 
 
 # Parse commandline arguments
@@ -19,15 +19,26 @@ os_git_command = ""
 if sys.platform.startswith('linux'):
 	os_git_command = "git"
 elif sys.platform.startswith('win32'):
+	github_path = os.environ['LOCALAPPDATA'] + "\\GitHub\\"
 	# First, check if git is installed in AppData\Local (this seems to happen with some git installs)
 	if os.path.exists(os.environ['LOCALAPPDATA'] + "\\Programs\\Git\\"):
 		os_git_command = "\"" + os.environ['LOCALAPPDATA'] + "\\Programs\\Git\\bin\\git.exe" + "\""
-	else :
+	# Check for git installed with GFW (https://windows.github.com/)
+	elif os.path.exists(github_path):
+		PortableGit = glob.glob(os.path.join(github_path, "PortableGit*"))
+		if PortableGit:
+			git_path = PortableGit[0]
+			os_git_command = "\"" + git_path + "\\bin\\git.exe" + "\""
+	else:
 		# If not, git is either in Program Files or Program Files (x86)
 		if 'PROGRAMFILES(X86)' in os.environ:
 			os_git_command = "\"" + os.environ['PROGRAMFILES(X86)'] + "\\Git\\bin\\git.exe" + "\""
 		else:
 			os_git_command = "\"" + os.environ['PROGRAMFILES'] + "\\Git\\bin\\git.exe" + "\""
+
+# Check that a git command was found
+if os_git_command == "":
+	sys.exit("ERROR: Git command not found for this operating system")
 
 # Get the current git info
 cmd = " ".join([os_git_command, "describe", "--tags", "--dirty", "--long"])
