@@ -22,5 +22,28 @@ def validate_version(link):
     else:
         print 'Version \t- FAIL - please update with software ' + str(ver_expected) + ' or newer'
 
+
+def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
+    icept = axis[1]
+    slope = axis[2]
+    if (icept == 0) or (i_min >= icept) or (i_max <= icept):
+        return False
+    elif (icept == 0) or (s_min >= slope) or (s_max <= slope):
+        return False
+    else:
+        return True
+
+def validate_comutation(link):
+    "The acceptable range values where collected from the batch of DVT1 gimbals"
+    pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
+    if (validate_comutation_axis(link, pitch_com, 0.30, 0.10, 0.14, 0.12) and 
+        validate_comutation_axis(link, roll_com,  0.51, 0.35, 0.14, 0.11) and 
+        validate_comutation_axis(link,yaw_com,    0.54, 0.40, 0.12, 0.10)):
+        print 'Comutation \t- PASS'
+    else:
+        print 'Comutation \t- FAIL - please redo the comutation calibration (-c)'
+
+
 def validate(link):
     validate_version(link)
+    validate_comutation(link)
