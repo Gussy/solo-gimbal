@@ -1,9 +1,13 @@
+[![Build Status](https://magnum.travis-ci.com/3drobotics/solo-gimbal.svg?token=DrXtEFw3btp4K1aMV8zU&branch=master)](https://magnum.travis-ci.com/3drobotics/solo-gimbal)
+
+
 # Solo Gimbal - AES
 AES gimbal software for C2000 uC
 
 ## Development
 Download and install the following softwares:
-* [Code Composer Studio](http://www.ti.com/tool/ccstudio)
+* [Code Composer Studio](http://www.ti.com/tool/ccstudio) - also avaliable on [this mirror](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti.tar.gz)
+* Or the only [the compiler](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti-cgt-c2000_6.4.2.tar.gz) if you want
 
 ### Requirements
 * [Python](https://www.python.org/) must be installed and on the system PATH environment variable
