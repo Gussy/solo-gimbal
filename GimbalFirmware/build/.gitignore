@@ -1,0 +1,6 @@
+*.pp
+*.obj
+*.xml
+*.hex
+*.map
+*.out
