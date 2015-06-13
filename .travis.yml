@@ -2,9 +2,9 @@ language: c
 
 sudo: required
 
-before_script: ./setupPrereqs.sh
+before_script: ./Tools/scripts/setupPrereqs.sh
 
-script: ./buildGimbalFirmware.sh
+script: ./Tools/scripts/buildGimbalFirmware.sh
 
 addons:
   artifacts: true

@@ -2,9 +2,9 @@
 set -e
 set -v 
 
-cd GimbalFirmware/build
 pwd
-ls -l /tmp/ti/ccsv6/utils/bin/
+cd GimbalFirmware/build
+
 /tmp/ti/ccsv6/utils/bin/gmake -k all
 
 # clean-up
