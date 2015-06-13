@@ -24,6 +24,7 @@ def handle_file(args, link):
         update(args.file, link)
     else:
         print 'file type not supported'
+        sys.exit(1)
     return
 
 def main():
@@ -51,7 +52,7 @@ def main():
     
     if wait_for_heartbeat(link) == None:
         print 'failed to comunicate to gimbal'
-        return
+        sys.exit(1)
 
     if args.file:
         handle_file(args, link)
@@ -109,7 +110,7 @@ def main():
             print("Software version: v%s" % ver)
         else:
             print("Unable to read software version")
-        return
+            sys.exit(1)
 
 if __name__ == '__main__':
     main()    

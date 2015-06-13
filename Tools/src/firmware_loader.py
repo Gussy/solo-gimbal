@@ -28,7 +28,7 @@ def decode_bootloader_version(msg):
 def start_bootloader(link):
     """Check if target is in booloader, if not reset into bootloader mode"""
     
-    msg = setup_mavlink.wait_handshake(link.file, timeout=1)
+    msg = setup_mavlink.wait_handshake(link.file, timeout=4)
     if (msg is not None):
         print_and_flush("Target already in bootloader mode\n")
         return    
@@ -39,12 +39,12 @@ def start_bootloader(link):
     while(True):
         # Signal the target to reset into bootloader mode
         setup_mavlink.reset_into_bootloader(link)
-        msg = setup_mavlink.wait_handshake(link.file, timeout=1)
+        msg = setup_mavlink.wait_handshake(link.file, timeout=4)
         timeout_counter += 1
         
         if (msg is None):
             print_and_flush('.')
-            if timeout_counter > 10:
+            if timeout_counter > 1:
                 print_and_flush("\nNot response from gimbal, exiting.\n")
                 sys.exit(1)
         else:
