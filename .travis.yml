@@ -4,6 +4,7 @@ before_script: "./Tools/scripts/setupPrereqs.sh"
 script: "./Tools/scripts/buildGimbalFirmware.sh"
 addons:
   artifacts: true
+cache: apt
 notifications:
   slack:
     secure: oXtbv3lCX60o7/iQkmoty9OM3A/pZWRnAISm2Ht+GZBfAgItM1DOgYAopg8CUpFNtY6CkAwDoO5O1WocOrKKlBNZqRjYK6Hqo2QVbMvJp9U2mBgxILauXwbknGoiM5YkqhkKQcHSbIqQc8EEAzfymYoeZoylAOTDIihnpHkiT2I=
