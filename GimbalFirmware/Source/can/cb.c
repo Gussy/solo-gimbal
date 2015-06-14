@@ -118,39 +118,3 @@ void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status)
 
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_CALIBRATION_REQUIRED_STATUS, params, 2);
 }
-
-void IFBSendVersionV2( DavinciVersion* v )
-{
-	static DavinciVersionState sw_version_state = VERSION_MAJOR;
-	uint16_t sub_version;
-
-	switch (sw_version_state) {
-		case VERSION_MAJOR:
-			sub_version = v->major;
-			break;
-		case VERSION_MINOR:
-			sub_version = v->minor;
-			break;
-		case VERSION_REV:
-			sub_version = v->rev;
-			break;
-		case VERSION_DIRTY:
-			sub_version = v->dirty;
-			break;
-		case VERSION_BRANCH:
-			sub_version = v->branch;
-			break;
-		case VERSION_DONE:
-		default:
-			sub_version = VERSION_RESYNC;
-			break;
-	}
-
-	cand_tx_response(CAND_ID_AZ, CAND_PID_VERSION, sub_version); // AZ axis is interface board
-
-	sw_version_state++;
-	if (sw_version_state >= VERSION_DONE) {
-		// sent resync byte, reset out state machine, requester will do the same
-		sw_version_state = VERSION_MAJOR;
-	}
-}
