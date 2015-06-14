@@ -186,33 +186,6 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
             do_gyro_correction(rate_cmds_received, cb_parms->encoder_readings, cb_parms->rate_cmd_inject);
         }
 
-        // Check for new gyro offsets from the copter
-        if (*(param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema) == TRUE) {
-            *(param_set[CAND_PID_GYRO_OFFSET_X_AXIS].sema) = FALSE;
-        }
-
-        if (*(param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema) == TRUE) {
-            *(param_set[CAND_PID_GYRO_OFFSET_Y_AXIS].sema) = FALSE;
-        }
-
-        if (*(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) == TRUE) {
-            *(param_set[CAND_PID_GYRO_OFFSET_Z_AXIS].sema) = FALSE;
-        }
-
-
-        // Check for target angle updates
-        if (*(param_set[CAND_PID_TARGET_ANGLES_AZ].sema) == TRUE) {
-            *(param_set[CAND_PID_TARGET_ANGLES_AZ].sema) = FALSE;
-        }
-
-        if (*(param_set[CAND_PID_TARGET_ANGLES_EL].sema) == TRUE) {
-            *(param_set[CAND_PID_TARGET_ANGLES_EL].sema) = FALSE;
-        }
-
-        if (*(param_set[CAND_PID_TARGET_ANGLES_ROLL].sema) == TRUE) {
-            *(param_set[CAND_PID_TARGET_ANGLES_ROLL].sema) = FALSE;
-        }
-
         // Check for any new GoPro get requests
         if (*(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) == TRUE) {
             gp_get_request((Uint8)param_set[CAND_PID_GOPRO_GET_REQUEST].param);
