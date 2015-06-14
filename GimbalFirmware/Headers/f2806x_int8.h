@@ -14,6 +14,5 @@
 typedef          char  int8_t;
 typedef unsigned char uint8_t;
 typedef          char  Int8;
-typedef unsigned char Uint8;
 
 #endif /* F2806X_INT8_H_ */
