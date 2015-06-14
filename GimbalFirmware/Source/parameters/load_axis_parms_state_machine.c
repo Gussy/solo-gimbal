@@ -31,19 +31,11 @@ void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info)
 	INIT_PARAM(15,init_param_recvd_flags_1, CAND_PID_RATE_RL_I,INIT_PARAM_RATE_PID_RL_I_RECVD);
 	INIT_PARAM(16,init_param_recvd_flags_1, CAND_PID_RATE_RL_D,INIT_PARAM_RATE_PID_RL_D_RECVD);
 	INIT_PARAM(17,init_param_recvd_flags_1, CAND_PID_RATE_RL_WINDUP,INIT_PARAM_RATE_PID_RL_WINDUP_RECVD);
-	INIT_PARAM(18,init_param_recvd_flags_1, CAND_PID_POS_AZ_P,INIT_PARAM_POS_PID_AZ_P_RECVD);
-	INIT_PARAM(19,init_param_recvd_flags_1, CAND_PID_POS_AZ_I,INIT_PARAM_POS_PID_AZ_I_RECVD);
-	INIT_PARAM(20,init_param_recvd_flags_1, CAND_PID_POS_AZ_D,INIT_PARAM_POS_PID_AZ_D_RECVD);
-	INIT_PARAM(21,init_param_recvd_flags_1, CAND_PID_POS_AZ_WINDUP,INIT_PARAM_POS_PID_AZ_WINDUP_RECVD);
-	INIT_PARAM(22,init_param_recvd_flags_1, CAND_PID_POS_RL_P,INIT_PARAM_POS_PID_RL_P_RECVD);
-	INIT_PARAM(23,init_param_recvd_flags_1, CAND_PID_POS_RL_I,INIT_PARAM_POS_PID_RL_I_RECVD);
-	INIT_PARAM(24,init_param_recvd_flags_1, CAND_PID_POS_RL_D,INIT_PARAM_POS_PID_RL_D_RECVD);
-	INIT_PARAM(25,init_param_recvd_flags_1, CAND_PID_POS_RL_WINDUP,INIT_PARAM_POS_PID_RL_WINDUP_RECVD);
 
     if (GetBoardHWID() == EL) {
-        load_parms_state_info->total_params_to_load = EL_PARAMS_TO_LOAD;
+        load_parms_state_info->total_params_to_load = TOTAL_LOADABLE_PARAMS;
     } else if (GetBoardHWID() == ROLL) {
-        load_parms_state_info->total_params_to_load = RL_PARAMS_TO_LOAD;
+        load_parms_state_info->total_params_to_load = TOTAL_LOADABLE_PARAMS;
     }
     // AZ doesn't load parameters over CAN
 }
