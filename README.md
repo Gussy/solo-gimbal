@@ -43,11 +43,11 @@ Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\P
 # LED Patterns
 
 ## User LED (1 per board)
-BLINK_NO_COMM - fast ,3Hz, duty cycle of 50%
-BLINK_ERROR - fast, 3Hz, duty cycle 50%, pause after 3 cycles - system in an error state, usually an over-current
-BLINK_INIT - slow, .8Hz, dudy cycle of 20%  - system being initialized
-BLINK_READY - slow, .5Hz , dudy cycle of 90% - system initialized but idle, since there are no rate commands
-BLINK_RUNNING - on all the time  - system working
+* BLINK_NO_COMM - fast ,3Hz, duty cycle of 50%
+* BLINK_ERROR - fast, 3Hz, duty cycle 50%, pause after 3 cycles - system in an error state, usually an over-current
+* BLINK_INIT - slow, .8Hz, dudy cycle of 20%  - system being initialized
+* BLINK_READY - slow, .5Hz , dudy cycle of 90% - system initialized but idle, since there are no rate commands
+* BLINK_RUNNING - on all the time  - system working
 
 ## Beacon LED (Camera Carriage Board)
 
