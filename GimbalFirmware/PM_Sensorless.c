@@ -75,7 +75,6 @@ int16	VTimer2[4]; 		// Virtual Timers slaved off CPU Timer 2 (C events)
 int16	SerialCommsTimer;
 
 // Global variables used in this system
-
 int16 DegreesC;
 int16 TempOffset;
 int16 TempSlope;

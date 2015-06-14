@@ -8,3 +8,6 @@ script: ./Tools/scripts/buildGimbalFirmware.sh
 
 addons:
   artifacts: true
+
+notifications:
+  slack: 3dr:OTjxfq1oqdWi9plQnvEhmksZ
