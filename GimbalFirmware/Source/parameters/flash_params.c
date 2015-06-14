@@ -287,37 +287,6 @@ int erase_our_flash()
 	return 1;
 }
 
-int erase_firmware_and_config()
-{
-    Uint16  Status;
-    Uint16  VersionHex;     // Version of the API in decimal encoded hex
-    EALLOW;
-    Flash_CPUScaleFactor = SCALE_FACTOR;
-    EDIS;
-
-    VersionHex = Flash_APIVersionHex();
-    if(VersionHex != 0x0100)
-    {
-        // Unexpected API version
-        // Make a decision based on this info.
-        asm("    ESTOP0");
-    }
-
-    Example_CsmUnlock();
-    // Erase all sectors except for sector A (that's where the bootloader lives)
-    Status = Flash_Erase(SECTORB, &FlashStatus);
-    Status = Flash_Erase(SECTORC, &FlashStatus);
-    Status = Flash_Erase(SECTORD, &FlashStatus);
-    Status = Flash_Erase(SECTORE, &FlashStatus);
-    Status = Flash_Erase(SECTORF, &FlashStatus);
-    Status = Flash_Erase(SECTORG, &FlashStatus);
-    Status = Flash_Erase(SECTORH, &FlashStatus);
-    if (Status != STATUS_SUCCESS) {
-        return -1;
-    }
-    return 1;
-}
-
 int write_flash(void)
 {
 	Uint16  i;
