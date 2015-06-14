@@ -5,7 +5,7 @@ set -v
 pwd
 cd GimbalFirmware/build
 
-/tmp/ti/ccsv6/utils/bin/gmake -k all
+/tmp/ti/ccsv6/utils/bin/gmake -k -j 8 all
 
 # clean-up
 find . -name '*.pp' -delete
