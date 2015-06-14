@@ -192,19 +192,6 @@ typedef enum {
     CAND_BEACON_PARTY       = 0x80
 } CAND_BeaconMode;
 
-#if 0
-typedef enum {
-    CAND_UC_STABE_HOME_MODE = 0x01,
-    CAND_UC_STABE_POS_MODE  = 0x02,
-    CAND_UC_STABE_MODE      = 0x04,
-    CAND_UC_RECORD          = 0x08,
-    CAND_UC_HOME_MODE       = 0x10,
-    CAND_UC_STABE_LOS_MODE  = 0x20,
-    CAND_UC_RELAX           = 0x40,
-    CAND_UC_TBD             = 0x80
-} CAND_UserControlFlags;
-#endif
-
 /**
  *  CAN API Return Codes
  */

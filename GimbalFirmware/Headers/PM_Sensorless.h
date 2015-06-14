@@ -37,17 +37,8 @@ Next, Include project specific include files.
 #include "rampgen.h"                        // Include header for the RAMPGEN object
 #include "control/rmp_cntl_aes_modified.h"          // Include header for the RMPCNTL object.  Using an AES modified version of this header to fix an issue with global variables in the original header
 
-#ifdef DSP2803x_DEVICE_H
-#include "f2803xileg_vdc_PM.h"              // Include header for the ILEG2DCBUSMEAS object
-#include "f2803xpwm_PM.h"                   // Include header for the PWMGEN object
-#include "f2803xpwmdac_PM.h"                // Include header for the PWMGEN object
-#include "f2803xqep_PM.h"                   // Include header for the QEP object
-#endif
-
-#ifdef F2806x_DEVICE_H
 #include "f2806/f2806xileg_vdc_PM.h"              // Include header for the ILEG2DCBUSMEAS object
 #include "f2806/f2806xpwm_PM_aes_modified.h"      // Include header for the PWMGEN object.  Using an AES modified version of this header to fix an issue with global variables in the original header
-#endif
 
 #include "can/cand_BitFields.h"
 #include "hardware/HWSpecific.h"
