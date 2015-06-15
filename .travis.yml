@@ -2,8 +2,6 @@ language: c
 sudo: required
 before_script: "./Tools/scripts/setupPrereqs.sh"
 script: "./Tools/scripts/buildGimbalFirmware.sh"
-addons:
-  artifacts: true
 cache: apt
 notifications:
   slack:
