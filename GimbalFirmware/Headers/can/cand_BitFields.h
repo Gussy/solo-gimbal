@@ -33,6 +33,7 @@ typedef CAND_DestinationID CAND_SenderID;
  */
 typedef enum  {
     CAND_PID_INVALID =                                  0,
+
     // Four Byte Parameters
     CAND_PID_RATE_EL_P =                                1,
     CAND_PID_RATE_EL_I,
@@ -55,7 +56,7 @@ typedef enum  {
 	CAND_PID_GOPRO_SET_REQUEST,
 	CAND_PID_GOPRO_SET_RESPONSE,
 	CAND_PID_GOPRO_GET_REQUEST,
-	CAND_PID_GP_CMD,
+
     // Two Byte Parameters
     CAND_PID_4_BYTE_CUTOFF =                            36,
     CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET,
@@ -79,6 +80,7 @@ typedef enum  {
     CAND_PID_VERSION,
 	CAND_PID_GOPRO_HEARTBEAT,
     CAND_PID_EXTENDED,
+
     CAND_PID_LAST =                                     63
 } CAND_ParameterID;
 
