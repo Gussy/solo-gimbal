@@ -11,7 +11,7 @@ def osGitCommand():
 	# Determine the shell git command based on the current platform
 	# For windows, we assume that the git binary is in the default install location
 	os_git_command = ""
-	if sys.platform.startswith('linux'):
+	if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
 		os_git_command = "git"
 	elif sys.platform.startswith('win32'):
 		github_path = os.environ['LOCALAPPDATA'] + "\\GitHub\\"
