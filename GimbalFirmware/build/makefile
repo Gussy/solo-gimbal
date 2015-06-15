@@ -7,7 +7,6 @@ CG_TOOL_ROOT := /tmp/ti/ccsv6/tools/compiler/ti-cgt-c2000_6.4.2
 ORDERED_OBJS += \
 -l"rts2800_fpu32.lib" \
 "./PM_Sensorless.obj" \
-"./Example_Flash2806x_CsmKeys.obj" \
 "./flash_params.obj" \
 "./load_axis_parms_state_machine.obj" \
 "./mavlink_parameter_interface.obj" \
@@ -28,6 +27,8 @@ ORDERED_OBJS += \
 "./spi.obj" \
 "./uart.obj" \
 "./gopro_interface.obj" \
+"./Example_Flash2806x_CsmKeys.obj" \
+"./flash.obj" \
 "./PID.obj" \
 "./average_power_filter.obj" \
 "./gyro_kinematics_correction.obj" \
@@ -57,23 +58,27 @@ RMDIR := rm -rf
 -include sources.mk
 -include subdir_vars.mk
 -include libs/subdir_vars.mk
+-include build/subdir_vars.mk
 -include Source/parameters/subdir_vars.mk
 -include Source/motor/subdir_vars.mk
 -include Source/mavlink_interface/subdir_vars.mk
 -include Source/helpers/subdir_vars.mk
 -include Source/hardware/subdir_vars.mk
 -include Source/gopro/subdir_vars.mk
+-include Source/flash/subdir_vars.mk
 -include Source/control/subdir_vars.mk
 -include Source/can/subdir_vars.mk
 -include Source/subdir_vars.mk
 -include subdir_rules.mk
 -include libs/subdir_rules.mk
+-include build/subdir_rules.mk
 -include Source/parameters/subdir_rules.mk
 -include Source/motor/subdir_rules.mk
 -include Source/mavlink_interface/subdir_rules.mk
 -include Source/helpers/subdir_rules.mk
 -include Source/hardware/subdir_rules.mk
 -include Source/gopro/subdir_rules.mk
+-include Source/flash/subdir_rules.mk
 -include Source/control/subdir_rules.mk
 -include Source/can/subdir_rules.mk
 -include Source/subdir_rules.mk
@@ -175,11 +180,17 @@ PM_Sensorless_F2806x.out \
 EXE_OUTPUTS__QUOTED += \
 "PM_Sensorless_F2806x.out" \
 
+BIN_OUTPUTS += \
+PM_Sensorless_F2806x.hex \
+
+BIN_OUTPUTS__QUOTED += \
+"PM_Sensorless_F2806x.hex" \
+
 
 # All Target
 all:
 	@$(MAKE) --no-print-directory pre-build
-	@$(MAKE) --no-print-directory main-build
+	@$(MAKE) --no-print-directory -j 8 main-build
 
 # Main-build Target
 main-build: PM_Sensorless_F2806x.out
@@ -193,13 +204,19 @@ PM_Sensorless_F2806x.out: $(OBJS) $(CMD_SRCS) $(CMD_UPPER_SRCS) $(LIB_SRCS) $(GE
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
 
+PM_Sensorless_F2806x.hex: $(EXE_OUTPUTS)
+	@echo 'Invoking: C2000 Hex Utility'
+	"/tmp/ti/ccsv6/tools/compiler/ti-cgt-c2000_6.4.2/bin/hex2000"  -o "PM_Sensorless_F2806x.hex" $(EXE_OUTPUTS__QUOTED)
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "PM_Sensorless.pp" "Source/parameters/flash_params.pp" "Source/parameters/load_axis_parms_state_machine.pp" "Source/parameters/mavlink_parameter_interface.pp" "Source/motor/commutation_calibration_state_machine.pp" "Source/motor/motor_commutation.pp" "Source/motor/motor_drive_state_machine.pp" "Source/mavlink_interface/mavlink_gimbal_interface.pp" "Source/helpers/fault_handling.pp" "Source/helpers/ringbuf.pp" "Source/hardware/HWSpecific.pp" "Source/hardware/adc.pp" "Source/hardware/device_init.pp" "Source/hardware/encoder.pp" "Source/hardware/gpio.pp" "Source/hardware/gyro.pp" "Source/hardware/i2c.pp" "Source/hardware/led.pp" "Source/hardware/spi.pp" "Source/hardware/uart.pp" "Source/gopro/gopro_interface.pp" "Source/control/PID.pp" "Source/control/average_power_filter.pp" "Source/control/gyro_kinematics_correction.pp" "Source/control/rate_loops.pp" "Source/control/running_average_filter.pp" "Source/can/can_message_processor.pp" "Source/can/can_parameter_updates.pp" "Source/can/cand.pp" 
-	-$(RM) "Source/can/cb.pp" "Source/F2806x_GlobalVariableDefs.pp" 
-	-$(RM) "PM_Sensorless.obj" "Example_Flash2806x_CsmKeys.obj" "flash_params.obj" "load_axis_parms_state_machine.obj" "mavlink_parameter_interface.obj" "commutation_calibration_state_machine.obj" "motor_commutation.obj" "motor_drive_state_machine.obj" "mavlink_gimbal_interface.obj" "fault_handling.obj" "ringbuf.obj" "HWSpecific.obj" "adc.obj" "device_init.obj" "encoder.obj" "gpio.obj" "gyro.obj" "i2c.obj" "led.obj" "spi.obj" "uart.obj" "gopro_interface.obj" "PID.obj" "average_power_filter.obj" "gyro_kinematics_correction.obj" "rate_loops.obj" "running_average_filter.obj" "can_message_processor.obj" "can_parameter_updates.obj" "cand.obj" "cb.obj" "F2806x_CodeStartBranch.obj" "F2806x_GlobalVariableDefs.obj" "F2806x_usDelay.obj" 
-	-$(RM) "Source/parameters/Example_Flash2806x_CsmKeys.pp" "Source/F2806x_CodeStartBranch.pp" "Source/F2806x_usDelay.pp" 
+	-$(RM) $(EXE_OUTPUTS__QUOTED)$(BIN_OUTPUTS__QUOTED)
+	-$(RM) "PM_Sensorless.pp" "Source/parameters/flash_params.pp" "Source/parameters/load_axis_parms_state_machine.pp" "Source/parameters/mavlink_parameter_interface.pp" "Source/motor/commutation_calibration_state_machine.pp" "Source/motor/motor_commutation.pp" "Source/motor/motor_drive_state_machine.pp" "Source/mavlink_interface/mavlink_gimbal_interface.pp" "Source/helpers/fault_handling.pp" "Source/helpers/ringbuf.pp" "Source/hardware/HWSpecific.pp" "Source/hardware/adc.pp" "Source/hardware/device_init.pp" "Source/hardware/encoder.pp" "Source/hardware/gpio.pp" "Source/hardware/gyro.pp" "Source/hardware/i2c.pp" "Source/hardware/led.pp" "Source/hardware/spi.pp" "Source/hardware/uart.pp" "Source/gopro/gopro_interface.pp" "Source/flash/flash.pp" "Source/control/PID.pp" "Source/control/average_power_filter.pp" "Source/control/gyro_kinematics_correction.pp" "Source/control/rate_loops.pp" "Source/control/running_average_filter.pp" "Source/can/can_message_processor.pp" "Source/can/can_parameter_updates.pp" 
+	-$(RM) "Source/can/cand.pp" "Source/can/cb.pp" "Source/F2806x_GlobalVariableDefs.pp" 
+	-$(RM) "PM_Sensorless.obj" "flash_params.obj" "load_axis_parms_state_machine.obj" "mavlink_parameter_interface.obj" "commutation_calibration_state_machine.obj" "motor_commutation.obj" "motor_drive_state_machine.obj" "mavlink_gimbal_interface.obj" "fault_handling.obj" "ringbuf.obj" "HWSpecific.obj" "adc.obj" "device_init.obj" "encoder.obj" "gpio.obj" "gyro.obj" "i2c.obj" "led.obj" "spi.obj" "uart.obj" "gopro_interface.obj" "Example_Flash2806x_CsmKeys.obj" "flash.obj" "PID.obj" "average_power_filter.obj" "gyro_kinematics_correction.obj" "rate_loops.obj" "running_average_filter.obj" "can_message_processor.obj" "can_parameter_updates.obj" "cand.obj" "cb.obj" "F2806x_CodeStartBranch.obj" "F2806x_GlobalVariableDefs.obj" "F2806x_usDelay.obj" 
+	-$(RM) "Source/flash/Example_Flash2806x_CsmKeys.pp" "Source/F2806x_CodeStartBranch.pp" "Source/F2806x_usDelay.pp" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
