@@ -14,7 +14,7 @@ firmware_extension = "ax"
 
 # Parse commandline arguments
 parser = argparse.ArgumentParser(description="Firmware generator for the Axon Gimbal.")
-parser.add_argument("--board_revision", required=True, action="store", help="set the board revision required")
+parser.add_argument("--board_revision", action="store", help="set the board revision required", default='0')
 parser.add_argument("--image", required=True, action="store", help="the firmware image")
 parser.add_argument("--outdir", required=True, help="image output directory")
 parser.add_argument("--release", help="name of the release")
