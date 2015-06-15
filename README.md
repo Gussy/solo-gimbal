@@ -14,16 +14,6 @@ Download and install the following softwares:
 
 Import the project into CCS via ```File>Import>C/C++>CCS Projects```, and browse for the root source folder
 
-### For "GitHub for Windows" users
-Gits executable is actually located in ```C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin\```
-
-1. Right-Click on My Computer
-2. Click Advanced System Settings
-3. Click Environment Variables
-4. Under System Variables find the path variable and click edit
-5. Add the path to gits bin and cmd at the end of the string (like this: ```;C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin;C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\cmd```)
-6. In the project properties, show advanced options, edit the ```GitDescribe``` configuration, change the ```Location``` to  ```C:\Users\<user>\AppData\Local\GitHub\PortableGit_<guid>\bin\sh.exe```
-
 ## Building
 
 ### GimbalFirmware
