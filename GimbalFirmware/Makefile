@@ -2,7 +2,6 @@
 PROJ := PM_Sensorless_F2806x
 
 PROJ_ROOT := .
-
 PROJ_PYTHON_ROOT := $(PROJ_ROOT)/../Tools/src
 
 ifeq ($(TI_ROOT),)
@@ -25,9 +24,10 @@ CC      := $(TI_ROOT)/bin/cl2000
 LD      := $(TI_ROOT)/bin/cl2000
 HEX     := $(TI_ROOT)/bin/hex2000
 
-RELEASE 		:= python $(PROJ_PYTHON_ROOT)/firmware_release.py
-VERSION_HEADER 	:= python $(PROJ_PYTHON_ROOT)/firmware_version_header.py
+RELEASE_GEN         := python $(PROJ_PYTHON_ROOT)/firmware_release.py
+VERSION_HEADER_GEN  := python $(PROJ_PYTHON_ROOT)/firmware_version_header.py
 
+VERSION_HEADER      := $(PROJ_ROOT)/Headers/version.h
 
 ###############################################################################
 # common flags
@@ -83,9 +83,9 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 all: $(PROJ).ax
 
 $(PROJ).ax: $(PROJ).out $(PROJ).hex
-	$(RELEASE) --image=$(PROJ).hex --outdir=$(PROJ_ROOT)/..
+	$(RELEASE_GEN) --image=$(PROJ).hex --outdir=$(PROJ_ROOT)/..
 
-$(PROJ).out: $(OBJS) $(LDSCRIPTS)
+$(PROJ).out: $(VERSION_HEADER) $(OBJS) $(LDSCRIPTS)
 	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
 
 $(PROJ).hex: $(PROJ).out
@@ -94,18 +94,17 @@ $(PROJ).hex: $(PROJ).out
 %.o: %.asm
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -fe $@
 
-%.o: %.c $(PROJ_ROOT)/Headers/version.h
+%.o: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -fe $@
 
-$(PROJ_ROOT)/Headers/version.h:
-	$(VERSION_HEADER) "$(PROJ_ROOT)/Headers/version.h"
+$(VERSION_HEADER):
+	$(VERSION_HEADER_GEN) $(VERSION_HEADER)
 
 .PHONY: all clean
 
 clean:
-	rm -f $(PROJ).*
+	rm -f $(PROJ).* $(VERSION_HEADER)
 	rm -f $(OBJS)
 	rm -f $(OBJS:.o=.pp)
-	rm -f $(PROJ_ROOT)/Headers/version.h
 
 -include $(OBJS:.o=.pp)
