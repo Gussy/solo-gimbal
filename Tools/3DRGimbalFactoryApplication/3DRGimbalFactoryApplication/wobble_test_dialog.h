@@ -38,35 +38,35 @@ private:
     double m_timerTemp;
     QTime m_totalElapsed;
 
-    QString m_xMaxDeltaAllowed;
-    QString m_xDelta;
-    QString m_xMaxDelta;
-    QString m_xMaxDeltaTime;
-    QString m_xMinDelta;
+    QString m_xMaxGyroAllowed;
+    QString m_xGyro;
+    QString m_xMaxGyro;
+    QString m_xMaxGyroTime;
+    QString m_xMinGyro;
     QString m_xNumFails;
     bool m_xFailOccurred;
     int m_xCount;
-//    const float X_MAX_DELTA_ALLOWED;
+//    const float X_MAX_GYRO_ALLOWED;
 
-    QString m_yMaxDeltaAllowed;
-    QString m_yDelta;
-    QString m_yMaxDelta;
-    QString m_yMaxDeltaTime;
-    QString m_yMinDelta;
+    QString m_yMaxGyroAllowed;
+    QString m_yGyro;
+    QString m_yMaxGyro;
+    QString m_yMaxGyroTime;
+    QString m_yMinGyro;
     QString m_yNumFails;
     bool m_yFailOccurred;
     int m_yCount;
-//    const float Y_MAX_DELTA_ALLOWED;
+//    const float Y_MAX_GYRO_ALLOWED;
 
-    QString m_zMaxDeltaAllowed;
-    QString m_zDelta;
-    QString m_zMaxDelta;
-    QString m_zMaxDeltaTime;
-    QString m_zMinDelta;
+    QString m_zMaxGyroAllowed;
+    QString m_zGyro;
+    QString m_zMaxGyro;
+    QString m_zMaxGyroTime;
+    QString m_zMinGyro;
     QString m_zNumFails;
     bool m_zFailOccurred;
     int m_zCount;
-//    const float Z_MAX_DELTA_ALLOWED;
+//    const float Z_MAX_GYRO_ALLOWED;
 
 
     void setupPlot(QCustomPlot *customPlot);
