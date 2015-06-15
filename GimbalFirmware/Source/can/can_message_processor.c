@@ -10,6 +10,7 @@
 #include "gopro/gopro_interface.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "helpers/fault_handling.h"
+#include "flash/flash.h"
 
 #include <string.h>
 #include <stdio.h>

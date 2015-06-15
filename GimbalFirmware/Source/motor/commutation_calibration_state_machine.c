@@ -7,6 +7,7 @@
 #include "can/cb.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "PM_Sensorless-Settings.h"
+#include "flash/flash.h"
 
 static void send_calibration_progress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status);
 

@@ -3,6 +3,7 @@
 #include "parameters/flash_params.h"
 #include "can/cand.h"
 #include "PM_Sensorless.h"
+#include "flash/flash.h"
 
 #include <string.h>
 

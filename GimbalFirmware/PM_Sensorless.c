@@ -25,6 +25,7 @@
 #include "can/can_parameter_updates.h"
 #include "hardware/encoder.h"
 #include "hardware/led.h"
+#include "flash/flash.h"
 
 #include <math.h>
 #include <string.h>

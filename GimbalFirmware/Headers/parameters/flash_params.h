@@ -1,8 +1,8 @@
 #ifndef FLASH_PARAMS_H_
 #define FLASH_PARAMS_H_
 
-
 #include "hardware/HWSpecific.h"
+#include "Flash2806x_API_Library.h"
 
 struct flash_param_struct_0000 {
 	Uint16 flash_struct_id;
@@ -40,18 +40,6 @@ struct flash_param_struct_0000 {
 };
 
 extern struct flash_param_struct_0000 flash_params;
-
-/**
- * initialize the flash, return positive on success, negative on failure
- *
- * Either way, the flash_param_struct needs to be initialized, if negative, to the default
- */
-int init_flash(void);
-
-/**
- * write what is in the current flash_params to flash, return a negative on failure
- */
-int write_flash(void);
 
 
 #endif /* FLASH_PARAMS_H_ */
