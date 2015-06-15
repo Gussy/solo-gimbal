@@ -58,7 +58,7 @@ typedef enum  {
 	CAND_PID_GOPRO_GET_REQUEST,
 
     // Two Byte Parameters
-    CAND_PID_4_BYTE_CUTOFF =                            36,
+    CAND_PID_4_BYTE_CUTOFF =                            22,
     CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET,
     CAND_PID_CORETEMP,
     CAND_PID_TORQUE,
@@ -71,7 +71,7 @@ typedef enum  {
     CAND_PID_DEBUG_3,
 
     // One Byte Parameters
-    CAND_PID_2_BYTE_CUTOFF =                            54,
+    CAND_PID_2_BYTE_CUTOFF =                            33,
     CAND_PID_BIT,
     CAND_PID_VOLTAGE,
     CAND_PID_USER_CONTROL_FLAGS,
@@ -81,7 +81,7 @@ typedef enum  {
 	CAND_PID_GOPRO_HEARTBEAT,
     CAND_PID_EXTENDED,
 
-    CAND_PID_LAST =                                     63
+    CAND_PID_LAST =                                     42
 } CAND_ParameterID;
 
 typedef enum {
