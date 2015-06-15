@@ -24,6 +24,8 @@ OBJS = \
     $(PROJ_ROOT)/Source/control/PID.o \
     $(PROJ_ROOT)/Source/control/rate_loops.o \
     $(PROJ_ROOT)/Source/control/running_average_filter.o \
+    $(PROJ_ROOT)/Source/flash/Example_Flash2806x_CsmKeys.o \
+    $(PROJ_ROOT)/Source/flash/flash.o \
     $(PROJ_ROOT)/Source/hardware/adc.o \
     $(PROJ_ROOT)/Source/hardware/device_init.o \
     $(PROJ_ROOT)/Source/hardware/encoder.o \
@@ -40,7 +42,6 @@ OBJS = \
     $(PROJ_ROOT)/Source/motor/commutation_calibration_state_machine.o \
     $(PROJ_ROOT)/Source/motor/motor_commutation.o \
     $(PROJ_ROOT)/Source/motor/motor_drive_state_machine.o \
-    $(PROJ_ROOT)/Source/parameters/Example_Flash2806x_CsmKeys.o \
     $(PROJ_ROOT)/Source/parameters/flash_params.o \
     $(PROJ_ROOT)/Source/parameters/load_axis_parms_state_machine.o \
     $(PROJ_ROOT)/Source/parameters/mavlink_parameter_interface.o \
