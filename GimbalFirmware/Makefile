@@ -3,6 +3,8 @@ PROJ := PM_Sensorless_F2806x
 
 PROJ_ROOT := .
 
+PROJ_PYTHON_ROOT := $(PROJ_ROOT)/../Tools/src/
+
 ifeq ($(TI_ROOT),)
 # XXX: would really prefer to not require this but at least for now,
 # we need to explicitly include paths in the compiler's directory path
@@ -22,6 +24,8 @@ include defs.mk
 CC      := $(TI_ROOT)/bin/cl2000
 LD      := $(TI_ROOT)/bin/cl2000
 HEX     := $(TI_ROOT)/bin/hex2000
+
+RELEASE := $(PROJ_PYTHON_ROOT)/firmware_release.py
 
 
 ###############################################################################
@@ -76,7 +80,10 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 ###############################################################################
 # rules
 
-all: $(PROJ).out $(PROJ).hex
+all: $(PROJ).ax
+
+$(PROJ).ax: $(PROJ).out $(PROJ).hex
+	python $(RELEASE) --image=$(PROJ).hex --outdir=$(PROJ_ROOT)/..
 
 $(PROJ).out: $(OBJS) $(LDSCRIPTS)
 	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
