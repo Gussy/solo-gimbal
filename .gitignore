@@ -19,3 +19,15 @@ Tools/3DRGimbalFactoryApplication/build-*/
 *.pyc
 *~
 *mav.tlog*
+
+.DS_Store
+
+*.o
+*.pp
+*.hex
+*.map
+*.out
+*linkinfo.xml
+
+.vagrant
+

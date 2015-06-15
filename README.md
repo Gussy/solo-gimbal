@@ -5,9 +5,15 @@
 AES gimbal software for C2000 uC
 
 ## Development
-Download and install the following softwares:
+
+The compiler tools can be downloaded for Linux, OS X, and Windows from [TI's website](http://software-dl.ti.com/codegen/non-esd/downloads/download.htm#C2000). 3DR keeps mirrors of a subset of compiler versions for convenient download:
+
+* [linux ( ti tools v6.4.2)](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti-cgt-c2000_6.4.2.tar.gz) 
+* os x...
+* windows...
+
+TI's full-fledged eclipse-based developement environment can also be used:
 * [Code Composer Studio](http://www.ti.com/tool/ccstudio) - also avaliable on [this mirror](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti.tar.gz)
-* Or the only [the compiler](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti-cgt-c2000_6.4.2.tar.gz) if you want
 
 ### Requirements
 * [Python](https://www.python.org/) must be installed and on the system PATH environment variable
