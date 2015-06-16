@@ -17,6 +17,8 @@ deploy:
   file_glob: true
   file: 
     - "GimbalFirmware/gimbal_firmware_*.ax"
+    - "AZBootloader/*.hex"
+    - "Bootloader/*.hex"
   skip_cleanup: true
   on:
     tags: true
