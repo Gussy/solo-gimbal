@@ -1,7 +1,11 @@
 language: c
 sudo: required
 before_script: "./Tools/scripts/setupPrereqs.sh"
-script: "./Tools/scripts/buildGimbalFirmware.sh"
+script:
+  - . ~/.profile
+  - make -C GimbalFirmware -j8
+  - make -C AZBootloader -j8 
+  - make -C Bootloader -j8
 cache: apt
 notifications:
   slack:
