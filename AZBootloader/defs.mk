@@ -5,9 +5,9 @@ INCS = \
     -I=$(TI_ROOT)/include                                                               \
     -I=$(PROJ_ROOT)/../controlSUITE/libs/utilities/flash_api/2806x/v100/include         \
     -I=$(PROJ_ROOT)/F2806x_headers/include                                              \
-    -I=$(PROJ_ROOT)/../GimbalFirmware/Headers                                           \
-    -I=$(PROJ_ROOT)/../GimbalFirmware/Headers/MAVLink                                   \
-    -I=$(PROJ_ROOT)/../GimbalFirmware/Headers/MAVLink/common                            \
+    -I=$(SHARED_ROOT)/headers                                                           \
+    -I=$(SHARED_ROOT)/mavlink_library                                                   \
+    -I=$(SHARED_ROOT)/mavlink_library/common                                            \
     -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_common/include    \
     -I=$(PROJ_ROOT)/../controlSUITE/development_kits/~SupportFiles/F2806x_headers
 

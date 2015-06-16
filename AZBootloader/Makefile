@@ -2,6 +2,7 @@
 PROJ := AZBootloader
 
 PROJ_ROOT := .
+SHARED_ROOT := ../shared
 
 ifeq ($(TI_ROOT),)
 # XXX: would really prefer to not require this but at least for now,
