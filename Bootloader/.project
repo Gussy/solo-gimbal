@@ -31,6 +31,26 @@
 			<locationURI>PARENT-1-PROJECT_LOC/GimbalFirmware/Source/hardware/led.c</locationURI>
 		</link>
 	</linkedResources>
+	<filteredResources>
+		<filter>
+			<id>1434432642334</id>
+			<name></name>
+			<type>6</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-true-.*\.(o|pp|hex|out)</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1434432642339</id>
+			<name></name>
+			<type>6</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*_linkinfo.xml</arguments>
+			</matcher>
+		</filter>
+	</filteredResources>
 	<variableList>
 		<variable>
 			<name>CONTROLSUITE_ROOT</name>
