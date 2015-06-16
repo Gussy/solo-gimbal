@@ -84,7 +84,7 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 ###############################################################################
 # rules
 
-all: $(DATA_HDR) $(PROJ).hex
+all: $(PROJ).hex
 
 # generate data header from main fw image
 $(DATA_HDR): $(MAIN_FW)
@@ -92,7 +92,11 @@ $(DATA_HDR): $(MAIN_FW)
 	python $(PROJ_ROOT)/../Tools/src/firmware_to_header.py data.bin $@
 	rm data.bin
 
-$(PROJ).out: $(DATA_HDR) $(OBJS) $(LDSCRIPTS)
+# order-only prerequisite, to ensure $(DATA_HDR) is built before any source files that might depend on it
+# http://www.gnu.org/software/make/manual/make.html#Prerequisite-Types
+$(OBJS): | $(DATA_HDR)
+
+$(PROJ).out: $(OBJS) $(LDSCRIPTS)
 	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
 
 $(PROJ).hex: $(PROJ).out
