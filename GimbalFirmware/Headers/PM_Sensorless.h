@@ -42,7 +42,7 @@ Next, Include project specific include files.
 
 #include "can/cand_BitFields.h"
 #include "hardware/HWSpecific.h"
-#include "MAVLink/ardupilotmega/mavlink.h"
+#include "ardupilotmega/mavlink.h"
 
 typedef enum {
     BLINK_NO_COMM,

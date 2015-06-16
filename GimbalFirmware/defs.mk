@@ -5,7 +5,8 @@ INCS = \
     -I=$(TI_ROOT)/include                                                               \
     -I=$(PROJ_ROOT)/Headers/gopro                                                       \
     -I=$(PROJ_ROOT)/Headers                                                             \
-    -I=$(PROJ_ROOT)/Headers/MAVLink                                                     \
+    -I=$(SHARED_ROOT)/headers                                                           \
+    -I=$(SHARED_ROOT)/mavlink_library                                                   \
     -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_headers/include   \
     -I=$(PROJ_ROOT)/../controlSUITE/libs/math/IQmath/v15c/include                       \
     -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_common/include    \
@@ -24,18 +25,18 @@ OBJS = \
     $(PROJ_ROOT)/Source/control/PID.o \
     $(PROJ_ROOT)/Source/control/rate_loops.o \
     $(PROJ_ROOT)/Source/control/running_average_filter.o \
-    $(PROJ_ROOT)/Source/flash/Example_Flash2806x_CsmKeys.o \
-    $(PROJ_ROOT)/Source/flash/flash.o \
+    $(SHARED_ROOT)/src/flash/Example_Flash2806x_CsmKeys.o \
+    $(SHARED_ROOT)/src/flash/flash.o \
     $(PROJ_ROOT)/Source/hardware/adc.o \
-    $(PROJ_ROOT)/Source/hardware/device_init.o \
+    $(SHARED_ROOT)/src/hardware/device_init.o \
     $(PROJ_ROOT)/Source/hardware/encoder.o \
-    $(PROJ_ROOT)/Source/hardware/gpio.o \
+    $(SHARED_ROOT)/src/hardware/gpio.o \
     $(PROJ_ROOT)/Source/hardware/gyro.o \
     $(PROJ_ROOT)/Source/hardware/HWSpecific.o \
     $(PROJ_ROOT)/Source/hardware/i2c.o \
-    $(PROJ_ROOT)/Source/hardware/led.o \
+    $(SHARED_ROOT)/src/hardware/led.o \
     $(PROJ_ROOT)/Source/hardware/spi.o \
-    $(PROJ_ROOT)/Source/hardware/uart.o \
+    $(SHARED_ROOT)/src/hardware/uart.o \
     $(PROJ_ROOT)/Source/helpers/fault_handling.o \
     $(PROJ_ROOT)/Source/helpers/ringbuf.o \
     $(PROJ_ROOT)/Source/mavlink_interface/mavlink_gimbal_interface.o \

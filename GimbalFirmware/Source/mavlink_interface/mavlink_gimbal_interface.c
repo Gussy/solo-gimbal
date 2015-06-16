@@ -10,7 +10,7 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
-#include "version.h"
+#include "version_git.h"
 #include <stdio.h>
 
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);

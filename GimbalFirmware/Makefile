@@ -2,6 +2,7 @@
 PROJ := PM_Sensorless_F2806x
 
 PROJ_ROOT := .
+SHARED_ROOT := ../shared
 PROJ_PYTHON_ROOT := $(PROJ_ROOT)/../Tools/src
 
 ifeq ($(TI_ROOT),)
@@ -27,7 +28,7 @@ HEX     := $(TI_ROOT)/bin/hex2000
 RELEASE_GEN         := python $(PROJ_PYTHON_ROOT)/firmware_release.py
 VERSION_HEADER_GEN  := python $(PROJ_PYTHON_ROOT)/firmware_version_header.py
 
-VERSION_HEADER      := $(PROJ_ROOT)/Headers/version.h
+VERSION_HEADER      := $(PROJ_ROOT)/Headers/version_git.h
 
 ###############################################################################
 # common flags

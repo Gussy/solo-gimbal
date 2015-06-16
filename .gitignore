@@ -7,7 +7,7 @@ Debug/
 project.log
 .launches/
 .settings/
-version.h
+version_git.h
 data.h
 data.hh
 *.bin

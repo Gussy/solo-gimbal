@@ -1,5 +1,5 @@
 #include "parameters/flash_params.h"
-#include "version.h"
+#include "version_git.h"
 
 struct flash_param_struct_0000 flash_params =
 {

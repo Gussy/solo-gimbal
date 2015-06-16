@@ -14,7 +14,7 @@
 #include "hardware/uart.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "can/can_message_processor.h"
-#include "version.h"
+#include "version_git.h"
 #include "gopro/gopro_interface.h"
 #include "parameters/flash_params.h"
 #include "motor/motor_drive_state_machine.h"
