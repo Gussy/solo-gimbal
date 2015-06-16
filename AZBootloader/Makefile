@@ -84,7 +84,7 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 ###############################################################################
 # rules
 
-all: $(PROJ).hex
+all: $(DATA_HDR) $(PROJ).hex
 
 # generate data header from main fw image
 $(DATA_HDR): $(MAIN_FW)
@@ -110,5 +110,6 @@ clean:
 	rm -f $(PROJ).* $(PROJ)_linkinfo.xml
 	rm -f $(OBJS)
 	rm -f $(OBJS:.o=.pp)
+	rm -f $(DATA_HDR)
 
 -include $(OBJS:.o=.pp)
