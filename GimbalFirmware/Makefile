@@ -83,7 +83,7 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 all: $(PROJ).ax
 
 $(PROJ).ax: $(PROJ).out $(PROJ).hex
-	$(RELEASE_GEN) --image=$(PROJ).hex --outdir=$(PROJ_ROOT)/..
+	$(RELEASE_GEN) --image=$(PROJ).hex --outdir=$(PROJ_ROOT)
 
 $(PROJ).out: $(VERSION_HEADER) $(OBJS) $(LDSCRIPTS)
 	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
@@ -106,5 +106,6 @@ clean:
 	rm -f $(PROJ).* $(VERSION_HEADER)
 	rm -f $(OBJS)
 	rm -f $(OBJS:.o=.pp)
+	rm -f $(PROJ)_linkinfo.xml
 
 -include $(OBJS:.o=.pp)
