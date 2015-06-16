@@ -6,3 +6,14 @@ cache: apt
 notifications:
   slack:
     secure: oXtbv3lCX60o7/iQkmoty9OM3A/pZWRnAISm2Ht+GZBfAgItM1DOgYAopg8CUpFNtY6CkAwDoO5O1WocOrKKlBNZqRjYK6Hqo2QVbMvJp9U2mBgxILauXwbknGoiM5YkqhkKQcHSbIqQc8EEAzfymYoeZoylAOTDIihnpHkiT2I=
+deploy:
+  provider: releases
+  api_key:
+    secure: Wnjv26jqI4YB3X2EpOE5Zzx7szBA/BcHZcZlN+V5qz54cWJG00o+v4VM9QbL97gtxrmJuZnKuwulBuIim2V6iT6x3xDG3ucryfymWtKARzFzz/NuEm0MPO+39IBxq/cxqzB9rmyfZlmMNpm5JXB4alSB/W1KDvN0khdhpA+jnR8=
+  file_glob: true
+  file: 
+    - "GimbalFirmware/gimbal_firmware_*.ax"
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: 3drobotics/solo-gimbal
