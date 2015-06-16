@@ -5,7 +5,7 @@ from distutils.version import LooseVersion
 from pymavlink.mavparm import MAVParmDict
 import setup_mavlink
 
-EXPECTED_VERSION = '0.15.2'
+EXPECTED_VERSION = '0.16.0'
 EXPECTED_BROADCAST = 0
 
 EXPECTED_PITCH_ICEPT_MAX = 0.30
