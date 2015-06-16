@@ -26,9 +26,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>led.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/GimbalFirmware/Source/hardware/led.c</locationURI>
+			<name>shared</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/shared</locationURI>
 		</link>
 	</linkedResources>
 	<filteredResources>
