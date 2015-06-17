@@ -19,7 +19,7 @@ TI's full-fledged eclipse-based developement environment can also be used:
 
 * [Python](https://www.python.org/) must be installed and on the system PATH environment variable
 
-For benchtop development, you'll likely want a custom cable that integrates cables from a power supply (16.8V, current limit can be around 0.5A), and an FTDI cable onto the custom connector that plugs into the AZ board. todo: provide wiring diagram...
+For benchtop development, you'll likely want a custom cable that integrates cables from a power supply (16.8V, current limit can be around 0.5A for just GoPro comms, or 3.0A to drive all the motors), and an FTDI cable onto the custom connector that plugs into the AZ board. todo: provide wiring diagram...
 
 ## Building
 
@@ -29,7 +29,7 @@ The following folders are each individual projects that generate a binary:
 * `AZBootloader`: the bootloader that runs on the AZ board, and speaks mavlink to the autopilot
 * `Bootloader`: the CAN bootloader that is updated via the AZBootloader
 
-navigate to any of these folders, and run `make` to build, or open them in Code Composer Studio and hit the Build button.
+navigate to any of these folders, and run `make` to build, or open them in Code Composer Studio and hit the Build button. You can also run `make` from the top level folder to build all projects.
 
 ## Flashing
 
