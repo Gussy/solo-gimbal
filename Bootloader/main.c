@@ -206,35 +206,6 @@ Uint16 CAN_GetWordData()
 
 static int location = 0;
 
-#if 0
-Uint16 CAN_SendWordData(Uint16 data)
-{
-   ECanaMboxes.MBOX1.MDL.byte.BYTE0 = (data&0xFF);   // LS byte
-   ECanaMboxes.MBOX1.MDL.byte.BYTE1 = ((data >> 8)&0xFF);    // MS byte
-
-   ECanaRegs.CANTRS.all = (1ul<<1);	// "writing 0 has no effect", previously queued boxes will stay queued
-   ECanaRegs.CANTA.all = (1ul<<1);		// "writing 0 has no effect", clears pending interrupt, open for our tx
-
-   struct ECAN_REGS ECanaShadow;
-   // wait for it to be sent
-   ECanaShadow.CANTRS.all = ECanaRegs.CANTRS.all;
-   while (ECanaShadow.CANTRS.bit.TRS1 == 1) {
-	   ECanaShadow.CANTRS.all = ECanaRegs.CANTRS.all;
-   }
-
-   return data;
-}
-
-Uint16 read_Data()
-{
-	extern const unsigned short DATA[];
-	Uint16 retval = 0;
-	retval = DATA[location++];
-	retval = ((retval & 0xFF00)>>8)|((retval & 0x00FF)<<8);
-	CAN_SendWordData(retval);
-	return retval;
-}
-#endif
 
 Uint32 CAN_Boot()
 {
