@@ -3,6 +3,7 @@
 
 INCS = \
     -I=$(TI_ROOT)/include                                                               \
+    -I=$(SHARED_ROOT)/                                                           		\
     -I=$(SHARED_ROOT)/headers                                                           \
     -I=$(SHARED_ROOT)/mavlink_library                                                   \
     -I=$(SHARED_ROOT)/mavlink_library/common                                            \
@@ -14,7 +15,7 @@ INCS = \
 OBJS = \
     $(PROJ_ROOT)/ITRAPIsr.o \
     $(PROJ_ROOT)/Init_Boot.o \
-    $(PROJ_ROOT)/Shared_Boot.o \
+    $(SHARED_ROOT)/boot/Shared_Boot.o \
     $(PROJ_ROOT)/Vectors_Boot.o \
     $(PROJ_ROOT)/main.o \
     $(SHARED_ROOT)/F2806x/source/F2806x_GlobalVariableDefs_patched.o

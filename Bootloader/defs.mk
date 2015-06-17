@@ -4,6 +4,7 @@
 INCS = \
     -I=$(TI_ROOT)/include                                                               \
     -I=$(PROJ_ROOT)/headers                                                             \
+    -I=$(SHARED_ROOT)/                                                           		\
     -I=$(SHARED_ROOT)/headers                                                           \
     -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_common/include    \
     -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_headers/include   \
@@ -12,7 +13,7 @@ INCS = \
 OBJS = \
     $(PROJ_ROOT)/ITRAPIsr.o \
     $(PROJ_ROOT)/Init_Boot.o \
-    $(PROJ_ROOT)/Shared_Boot.o \
+    $(SHARED_ROOT)/boot/Shared_Boot.o \
     $(PROJ_ROOT)/Vectors_Boot.o \
     $(SHARED_ROOT)/src/hardware/led.o \
     $(PROJ_ROOT)/main.o \
