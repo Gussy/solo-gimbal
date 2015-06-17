@@ -16,7 +16,12 @@ OBJS = \
     $(SHARED_ROOT)/boot/Shared_Boot.o \
     $(SHARED_ROOT)/boot/Vectors_Boot.o 													\
     $(SHARED_ROOT)/src/hardware/led.o \
-    $(PROJ_ROOT)/main.o \
+    $(PROJ_ROOT)/main.o 																\
+    $(PROJ_ROOT)/can.o 																	\
+    $(PROJ_ROOT)/can_bootloader.o														\
+    $(PROJ_ROOT)/device_init.o 															\
+    $(PROJ_ROOT)/pll.o 																	\
+    $(PROJ_ROOT)/watchdog.o																\
     $(SHARED_ROOT)/F2806x/source/F2806x_GlobalVariableDefs_patched.o
 
 LIBS = \
