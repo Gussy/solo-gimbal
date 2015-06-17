@@ -4,7 +4,7 @@ GimbalFirmware:
 	$(MAKE) -C GimbalFirmware
 AZBootloader: GimbalFirmware
 	$(MAKE) -C AZBootloader
-Bootloader: GimbalFirmware
+Bootloader: AZBootloader
 	$(MAKE) -C Bootloader
 
 clean:
