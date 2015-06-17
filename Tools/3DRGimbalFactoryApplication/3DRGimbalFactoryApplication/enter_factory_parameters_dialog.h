@@ -43,9 +43,11 @@ private:
     void updateGeneratedSerialNumber();
 
 private slots:
-    void on_assemblyDate_textChanged(const QString&);
-    void on_serialNumber_textChanged(const QString&);
-    void on_languageCountry_currentIndexChanged(int);
+//    void on_assemblyDate_textChanged(const QString&);
+//    void on_serialNumber_textChanged(const QString&);
+//    void on_languageCountry_currentIndexChanged(int);
+    void on_skipButton_clicked();
+    void on_buttonBox_clicked();
 };
 
 #endif // ENTER_FACTORY_PARAMETERS_DIALOG_H

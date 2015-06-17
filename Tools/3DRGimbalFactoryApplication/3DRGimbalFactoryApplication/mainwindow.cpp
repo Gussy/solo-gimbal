@@ -441,6 +441,7 @@ void MainWindow::receiveHomeOffsetCalibrationStatus(bool successful)
 void MainWindow::receiveFactoryParameters(QString assemblyDateTime, QString serialNumber)
 {
     ui->assemblyDateTime->setText(assemblyDateTime);
+    m_serialNum = serialNumber;
     ui->serialNumber->setText(serialNumber);
 }
 
@@ -449,7 +450,7 @@ void MainWindow::on_setUnitParametersButton_clicked()
     EnterFactoryParametersDialog dialog;
     connect(&dialog, SIGNAL(setGimbalFactoryParameters(unsigned short,unsigned char,unsigned char,unsigned char,unsigned char,unsigned char,ulong,ulong,ulong)), this, SIGNAL(setGimbalFactoryParameters(unsigned short,unsigned char,unsigned char,unsigned char,unsigned char,unsigned char,ulong,ulong,ulong)));
     connect(this, SIGNAL(factoryParametersLoaded()), &dialog, SLOT(factoryParametersLoaded()));
-    dialog.exec();
+    dialog.exec();//todo
     // After the user sets the new factory parameters, request the new parameters from the gimbal to update the UI
     emit requestFactoryParameters();
 }
@@ -492,7 +493,7 @@ void MainWindow::on_factoryTestsButton_clicked()
 
 void MainWindow::on_runWobbleTestButton_clicked()
 {
-    WobbleTestDialog dialog;
+    WobbleTestDialog dialog(m_serialNum);
 
     connect(this, SIGNAL(receivedGimbalReport(float, float, float)), &dialog, SLOT(receivedGimbalReport(float, float, float)));
     dialog.exec();

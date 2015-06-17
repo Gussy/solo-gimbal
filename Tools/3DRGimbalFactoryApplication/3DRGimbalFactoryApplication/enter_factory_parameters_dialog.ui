@@ -14,16 +14,6 @@
    <string>Set Factory Parameters</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="1" colspan="2">
-    <widget class="QLabel" name="factoryParametersInstructions_label">
-     <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please enter the assembly date and time, and serial number of this gimbal, then press OK to commit these values to flash&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="1">
     <widget class="QLabel" name="assemblyDate_label">
      <property name="text">
@@ -38,34 +28,20 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="1" colspan="2">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="2">
-    <widget class="QLineEdit" name="assemblyTime">
-     <property name="inputMask">
-      <string>09:09:09;_</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1">
-    <widget class="QLabel" name="assemblyTime_label">
+   <item row="7" column="2">
+    <widget class="QPushButton" name="buttonBox">
      <property name="text">
-      <string>Assembly Time: (HH/MM/SS)</string>
+      <string>Commit Changes to Flash</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="1" colspan="2">
-    <widget class="QLabel" name="settingFactoryParameters_label">
+   <item row="0" column="1" colspan="2">
+    <widget class="QLabel" name="factoryParametersInstructions_label">
      <property name="text">
-      <string>Setting Parameters...</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please enter the assembly date and time, and serial number of this gimbal, or you may skip this step.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -116,6 +92,34 @@
      </layout>
     </widget>
    </item>
+   <item row="2" column="2">
+    <widget class="QLineEdit" name="assemblyTime">
+     <property name="inputMask">
+      <string>09:09:09;_</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QLabel" name="assemblyTime_label">
+     <property name="text">
+      <string>Assembly Time: (HH/MM/SS)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1" colspan="2">
+    <widget class="QLabel" name="settingFactoryParameters_label">
+     <property name="text">
+      <string>Setting Parameters...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="2">
+    <widget class="QPushButton" name="skipButton">
+     <property name="text">
+      <string>Skip This Step</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <tabstops>
@@ -125,38 +129,5 @@
   <tabstop>serialNumber</tabstop>
  </tabstops>
  <resources/>
- <connections>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>EnterFactoryParametersDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>157</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>EnterFactoryParametersDialog</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>286</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

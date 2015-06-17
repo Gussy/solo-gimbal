@@ -5,6 +5,7 @@
 #include "qcustomplot.h"
 #include "mainwindow.h"
 
+
 #include <QDialog>
 #include <QPixmap>
 #include <QLabel>
@@ -20,7 +21,7 @@ class WobbleTestDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit WobbleTestDialog(QWidget *parent = 0);
+    explicit WobbleTestDialog(const QString serNum, QWidget *parent = 0);
     ~WobbleTestDialog();
 
 
@@ -33,6 +34,8 @@ private:
 
     const int COUNTS;
     const int RANGE;
+    const QString GIM_SERIAL_NUM;
+
     bool m_pause;
     QElapsedTimer m_elapsedTime;
     double m_timerTemp;

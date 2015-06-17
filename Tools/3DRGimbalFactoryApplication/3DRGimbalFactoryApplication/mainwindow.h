@@ -71,6 +71,7 @@ signals:
 private:
     Ui::MainWindow *ui;
 
+    QString m_serialNum;
     QThread m_serialThread;
     SerialInterfaceThread* m_serialThreadObj;
     QTimer m_connectionTimeoutTimer;

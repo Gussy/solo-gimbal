@@ -92,6 +92,7 @@ void EnterFactoryParametersDialog::accept()
         ui->serialNumber->setEnabled(false);
         ui->settingFactoryParameters_label->setVisible(true);
     }
+    QDialog::accept();
 }
 
 void EnterFactoryParametersDialog::reject()
@@ -106,14 +107,15 @@ void EnterFactoryParametersDialog::factoryParametersLoaded()
     // Inform the user that the load was successful
     QMessageBox msg;
     msg.setText("Parameters Loaded");
-    msg.setInformativeText("The Factory Parameters were Sucessfully Loaded!");
+    msg.setInformativeText("The Factory Parameters were Successfully Loaded!");
     msg.setIcon(QMessageBox::Information);
     msg.setStandardButtons(QMessageBox::Ok);
     msg.setDefaultButton(QMessageBox::Ok);
     msg.exec();
 
     // Close the dialog
-    QDialog::accept();
+    //QDialog::accept();
+    //done(1);
 }
 
 void EnterFactoryParametersDialog::updateGeneratedSerialNumber()
@@ -131,17 +133,29 @@ void EnterFactoryParametersDialog::updateGeneratedSerialNumber()
     ui->generatedSerialNumber->setText(generatedSerialNumber);
 }
 
-void EnterFactoryParametersDialog::on_assemblyDate_textChanged(const QString&)
+//void EnterFactoryParametersDialog::on_assemblyDate_textChanged(const QString&)
+//{
+//    updateGeneratedSerialNumber();
+//}
+
+//void EnterFactoryParametersDialog::on_serialNumber_textChanged(const QString&)
+//{
+//    updateGeneratedSerialNumber();
+//}
+
+//void EnterFactoryParametersDialog::on_languageCountry_currentIndexChanged(int)
+//{
+//    updateGeneratedSerialNumber();
+//}
+
+void EnterFactoryParametersDialog::on_skipButton_clicked()
 {
-    updateGeneratedSerialNumber();
+    QDialog::reject();//parameters unchanged
 }
 
-void EnterFactoryParametersDialog::on_serialNumber_textChanged(const QString&)
+void EnterFactoryParametersDialog::on_buttonBox_clicked()
 {
     updateGeneratedSerialNumber();
-}
-
-void EnterFactoryParametersDialog::on_languageCountry_currentIndexChanged(int)
-{
-    updateGeneratedSerialNumber();
+    factoryParametersLoaded();
+    accept();
 }

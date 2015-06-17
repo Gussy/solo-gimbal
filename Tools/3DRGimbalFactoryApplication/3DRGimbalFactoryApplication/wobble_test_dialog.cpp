@@ -2,23 +2,26 @@
 #include "ui_wobble_test_dialog.h"
 #include "mainwindow.h"
 #include "serial_interface_thread.h"
+#include "enter_factory_parameters_dialog.h"
 
 #include <QTime>
 
 
 
-WobbleTestDialog::WobbleTestDialog(QWidget *parent) :
+WobbleTestDialog::WobbleTestDialog(QString serNum, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::WobbleTestDialog),
 //    X_MAX_GYRO_ALLOWED(0.01),
 //    Y_MAX_GYRO_ALLOWED(0.01),
 //    Z_MAX_GYRO_ALLOWED(0.01),
     COUNTS(10),
-    RANGE(30)
+    RANGE(30),
+    GIM_SERIAL_NUM(serNum)
 {
     // Disable all of the title bar buttons (so the user can't close the dialog from the title bar)
     setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
     ui->setupUi(this);
+    this->setWindowTitle(GIM_SERIAL_NUM);
     setupPlot(ui->customPlot);
     setupPlot(ui->customPlot_2);
     setupPlot(ui->customPlot_3);
