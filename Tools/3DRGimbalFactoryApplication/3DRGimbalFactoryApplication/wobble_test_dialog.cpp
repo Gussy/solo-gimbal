@@ -34,6 +34,7 @@ WobbleTestDialog::WobbleTestDialog(QString serNum, QWidget *parent) :
     m_xMinGyro = "0";
     m_xNumFails = "0";
     m_xMaxGyroAllowed = "0.001";
+    ui->xMaxGyroAllowed->setPlainText(m_xMaxGyroAllowed);
 
     m_yCount = 0;
     m_yFailOccurred = false;
@@ -43,6 +44,7 @@ WobbleTestDialog::WobbleTestDialog(QString serNum, QWidget *parent) :
     m_yMinGyro = "0";
     m_yNumFails = "0";
     m_yMaxGyroAllowed = "0.001";
+    ui->yMaxGyroAllowed->setPlainText(m_yMaxGyroAllowed);
 
     m_zCount = 0;
     m_zFailOccurred = false;
@@ -52,6 +54,7 @@ WobbleTestDialog::WobbleTestDialog(QString serNum, QWidget *parent) :
     m_zMinGyro = "0";
     m_zNumFails = "0";
     m_zMaxGyroAllowed = "0.001";
+    ui->zMaxGyroAllowed->setPlainText(m_zMaxGyroAllowed);
 
     m_pause = false;
     ui->resumeButton->setEnabled(false);
@@ -97,7 +100,7 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
         ui->customPlot->graph(2)->addData(key, m_xMinGyro.toFloat());
 
         //if we've failed this run or it's been 10 counts since adding point to plot, refresh plot
-        if(gyroX > m_xMaxGyroAllowed.toFloat() || m_xCount == COUNTS){
+        if(gyroX > m_xMaxGyroAllowed.toFloat() || qAbs(gyroX) > m_xMaxGyroAllowed.toFloat() || m_xCount == COUNTS){
             if(m_xCount == 10){
                 m_xCount = 0;
             }
@@ -115,6 +118,17 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
                 m_xMaxGyroTime = logTime.toString("hh:mm:ss.zzz");
                 ui->xFailTime->setText(m_xMaxGyroTime);
             }
+            else if(qAbs(gyroX) > m_xMaxGyroAllowed.toFloat()){
+                m_xNumFails = QString::number(m_xNumFails.toInt() + 1);
+                m_xFailOccurred = true;
+                ui->customPlot->setBackground(Qt::red);
+                ui->customPlot->axisRect()->setBackground(Qt::white);
+                ui->xNumFails->setText(m_xNumFails);
+                m_xCount = 0;
+                m_xMaxGyroTime = logTime.toString("hh:mm:ss.zzz");
+                ui->xFailTime->setText(m_xMaxGyroTime);
+            }
+
             else{
                 if(m_xFailOccurred){
                     ui->customPlot->setBackground(Qt::yellow);
@@ -124,9 +138,9 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
                 }
             }
 
-            if(gyroX > m_xMaxGyro.toFloat()){
-                m_xMaxGyro = m_xGyro;
-            }
+//            if(gyroX > m_xMaxGyro.toFloat()){
+//                m_xMaxGyro = m_xGyro;
+//            }
 
             // add data to lines:
             ui->customPlot->graph(0)->addData(key, gyroX);
@@ -170,7 +184,7 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
         ui->customPlot_2->graph(1)->addData(key, m_yMaxGyro.toFloat());
         ui->customPlot_2->graph(2)->addData(key, m_yMinGyro.toFloat());
 
-        if(gyroY > m_yMaxGyroAllowed.toFloat() || m_yCount == COUNTS){
+        if(gyroY > m_yMaxGyroAllowed.toFloat() || qAbs(gyroY) > m_yMaxGyroAllowed.toFloat() || m_yCount == COUNTS){
             if(m_yCount == 10){
                 m_yCount = 0;
             }
@@ -179,6 +193,16 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
             ui->yGyro->setText(m_yGyro);
 
             if(gyroY > m_yMaxGyroAllowed.toFloat()){
+                m_yNumFails = QString::number(m_yNumFails.toInt() + 1);
+                m_yFailOccurred = true;
+                ui->customPlot_2->setBackground(Qt::red);
+                ui->customPlot_2->axisRect()->setBackground(Qt::white);
+                ui->yNumFails->setText(m_yNumFails);
+                m_yCount = 0;
+                m_yMaxGyroTime = logTime.toString("hh:mm:ss.zzz");
+                ui->yFailTime->setText(m_yMaxGyroTime);
+            }
+            else if(qAbs(gyroY) > m_yMaxGyroAllowed.toFloat()){
                 m_yNumFails = QString::number(m_yNumFails.toInt() + 1);
                 m_yFailOccurred = true;
                 ui->customPlot_2->setBackground(Qt::red);
@@ -197,9 +221,9 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
                 }
             }
 
-            if(gyroY > m_yMaxGyro.toFloat()){
-                m_yMaxGyro = m_yGyro;
-            }
+ //           if(gyroY > m_yMaxGyro.toFloat()){
+ //               m_yMaxGyro = m_yGyro;
+ //           }
 
             // add data to lines:
             ui->customPlot_2->graph(0)->addData(key, gyroY);
@@ -242,7 +266,7 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
         ui->customPlot_3->graph(1)->addData(key, m_zMaxGyro.toFloat());
         ui->customPlot_3->graph(2)->addData(key, m_zMinGyro.toFloat());
 
-        if(gyroZ > m_zMaxGyroAllowed.toFloat() || m_zCount == COUNTS){
+        if(gyroZ > m_zMaxGyroAllowed.toFloat() || qAbs(gyroZ) > m_zMaxGyroAllowed.toFloat() || m_zCount == COUNTS){
             if(m_zCount == 10){
                 m_zCount = 0;
             }
@@ -252,7 +276,7 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
 
             if(gyroZ >  m_zMaxGyroAllowed.toFloat()){
                 m_zNumFails = QString::number(m_zNumFails.toInt() + 1);
-                m_zFailOccurred = true;//TODO, make background red if fail occurred
+                m_zFailOccurred = true;
                 ui->customPlot_3->setBackground(Qt::red);
                 ui->customPlot_3->axisRect()->setBackground(Qt::white);
                 ui->zNumFails->setText(m_zNumFails);
@@ -260,6 +284,17 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
                 m_zMaxGyroTime = logTime.toString("hh:mm:ss.zzz");
                 ui->zFailTime->setText(m_zMaxGyroTime);
             }
+            else if(qAbs(gyroZ) > m_zMaxGyroAllowed.toFloat()){
+                m_zNumFails = QString::number(m_zNumFails.toInt() + 1);
+                m_zFailOccurred = true;
+                ui->customPlot_3->setBackground(Qt::red);
+                ui->customPlot_3->axisRect()->setBackground(Qt::white);
+                ui->zNumFails->setText(m_zNumFails);
+                m_zCount = 0;
+                m_zMaxGyroTime = logTime.toString("hh:mm:ss.zzz");
+                ui->zFailTime->setText(m_zMaxGyroTime);
+            }
+
             else{
                 if(m_zFailOccurred){
                     ui->customPlot_3->setBackground(Qt::yellow);
@@ -269,9 +304,9 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
                 }
             }
 
-            if(gyroZ > m_zMaxGyro.toFloat()){
-                m_zMaxGyro = m_zGyro;
-            }
+//            if(gyroZ > m_zMaxGyro.toFloat()){
+//                m_zMaxGyro = m_zGyro;
+//            }
 
             // add data to lines:
             ui->customPlot_3->graph(0)->addData(key, gyroZ);
@@ -364,9 +399,17 @@ void WobbleTestDialog::on_resumeButton_clicked()
 
 void WobbleTestDialog::on_refreshSetpointsButton_clicked()
 {
-    m_xMaxGyroAllowed = ui->xMaxGyroAllowed->toPlainText();
-    m_yMaxGyroAllowed = ui->yMaxGyroAllowed->toPlainText();
-    m_zMaxGyroAllowed = ui->zMaxGyroAllowed->toPlainText();
+    if(ui->xMaxGyroAllowed->toPlainText() != ""){
+        m_xMaxGyroAllowed = ui->xMaxGyroAllowed->toPlainText();
+    }
+
+    if(ui->yMaxGyroAllowed->toPlainText()!= ""){
+        m_yMaxGyroAllowed = ui->yMaxGyroAllowed->toPlainText();
+    }
+
+    if(ui->zMaxGyroAllowed->toPlainText() != ""){
+        m_zMaxGyroAllowed = ui->zMaxGyroAllowed->toPlainText();
+    }
 
     setupPlot(ui->customPlot);
     setupPlot(ui->customPlot_2);
