@@ -26,8 +26,8 @@ For benchtop development, you'll likely want a custom cable that integrates cabl
 The following folders are each individual projects that generate a binary:
 
 * `GimbalFirmware`: the main application firmware image that runs on all 3 boards
-* `AZBootloader`: the bootloader that runs on the AZ board, and speaks mavlink to the autopilot
-* `Bootloader`: the CAN bootloader that is updated via the AZBootloader
+* `AZBootloader`: the bootloader that runs on the AZ board, and speaks mavlink to the autopilot - this must be loaded onto the AZ board
+* `Bootloader`: the CAN bootloader that is updated via the AZBootloader - this must be loaded onto the EL and ROLL boards
 
 navigate to any of these folders, and run `make` to build, or open them in Code Composer Studio and hit the Build button. You can also run `make` from the top level folder to build all projects.
 
