@@ -2,17 +2,19 @@
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
+#include "can.h"
 
 // External functions
 extern void CopyData(void);
 extern Uint32 GetLongData(void);
 extern void ReadReservedFn(void);
+extern Uint16 CAN_GetWordData();
 
 #pragma   DATA_SECTION(endRam,".endmem");
 Uint16 endRam;
 
-LED_RGBA rgba_amber = {255, 160, 0, 0xff};
-static int location = 0;
+extern LED_RGBA rgba_amber;
+int location = 0;
 
 Uint32 CAN_Boot()
 {

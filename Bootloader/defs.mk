@@ -3,6 +3,7 @@
 
 INCS = \
     -I=$(TI_ROOT)/include                                                               \
+    -I=$(PROJ_ROOT)/		                                                            \
     -I=$(PROJ_ROOT)/headers                                                             \
     -I=$(SHARED_ROOT)/                                                           		\
     -I=$(SHARED_ROOT)/headers                                                           \
