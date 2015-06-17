@@ -11,10 +11,10 @@ INCS = \
     -I=$(PROJ_ROOT)/../controlSUITE/development_kits/~SupportFiles/F2806x_headers
 
 OBJS = \
-    $(PROJ_ROOT)/ITRAPIsr.o \
-    $(PROJ_ROOT)/Init_Boot.o \
+    $(SHARED_ROOT)/boot/ITRAPIsr.o 														\
+    $(SHARED_ROOT)/boot/Init_Boot.o 													\
     $(SHARED_ROOT)/boot/Shared_Boot.o \
-    $(PROJ_ROOT)/Vectors_Boot.o \
+    $(SHARED_ROOT)/boot/Vectors_Boot.o 													\
     $(SHARED_ROOT)/src/hardware/led.o \
     $(PROJ_ROOT)/main.o \
     $(SHARED_ROOT)/F2806x/source/F2806x_GlobalVariableDefs_patched.o
