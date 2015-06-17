@@ -3,10 +3,10 @@
 
 INCS = \
     -I=$(TI_ROOT)/include                                                               \
-    -I=$(SHARED_ROOT)/F2806x_headers/include                                              \
-    -I=$(PROJ_ROOT)/headers                                                            \
+    -I=$(PROJ_ROOT)/headers                                                             \
     -I=$(SHARED_ROOT)/headers                                                           \
     -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_common/include    \
+    -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_headers/include   \
     -I=$(PROJ_ROOT)/../controlSUITE/development_kits/~SupportFiles/F2806x_headers
 
 OBJS = \
@@ -16,7 +16,7 @@ OBJS = \
     $(PROJ_ROOT)/Vectors_Boot.o \
     $(SHARED_ROOT)/src/hardware/led.o \
     $(PROJ_ROOT)/main.o \
-    $(SHARED_ROOT)/F2806x_headers/source/F2806x_GlobalVariableDefs.o
+    $(SHARED_ROOT)/F2806x/source/F2806x_GlobalVariableDefs_patched.o
 
 LIBS = \
     -l"libc.a"
