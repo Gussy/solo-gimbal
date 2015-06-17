@@ -26,11 +26,6 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>2806x_BootROM_API_TABLE_Symbols_fpu32.lib</name>
-			<type>1</type>
-			<location>/opt/ti/ccsv6/eclipse/C::/ti/controlSUITE/libs/utilities/flash_api/2806x/v100/lib/2806x_BootROM_API_TABLE_Symbols_fpu32.lib</location>
-		</link>
-		<link>
 			<name>shared</name>
 			<type>2</type>
 			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/shared</locationURI>

@@ -93,13 +93,6 @@
 							<tool id="com.ti.ccstudio.buildDefinitions.C2000_6.4.hex.1403972562" name="C2000 Hex Utility" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.4.hex"/>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.ti.ccstudio.buildDefinitions.C2000.Debug.480596916.libs/IQmath.lib" name="IQmath.lib" rcbsApplicability="disable" resourcePath="libs/IQmath.lib" toolsToInvoke="com.ti.ccstudio.buildDefinitions.C2000_6.4.exe.linkerDebug.442516503.706014278">
-						<tool id="com.ti.ccstudio.buildDefinitions.C2000_6.4.exe.linkerDebug.442516503.706014278" name="C2000 Linker" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.4.exe.linkerDebug.442516503">
-							<inputType id="com.ti.ccstudio.buildDefinitions.C2000_6.4.exeLinker.inputType__CMD_SRCS.1162504702" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.4.exeLinker.inputType__CMD_SRCS"/>
-							<inputType id="com.ti.ccstudio.buildDefinitions.C2000_6.4.exeLinker.inputType__CMD2_SRCS.1464014078" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.4.exeLinker.inputType__CMD2_SRCS"/>
-							<inputType id="com.ti.ccstudio.buildDefinitions.C2000_6.4.exeLinker.inputType__GEN_CMDS.387630263" name="Generated Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.4.exeLinker.inputType__GEN_CMDS"/>
-						</tool>
-					</fileInfo>
 					<sourceEntries>
 						<entry excluding="28067_RAM_lnk.cmd|Source/parameters/Example_Flash2806x_GlobalVariableDefs.c|Source/DLOG4CHC.asm|Source/F2806x_FLASH_PM_Sensorless.CMD|Source/F2806x_SysCtrl.c|Source/F2806x_PieVect.c|Source/F2806x_PieCtrl.c|Source/F2806x_DefaultIsr.c|DSP2803x_usDelay.asm|F28035_RAM_PM_Sensorless.CMD|DSP2803x_GlobalVariableDefs.c|PM_Sensorless-DevInit_F2803x.c|F2806x_FLASH_PM_Sensorless.CMD|IQmath.lib|DSP2803x_Headers_nonBIOS.cmd|F28035_FLASH_PM_Sensorless.CMD" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
@@ -198,13 +191,6 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.ti.ccstudio.buildDefinitions.C2000.Debug.480596916.1103538072.libs/IQmath.lib" name="IQmath.lib" rcbsApplicability="disable" resourcePath="libs/IQmath.lib" toolsToInvoke="com.ti.ccstudio.buildDefinitions.C2000_6.2.exe.linkerDebug.793382879.181474808">
-						<tool id="com.ti.ccstudio.buildDefinitions.C2000_6.2.exe.linkerDebug.793382879.181474808" name="C2000 Linker" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.exe.linkerDebug.793382879">
-							<inputType id="com.ti.ccstudio.buildDefinitions.C2000_6.2.exeLinker.inputType__CMD_SRCS.317067579" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.exeLinker.inputType__CMD_SRCS"/>
-							<inputType id="com.ti.ccstudio.buildDefinitions.C2000_6.2.exeLinker.inputType__CMD2_SRCS.814485931" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.exeLinker.inputType__CMD2_SRCS"/>
-							<inputType id="com.ti.ccstudio.buildDefinitions.C2000_6.2.exeLinker.inputType__GEN_CMDS.765019815" name="Generated Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.C2000_6.2.exeLinker.inputType__GEN_CMDS"/>
-						</tool>
-					</fileInfo>
 					<sourceEntries>
 						<entry excluding="Source/parameters/Example_Flash2806x_GlobalVariableDefs.c|Source/DLOG4CHC.asm|Source/F2806x_RAM_PM_Sensorless.CMD|Source/F2806x_SysCtrl.c|Source/F2806x_PieVect.c|Source/F2806x_PieCtrl.c|Source/F2806x_DefaultIsr.c|DSP2803x_usDelay.asm|F28035_RAM_PM_Sensorless.CMD|DSP2803x_GlobalVariableDefs.c|PM_Sensorless-DevInit_F2803x.c|F2806x_FLASH_PM_Sensorless.CMD|IQmath.lib|DSP2803x_Headers_nonBIOS.cmd|F28035_FLASH_PM_Sensorless.CMD" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
