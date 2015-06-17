@@ -17,7 +17,7 @@ OBJS = \
     $(PROJ_ROOT)/Shared_Boot.o \
     $(PROJ_ROOT)/Vectors_Boot.o \
     $(PROJ_ROOT)/main.o \
-    $(PROJ_ROOT)/F2806x_headers/source/F2806x_GlobalVariableDefs.o
+    $(SHARED_ROOT)/F2806x_headers/source/F2806x_GlobalVariableDefs.o
 
 LIBS = \
     -l"libc.a" \
