@@ -30,7 +30,7 @@ void DeviceInit(void)
 	init_xtal();
     EDIS;
 
-	PLLset( 0x8 );
+	PLLset( PLL_80MHZ_SYSTEM_CLOCK_20MHZ_XTAL );
 
 	// Initialise interrupt controller and Vector Table
 	// to defaults for now. Application ISR mapping done later.
