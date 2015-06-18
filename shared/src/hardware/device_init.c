@@ -1,8 +1,5 @@
 #include "hardware/device_init.h"
-#include "PM_Sensorless.h"
 #include "hardware/HWSpecific.h"
-#include "hardware/uart.h"
-#include "hardware/i2c.h"
 #include "hardware/led.h"
 #include "hardware/pll.h"
 #include "hardware/watchdog.h"
@@ -15,12 +12,14 @@ static void init_xtal();
 static void init_peripheral_clocks();
 static void init_gpio();
 
-void DeviceInit(void)
+void DeviceInit(int isApplicationFirmware)
 {
-	WatchDogDisable();	// Disable the watchdog initially
-	DINT;			// Global Disable all Interrupts
-	IER = 0x0000;	// Disable CPU interrupts
-	IFR = 0x0000;	// Clear all CPU interrupt flags
+	if(isApplicationFirmware){
+		WatchDogDisable();	// Disable the watchdog initially
+		DINT;			// Global Disable all Interrupts
+		IER = 0x0000;	// Disable CPU interrupts
+		IFR = 0x0000;	// Clear all CPU interrupt flags
+	}
 
 	EALLOW;
 	calibrate_adc();
@@ -32,10 +31,12 @@ void DeviceInit(void)
 
 	PLLset( PLL_80MHZ_SYSTEM_CLOCK_20MHZ_XTAL );
 
-	// Initialise interrupt controller and Vector Table
-	// to defaults for now. Application ISR mapping done later.
-	PieCntlInit();		
-	PieVectTableInit();
+	if(isApplicationFirmware){
+		// Initialise interrupt controller and Vector Table
+		// to defaults for now. Application ISR mapping done later.
+		PieCntlInit();
+		PieVectTableInit();
+	}
 
    EALLOW; // below registers are "protected", allow access.
    init_peripheral_clocks();

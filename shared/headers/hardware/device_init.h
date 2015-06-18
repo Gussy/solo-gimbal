@@ -6,7 +6,10 @@
 
 #include "F2806x_EPwm_defines.h"
 
-void DeviceInit(void);
+#define APPLICATION_FIRMWARE 1
+#define BOOTLOADER_FIRMWARE 0
+
+void DeviceInit(int isApplicationFirmware);
 void InitInterrupts();
 void ISR_ILLEGAL(void);
 

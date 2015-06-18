@@ -6,6 +6,10 @@
 #include "can_bootloader.h"
 #include "checksum.h"
 
+// empty setup functions so this code can run  DeviceInit()
+void init_led_periph(void){}
+void PieCntlInit(void){}
+void PieVectTableInit(void){}
 
 Uint32 SelectBootMode()
 {
@@ -36,7 +40,7 @@ Uint32 SelectBootMode()
 	  Flash_CallbackPtr = 0;
 	  EDIS;
 
-	  DeviceInit();
+	  DeviceInit(BOOTLOADER_FIRMWARE);
 
 	  // Read the password locations - this will unlock the
 	  // CSM only if the passwords are erased.  Otherwise it
