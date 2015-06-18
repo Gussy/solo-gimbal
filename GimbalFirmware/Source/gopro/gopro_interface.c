@@ -69,7 +69,7 @@ bool gp_cmd_has_param(const GPCmd* c)
     return true;
 }
 
-int gp_send_command(GPCmd* cmd)
+int gp_send_command(const GPCmd* cmd)
 {
     if (gp_control_state == GP_CONTROL_STATE_IDLE) {
 
