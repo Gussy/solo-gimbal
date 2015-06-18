@@ -10,6 +10,11 @@
 
 #define Device_cal (void   (*)(void))0x3D7C80
 
+static void calibrate_adc();
+static void init_xtal();
+static void init_peripheral_clocks();
+static void init_gpio();
+
 void DeviceInit(void)
 {
 	WatchDogDisable();	// Disable the watchdog initially
@@ -17,18 +22,38 @@ void DeviceInit(void)
 	IER = 0x0000;	// Disable CPU interrupts
 	IFR = 0x0000;	// Clear all CPU interrupt flags
 
-//The Device_cal function, which copies the ADC & oscillator calibration values
-// from TI reserved OTP into the appropriate trim registers, occurs automatically
-// in the Boot ROM. If the boot ROM code is bypassed during the debug process, the
-// following function MUST be called for the ADC and oscillators to function according
-// to specification.
 	EALLOW;
-	SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 1; // Enable ADC peripheral clock
-	(*Device_cal)();					  // Auto-calibrate from TI OTP
-	SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 0; // Return ADC clock to original state
+	calibrate_adc();
 	EDIS;
 
 	EALLOW;
+	init_xtal();
+    EDIS;
+
+	PLLset( 0x8 );
+
+	// Initialise interrupt controller and Vector Table
+	// to defaults for now. Application ISR mapping done later.
+	PieCntlInit();		
+	PieVectTableInit();
+
+   EALLOW; // below registers are "protected", allow access.
+   init_peripheral_clocks();
+   init_gpio();
+   EDIS;	// Disable register access
+}
+
+static void calibrate_adc(){
+	//The Device_cal function, which copies the ADC & oscillator calibration values
+	// from TI reserved OTP into the appropriate trim registers, occurs automatically
+	// in the Boot ROM. If the boot ROM code is bypassed during the debug process, the
+	// following function MUST be called for the ADC and oscillators to function according
+	// to specification.
+	SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 1; // Enable ADC peripheral clock
+	(*Device_cal)();					  // Auto-calibrate from TI OTP
+	SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 0; // Return ADC clock to original state
+}
+static void init_xtal(){
 	SysCtrlRegs.CLKCTL.bit.INTOSC1OFF = 0;
     SysCtrlRegs.CLKCTL.bit.OSCCLKSRCSEL=0;  // Clk Src = INTOSC1
 	SysCtrlRegs.CLKCTL.bit.XCLKINOFF=1;     // Turn off XCLKIN
@@ -36,98 +61,82 @@ void DeviceInit(void)
 	SysCtrlRegs.CLKCTL.bit.INTOSC2OFF=1;    // Turn off INTOSC2
 	SysCtrlRegs.CLKCTL.bit.OSCCLKSRC2SEL = 0;  //Select external crystal for osc2
 	SysCtrlRegs.CLKCTL.bit.OSCCLKSRCSEL = 1;  //Select osc2
-    EDIS;
+}
 
-// SYSTEM CLOCK speed based on external 20MHz crystal
-// 0x9 =  90	MHz		(9)
-// 0x8 =  80	MHz		(8)
-// 0x7 =  70	MHz		(7)
-// 0x6 =  60	MHz		(6)
-// 0x5 =  50	MHz		(5)
-// 0x4 =  40	MHz		(4)
-// 0x3 =  30	MHz		(3)
-// 0x2 =  20	MHz		(2)
+static void init_peripheral_clocks(){
+	// HIGH / LOW SPEED CLOCKS prescale register settings
+	   SysCtrlRegs.LOSPCP.all = 0x0002;		// Sysclk / 4 (20 MHz)
+	   SysCtrlRegs.XCLK.bit.XCLKOUTDIV=0;	//divide by 4 default
 
-	PLLset( 0x8 );	// choose from options above
+	// PERIPHERAL CLOCK ENABLES
+	//---------------------------------------------------
+	// If you are not using a peripheral you may want to switch
+	// the clock off to save power, i.e. set to =0
+	//
+	// Note: not all peripherals are available on all 280x derivates.
+	// Refer to the datasheet for your particular device.
 
-// Initialise interrupt controller and Vector Table
-// to defaults for now. Application ISR mapping done later.
-	PieCntlInit();		
-	PieVectTableInit();
+	   // Need ADC for reading phase currents, rotor position from analog pot, die temp
+	   SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 1;    // ADC
+	   //------------------------------------------------
+	   // I2C is used for GoPro HeroBus communication
+	   SysCtrlRegs.PCLKCR0.bit.I2CAENCLK = 1;   // I2C
+	   //------------------------------------------------
+	   // SPI-A reads from the gyro
+	   // SPI-B is for debug use, and may be disabled for production
+	   SysCtrlRegs.PCLKCR0.bit.SPIAENCLK = 1;     // SPI-A
+	   SysCtrlRegs.PCLKCR0.bit.SPIBENCLK = 1;	// SPI-B
+	   //------------------------------------------------
+	   SysCtrlRegs.PCLKCR0.bit.MCBSPAENCLK = 0;	// McBSP-A
+	   //------------------------------------------------
+	   // SCI-B is used for MAVLink communication with the parent system
+	   SysCtrlRegs.PCLKCR0.bit.SCIAENCLK = 0;   // SCI-A
+	   SysCtrlRegs.PCLKCR0.bit.SCIBENCLK = 1;	// SCI-B
+	   //------------------------------------------------
+	   // CAN-A is used for communication with the other gimbal axes
+	   SysCtrlRegs.PCLKCR0.bit.ECANAENCLK = 1;  // eCAN-A
+	   //------------------------------------------------
+	   // PWM modules 1-3 are used for motor commutation and triggering ADC reads
+	   SysCtrlRegs.PCLKCR1.bit.EPWM1ENCLK = 1;  // ePWM1
+	   SysCtrlRegs.PCLKCR1.bit.EPWM2ENCLK = 1;  // ePWM2
+	   SysCtrlRegs.PCLKCR1.bit.EPWM3ENCLK = 1;  // ePWM3
+	   SysCtrlRegs.PCLKCR1.bit.EPWM4ENCLK = 0;  // ePWM4
+	   SysCtrlRegs.PCLKCR1.bit.EPWM5ENCLK = 0;	// ePWM5
+	   SysCtrlRegs.PCLKCR1.bit.EPWM6ENCLK = 0;	// ePWM6
+	   SysCtrlRegs.PCLKCR1.bit.EPWM7ENCLK = 0;	// ePWM7
+	   SysCtrlRegs.PCLKCR1.bit.EPWM8ENCLK = 0;	// ePWM8
+	   //------------------------------------------------
+	   SysCtrlRegs.PCLKCR0.bit.HRPWMENCLK = 0;	// HRPWM
+	   //------------------------------------------------
+	   // Enable globally synchronized PWM clocks
+	   SysCtrlRegs.PCLKCR0.bit.TBCLKSYNC = 1;   // Enable TBCLK
+	   //------------------------------------------------
+	   // ECAP-1 used as a timer for the main commutation loop
+	   SysCtrlRegs.PCLKCR1.bit.ECAP1ENCLK = 1;  // eCAP1
+	   SysCtrlRegs.PCLKCR1.bit.ECAP2ENCLK = 0;  // eCAP2
+	   SysCtrlRegs.PCLKCR1.bit.ECAP3ENCLK = 0;  // eCAP3
+	   //------------------------------------------------
+	   SysCtrlRegs.PCLKCR1.bit.EQEP1ENCLK = 0;  // eQEP1
+	   SysCtrlRegs.PCLKCR1.bit.EQEP2ENCLK = 0;  // eQEP2
+	   //------------------------------------------------
+	   SysCtrlRegs.PCLKCR3.bit.COMP1ENCLK = 0;	// COMP1
+	   SysCtrlRegs.PCLKCR3.bit.COMP2ENCLK = 0;	// COMP2
+	   SysCtrlRegs.PCLKCR3.bit.COMP3ENCLK = 0;  // COMP3
+	   //------------------------------------------------
+	   // CPU timers used for low speed (1ms, 5ms, 50ms) tasks
+	   SysCtrlRegs.PCLKCR3.bit.CPUTIMER0ENCLK = 1;	// CPUTIMER0
+	   SysCtrlRegs.PCLKCR3.bit.CPUTIMER1ENCLK = 1;	// CPUTIMER1
+	   SysCtrlRegs.PCLKCR3.bit.CPUTIMER2ENCLK = 1;  // CPUTIMER2
+	   //------------------------------------------------
+	   SysCtrlRegs.PCLKCR3.bit.GPIOINENCLK = 0;	//SYSCLKOUT on GPIO
+	   //------------------------------------------------
+	   SysCtrlRegs.PCLKCR3.bit.DMAENCLK = 0;	// DMA
+	   //------------------------------------------------
+	   SysCtrlRegs.PCLKCR3.bit.CLA1ENCLK = 0;	// CLA
+	   //------------------------------------------------
+}
 
-   EALLOW; // below registers are "protected", allow access.
-
-// HIGH / LOW SPEED CLOCKS prescale register settings
-   SysCtrlRegs.LOSPCP.all = 0x0002;		// Sysclk / 4 (20 MHz)
-   SysCtrlRegs.XCLK.bit.XCLKOUTDIV=0;	//divide by 4 default
-      	
-// PERIPHERAL CLOCK ENABLES 
-//---------------------------------------------------
-// If you are not using a peripheral you may want to switch
-// the clock off to save power, i.e. set to =0 
-// 
-// Note: not all peripherals are available on all 280x derivates.
-// Refer to the datasheet for your particular device. 
-
-   // Need ADC for reading phase currents, rotor position from analog pot, die temp
-   SysCtrlRegs.PCLKCR0.bit.ADCENCLK = 1;    // ADC
-   //------------------------------------------------
-   // I2C is used for GoPro HeroBus communication
-   SysCtrlRegs.PCLKCR0.bit.I2CAENCLK = 1;   // I2C
-   //------------------------------------------------
-   // SPI-A reads from the gyro
-   // SPI-B is for debug use, and may be disabled for production
-   SysCtrlRegs.PCLKCR0.bit.SPIAENCLK = 1;     // SPI-A
-   SysCtrlRegs.PCLKCR0.bit.SPIBENCLK = 1;	// SPI-B
-   //------------------------------------------------
-   SysCtrlRegs.PCLKCR0.bit.MCBSPAENCLK = 0;	// McBSP-A
-   //------------------------------------------------
-   // SCI-B is used for MAVLink communication with the parent system
-   SysCtrlRegs.PCLKCR0.bit.SCIAENCLK = 0;   // SCI-A
-   SysCtrlRegs.PCLKCR0.bit.SCIBENCLK = 1;	// SCI-B
-   //------------------------------------------------
-   // CAN-A is used for communication with the other gimbal axes
-   SysCtrlRegs.PCLKCR0.bit.ECANAENCLK = 1;  // eCAN-A
-   //------------------------------------------------
-   // PWM modules 1-3 are used for motor commutation and triggering ADC reads
-   SysCtrlRegs.PCLKCR1.bit.EPWM1ENCLK = 1;  // ePWM1
-   SysCtrlRegs.PCLKCR1.bit.EPWM2ENCLK = 1;  // ePWM2
-   SysCtrlRegs.PCLKCR1.bit.EPWM3ENCLK = 1;  // ePWM3
-   SysCtrlRegs.PCLKCR1.bit.EPWM4ENCLK = 0;  // ePWM4
-   SysCtrlRegs.PCLKCR1.bit.EPWM5ENCLK = 0;	// ePWM5
-   SysCtrlRegs.PCLKCR1.bit.EPWM6ENCLK = 0;	// ePWM6
-   SysCtrlRegs.PCLKCR1.bit.EPWM7ENCLK = 0;	// ePWM7
-   SysCtrlRegs.PCLKCR1.bit.EPWM8ENCLK = 0;	// ePWM8
-   //------------------------------------------------
-   SysCtrlRegs.PCLKCR0.bit.HRPWMENCLK = 0;	// HRPWM
-   //------------------------------------------------
-   // Enable globally synchronized PWM clocks
-   SysCtrlRegs.PCLKCR0.bit.TBCLKSYNC = 1;   // Enable TBCLK
-   //------------------------------------------------
-   // ECAP-1 used as a timer for the main commutation loop
-   SysCtrlRegs.PCLKCR1.bit.ECAP1ENCLK = 1;  // eCAP1
-   SysCtrlRegs.PCLKCR1.bit.ECAP2ENCLK = 0;  // eCAP2
-   SysCtrlRegs.PCLKCR1.bit.ECAP3ENCLK = 0;  // eCAP3
-   //------------------------------------------------
-   SysCtrlRegs.PCLKCR1.bit.EQEP1ENCLK = 0;  // eQEP1
-   SysCtrlRegs.PCLKCR1.bit.EQEP2ENCLK = 0;  // eQEP2
-   //------------------------------------------------
-   SysCtrlRegs.PCLKCR3.bit.COMP1ENCLK = 0;	// COMP1
-   SysCtrlRegs.PCLKCR3.bit.COMP2ENCLK = 0;	// COMP2
-   SysCtrlRegs.PCLKCR3.bit.COMP3ENCLK = 0;  // COMP3
-   //------------------------------------------------
-   // CPU timers used for low speed (1ms, 5ms, 50ms) tasks
-   SysCtrlRegs.PCLKCR3.bit.CPUTIMER0ENCLK = 1;	// CPUTIMER0
-   SysCtrlRegs.PCLKCR3.bit.CPUTIMER1ENCLK = 1;	// CPUTIMER1
-   SysCtrlRegs.PCLKCR3.bit.CPUTIMER2ENCLK = 1;  // CPUTIMER2
-   //------------------------------------------------
-   SysCtrlRegs.PCLKCR3.bit.GPIOINENCLK = 0;	//SYSCLKOUT on GPIO
-   //------------------------------------------------
-   SysCtrlRegs.PCLKCR3.bit.DMAENCLK = 0;	// DMA
-   //------------------------------------------------
-   SysCtrlRegs.PCLKCR3.bit.CLA1ENCLK = 0;	// CLA
-   //------------------------------------------------
-                                                        
+static void init_gpio(){
 //--------------------------------------------------------------------------------------
 // GPIO (GENERAL PURPOSE I/O) CONFIG
 //--------------------------------------------------------------------------------------
@@ -426,6 +435,4 @@ void DeviceInit(void)
 //	GpioDataRegs.GPBSET.bit.GPIO39 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
-
-	EDIS;	// Disable register access
 }
