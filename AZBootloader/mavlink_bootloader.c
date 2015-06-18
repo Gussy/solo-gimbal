@@ -80,21 +80,37 @@ mavlink_message_t msg, inmsg;
 mavlink_status_t status;
 unsigned char buffer[BUFFER_LENGTH];
 
+void mavlink_data_handshake(Uint16 seq) {
+	// send mavlink message to request data stream
+	mavlink_msg_data_transmission_handshake_pack(
+	MAVLINK_SYSTEM_ID, MAV_COMP_ID_GIMBAL, &msg, MAVLINK_TYPE_UINT16_T,
+			0 /* size */, seq /* width */,
+			BOOTLOADER_VERSION /*uint16_t height*/, 0 /*uint16_t packets*/,
+			ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/, 0 /*uint8_t jpg_quality*/
+			);
+	Uint16 length;
+	length = mavlink_msg_to_send_buffer(buffer, &msg);
+	send_serial_port(buffer, length);
+}
+
+void clearBuffers(){
+	memset(&msg, 0, sizeof(msg));
+	memset(&status, 0, sizeof(status));
+	memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer[0]));
+	memset(&m_mavlink_status, 0, sizeof(m_mavlink_status[0]));
+}
 
 Uint32 MAVLINK_Flash()
 {
 	int getting_messages = 0;
-	Uint16 seq = 0, length;
+	Uint16 seq = 0;
 	FLASH_ST FlashStatus = {0};
 	Uint16  *Flash_ptr = (Uint16 *)APP_START;     // Pointer to a location in flash
     Uint16 blink_counter = 0;
     int idx1 = 0;
     Uint16 idx2 = 0;
 
-	memset(&msg, 0, sizeof(msg));
-	memset(&status, 0, sizeof(status));
-	memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer[0]));
-	memset(&m_mavlink_status, 0, sizeof(m_mavlink_status[0]));
+	clearBuffers();
 	setup_serial_port();
 
 	EALLOW;
@@ -108,21 +124,8 @@ Uint32 MAVLINK_Flash()
 			MAVLINK_send_heartbeat();
 
 		// send mavlink message to request data stream
-		mavlink_msg_data_transmission_handshake_pack(
-			MAVLINK_SYSTEM_ID,
-			MAV_COMP_ID_GIMBAL,
-			&msg,
-			MAVLINK_TYPE_UINT16_T,
-			0 /* size */,
-			seq /* width */,
-			BOOTLOADER_VERSION /*uint16_t height*/,
-			0 /*uint16_t packets*/,
-			ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/,
-			0 /*uint8_t jpg_quality*/
-		);
+		mavlink_data_handshake(seq);
 
-		length = mavlink_msg_to_send_buffer(buffer, &msg);
-		send_serial_port(buffer, length);
 		getting_messages = 1;
 
 		while(getting_messages) {
@@ -131,10 +134,7 @@ Uint32 MAVLINK_Flash()
 			memset(buffer, 0, sizeof(buffer[0])*BUFFER_LENGTH);
 			if((read_size = read_serial_port(buffer, BUFFER_LENGTH)) == 0) {
 				getting_messages = 0;
-				memset(&msg, 0, sizeof(msg));
-				memset(&status, 0, sizeof(status));
-				memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer[0]));
-				memset(&m_mavlink_status, 0, sizeof(m_mavlink_status[0]));
+				clearBuffers();
 			} else {
 				getting_messages = 1;
 				for(idx1 = 0; idx1 < read_size; idx1++) {
@@ -186,22 +186,8 @@ Uint32 MAVLINK_Flash()
 								}
 							}
 						} else if(inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE) {
-							// send mavlink message to request data stream
-							mavlink_msg_data_transmission_handshake_pack(
-								MAVLINK_SYSTEM_ID,
-								MAV_COMP_ID_GIMBAL,
-								&msg,
-								MAVLINK_TYPE_UINT16_T,
-								0 /* size */,
-								UINT16_MAX /* width */,
-								BOOTLOADER_VERSION /*uint16_t height*/,
-								0 /*uint16_t packets*/,
-								ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/,
-								0 /*uint8_t jpg_quality*/
-							);
 
-							length = mavlink_msg_to_send_buffer(buffer, &msg);
-							send_serial_port(buffer, length);
+							mavlink_data_handshake(UINT16_MAX);
 
 							/* must be done */
 							WatchDogEnable();
