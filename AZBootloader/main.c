@@ -2,6 +2,10 @@
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
+#include "mavlink_bootloader.h"
+#include "can_bootloader.h"
+#include "checksum.h"
+
 
 Uint32 SelectBootMode()
 {

@@ -5,6 +5,7 @@
 #include "checksum.h"
 #include "can_bootloader.h"
 #include "data.h"
+#include "can.h"
 
 unsigned int location = 0;
 

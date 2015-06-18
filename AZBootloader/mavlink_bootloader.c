@@ -4,6 +4,9 @@
 #include "hardware/HWSpecific.h"
 #include "led_red.h"
 
+#include "uart.h"
+#include "watchdog.h"
+
 
 #define	FLASH_F2806x 1
 #include "Flash2806x_API_Library.h"
@@ -261,6 +264,5 @@ Uint32 MAVLINK_Flash()
 	}
 
 	// reset?
-	return 0;
 }
 

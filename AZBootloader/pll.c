@@ -2,6 +2,7 @@
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
+#include "watchdog.h"
 
 // This function initializes the PLLCR register.
 //void InitPll(Uint16 val, Uint16 clkindiv)
