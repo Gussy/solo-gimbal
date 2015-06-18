@@ -8,6 +8,7 @@
 #include <ctype.h>
 
 static void gp_timeout(GPCmdResult reason);
+static bool gp_cmd_has_param(const GPCmd* c);
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
@@ -45,30 +46,42 @@ Uint16 gp_ready_for_cmd()
     return (gp_control_state == GP_CONTROL_STATE_IDLE) && !i2c_get_bb();
 }
 
+bool gp_cmd_has_param(const GPCmd* c)
+{
+    /*
+     * For the most part, commands have a parameter, queries never do.
+     * Commands are 2 uppercase characters, queries are 2 lowercase characters
+     */
+
+    if (islower(c->cmd[0]) || isupper(c->cmd[1])) {
+        return false;
+    }
+
+    // Need to special case 'DL', 'DA', and 'FO' commands, since they don't have parameters
+    if ((c->cmd[0] == 'F') && (c->cmd[1] == 'O')) {
+        return false;
+    }
+
+    if (c->cmd[0] == 'D' && (c->cmd[1] == 'L' || c->cmd[1] == 'A')) {
+        return false;
+    }
+
+    return true;
+}
+
 int gp_send_command(GPCmd* cmd)
 {
     if (gp_control_state == GP_CONTROL_STATE_IDLE) {
-        // Need to check if this is a command or a query.  Commands have a parameter, queries don't
-        // Commands are 2 uppercase characters, queries are 2 lowercase characters
-        if (isupper(cmd->cmd[0]) && isupper(cmd->cmd[1])) {
-            // This is a command
-            // Need to special case 'DL', 'DA', and 'FO' commands, since they don't have parameters
-            if (((cmd->cmd[0] == 'D') && ((cmd->cmd[1] == 'L') || (cmd->cmd[1] == 'A'))) ||
-                    ((cmd->cmd[0] == 'F') && (cmd->cmd[1] == 'O'))) {
-                request_cmd_buffer[0] = 0x2; // Length of 2 (2 command name bytes), with upper bit clear to indicate command originated from the gimbal (not the GoPro)
-                request_cmd_buffer[1] = cmd->cmd[0];
-                request_cmd_buffer[2] = cmd->cmd[1];
-            } else {
-                request_cmd_buffer[0] = 0x3; // Length of 3 (2 command name bytes, 1 parameter byte), with upper bit clear to indicate command originated from the gimbal (not the GoPro)
-                request_cmd_buffer[1] = cmd->cmd[0];
-                request_cmd_buffer[2] = cmd->cmd[1];
-                request_cmd_buffer[3] = cmd->cmd_parm;
-            }
+
+        request_cmd_buffer[1] = cmd->cmd[0];
+        request_cmd_buffer[2] = cmd->cmd[1];
+
+        // first byte is len, upper bit clear to indicate command originated from the gimbal (not the GoPro)
+        if (gp_cmd_has_param(cmd)) {
+            request_cmd_buffer[0] = 0x3;
+            request_cmd_buffer[3] = cmd->cmd_parm;
         } else {
-            // This is a query
-            request_cmd_buffer[0] = 0x2; // Length of 2 (2 query name bytes), with upper bit clear to indicate command originated from the gimbal (not the GoPro)
-            request_cmd_buffer[1] = cmd->cmd[0];
-            request_cmd_buffer[2] = cmd->cmd[1];
+            request_cmd_buffer[0] = 0x2;
         }
 
         // Clear the last command data

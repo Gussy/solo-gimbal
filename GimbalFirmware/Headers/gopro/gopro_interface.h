@@ -4,6 +4,8 @@
 #include "hardware/i2c.h"
 #include "PM_Sensorless-Settings.h"
 
+#include <stdbool.h>
+
 #define GP_COMMAND_REQUEST_SIZE 4
 #define GP_COMMAND_RESPONSE_SIZE 3
 #define GP_COMMAND_RECEIVE_BUFFER_SIZE 40
