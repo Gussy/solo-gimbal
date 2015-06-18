@@ -286,7 +286,7 @@ Uint32 can_init_fault_message_resend_counter = 0;
 
 void main(void)
 {
-	DeviceInit(APPLICATION_FIRMWARE);	// Device Life support & GPIO
+	DeviceInit();	// Device Life support & GPIO
 
 	// initialize flash
     board_hw_id = GetBoardHWID();
