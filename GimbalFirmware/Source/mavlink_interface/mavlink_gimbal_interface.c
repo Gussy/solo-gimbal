@@ -12,6 +12,7 @@
 #include "gopro/gopro_interface.h"
 #include "version_git.h"
 #include <stdio.h>
+#include "hardware/watchdog.h"
 
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
@@ -76,8 +77,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 			// something went wrong... but what do I do?
 		}
 		// reset
-		extern void WDogEnable(void);
-		WDogEnable();
+		WatchDogEnable();
 		
 		EALLOW;
 		// Cause a device reset by writing incorrect values into WDCHK
@@ -318,8 +318,7 @@ static void handle_reset_gimbal()
         cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
 
         // reset this axes
-        extern void WDogEnable(void);
-        WDogEnable();
+        WatchDogEnable();
         while(1)
         {}
 }
