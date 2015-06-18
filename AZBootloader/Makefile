@@ -85,7 +85,7 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 ###############################################################################
 # rules
 
-all: $(PROJ).hex
+all: $(PROJ).hex $(PROJ)_noapp.hex
 
 # generate data header from main fw image
 $(DATA_HDR): $(MAIN_FW)
@@ -98,9 +98,15 @@ $(DATA_HDR): $(MAIN_FW)
 $(OBJS): | $(DATA_HDR)
 
 $(PROJ).out: $(OBJS) $(LDSCRIPTS)
+	$(LD) $(LDFLAGS) --define=PACKAGE_APPLICATION $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
+
+$(PROJ)_noapp.out: $(OBJS) $(LDSCRIPTS)
 	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
 
 $(PROJ).hex: $(PROJ).out
+	$(HEX) -i $< -o $@ -order MS -romwidth 16
+
+$(PROJ)_noapp.hex: $(PROJ)_noapp.out
 	$(HEX) -i $< -o $@ -order MS -romwidth 16
 
 %.o: %.asm
