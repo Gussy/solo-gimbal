@@ -86,8 +86,8 @@ int gp_send_command(const GPCmd* cmd)
 
         // Clear the last command data
         last_cmd_response.cmd_response = 0x00;
-		last_cmd_response.cmd_status = GP_CMD_STATUS_UNKNOWN;
-		last_cmd_response.cmd_result = GP_CMD_UNKNOWN;
+        last_cmd_response.cmd_status = GP_CMD_STATUS_UNKNOWN;
+        last_cmd_response.cmd_result = GP_CMD_UNKNOWN;
 
         // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
         // this command, and this way a caller of gp_get_last_response can know what command the response goes with
@@ -200,6 +200,14 @@ int gp_request_power_off()
 
 int gp_get_request(Uint8 cmd_id)
 {
+    /*
+     * Called when a CAN msg has been received with a `gopro get request` msg type.
+     *
+     * Fire off the transaction for the requested cmd,
+     * and assume that the CAN layer will pick up the response
+     * via gp_get_last_get_response()
+     */
+
 	last_request_type = GP_REQUEST_GET;
 	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
 		GPCmd cmd;
@@ -223,7 +231,7 @@ int gp_get_request(Uint8 cmd_id)
 			case GOPRO_COMMAND_BATTERY:
 				cmd.cmd[0] = 'b';
 				cmd.cmd[1] = 'l';
-			break;
+            break;
 
 			default:
 				// Unsupported Command ID
@@ -244,6 +252,14 @@ int gp_get_request(Uint8 cmd_id)
 
 int gp_set_request(GPSetRequest* request)
 {
+    /*
+     * Called when a CAN msg has been received with a 'gopro set request' msg type.
+     *
+     * Forward the requested set cmd,
+     * and assume that the CAN layer will pick up the response
+     * via gp_get_last_set_response()
+     */
+
 	last_request_type = GP_REQUEST_SET;
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
