@@ -26,6 +26,7 @@ OBJS = \
     $(PROJ_ROOT)/can_bootloader.o														\
     $(PROJ_ROOT)/checksum.o																\
     $(PROJ_ROOT)/mavlink_bootloader.o 													\
+    $(PROJ_ROOT)/mavlink_interface.o 													\
     $(PROJ_ROOT)/uart.o																	\
     $(SHARED_ROOT)/F2806x/source/F2806x_GlobalVariableDefs_patched.o
 

@@ -6,7 +6,9 @@
 #include "led_red.h"
 
 #include "uart.h"
+#include "mavlink_interface.h"
 
+#include "mavlink_bootloader.h"
 
 #define	FLASH_F2806x 1
 #include "Flash2806x_API_Library.h"
@@ -29,15 +31,6 @@ mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];
 mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 
 
-#define BOOTLOADER_VERSION_MAJOR	0x02
-#define BOOTLOADER_VERSION_MINOR	0x07
-#define BOOTLOADER_VERSION			((BOOTLOADER_VERSION_MAJOR << 8) | BOOTLOADER_VERSION_MINOR)
-
-#define MAVLINK_SYSTEM_ID			1
-
-// Max payload of MAVLINK_MSG_ID_ENCAPSULATED_DATA message is 253 Bytes
-// Must be an even number or the uint8_t[] to uint16_t[] conversion will fail
-#define ENCAPSULATED_DATA_LENGTH 	252
 
 
 static Uint16 Example_CsmUnlock()
@@ -85,40 +78,8 @@ static Uint16 Example_CsmUnlock()
 #pragma    DATA_SECTION(buffer,"DMARAML5");
 mavlink_message_t msg, inmsg;
 mavlink_status_t status;
-#define BUFFER_LENGTH	300
 unsigned char buffer[BUFFER_LENGTH];
 
-void MAVLINK_send_heartbeat()
-{
-	Uint16 length;
-	mavlink_message_t heartbeat_msg;
-	mavlink_msg_heartbeat_pack(MAVLINK_SYSTEM_ID,
-								MAV_COMP_ID_GIMBAL,
-								&heartbeat_msg,
-								MAV_TYPE_GIMBAL,
-								MAV_AUTOPILOT_INVALID,
-								MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-								0, /* MAV_MODE_GIMBAL_UNINITIALIZED */
-								0  /* MAV_STATE_UNINIT */
-								);
-
-	length = mavlink_msg_to_send_buffer(buffer, &heartbeat_msg);
-	send_serial_port(buffer, length);
-}
-
-void send_mavlink_statustext(char* message)
-{
-	Uint16 length;
-    mavlink_message_t status_msg;
-    mavlink_msg_statustext_pack(MAVLINK_SYSTEM_ID,
-								MAV_COMP_ID_GIMBAL,
-								&status_msg,
-								MAV_SEVERITY_DEBUG,
-								message);
-
-    length = mavlink_msg_to_send_buffer(buffer, &status_msg);
-    send_serial_port(buffer, length);
-}
 
 Uint32 MAVLINK_Flash()
 {
