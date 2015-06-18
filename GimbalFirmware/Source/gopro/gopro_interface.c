@@ -71,40 +71,39 @@ bool gp_cmd_has_param(const GPCmd* c)
 
 int gp_send_command(const GPCmd* cmd)
 {
-    if (gp_control_state == GP_CONTROL_STATE_IDLE) {
-
-        request_cmd_buffer[1] = cmd->cmd[0];
-        request_cmd_buffer[2] = cmd->cmd[1];
-
-        // first byte is len, upper bit clear to indicate command originated from the gimbal (not the GoPro)
-        if (gp_cmd_has_param(cmd)) {
-            request_cmd_buffer[0] = 0x3;
-            request_cmd_buffer[3] = cmd->cmd_parm;
-        } else {
-            request_cmd_buffer[0] = 0x2;
-        }
-
-        // Clear the last command data
-        last_cmd_response.cmd_response = 0x00;
-        last_cmd_response.cmd_status = GP_CMD_STATUS_UNKNOWN;
-        last_cmd_response.cmd_result = GP_CMD_UNKNOWN;
-
-        // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
-        // this command, and this way a caller of gp_get_last_response can know what command the response goes with
-        last_cmd_response.cmd[0] = cmd->cmd[0];
-        last_cmd_response.cmd[1] = cmd->cmd[1];
-
-        // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
-        gp_assert_intr();
-
-        // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
-        timeout_counter = 0;
-        gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
-
-        return 0;
-    } else {
+    if (gp_control_state != GP_CONTROL_STATE_IDLE) {
         return -1;
     }
+
+    request_cmd_buffer[1] = cmd->cmd[0];
+    request_cmd_buffer[2] = cmd->cmd[1];
+
+    // first byte is len, upper bit clear to indicate command originated from the gimbal (not the GoPro)
+    if (gp_cmd_has_param(cmd)) {
+        request_cmd_buffer[0] = 0x3;
+        request_cmd_buffer[3] = cmd->cmd_parm;
+    } else {
+        request_cmd_buffer[0] = 0x2;
+    }
+
+    // Clear the last command data
+    last_cmd_response.cmd_response = 0x00;
+    last_cmd_response.cmd_status = GP_CMD_STATUS_UNKNOWN;
+    last_cmd_response.cmd_result = GP_CMD_UNKNOWN;
+
+    // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
+    // this command, and this way a caller of gp_get_last_response can know what command the response goes with
+    last_cmd_response.cmd[0] = cmd->cmd[0];
+    last_cmd_response.cmd[1] = cmd->cmd[1];
+
+    // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
+    gp_assert_intr();
+
+    // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
+    timeout_counter = 0;
+    gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
+
+    return 0;
 }
 
 Uint8 gp_get_new_heartbeat_available()
