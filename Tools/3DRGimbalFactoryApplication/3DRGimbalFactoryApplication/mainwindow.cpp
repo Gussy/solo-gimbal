@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->baudRate->addItem("57600", 57600);
     ui->baudRate->addItem("115200", 115200);
     ui->baudRate->addItem("230400", 230400);
+    ui->baudRate->setCurrentIndex(4);
 
     connect(&m_connectionTimeoutTimer, SIGNAL(timeout()), this, SLOT(connectionTimeout()));
 
@@ -74,6 +75,7 @@ void MainWindow::on_connectButton_clicked()
     // Initialize and start the serial interface thread
     m_serialThreadObj = new SerialInterfaceThread(ui->comPort->currentText(), ui->baudRate->currentData().toInt());
     m_serialThreadObj->moveToThread(&m_serialThread);
+    m_commPort = ui->comPort->currentText();
     connect(&m_serialThread, SIGNAL(started()), m_serialThreadObj, SLOT(run()));
     connect(&m_serialThread, SIGNAL(finished()), m_serialThreadObj, SLOT(deleteLater()));
     connect(m_serialThreadObj, SIGNAL(receivedHeartbeat()), this, SLOT(receivedGimbalHeartbeat()));
@@ -493,7 +495,7 @@ void MainWindow::on_factoryTestsButton_clicked()
 
 void MainWindow::on_runWobbleTestButton_clicked()
 {
-    WobbleTestDialog dialog(m_serialNum);
+    WobbleTestDialog dialog(m_serialNum, m_commPort);
 
     connect(this, SIGNAL(receivedGimbalReport(float, float, float)), &dialog, SLOT(receivedGimbalReport(float, float, float)));
     dialog.exec();

@@ -72,6 +72,7 @@ private:
     Ui::MainWindow *ui;
 
     QString m_serialNum;
+    QString m_commPort;
     QThread m_serialThread;
     SerialInterfaceThread* m_serialThreadObj;
     QTimer m_connectionTimeoutTimer;

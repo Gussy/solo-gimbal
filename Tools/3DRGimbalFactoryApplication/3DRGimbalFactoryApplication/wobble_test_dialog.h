@@ -21,7 +21,7 @@ class WobbleTestDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit WobbleTestDialog(const QString serNum, QWidget *parent = 0);
+    explicit WobbleTestDialog(const QString serNum, const QString comPort, QWidget *parent = 0);
     ~WobbleTestDialog();
 
 
@@ -35,6 +35,8 @@ private:
     const int COUNTS;
     const int RANGE;
     const QString GIM_SERIAL_NUM;
+    const QString COMM_PORT;
+    const QString MAX_ALLOWED_ALL_AXES;
 
     bool m_pause;
     QElapsedTimer m_elapsedTime;
