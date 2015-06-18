@@ -26,6 +26,7 @@
 #include "hardware/encoder.h"
 #include "hardware/led.h"
 #include "flash/flash.h"
+#include "hardware/interrupts.h"
 
 #include <math.h>
 #include <string.h>

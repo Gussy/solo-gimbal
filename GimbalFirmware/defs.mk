@@ -39,6 +39,7 @@ OBJS = \
     $(SHARED_ROOT)/src/hardware/uart.o 													\
     $(SHARED_ROOT)/src/hardware/pll.o 													\
     $(SHARED_ROOT)/src/hardware/watchdog.o												\
+    $(SHARED_ROOT)/src/hardware/interrupts.o											\
     $(PROJ_ROOT)/Source/helpers/fault_handling.o 										\
     $(PROJ_ROOT)/Source/helpers/ringbuf.o 												\
     $(PROJ_ROOT)/Source/mavlink_interface/mavlink_gimbal_interface.o 					\
