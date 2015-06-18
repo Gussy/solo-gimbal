@@ -28,6 +28,7 @@ WobbleTestDialog::WobbleTestDialog(QString serNum, QString comPort, QWidget *par
     setupPlot(ui->customPlot_2);
     setupPlot(ui->customPlot_3);
 
+
     m_xCount = 0;
     m_xFailOccurred = false;
     m_xGyro = "0";
@@ -76,7 +77,7 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
     {
         QDateTime logTime = QDateTime::currentDateTime();
         double key = logTime.toMSecsSinceEpoch()/1000.0;
-        double max = 0;
+        //double max = 0;
 
         /*
          *
@@ -105,8 +106,8 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
                 m_xCount = COUNTS - 1;
             }
 
-            max = qMax(qAbs(m_xMaxGyro.toDouble()),qAbs(m_xMinGyro.toDouble()));
-            ui->customPlot->yAxis->setRange(1.2 * max, -1.2 * max);
+            //max = qMax(qAbs(m_xMaxGyro.toDouble()),qAbs(m_xMinGyro.toDouble()));
+            //ui->customPlot->yAxis->setRange(1.2 * max, -1.2 * max);
 
             //plot watermarks
             ui->customPlot->graph(1)->addData(key, m_xMaxGyro.toFloat());
@@ -189,8 +190,8 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
                 m_yCount = COUNTS - 1;
             }
 
-            max = qMax(qAbs(m_yMaxGyro.toDouble()),qAbs(m_yMinGyro.toDouble()));
-            ui->customPlot_2->yAxis->setRange(1.2 * max, -1.2 * max);
+            //max = qMax(qAbs(m_yMaxGyro.toDouble()),qAbs(m_yMinGyro.toDouble()));
+            //ui->customPlot_2->yAxis->setRange(1.2 * max, -1.2 * max);
 
             ui->customPlot_2->graph(1)->addData(key, m_yMaxGyro.toFloat());
             ui->customPlot_2->graph(2)->addData(key, m_yMinGyro.toFloat());
@@ -271,8 +272,8 @@ void WobbleTestDialog::receivedGimbalReport(float gyroX, float gyroY, float gyro
                 m_zCount = COUNTS - 1;
             }
 
-            max = qMax(qAbs(m_zMaxGyro.toDouble()),qAbs(m_zMinGyro.toDouble()));
-            ui->customPlot_3->yAxis->setRange(1.2 * max, -1.2 * max);
+            //max = qMax(qAbs(m_zMaxGyro.toDouble()),qAbs(m_zMinGyro.toDouble()));
+            //ui->customPlot_3->yAxis->setRange(1.2 * max, -1.2 * max);
 
             ui->customPlot_3->graph(1)->addData(key, m_zMaxGyro.toFloat());
             ui->customPlot_3->graph(2)->addData(key, m_zMinGyro.toFloat());
@@ -371,7 +372,8 @@ void WobbleTestDialog::setupPlot(QCustomPlot *customPlot)
   customPlot->graph(1)->setPen(QPen(Qt::red));
 
   customPlot->addGraph(); //min watermark
-  customPlot->graph(2)->setPen(QPen(Qt::green));
+  customPlot->graph(2)->setPen(QPen(Qt::red));
+  customPlot->yAxis->setRange(1.5 * MAX_ALLOWED_ALL_AXES.toDouble(), -1.5 * MAX_ALLOWED_ALL_AXES.toDouble());
   m_elapsedTime.start();
 
 

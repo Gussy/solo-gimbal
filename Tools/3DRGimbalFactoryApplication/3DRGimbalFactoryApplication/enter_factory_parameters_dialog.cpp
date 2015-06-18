@@ -155,7 +155,16 @@ void EnterFactoryParametersDialog::on_skipButton_clicked()
 
 void EnterFactoryParametersDialog::on_buttonBox_clicked()
 {
-    updateGeneratedSerialNumber();
-    factoryParametersLoaded();
-    accept();
+    // First, make sure the user really wants to run the axis calibration
+    QMessageBox msg;
+    msg.setText("WARNING");
+    msg.setInformativeText("This action could currupt parameters stored in flash if this gimbal has had a previous version of firmware. Are you sure you would like to submit these changes?");
+    msg.setIcon(QMessageBox::Warning);
+    msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msg.setDefaultButton(QMessageBox::No);
+    if (msg.exec() == QMessageBox::Yes) {
+        updateGeneratedSerialNumber();
+        factoryParametersLoaded();
+        accept();
+    }
 }
