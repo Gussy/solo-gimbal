@@ -1,3 +1,8 @@
+#include "boot/Boot.h"
+#include "hardware/led.h"
+#include "hardware/device_init.h"
+#include "hardware/HWSpecific.h"
+#include "led_red.h"
 
 void CAN_Init()
 {

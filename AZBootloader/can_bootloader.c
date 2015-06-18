@@ -1,3 +1,9 @@
+#include "boot/Boot.h"
+#include "hardware/led.h"
+#include "hardware/device_init.h"
+#include "hardware/HWSpecific.h"
+#include "can.h"
+#include "checksum.h"
 
 // External functions
 extern void CopyData(void);

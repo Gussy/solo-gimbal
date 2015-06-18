@@ -1,3 +1,7 @@
+#include "boot/Boot.h"
+#include "hardware/led.h"
+#include "hardware/device_init.h"
+#include "hardware/HWSpecific.h"
 
 //---------------------------------------------------------------
 // This module disables the watchdog timer.

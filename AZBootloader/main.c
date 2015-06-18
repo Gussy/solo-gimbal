@@ -1,14 +1,7 @@
 #include "boot/Boot.h"
-#include "data.h"
-
-#define	FLASH_F2806x 1
-#include "Flash2806x_API_Library.h"
-
-#include "F2806x_SysCtrl.h"
-
-#define STATUS_LED_ON()				{GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;}
-#define STATUS_LED_OFF()			{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
-#define STATUS_LED_TOGGLE()			{GpioDataRegs.GPATOGGLE.bit.GPIO7 = 1;}
+#include "hardware/led.h"
+#include "hardware/device_init.h"
+#include "hardware/HWSpecific.h"
 
 Uint32 SelectBootMode()
 {

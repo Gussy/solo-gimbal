@@ -7,6 +7,7 @@ INCS = \
     -I=$(SHARED_ROOT)/headers                                                           \
     -I=$(SHARED_ROOT)/mavlink_library                                                   \
     -I=$(SHARED_ROOT)/mavlink_library/common                                            \
+    -I=$(PROJ_ROOT)/    																\
     -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_common/include    \
     -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_headers/include   \
     -I=$(PROJ_ROOT)/../controlSUITE/libs/utilities/flash_api/2806x/v100/include         \

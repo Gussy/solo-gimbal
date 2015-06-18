@@ -1,9 +1,17 @@
-
-#define BOOTLOADER_KEY_VALUE_8BIT	0x08AA
+#include "boot/Boot.h"
+#include "hardware/led.h"
+#include "hardware/device_init.h"
+#include "hardware/HWSpecific.h"
+#include "checksum.h"
+#include "can_bootloader.h"
+#include "data.h"
 
 unsigned int location = 0;
 
-static void reset_datapointer(void) {
+// External functions
+extern Uint32 GetLongData(void);
+
+void reset_datapointer(void) {
 	location = 0;
 }
 

@@ -1,3 +1,14 @@
+#include "boot/Boot.h"
+#include "hardware/led.h"
+#include "hardware/device_init.h"
+#include "hardware/HWSpecific.h"
+#include "led_red.h"
+
+
+#define	FLASH_F2806x 1
+#include "Flash2806x_API_Library.h"
+#include "F2806x_SysCtrl.h"
+
 
 //#define MAVLINK_COMM_NUM_BUFFERS 1
 #define MAVLINK_EXTERNAL_RX_BUFFER
