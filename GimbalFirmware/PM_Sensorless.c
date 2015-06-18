@@ -34,11 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Prototype statements for functions found within this file.
-void DeviceInit();
-void MemCopy();
-void InitFlash();
-
 #define getTempSlope() (*(int (*)(void))0x3D7E82)();
 #define getTempOffset() (*(int (*)(void))0x3D7E85)();
 // State Machine function prototypes
