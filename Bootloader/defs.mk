@@ -14,9 +14,9 @@ INCS = \
 OBJS = \
     $(SHARED_ROOT)/boot/ITRAPIsr.o 														\
     $(SHARED_ROOT)/boot/Init_Boot.o 													\
-    $(SHARED_ROOT)/boot/Shared_Boot.o \
+    $(SHARED_ROOT)/boot/Shared_Boot.o 													\
     $(SHARED_ROOT)/boot/Vectors_Boot.o 													\
-    $(SHARED_ROOT)/src/hardware/led.o \
+    $(SHARED_ROOT)/src/hardware/led.o 													\
     $(SHARED_ROOT)/src/hardware/pll.o 													\
     $(PROJ_ROOT)/main.o 																\
     $(PROJ_ROOT)/can.o 																	\

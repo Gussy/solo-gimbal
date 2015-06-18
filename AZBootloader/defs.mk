@@ -16,7 +16,7 @@ INCS = \
 OBJS = \
     $(SHARED_ROOT)/boot/ITRAPIsr.o 														\
     $(SHARED_ROOT)/boot/Init_Boot.o 													\
-    $(SHARED_ROOT)/boot/Shared_Boot.o \
+    $(SHARED_ROOT)/boot/Shared_Boot.o 													\
     $(SHARED_ROOT)/boot/Vectors_Boot.o 													\
     $(SHARED_ROOT)/src/hardware/pll.o 													\
     $(PROJ_ROOT)/main.o 																\
@@ -30,5 +30,5 @@ OBJS = \
     $(SHARED_ROOT)/F2806x/source/F2806x_GlobalVariableDefs_patched.o
 
 LIBS = \
-    -l"libc.a" \
+    -l"libc.a" 																			\
     -l2806x_BootROM_API_TABLE_Symbols_fpu32.lib
