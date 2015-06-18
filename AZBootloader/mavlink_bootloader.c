@@ -2,10 +2,10 @@
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
+#include "hardware/watchdog.h"
 #include "led_red.h"
 
 #include "uart.h"
-#include "watchdog.h"
 
 
 #define	FLASH_F2806x 1
