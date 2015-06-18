@@ -30,7 +30,7 @@ def handle_file(args, link):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
-    parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default='0.0.0.0:14550')
+    parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default=None)
     parser.add_argument("-s", "--show", help="Show all useful gimbal parameters", action='store_true')
     parser.add_argument("-v", "--validate", help="Check gimbal parameters to see if they have valid values", action='store_true')
     parser.add_argument("-d", "--defaults", help="Reset gimbal parameters to default values", action='store_true')

@@ -14,8 +14,16 @@ TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
 
 def open_comm(port, baudrate):
-    mavserial = mavutil.mavlink_connection(device=port,
-        baud=baudrate)
+    
+    if not port:
+        serial_list = mavutil.auto_detect_serial(preferred_list=['*FTDI*',"*Arduino_Mega_2560*", "*3D_Robotics*", "*USB_to_UART*", '*PX4*', '*FMU*'])
+        if len(serial_list) == 1:
+            port = serial_list[0].device
+            print("Connecting via serial port %s" % port)
+        else:
+            port = '0.0.0.0:14550'    
+            print("Connecting via WiFi on port %s" % port)
+    mavserial = mavutil.mavlink_connection(device=port, baud=baudrate)
     link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
     link.target_sysid = TARGET_SYSTEM_ID
     link.target_compid = TARGET_COMPONENT_ID
