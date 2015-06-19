@@ -72,7 +72,7 @@ LDFLAGS += --reread_libs --xml_link_info=$(PROJ)_linkinfo.xml --rom_model
 # other deps
 
 # JTAG Programmer configuration file
-JTAG_CONFIG	:= $(PROJ_ROOT)/targetConfigs/TMS320F28067.ccxml
+JTAG_CONFIG	:= $(PROJ_ROOT)/targetConfigs/TMS320F28067_$(JTAG_TOOL).ccxml
 
 
 ###############################################################################
