@@ -54,6 +54,16 @@ Uint32 SelectBootMode()
 
 	  EALLOW;
 
+	  // Enable the beacon LED on the elevation board only
+	  if(GetBoardHWID() == EL) {
+	  	  init_led_periph();
+	  	  init_led_interrupts();
+	  	  init_led();
+
+	  	  LED_RGBA rgba_blank = {0, 0, 0, 0};
+	  	  led_set_mode(LED_MODE_OFF, rgba_blank, 0);
+	   }
+
 	  EntryAddr = CAN_Boot();
 	return EntryAddr;
 }

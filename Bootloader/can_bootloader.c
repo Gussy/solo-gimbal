@@ -13,18 +13,10 @@ extern Uint16 CAN_GetWordData();
 #pragma   DATA_SECTION(endRam,".endmem");
 Uint16 endRam;
 
-extern LED_RGBA rgba_amber;
 int location = 0;
 
 Uint32 CAN_Boot()
 {
-   if(GetBoardHWID() == EL) {
-	   init_led_periph();
-	   init_led_interrupts();
-	   init_led();
-	   led_set_mode(LED_MODE_OFF, rgba_amber, 0);
-   }
-
    Uint32 EntryAddr;
 
    location = 0;
