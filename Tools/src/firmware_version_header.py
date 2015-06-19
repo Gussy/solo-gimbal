@@ -51,6 +51,10 @@ def gitBranch(os_git_command):
 	re_branch = re.search(ur"\*\s(.*)\n", str(p.read()))
 	git_branch = re_branch.group(1)
 	p.close()
+	if re.search(ur"(no branch)", git_branch):
+		git_branch = "no branch"
+	elif re.search(ur"(detached) from [a-f0-9]{7}", git_branch):
+		git_branch = "detached"
 	return git_branch
 
 if __name__ == '__main__':
