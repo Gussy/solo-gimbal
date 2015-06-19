@@ -1,6 +1,8 @@
 
 # we expect PROJ_ROOT and TI_ROOT to be defined by whoever included us
 
+F2806X_COMMON := $(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_common/
+
 INCS = \
     -I=$(TI_ROOT)/include                                                               \
     -I=$(PROJ_ROOT)/Headers/gopro                                                       \
@@ -9,7 +11,7 @@ INCS = \
     -I=$(SHARED_ROOT)/mavlink_library                                                   \
     -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_headers/include   \
     -I=$(PROJ_ROOT)/../controlSUITE/libs/math/IQmath/v15c/include                       \
-    -I=$(PROJ_ROOT)/../controlSUITE/device_support/f2806x/v100/F2806x_common/include    \
+    -I=$(F2806X_COMMON)/include                                                         \
     -I=$(PROJ_ROOT)/../controlSUITE/development_kits/~SupportFiles/F2806x_headers       \
     -I=$(PROJ_ROOT)/../controlSUITE/libs/app_libs/motor_control/math_blocks/v3.1        \
     -I=$(PROJ_ROOT)/../controlSUITE/libs/utilities/flash_api/2806x/v100/include
@@ -40,7 +42,7 @@ OBJS = \
     $(SHARED_ROOT)/src/hardware/pll.o 													\
     $(SHARED_ROOT)/src/hardware/watchdog.o												\
     $(SHARED_ROOT)/src/hardware/interrupts.o											\
-    $(SHARED_ROOT)/src/flash/flash_init.o											\
+    $(SHARED_ROOT)/src/flash/flash_init.o											    \
     $(PROJ_ROOT)/Source/helpers/fault_handling.o 										\
     $(PROJ_ROOT)/Source/helpers/ringbuf.o 												\
     $(PROJ_ROOT)/Source/mavlink_interface/mavlink_gimbal_interface.o 					\
@@ -51,8 +53,8 @@ OBJS = \
     $(PROJ_ROOT)/Source/parameters/load_axis_parms_state_machine.o 						\
     $(PROJ_ROOT)/Source/parameters/mavlink_parameter_interface.o 						\
     $(PROJ_ROOT)/Source/F2806x_GlobalVariableDefs.o 									\
-    $(PROJ_ROOT)/Source/F2806x_usDelay.o 												\
-    $(PROJ_ROOT)/Source/F2806x_CodeStartBranch.o 										\
+    $(F2806X_COMMON)/source/F2806x_usDelay.o                                            \
+    $(F2806X_COMMON)/source/F2806x_CodeStartBranch.o                                    \
     $(PROJ_ROOT)/PM_Sensorless.o
 
 LIBS = \
