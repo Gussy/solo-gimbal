@@ -16,6 +16,8 @@ include defs.mk
 # Disable implicit rules - we don't rely on them, and this is faster.
 .SUFFIXES:
 
+JTAG_TOOL = XDS500
+#JTAG_TOOL = XDS100v3
 
 ###############################################################################
 # executables
