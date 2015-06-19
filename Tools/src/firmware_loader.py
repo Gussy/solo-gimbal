@@ -111,7 +111,7 @@ def update(firmware_file, link):
     image = load_firmware(firmware_file)
     binary = append_checksum(image)  
     
-    start_bootloader(link)          
+    start_bootloader(link)
     upload_data(link, binary)
     finish_upload(link)
     

@@ -132,7 +132,7 @@ def validate_gains(link):
     if (validate_gain_axis(link, 'PITCH', EXPECTED_PITCH_P, EXPECTED_PITCH_I, EXPECTED_PITCH_D) and
         validate_gain_axis(link, 'ROLL',  EXPECTED_ROLL_P, EXPECTED_ROLL_I, EXPECTED_ROLL_D) and
         validate_gain_axis(link, 'YAW',   EXPECTED_YAW_P, EXPECTED_YAW_I, EXPECTED_YAW_D) and
-        validate_k_rate(link,EXPECTED_K_RATE)):
+        validate_k_rate(link, EXPECTED_K_RATE)):
         print 'Gains   \t- PASS'
     else:
         print 'Gains   \t- FAIL - restore parameters to default values (-d)'

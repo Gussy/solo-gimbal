@@ -5,7 +5,7 @@ Utility for loading firmware into the 3DR Gimbal.
 
 """
 import sys
-import setup_mavlink,setup_param
+import setup_mavlink, setup_param
 from setup_param import getAxisCalibrationParam
 
 axis_enum = ['PITCH', 'ROLL', 'YAW']

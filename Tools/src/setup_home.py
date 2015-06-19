@@ -11,9 +11,9 @@ from math import degrees
 
 
 NUMBER_OF_SAMPLES = 200
-ENCODER_COUNTS_PER_RADIAN = 1000.0/(2*math.pi)
+ENCODER_COUNTS_PER_RADIAN = 1000.0 / (2 * math.pi)
 
-def getAverage(link,get_variable, sample_count =  NUMBER_OF_SAMPLES):
+def getAverage(link,get_variable, sample_count=NUMBER_OF_SAMPLES):
     sum_angles = Vector3()
     for i in range(sample_count):
         angles = get_variable(link)

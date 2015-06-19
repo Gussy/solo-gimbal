@@ -2,7 +2,6 @@
 
 '''
 from pymavlink import mavutil
-
 from pymavlink.mavutil import mavlink, mavserial
 import setup_comutation
 from pymavlink.rotmat import Vector3
@@ -84,7 +83,7 @@ def send_gimbal_control(link,rate):
     link.gimbal_control_send(link.target_sysid, link.target_compid,rate.x,rate.y,rate.z)
        
 def reset_gimbal(link):
-    link.file.mav.command_long_send(link.target_sysid, link.target_compid,42501,0,0,0,0,0,0,0,0)
+    link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42501, 0, 0, 0, 0, 0, 0, 0, 0)
     result = link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
     if result:
         return True
@@ -124,7 +123,7 @@ def receive_home_offset_result(link):
     return link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
 
 def start_home_calibration(link):    
-    return link.file.mav.command_long_send(link.target_sysid, link.target_compid,42500,0,0,0,0,0,0,0,0)
+    return link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42500, 0, 0, 0, 0, 0, 0, 0, 0)
 
 def requestCalibration(link):
-    return link.file.mav.command_long_send(link.target_sysid, link.target_compid,42503,0,0,0,0,0,0,0,0)
+    return link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42503, 0, 0, 0, 0, 0, 0, 0, 0)
