@@ -4,15 +4,11 @@
 struct flash_param_struct_0000 flash_params =
 {
     0x0000,                     // Flash Struct ID
-    0,                          // Board ID
-    0,                          // Other ID
 	0x00000000,                 // Software version number, loaded from compiled in version information at boot time
-    0x00000000,                 // Assembly date
     0x00000000,                 // Assembly time
     0x00000000,                 // Serial number part 1 (part code, design, language/country)
     0x00000000,                 // Serial number part 2 (option, year, month)
     0x00000000,                 // Serial number part 3 (incrementing serial number per month)
-    115,                        // Mavlink baud rate
     // ***************************************************************
     // NOTE: These differ per gimbal, and are loaded from flash at boot
     // time, so we default these to 0 here to force and auto-calibration
@@ -28,13 +24,6 @@ struct flash_param_struct_0000 flash_params =
         0.0,      // EL
         0.0,      // AZ
         0.0       // ROLL
-    },
-    // ***************************************************************
-    // Axis home positions
-    {
-        5090,      // EL
-        4840,      // AZ
-        4993       // ROLL
     },
     // Rate PID P gains
     {
@@ -60,36 +49,6 @@ struct flash_param_struct_0000 flash_params =
         32768.0,// AZ
         32768.0 // ROLL
     },
-    // Position PID P gains
-	{
-		5.0, // EL
-		5.0, // AZ
-		5.0  // ROLL
-	},
-	// Position PID I gains
-	{
-		0.0, // EL
-		0.0, // AZ
-		0.0  // ROLL
-	},
-	// Position PID D gains
-	{
-		0.0, // EL
-		0.0, // AZ
-		0.0  // ROLL
-	},
-	// Position PID windup limits
-	{
-		2000.0, // EL
-		2000.0, // AZ
-		2000.0  // ROLL
-	},
-	// Gyro offsets
-	{
-		0.0, // EL
-		0.0, // AZ
-		0.0  // ROLL
-	},
     // Torque Loop PID Kp
     {
         0.8,    // EL
@@ -128,6 +87,4 @@ struct flash_param_struct_0000 flash_params =
     },
     0.0,			// Pointing loop gain
 	0.0,				// Message brodcasting
-    0.0,           // Balance axis (only used when balance mode is compiled in)
-    20000.0        // Balance step time in ms (only used when balance mode is compiled in)
 };
