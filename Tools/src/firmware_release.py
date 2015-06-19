@@ -35,7 +35,7 @@ desc['git_identity'] = gitIdentity(os_git_command)
 git_branch = gitBranch(os_git_command)
 
 # Use the branch name if it's an off-master release
-if not args.release and git_branch != "master":
+if not args.release and git_branch not in ["master", "detached", "no branch"]:
 	desc['release'] = git_branch
 
 # Version is extracted from the git identity
