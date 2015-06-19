@@ -5,9 +5,8 @@ Utility for building a release firmware bundle
 
 """
 
-from firmware_version_header import osGitCommand, gitIdentity, gitBranch
 import argparse, base64, json, os, subprocess, time, zlib, re
-
+from firmware_git_tools import osGitCommand, gitIdentity, gitBranch
 
 firmware_prefix = "gimbal_firmware_"
 firmware_extension = "ax"
