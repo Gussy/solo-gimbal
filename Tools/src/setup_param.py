@@ -8,7 +8,8 @@ from pymavlink.mavparm import MAVParmDict
 from pymavlink.dialects.v10.ardupilotmega import MAV_PARAM_TYPE_REAL32
 from pymavlink.rotmat import Vector3
 
-def fetch_param(link, param, timeout=10):
+# A timeout of 10 causes windows to choke and fail
+def fetch_param(link, param, timeout=2):
     # Get a parameter
     link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
     # Wait 10 seconds for a response

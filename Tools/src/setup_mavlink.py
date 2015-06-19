@@ -99,7 +99,7 @@ def send_bootloader_data(link, sequence_number, data):
 
 def getCalibrationState(link):
     while(True):
-        msg_status = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=10)
+        msg_status = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=5)
         if msg_status is None:
             return None
         if msg_status.command == 42504:
@@ -107,7 +107,7 @@ def getCalibrationState(link):
 
 def getCalibrationProgress(link):
     while(True):
-        msg_progress = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=10)
+        msg_progress = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=5)
         if msg_progress is None:
             return None
         if msg_progress.command == 42502:

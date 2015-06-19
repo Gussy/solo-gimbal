@@ -86,7 +86,7 @@ def upload_data(link, binary):
     # Loop until we are finished
     end_idx = 0
     while (end_idx < len(binary)):
-        msg = get_handshake_msg(link,timeout=10)        
+        msg = get_handshake_msg(link, timeout=1) # Note: If this timeout is 10, windows will choke and send a block every 10s...
         end_idx = send_block(link, binary, msg)
         
         text = "\rUpload %2.2fkB of %2.2fkB - %d%%     " % (end_idx/1024.0, len(binary)/1024.0, (100.0*end_idx)/len(binary))
@@ -98,7 +98,7 @@ def finish_upload(link):
     """Send an "end of transmission" signal to the target, to cause a target reset""" 
     while True:
         setup_mavlink.reset_into_bootloader(link)
-        msg = setup_mavlink.wait_handshake(link.file, timeout=10)  
+        msg = setup_mavlink.wait_handshake(link.file, timeout=10)
         if msg == None:
             print_and_flush("Timeout\n")
             break
