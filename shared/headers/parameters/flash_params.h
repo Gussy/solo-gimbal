@@ -14,9 +14,9 @@ struct flash_param_struct_0000 {
 	Uint32 ser_num_1;
 	Uint32 ser_num_2;
 	Uint32 ser_num_3;
+	float commutation_slope[AXIS_CNT];
+	float commutation_icept[AXIS_CNT];
 	Uint32 mavlink_baud_rate;
-	float AxisCalibrationSlopes[AXIS_CNT];
-	float AxisCalibrationIntercepts[AXIS_CNT];
 	float AxisHomePositions[AXIS_CNT];
 	float rate_pid_p[AXIS_CNT];
 	float rate_pid_i[AXIS_CNT];
