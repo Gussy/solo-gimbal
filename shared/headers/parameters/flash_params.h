@@ -4,7 +4,7 @@
 #include "hardware/HWSpecific.h"
 #include "Flash2806x_API_Library.h"
 
-struct flash_param_struct_0000 {
+struct flash_param_struct_0001 {
 	Uint16 flash_struct_id;
 	Uint32 sys_swver;
 	Uint32 assy_time;
@@ -27,7 +27,7 @@ struct flash_param_struct_0000 {
 	float offset_gyro[AXIS_CNT];
 };
 
-extern struct flash_param_struct_0000 flash_params;
+extern struct flash_param_struct_0001 flash_params;
 
 
 #endif /* FLASH_PARAMS_H_ */

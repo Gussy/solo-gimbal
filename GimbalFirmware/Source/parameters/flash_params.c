@@ -5,11 +5,11 @@
 // time, so we default these to 0 here to force and auto-calibration
 // if there are no previously saved
 
-struct flash_param_struct_0000 flash_params =
+struct flash_param_struct_0001 flash_params =
 {
 		0x0001,                     // Flash Struct ID
 		0x00000000,                 // Software version number, loaded from compiled in version information at boot time
-		0x00000000,                 // Assembly time
+		0x00000000,                 // Unix timestamp (seconds since Jan 01 1970 UTC)
 		0x00000000,                 // Serial number part 1 (part code, design, language/country)
 		0x00000000,                 // Serial number part 2 (option, year, month)
 		0x00000000,                 // Serial number part 3 (incrementing serial number per month)
