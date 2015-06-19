@@ -23,7 +23,7 @@ include defs.mk
 CC      := $(TI_ROOT)/bin/cl2000
 LD      := $(TI_ROOT)/bin/cl2000
 HEX     := $(TI_ROOT)/bin/hex2000
-
+TILOAD  := $(TI_ROOT)../../../ccs_base/scripting/examples/loadti/loadti.sh
 
 ###############################################################################
 # common flags
@@ -74,6 +74,8 @@ LDFLAGS += --reread_libs --xml_link_info=$(PROJ)_linkinfo.xml --rom_model
 MAIN_FW := $(PROJ_ROOT)/../GimbalFirmware/PM_Sensorless_F2806x.out
 DATA_HDR := data.h
 
+# JTAG Programmer configuration file
+JTAG_CONFIG	:= $(PROJ_ROOT)/targetConfigs/TMS320F28067.ccxml
 
 ###############################################################################
 # Used libraries
@@ -85,6 +87,9 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 # rules
 
 all: $(PROJ).hex
+
+flash: all
+	$(TILOAD) -a -c=$(JTAG_CONFIG) $(PROJ).hex
 
 # generate data header from main fw image
 $(DATA_HDR): $(MAIN_FW)
@@ -108,7 +113,7 @@ $(PROJ).hex: $(PROJ).out
 %.o: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -fe $@
 
-.PHONY: all clean
+.PHONY: all clean flash
 
 clean:
 	rm -f $(PROJ).* $(PROJ)_linkinfo.xml

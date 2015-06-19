@@ -27,6 +27,7 @@ HEX     := $(TI_ROOT)/bin/hex2000
 
 RELEASE_GEN         := python $(PROJ_PYTHON_ROOT)/firmware_release.py
 VERSION_HEADER_GEN  := python $(PROJ_PYTHON_ROOT)/firmware_version_header.py
+SETUP_TOOL      	:= python $(PROJ_PYTHON_ROOT)/setup.py
 
 VERSION_HEADER      := $(PROJ_ROOT)/Headers/version_git.h
 
@@ -83,6 +84,9 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 
 all: $(PROJ).ax
 
+flash:
+	$(SETUP_TOOL) gimbal_firmware_*.ax 
+
 $(PROJ).ax: $(PROJ).out $(PROJ).hex
 	$(RELEASE_GEN) --image=$(PROJ).hex --outdir=$(PROJ_ROOT)
 
@@ -101,7 +105,7 @@ $(PROJ).hex: $(PROJ).out
 $(VERSION_HEADER):
 	$(VERSION_HEADER_GEN) $(VERSION_HEADER)
 
-.PHONY: all clean
+.PHONY: all clean flash
 
 clean:
 	rm -f $(PROJ).* $(VERSION_HEADER)

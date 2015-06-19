@@ -23,7 +23,7 @@ include defs.mk
 CC      := $(TI_ROOT)/bin/cl2000
 LD      := $(TI_ROOT)/bin/cl2000
 HEX     := $(TI_ROOT)/bin/hex2000
-
+TILOAD  := $(TI_ROOT)../../../ccs_base/scripting/examples/loadti/loadti.sh
 
 ###############################################################################
 # common flags
@@ -66,6 +66,12 @@ LDFLAGS += -z -m$(PROJ).map --stack_size=$(STACK_SIZE) --warn_sections
 LDFLAGS += -i$(TI_ROOT)/lib
 LDFLAGS += --reread_libs --xml_link_info=$(PROJ)_linkinfo.xml --rom_model
 
+###############################################################################
+# other deps
+
+# JTAG Programmer configuration file
+JTAG_CONFIG	:= $(PROJ_ROOT)/targetConfigs/TMS320F28067.ccxml
+
 
 ###############################################################################
 # Used libraries
@@ -77,6 +83,9 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 # rules
 
 all: $(PROJ).hex
+
+flash: all
+	$(TILOAD) -a -c=$(JTAG_CONFIG) $(PROJ).hex
 
 $(PROJ).out: $(OBJS) $(LDSCRIPTS)
 	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
@@ -90,7 +99,7 @@ $(PROJ).hex: $(PROJ).out
 %.o: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -fe $@
 
-.PHONY: all clean
+.PHONY: all clean flash
 
 clean:
 	rm -f $(PROJ).* $(PROJ)_linkinfo.xml
