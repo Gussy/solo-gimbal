@@ -287,7 +287,25 @@ int gp_set_request(GPSetRequest* request)
 				cmd.cmd[0] = 'S';
 				cmd.cmd[1] = 'H';
 				cmd.cmd_parm = request->value;
-			break;
+                break;
+
+            case GOPRO_COMMAND_RESOLUTION:
+                cmd.cmd[0] = 'V';
+                cmd.cmd[1] = 'V';
+                cmd.cmd_parm = request->value;
+                break;
+
+            case GOPRO_COMMAND_FRAME_RATE:
+                cmd.cmd[0] = 'F';
+                cmd.cmd[1] = 'S';
+                cmd.cmd_parm = request->value;
+                break;
+
+            case GOPRO_COMMAND_FIELD_OF_VIEW:
+                cmd.cmd[0] = 'F';
+                cmd.cmd[1] = 'V';
+                cmd.cmd_parm = request->value;
+                break;
 
 			default:
 				// Unsupported Command ID
