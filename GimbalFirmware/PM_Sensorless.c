@@ -418,7 +418,9 @@ void main(void)
         version_number |= (((Uint32)atoi(GitVersionRevision) << 8) & 0x0000FF00);
         version_number |= ((Uint32)atoi(GitCommit) & 0x0000007F);
         version_number |= strstr(GitVersionString, "dirty") ? (0x1 << 7) : 0x00;
-        flash_params.sys_swver = version_number;
+        IntOrFloat float_converter;
+        float_converter.uint32_val = version_number;
+        flash_params.sys_swver = float_converter.float_val;
 
 	    axis_parms.enable_flag = TRUE;
 	}

@@ -6,11 +6,11 @@
 
 struct flash_param_struct_0001 {
 	Uint16 flash_struct_id;
-	Uint32 sys_swver;
-	Uint32 assy_time;
-	Uint32 ser_num_1;
-	Uint32 ser_num_2;
-	Uint32 ser_num_3;
+	float sys_swver;
+	float assy_time;
+	float ser_num_1;
+	float ser_num_2;
+	float ser_num_3;
 	float broadcast_msgs;
 	float k_rate;
 	float commutation_slope[AXIS_CNT];
