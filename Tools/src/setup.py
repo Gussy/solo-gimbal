@@ -114,10 +114,12 @@ def main():
         ver = setup_factory.readSWver(link)
         if ver:
             asm_time = setup_factory.get_assembly_time(link)
+            serial_number = setup_factory.get_serial_number(link)
             print("Software version: v%s" % ver)
+            if(serial_number):    
+                print "Serial number: "+ serial_number
             if(asm_time):
                 print "Assembled on " +time.ctime(asm_time)
-            print setup_factory.get_serial_number(link)
         else:
             print("Unable to read software version")
             sys.exit(1)
