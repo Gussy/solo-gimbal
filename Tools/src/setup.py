@@ -46,6 +46,7 @@ def main():
     parser.add_argument("-x", "--staticcal", help="Calibrate all static home values", action='store_true')
     parser.add_argument("-e", "--erase", help="Erase calibration values", action='store_true')
     parser.add_argument("--date", help="Setup assembly date", action='store_true')
+    parser.add_argument("--serialnumber", help="Setup gimbal serial number", action='store_true')    
     args = parser.parse_args()
  
     # Open the serial port
@@ -60,6 +61,8 @@ def main():
         return
     elif args.date:
         setup_factory.set_assembly_date(link)
+    elif args.serialnumber:
+        setup_factory.set_serial_number(link, '123456789ABCDEF')
     elif args.run:
         setup_run.run(link)
         return
@@ -114,6 +117,7 @@ def main():
             print("Software version: v%s" % ver)
             if(asm_time):
                 print "Assembled on " +time.ctime(asm_time)
+            print setup_factory.get_serial_number(link)
         else:
             print("Unable to read software version")
             sys.exit(1)
