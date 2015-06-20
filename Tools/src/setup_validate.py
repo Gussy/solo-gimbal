@@ -8,6 +8,7 @@ import setup_mavlink
 EXPECTED_VERSION = '0.16.0'
 EXPECTED_BROADCAST = 0
 
+EXPECTED_SERIAL_NUMBER_START = 'GB11A'
 EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
 
 EXPECTED_PITCH_ICEPT_MAX = 0.30
@@ -144,8 +145,17 @@ def validate_date(link):
     else:
         print 'Assembly date\t- FAIL - assembly date was not set on the factory (--date)'
 
+
+def validate_serial_number(link):
+    serial_number = setup_factory.get_serial_number(link)
+    if (serial_number) and (serial_number.startswith(EXPECTED_SERIAL_NUMBER_START)):
+        print 'Serial number\t- PASS'
+    else:
+        print 'Serial number\t- FAIL - Serial number was not set (--serialnumber SERIALNUMBER)'
+        
 def validate(link):
     validate_version(link)
+    validate_serial_number(link)
     validate_date(link)
     validate_gains(link)
     validate_comutation(link)
