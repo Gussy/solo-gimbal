@@ -139,18 +139,18 @@ def validate_gains(link):
 def validate_date(link):
     assembly_time = setup_read_sw_version.get_assembly_time(link)
     if (assembly_time > EXPETED_ASSEMBLY_DATE_MIN):
-        print 'Gains   \t- PASS'
+        print 'Assembly date\t- PASS'
     else:
-        print 'Gains   \t- FAIL - assembly date was not set on the factory (--date)'
+        print 'Assembly date\t- FAIL - assembly date was not set on the factory (--date)'
 
 def validate(link):
     validate_version(link)
+    validate_date(link)
+    validate_gains(link)
     validate_comutation(link)
     validate_joints(link)
     validate_gyros(link)
     validate_accelerometers(link)
-    validate_gains(link)
-    validate_date(link)
 
 def restore_defaults(link):
     parameters = MAVParmDict()
