@@ -10,7 +10,7 @@ import setup_param
 import time
 from setup_param import commit_to_flash
 
-def float_to_bytes(f):
+def float_to_bytes4(f):
     return struct.unpack('4b', struct.pack('<f', f))
 
 def uint32_to_float(i):
@@ -30,7 +30,7 @@ def readSWver(link):
     if not msg:
         return None
     else:
-        swver_raw = float_to_bytes(msg.param_value)
+        swver_raw = float_to_bytes4(msg.param_value)
         return "%i.%i.%i" % (swver_raw[3], swver_raw[2], swver_raw[1])
 
 def get_assembly_time(link):
