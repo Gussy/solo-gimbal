@@ -302,7 +302,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 IntOrFloat float_converter;
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
-                    float_converter.float_val = flash_params.AxisCalibrationSlopes[msg.sender_id];
+                    float_converter.float_val = flash_params.commutation_slope[msg.sender_id];
                     cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_SLOPE, float_converter.uint32_val);
                 }
             }
@@ -313,7 +313,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 IntOrFloat float_converter;
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
-                    float_converter.float_val = flash_params.AxisCalibrationIntercepts[msg.sender_id];
+                    float_converter.float_val = flash_params.commutation_icept[msg.sender_id];
                     cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT, float_converter.uint32_val);
                 }
             }
@@ -580,7 +580,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 	if (GetBoardHWID() == AZ) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                		flash_params.AxisCalibrationSlopes[msg.sender_id] = float_converter.float_val;
+                		flash_params.commutation_slope[msg.sender_id] = float_converter.float_val;
                 		//write_flash();
                 	} else {
                         // Only load the parameter once (because we request parameters until we get them, there's a possibility
@@ -598,7 +598,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 	if (GetBoardHWID() == AZ) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                		flash_params.AxisCalibrationIntercepts[msg.sender_id] = float_converter.float_val;
+                		flash_params.commutation_icept[msg.sender_id] = float_converter.float_val;
                 		// intercept comes after slope
                 		write_flash();
                 	} else {

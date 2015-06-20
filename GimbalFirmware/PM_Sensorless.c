@@ -300,8 +300,8 @@ void main(void)
 		int i;
 		init_flash();
 		for ( i = 0; i < 3; i++) {
-			AxisCalibrationSlopes[i] = flash_params.AxisCalibrationSlopes[i];
-			AxisCalibrationIntercepts[i] = flash_params.AxisCalibrationIntercepts[i];
+			AxisCalibrationSlopes[i] = flash_params.commutation_slope[i];
+			AxisCalibrationIntercepts[i] = flash_params.commutation_icept[i];
 		}
 	}
 
