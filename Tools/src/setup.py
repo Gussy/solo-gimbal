@@ -15,7 +15,6 @@ import setup_run
 import time
 import numpy
 from setup_param import set_offsets
-import setup_serial_number
 import setup_read_sw_version
 
 def handle_file(args, link):
