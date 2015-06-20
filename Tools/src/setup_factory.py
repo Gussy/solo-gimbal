@@ -52,7 +52,7 @@ def set_serial_number(link,serial_str):
     setup_param.set_param(link, "GMB_SER_NUM_1", ser_num_1)
     setup_param.set_param(link, "GMB_SER_NUM_2", ser_num_2)
     setup_param.set_param(link, "GMB_SER_NUM_3", ser_num_3)
-    #commit_to_flash(link)
+    commit_to_flash(link)
     print "Serial number set to %s" % serial_str
     
 def get_serial_number(link):
