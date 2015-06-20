@@ -59,5 +59,7 @@ def get_serial_number(link):
     ser_num_2 = setup_param.fetch_param(link, "GMB_SER_NUM_2").param_value
     ser_num_3 = setup_param.fetch_param(link, "GMB_SER_NUM_3").param_value
     serial_str = float3_to_string12(ser_num_1, ser_num_2, ser_num_3)
-    return serial_str
-
+    if serial_str.startswith('GB'):
+        return serial_str
+    else:
+        return None
