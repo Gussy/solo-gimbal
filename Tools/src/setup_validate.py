@@ -8,6 +8,8 @@ import setup_mavlink
 EXPECTED_VERSION = '0.16.0'
 EXPECTED_BROADCAST = 0
 
+EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
+
 EXPECTED_PITCH_ICEPT_MAX = 0.30
 EXPECTED_PITCH_ICEPT_MIN = 0.10
 EXPECTED_PITCH_SLOPE_MAX = 0.14
@@ -55,7 +57,7 @@ def show(link):
     
 
 def validate_version(link):
-    ver = LooseVersion(readSWver(link))
+    ver = LooseVersion(setup_read_sw_version.readSWver(link))
     ver_expected = LooseVersion(EXPECTED_VERSION)
     if ver >= ver_expected:
         print 'Version \t- PASS'
@@ -133,6 +135,14 @@ def validate_gains(link):
     else:
         print 'Gains   \t- FAIL - restore parameters to default values (-d)'
 
+
+def validate_date(link):
+    assembly_time = setup_read_sw_version.get_assembly_time(link)
+    if (assembly_time > EXPETED_ASSEMBLY_DATE_MIN):
+        print 'Gains   \t- PASS'
+    else:
+        print 'Gains   \t- FAIL - assembly date was not set on the factory (--date)'
+
 def validate(link):
     validate_version(link)
     validate_comutation(link)
@@ -140,6 +150,7 @@ def validate(link):
     validate_gyros(link)
     validate_accelerometers(link)
     validate_gains(link)
+    validate_date(link)
 
 def restore_defaults(link):
     parameters = MAVParmDict()
