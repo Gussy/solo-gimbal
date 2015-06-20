@@ -9,6 +9,7 @@ import struct
 import setup_param
 import time
 from setup_param import commit_to_flash
+import datetime
 
 def float_to_bytes4(f):
     return struct.unpack('4b', struct.pack('<f', f))
@@ -63,3 +64,29 @@ def get_serial_number(link):
         return serial_str
     else:
         return None
+
+def set_serial_number_3dr(link,month_serial_number):
+    today = datetime.date.today() 
+    
+    # Build year identifier
+    year = hex(((today.year-2010)%16))[2]
+    
+    # Build month indentifier
+    if today.month<10:
+        month = today.month
+    elif today.month == 10:
+        month = '0'
+    elif today.month == 11:
+        month = 'A'
+    elif today.month == 12:
+        month = 'B'        
+    
+    # Build per-mount serial number (5 digits)
+    number = '%05d'%(month_serial_number%100000)    
+    
+    # Build serial number string
+    serial_str = 'GB11A'+str(year)+str(month)+str(number)
+    
+    # Save the serial number on the gimbal
+    set_serial_number(link, serial_str)
+    pass
