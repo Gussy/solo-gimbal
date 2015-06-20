@@ -145,12 +145,12 @@ def validate_date(link):
 
 def validate(link):
     validate_version(link)
+    validate_date(link)
+    validate_gains(link)
     validate_comutation(link)
     validate_joints(link)
     validate_gyros(link)
     validate_accelerometers(link)
-    validate_gains(link)
-    validate_date(link)
 
 def restore_defaults(link):
     parameters = MAVParmDict()
