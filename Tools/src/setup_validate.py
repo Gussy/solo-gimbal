@@ -1,5 +1,5 @@
 import setup_comutation
-from setup_read_sw_version import readSWver
+import setup_read_sw_version
 import setup_param
 from distutils.version import LooseVersion
 from pymavlink.mavparm import MAVParmDict
@@ -7,6 +7,8 @@ import setup_mavlink
 
 EXPECTED_VERSION = '0.16.0'
 EXPECTED_BROADCAST = 0
+
+EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
 
 EXPECTED_PITCH_ICEPT_MAX = 0.30
 EXPECTED_PITCH_ICEPT_MIN = 0.10
@@ -43,18 +45,19 @@ EXPECTED_YAW_D = 7.00
 EXPECTED_K_RATE = 10.0
 
 def show(link):
-    ver = readSWver(link)
+    ver = setup_read_sw_version.readSWver(link)
     pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
     joint = setup_param.get_offsets(link, 'JNT')
     gyro = setup_param.get_offsets(link, 'GYRO')
     acc = setup_param.get_offsets(link, 'ACC')
     k_rate = setup_param.fetch_param(link, "GMB_K_RATE").param_value
-    print "sw_ver, pitch_icept, pitch_slope, roll_icept, roll_slope, yaw_icept, yaw_slope, joint_z, joint_y, joint_z, gyro_x, gyro_y, gyro_z, acc_x, acc_y, acc_z, k_rate"
-    print "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (ver, pitch_com[1], pitch_com[2], roll_com[1], roll_com[2], yaw_com[1], yaw_com[2], joint.x, joint.y, joint.z, gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z, k_rate)
+    asm_date = setup_read_sw_version.get_assembly_time(link)
+    print "sw_ver, asm_date, pitch_icept, pitch_slope, roll_icept, roll_slope, yaw_icept, yaw_slope, joint_z, joint_y, joint_z, gyro_x, gyro_y, gyro_z, acc_x, acc_y, acc_z, k_rate"
+    print "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (ver, asm_date, pitch_com[1], pitch_com[2], roll_com[1], roll_com[2], yaw_com[1], yaw_com[2], joint.x, joint.y, joint.z, gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z, k_rate)
     
 
 def validate_version(link):
-    ver = LooseVersion(readSWver(link))
+    ver = LooseVersion(setup_read_sw_version.readSWver(link))
     ver_expected = LooseVersion(EXPECTED_VERSION)
     if ver >= ver_expected:
         print 'Version \t- PASS'
@@ -132,6 +135,14 @@ def validate_gains(link):
     else:
         print 'Gains   \t- FAIL - restore parameters to default values (-d)'
 
+
+def validate_date(link):
+    assembly_time = setup_read_sw_version.get_assembly_time(link)
+    if (assembly_time > EXPETED_ASSEMBLY_DATE_MIN):
+        print 'Gains   \t- PASS'
+    else:
+        print 'Gains   \t- FAIL - assembly date was not set on the factory (--date)'
+
 def validate(link):
     validate_version(link)
     validate_comutation(link)
@@ -139,6 +150,7 @@ def validate(link):
     validate_gyros(link)
     validate_accelerometers(link)
     validate_gains(link)
+    validate_date(link)
 
 def restore_defaults(link):
     parameters = MAVParmDict()
