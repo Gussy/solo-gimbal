@@ -15,6 +15,8 @@ import setup_run
 import time
 import numpy
 from setup_param import set_offsets
+import setup_serial_number
+import setup_read_sw_version
 
 def handle_file(args, link):
     fileExtension = str(args.file).split(".")[-1].lower()
@@ -45,6 +47,7 @@ def main():
     parser.add_argument("-a", "--accelcalibration", help="Calibrate accelerometers", action='store_true')
     parser.add_argument("-x", "--staticcal", help="Calibrate all static home values", action='store_true')
     parser.add_argument("-e", "--erase", help="Erase calibration values", action='store_true')
+    parser.add_argument("--date", help="Setup assembly date", action='store_true')
     args = parser.parse_args()
  
     # Open the serial port
@@ -57,6 +60,8 @@ def main():
     if args.file:
         handle_file(args, link)
         return
+    elif args.date:
+        setup_read_sw_version.setup_assembly_date(link)
     elif args.run:
         setup_run.run(link)
         return
@@ -107,7 +112,10 @@ def main():
     else:
         ver = readSWver(link)
         if ver:
+            asm_time = setup_read_sw_version.get_assembly_time(link)
             print("Software version: v%s" % ver)
+            if(asm_time):
+                print "Assembled on " +time.ctime(asm_time)
         else:
             print("Unable to read software version")
             sys.exit(1)
