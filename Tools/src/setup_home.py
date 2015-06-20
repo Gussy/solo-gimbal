@@ -1,10 +1,13 @@
 """
 """
 import math
+import numpy as np
+import setup_accelcal
 
 from setup_mavlink import get_current_joint_angles, get_current_delta_angles, get_current_delta_velocity
 from setup_param import set_offsets, message_brodcasting
 from pymavlink.rotmat import Vector3
+from math import degrees
 
 
 NUMBER_OF_SAMPLES = 200
@@ -54,10 +57,11 @@ def calibrate_accel(link):
     samples.append(getAccelSample(link,"Place the gimbal upside-down"))
     print ' '
     
+    p = setup_accelcal.calibrate_accel_6dof(samples)
+    level = setup_accelcal.calc_level_euler_rpy(p, samples[0])
     
-    # Apply Math
-    for vector in samples:
-        print vector
+    print 'calibration values are '+ str(p)
+    print 'offset values are '+ str(level.T*degrees(1))
         
     # Save values
     set_offsets(link, 'ACC', Vector3()) # TODO: implement accel calibration
