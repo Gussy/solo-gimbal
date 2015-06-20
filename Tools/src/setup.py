@@ -10,12 +10,11 @@ import setup_comutation, setup_home
 from setup_mavlink import open_comm, wait_for_heartbeat
 import setup_mavlink, setup_param
 import setup_validate
-from setup_read_sw_version import readSWver
 import setup_run
 import time
 import numpy
 from setup_param import set_offsets
-import setup_read_sw_version
+import setup_factory
 
 def handle_file(args, link):
     fileExtension = str(args.file).split(".")[-1].lower()
@@ -60,7 +59,7 @@ def main():
         handle_file(args, link)
         return
     elif args.date:
-        setup_read_sw_version.setup_assembly_date(link)
+        setup_factory.set_assembly_date(link)
     elif args.run:
         setup_run.run(link)
         return
@@ -109,9 +108,9 @@ def main():
         setup_comutation.resetCalibration(link)
         return
     else:
-        ver = readSWver(link)
+        ver = setup_factory.readSWver(link)
         if ver:
-            asm_time = setup_read_sw_version.get_assembly_time(link)
+            asm_time = setup_factory.get_assembly_time(link)
             print("Software version: v%s" % ver)
             if(asm_time):
                 print "Assembled on " +time.ctime(asm_time)

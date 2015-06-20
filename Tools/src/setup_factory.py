@@ -34,8 +34,7 @@ def get_assembly_time(link):
         asm_time = None    
     return asm_time
 
-
-def setup_assembly_date(link):
+def set_assembly_date(link):
     timestamp =  time.time()
     setup_param.set_param(link, "GMB_ASM_TIME", uint32_to_float(timestamp))
     commit_to_flash(link)
