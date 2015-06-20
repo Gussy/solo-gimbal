@@ -46,7 +46,7 @@ def main():
     parser.add_argument("-x", "--staticcal", help="Calibrate all static home values", action='store_true')
     parser.add_argument("-e", "--erase", help="Erase calibration values", action='store_true')
     parser.add_argument("--date", help="Setup assembly date", action='store_true')
-    parser.add_argument("--serialnumber", help="Setup gimbal serial number", action='store_true')    
+    parser.add_argument("--serialnumber", help="Setup gimbal serial number", type=int)    
     args = parser.parse_args()
  
     # Open the serial port
@@ -61,8 +61,8 @@ def main():
         return
     elif args.date:
         setup_factory.set_assembly_date(link)
-    elif args.serialnumber:
-        setup_factory.set_serial_number(link, '123456789ABCDEF')
+    elif args.serialnumber is not None:
+        setup_factory.set_serial_number_3dr(link, args.serialnumber)
     elif args.run:
         setup_run.run(link)
         return
