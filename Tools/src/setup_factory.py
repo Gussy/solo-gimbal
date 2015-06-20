@@ -46,5 +46,18 @@ def set_assembly_date(link):
     commit_to_flash(link)
     print "Assembly date set to %s" % (time.ctime(timestamp))
 
-
+def set_serial_number(link,serial_str):    
+    ser_num_1, ser_num_2,ser_num_3 = string12_to_float3(serial_str)
+    setup_param.set_param(link, "GMB_SER_NUM_1", ser_num_1)
+    setup_param.set_param(link, "GMB_SER_NUM_2", ser_num_2)
+    setup_param.set_param(link, "GMB_SER_NUM_3", ser_num_3)
+    #commit_to_flash(link)
+    print "Serial number set to %s" % serial_str
+    
+def get_serial_number(link):
+    ser_num_1 = setup_param.fetch_param(link, "GMB_SER_NUM_1").param_value
+    ser_num_2 = setup_param.fetch_param(link, "GMB_SER_NUM_2").param_value
+    ser_num_3 = setup_param.fetch_param(link, "GMB_SER_NUM_3").param_value
+    serial_str = float3_to_string12(ser_num_1, ser_num_2, ser_num_3)
+    return serial_str
 
