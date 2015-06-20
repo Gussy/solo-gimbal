@@ -19,6 +19,12 @@ def uint32_to_float(i):
 def float_to_uint32(f):
     return struct.unpack('I',struct.pack('<f',f))[0]
 
+def string12_to_float3(s):
+    return struct.unpack('3f',struct.pack('<12s', s))
+
+def float3_to_string12(f1,f2,f3):
+    return struct.unpack('12s',struct.pack('<3f', f1, f2, f3))[0]
+
 def readSWver(link):
     msg = setup_param.get_SWVER_param(link)
     if not msg:
