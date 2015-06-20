@@ -34,23 +34,26 @@ def calibrate_gyro(link):
     message_brodcasting(link, False)
     return
 
+
+def getAccelSample(link, ui_msg, AVG_COUNT=10):
+    raw_input(ui_msg)
+    v = getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT)
+    v = v*100 # sample needs to be in units of m/s
+    return np.asarray([v.x,v.y,v.z])
+
 def calibrate_accel(link):
     message_brodcasting(link, True)
-    
+        
     # Get samples
-    samples = []; AVG_COUNT =50
-    raw_input("Place the gimbal leveled")
-    samples.append(getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT))
-    raw_input("Place the gimbal on it's side")
-    samples.append(getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT))
-    raw_input("Place the gimbal on it's back")
-    samples.append(getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT))
-    raw_input("Place the gimbal on it's other side")
-    samples.append(getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT))
-    raw_input("Place the gimbal on it's front side")
-    samples.append(getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT))
-    raw_input("Place the gimbal upside-down")
-    samples.append(getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT))
+    samples = [];
+    samples.append(getAccelSample(link,"Place the gimbal leveled"))
+    samples.append(getAccelSample(link,"Place the gimbal on it's side"))
+    samples.append(getAccelSample(link,"Place the gimbal on it's back"))
+    samples.append(getAccelSample(link,"Place the gimbal on it's other side"))
+    samples.append(getAccelSample(link,"Place the gimbal on it's front side"))
+    samples.append(getAccelSample(link,"Place the gimbal upside-down"))
+    print ' '
+    
     
     # Apply Math
     for vector in samples:
