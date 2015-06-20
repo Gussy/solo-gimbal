@@ -11,6 +11,12 @@ import setup_param
 def float_to_bytes(f):
     return struct.unpack('4b', struct.pack('<f', f))
 
+def uint32_to_float(i):
+    return struct.unpack('f', struct.pack('<I', i))[0]
+
+def float_to_uint32(f):
+    return struct.unpack('I',struct.pack('<f',f))[0]
+
 def readSWver(link):
     msg = setup_param.get_SWVER_param(link)
     if not msg:
