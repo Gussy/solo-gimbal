@@ -1,5 +1,5 @@
 import setup_comutation
-import setup_read_sw_version
+import setup_factory
 import setup_param
 from distutils.version import LooseVersion
 from pymavlink.mavparm import MAVParmDict
@@ -8,6 +8,7 @@ import setup_mavlink
 EXPECTED_VERSION = '0.16.0'
 EXPECTED_BROADCAST = 0
 
+EXPECTED_SERIAL_NUMBER_START = 'GB11A'
 EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
 
 EXPECTED_PITCH_ICEPT_MAX = 0.30
@@ -45,19 +46,20 @@ EXPECTED_YAW_D = 7.00
 EXPECTED_K_RATE = 10.0
 
 def show(link):
-    ver = setup_read_sw_version.readSWver(link)
+    ver = setup_factory.readSWver(link)
+    asm_date = setup_factory.get_assembly_time(link)
+    serial = setup_factory.get_serial_number(link)
     pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
     joint = setup_param.get_offsets(link, 'JNT')
     gyro = setup_param.get_offsets(link, 'GYRO')
     acc = setup_param.get_offsets(link, 'ACC')
     k_rate = setup_param.fetch_param(link, "GMB_K_RATE").param_value
-    asm_date = setup_read_sw_version.get_assembly_time(link)
-    print "sw_ver, asm_date, pitch_icept, pitch_slope, roll_icept, roll_slope, yaw_icept, yaw_slope, joint_z, joint_y, joint_z, gyro_x, gyro_y, gyro_z, acc_x, acc_y, acc_z, k_rate"
-    print "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (ver, asm_date, pitch_com[1], pitch_com[2], roll_com[1], roll_com[2], yaw_com[1], yaw_com[2], joint.x, joint.y, joint.z, gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z, k_rate)
+    print "sw_ver, serial, asm_date, pitch_icept, pitch_slope, roll_icept, roll_slope, yaw_icept, yaw_slope, joint_z, joint_y, joint_z, gyro_x, gyro_y, gyro_z, acc_x, acc_y, acc_z, k_rate"
+    print "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (ver, serial, asm_date, pitch_com[1], pitch_com[2], roll_com[1], roll_com[2], yaw_com[1], yaw_com[2], joint.x, joint.y, joint.z, gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z, k_rate)
     
 
 def validate_version(link):
-    ver = LooseVersion(setup_read_sw_version.readSWver(link))
+    ver = LooseVersion(setup_factory.readSWver(link))
     ver_expected = LooseVersion(EXPECTED_VERSION)
     if ver >= ver_expected:
         print 'Version \t- PASS'
@@ -137,14 +139,23 @@ def validate_gains(link):
 
 
 def validate_date(link):
-    assembly_time = setup_read_sw_version.get_assembly_time(link)
+    assembly_time = setup_factory.get_assembly_time(link)
     if (assembly_time > EXPETED_ASSEMBLY_DATE_MIN):
         print 'Assembly date\t- PASS'
     else:
         print 'Assembly date\t- FAIL - assembly date was not set on the factory (--date)'
 
+
+def validate_serial_number(link):
+    serial_number = setup_factory.get_serial_number(link)
+    if (serial_number) and (serial_number.startswith(EXPECTED_SERIAL_NUMBER_START)):
+        print 'Serial number\t- PASS'
+    else:
+        print 'Serial number\t- FAIL - Serial number was not set (--serialnumber SERIALNUMBER)'
+        
 def validate(link):
     validate_version(link)
+    validate_serial_number(link)
     validate_date(link)
     validate_gains(link)
     validate_comutation(link)
