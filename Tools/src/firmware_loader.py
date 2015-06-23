@@ -27,7 +27,6 @@ def decode_bootloader_version(msg):
 def start_bootloader(link):
     """Check if target is in booloader, if not reset into bootloader mode"""
     msg = setup_mavlink.wait_handshake(link.file, timeout=4)
-    print msg
     if (msg is not None):
         return Results.InBoot
     

@@ -1,11 +1,12 @@
 '''
 
 '''
+import sys
 from pymavlink import mavutil
 from pymavlink.mavutil import mavlink, mavserial
-import setup_comutation
+from pymavlink.dialects.v10 import ardupilotmega
 from pymavlink.rotmat import Vector3
-import sys
+import setup_comutation
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
@@ -78,7 +79,7 @@ def send_gimbal_control(link,rate):
     link.gimbal_control_send(link.target_sysid, link.target_compid,rate.x,rate.y,rate.z)
        
 def reset_gimbal(link):
-    link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42501, 0, 0, 0, 0, 0, 0, 0, 0)
+    link.file.mav.command_long_send(link.target_sysid, link.target_compid, ardupilotmega.MAV_CMD_GIMBAL_RESET, 0, 0, 0, 0, 0, 0, 0, 0)
     result = link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
     if result:
         return True
@@ -104,7 +105,7 @@ def getCalibrationProgress(link):
         msg_progress = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=1)
         if msg_progress is None:
             return None
-        if msg_progress.command == 42502:
+        if msg_progress.command == ardupilotmega.MAV_CMD_GIMBAL_REPORT_AXIS_CALIBRATION_STATUS:
             break
 
     axis = setup_comutation.axis_enum[int(msg_progress.param1) - 1]
@@ -117,7 +118,7 @@ def receive_home_offset_result(link):
     return link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
 
 def start_home_calibration(link):    
-    return link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42500, 0, 0, 0, 0, 0, 0, 0, 0)
+    return link.file.mav.command_long_send(link.target_sysid, link.target_compid, ardupilotmega.MAV_CMD_GIMBAL_SET_HOME_OFFSETS, 0, 0, 0, 0, 0, 0, 0, 0)
 
 def requestCalibration(link):
     return link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42503, 0, 0, 0, 0, 0, 0, 0, 0)
