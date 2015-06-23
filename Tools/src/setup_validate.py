@@ -53,63 +53,59 @@ def show(link):
     joint = setup_param.get_offsets(link, 'JNT')
     gyro = setup_param.get_offsets(link, 'GYRO')
     acc = setup_param.get_offsets(link, 'ACC')
-    k_rate = setup_param.fetch_param(link, "GMB_K_RATE").param_value
-<<<<<<< HEAD
-    print "sw_ver, serial, asm_date, pitch_icept, pitch_slope, roll_icept, roll_slope, yaw_icept, yaw_slope, joint_z, joint_y, joint_z, gyro_x, gyro_y, gyro_z, acc_x, acc_y, acc_z, k_rate"
-    print "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (ver, serial, asm_date, pitch_com[1], pitch_com[2], roll_com[1], roll_com[2], yaw_com[1], yaw_com[2], joint.x, joint.y, joint.z, gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z, k_rate)
-    
+    k_rate = setup_param.fetch_param(link, "GMB_K_RATE")
 
-def validate_version(link):
-    ver = LooseVersion(setup_factory.readSWver(link))
-=======
-    params = {
-        'version': ver,
-        'pitch': {
-            'icept': pitch_com[1],
-            'slope': pitch_com[2],
-        },
-        'roll': {
-            'icept': roll_com[1],
-            'slope': roll_com[2],
-        },
-        'yaw': {
-            'icept': yaw_com[1],
-            'slope': yaw_com[2],
-        },
-        'joint': {
-            'x': joint.x,
-            'y': joint.y,
-            'z': joint.z,
-        },
-        'gyro': {
-            'x': gyro.x,
-            'y': gyro.y,
-            'z': gyro.z,
-        },
-        'accel': {
-            'x': acc.x,
-            'y': acc.y,
-            'z': acc.z,
-        },
-        'k_rate': k_rate
-    }
-    return params
-    
+    if ver != None and pitch_com != None and roll_com != None and yaw_com != None and joint and gyro and acc and k_rate != None:
+        params = {
+            'version': ver,
+            'pitch': {
+                'icept': pitch_com[0],
+                'slope': pitch_com[1],
+            },
+            'roll': {
+                'icept': roll_com[0],
+                'slope': roll_com[1],
+            },
+            'yaw': {
+                'icept': yaw_com[0],
+                'slope': yaw_com[1],
+            },
+            'joint': {
+                'x': joint.x,
+                'y': joint.y,
+                'z': joint.z,
+            },
+            'gyro': {
+                'x': gyro.x,
+                'y': gyro.y,
+                'z': gyro.z,
+            },
+            'accel': {
+                'x': acc.x,
+                'y': acc.y,
+                'z': acc.z,
+            },
+            'k_rate': k_rate.param_value
+        }
+        return params
+    else:
+        return None
 
 def validate_version(link):
     swver = readSWver(link)
+    if not swver:
+        return None
     ver = LooseVersion("%i.%i.%i" % (swver[0], swver[1], swver[2]))
->>>>>>> 4bf207f... tools: add JSON output support
     ver_expected = LooseVersion(EXPECTED_VERSION)
     if ver >= ver_expected:
-        return {'valid': True, 'msg': 'Version \t- PASS'}
+        return True
     else:
-        return {'valid': False, 'msg': 'Version \t- FAIL - please update with software ' + str(ver_expected) + ' or newer'}
+        return False
 
 
 def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
-    icept = axis[1]
-    slope = axis[2]
+    icept = axis[0]
+    slope = axis[1]
     if (icept == 0) or (i_min >= icept) or (i_max <= icept):
         return False
     elif (icept == 0) or (s_min >= slope) or (s_max <= slope):
@@ -120,62 +116,75 @@ def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
 def validate_comutation(link):
     "The acceptable range values where collected from the batch of DVT1 gimbals"
     pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
+    if pitch_com == None or roll_com == None or yaw_com == None:
+        return None
     if (validate_comutation_axis(link, pitch_com, EXPECTED_PITCH_ICEPT_MAX, EXPECTED_PITCH_ICEPT_MIN, EXPECTED_PITCH_SLOPE_MAX, EXPECTED_PITCH_SLOPE_MIN) and 
         validate_comutation_axis(link, roll_com, EXPECTED_ROLL_ICEPT_MAX, EXPECTED_ROLL_ICEPT_MIN, EXPECTED_ROLL_SLOPE_MAX, EXPECTED_ROLL_SLOPE_MIN) and 
         validate_comutation_axis(link, yaw_com, EXPECTED_YAW_ICEPT_MAX, EXPECTED_YAW_ICEPT_MIN, EXPECTED_YAW_SLOPE_MAX, EXPECTED_YAW_SLOPE_MIN)):
-        return {'valid': True, 'msg': 'Comutation \t- PASS'}
+        return True
     else:
-        return {'valid': False, 'msg': 'Comutation \t- FAIL - please redo the comutation calibration (-c)'}
-
+        return False
 
 def validate_joints(link):
     "The acceptable range values where collected from the batch of DVT1 gimbals"
     joint = setup_param.get_offsets(link, 'JNT')
+    if not joint:
+        return None
     if ((joint.x <= EXPECTED_JOINT_X_MAX) and (joint.x >= EXPECTED_JOINT_X_MIN) and (joint.x != 0) and
         (joint.y <= EXPECTED_JOINT_Y_MAX) and (joint.y >= EXPECTED_JOINT_Y_MIN) and (joint.y != 0) and
         (joint.z <= EXPECTED_JOINT_Z_MAX) and (joint.z >= EXPECTED_JOINT_Z_MIN) and (joint.z != 0)):
-        return {'valid': True, 'msg': 'Joints  \t- PASS'}
+        return True
     else:
-        return {'valid': False, 'msg': 'Joints  \t- FAIL - redo joint calibration (-j)'}
+        return False
 
 def validate_gyros(link):
     "The acceptable range values where collected from the batch of DVT1 gimbals"
     gyro = setup_param.get_offsets(link, 'GYRO')
+    if not gyro:
+        return None
     if ((gyro.x <= EXPECTED_GYRO) and (gyro.x >= -EXPECTED_GYRO) and (gyro.x != 0) and
         (gyro.y <= EXPECTED_GYRO) and (gyro.y >= -EXPECTED_GYRO) and (gyro.y != 0) and
         (gyro.z <= EXPECTED_GYRO) and (gyro.z >= -EXPECTED_GYRO) and (gyro.z != 0)):
-        return {'valid': True, 'msg': 'Gyros   \t- PASS'}
+        return True
     else:
-        return {'valid': False, 'msg': 'Gyros   \t- FAIL - redo gyro calibration (-g)'}
+        return False
 
 def validate_accelerometers(link):
     "Since there is no accelerometer cal yet, just check if the values are zeroed"
     acc = setup_param.get_offsets(link, 'ACC')
-    if ((acc.x == 0) and
-        (acc.y == 0) and
-        (acc.z == 0)):
-        return {'valid': True, 'msg': 'Accelerometer\t- PASS'}
+    if not acc:
+        return None
+    if acc.x == 0 and acc.y == 0 and acc.z == 0:
+        return True
     else:
-        return {'valid': False, 'msg': 'Accelerometer\t- FAIL - redo accelerometer calibration (-a)'}
+        return False
 
-def validate_gain_axis(link,axis,p_e,i_e,d_e):
+def validate_gain_axis(link, axis, p_e, i_e, d_e):
     p, i, d = setup_param.get_gains(link, axis)
+    if p == None or i == None or d == None:
+        return None
     return (abs(p - p_e) < GAIN_TOLERANCE and
             abs(i - i_e) < GAIN_TOLERANCE and
             abs(d - d_e) < GAIN_TOLERANCE)
 
 def validate_k_rate(link, value):
-    k_rate = setup_param.fetch_param(link, "GMB_K_RATE").param_value
-    return (abs(k_rate - value) < GAIN_TOLERANCE)
+    k_rate = setup_param.fetch_param(link, "GMB_K_RATE")
+    if k_rate:
+        return (abs(k_rate.param_value - value) < GAIN_TOLERANCE)
+    else:
+        return None
 
 def validate_gains(link):
-    if (validate_gain_axis(link, 'PITCH', EXPECTED_PITCH_P, EXPECTED_PITCH_I, EXPECTED_PITCH_D) and
-        validate_gain_axis(link, 'ROLL',  EXPECTED_ROLL_P, EXPECTED_ROLL_I, EXPECTED_ROLL_D) and
-        validate_gain_axis(link, 'YAW',   EXPECTED_YAW_P, EXPECTED_YAW_I, EXPECTED_YAW_D) and
-        validate_k_rate(link, EXPECTED_K_RATE)):
-        return {'valid': True, 'msg': 'Gains   \t- PASS'}
+    pitch = validate_gain_axis(link, 'PITCH', EXPECTED_PITCH_P, EXPECTED_PITCH_I, EXPECTED_PITCH_D)
+    roll = validate_gain_axis(link, 'ROLL',  EXPECTED_ROLL_P, EXPECTED_ROLL_I, EXPECTED_ROLL_D)
+    yaw = validate_gain_axis(link, 'YAW',   EXPECTED_YAW_P, EXPECTED_YAW_I, EXPECTED_YAW_D)
+    krate = validate_k_rate(link, EXPECTED_K_RATE)
+    if pitch == True and roll == True and yaw == True and krate == True:
+        return True
+    elif pitch == False or roll == False or yaw == False or krate == False:
+        return False
     else:
-        return {'valid': False, 'msg': 'Gains   \t- FAIL - restore parameters to default values (-d)'}
+        return None
 
 
 def validate_date(link):

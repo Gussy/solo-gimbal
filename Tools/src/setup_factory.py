@@ -31,8 +31,7 @@ def readSWver(link):
     if not msg:
         return None
     else:
-        swver_raw = float_to_bytes4(msg.param_value)
-        return "%i.%i.%i" % (swver_raw[3], swver_raw[2], swver_raw[1])
+        return float_to_bytes4(msg.param_value)
 
 def get_assembly_time(link):
     value = setup_param.fetch_param(link, "GMB_ASM_TIME").param_value

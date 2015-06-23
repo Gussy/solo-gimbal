@@ -12,9 +12,7 @@ MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 TARGET_SYSTEM_ID = 1
 TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
-
 def open_comm(port, baudrate):
-    
     if not port:
         serial_list = mavutil.auto_detect_serial(preferred_list=['*FTDI*',"*Arduino_Mega_2560*", "*3D_Robotics*", "*USB_to_UART*", '*PX4*', '*FMU*'])
         if len(serial_list) == 1:
@@ -27,12 +25,11 @@ def open_comm(port, baudrate):
     link.target_compid = TARGET_COMPONENT_ID
     return (port, link)
 
-
 def wait_for_heartbeat(link):
     for i in range(5):
         link.heartbeat_send(0, 0, 0, 0, 0)
         if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1):
-            return True        
+            return True
 
 def wait_handshake(m, timeout=1):
     '''wait for a handshake so we know the target system IDs'''
@@ -104,7 +101,7 @@ def getCalibrationState(link):
 
 def getCalibrationProgress(link):
     while(True):
-        msg_progress = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=5)
+        msg_progress = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=1)
         if msg_progress is None:
             return None
         if msg_progress.command == 42502:

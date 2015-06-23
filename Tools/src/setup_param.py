@@ -4,15 +4,15 @@
 Utility for loading firmware into the 3DR Gimbal.
 
 """
+import time
 from pymavlink.mavparm import MAVParmDict
 from pymavlink.dialects.v10.ardupilotmega import MAV_PARAM_TYPE_REAL32
 from pymavlink.rotmat import Vector3
 
-# A timeout of 10 causes windows to choke and fail
-def fetch_param(link, param, timeout=2):
+def fetch_param(link, param, timeout=1):
     # Get a parameter
     link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
-    # Wait 10 seconds for a response
+    # Wait for a response
     msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=timeout)
     return msg
 
@@ -23,6 +23,8 @@ def set_param(link, param_name, param_value):
 def commit_to_flash(link):    
     # Commit the zeroed out calibration parameters to flash
     link.param_set_send(link.target_sysid, 0, "GMB_FLASH", 69.0, MAV_PARAM_TYPE_REAL32)
+    # Sleep for two seconds as immedietly following commands will fail (while the C2000 is writing flash)
+    time.sleep(2)
 
 def load_param_file(pid, link):
     parameters = MAVParmDict()
@@ -33,12 +35,12 @@ def clear_comutation_params(link):
     parameters = MAVParmDict()
 
     # Set all commutation calibration parameters to 0
-    parameters.mavset(link.file, "GMB_YAW_SLOPE", 0.0, 3);
-    parameters.mavset(link.file, "GMB_YAW_ICEPT", 0.0, 3);
-    parameters.mavset(link.file, "GMB_ROLL_SLOPE", 0.0, 3);
-    parameters.mavset(link.file, "GMB_ROLL_ICEPT", 0.0, 3);
-    parameters.mavset(link.file, "GMB_PITCH_SLOPE", 0.0, 3);
-    parameters.mavset(link.file, "GMB_PITCH_ICEPT", 0.0, 3);
+    parameters.mavset(link.file, "GMB_YAW_SLOPE", 0.0, 3)
+    parameters.mavset(link.file, "GMB_YAW_ICEPT", 0.0, 3)
+    parameters.mavset(link.file, "GMB_ROLL_SLOPE", 0.0, 3)
+    parameters.mavset(link.file, "GMB_ROLL_ICEPT", 0.0, 3)
+    parameters.mavset(link.file, "GMB_PITCH_SLOPE", 0.0, 3)
+    parameters.mavset(link.file, "GMB_PITCH_ICEPT", 0.0, 3)
     commit_to_flash(link)
 
 def message_brodcasting(link, broadcast=True):
@@ -51,27 +53,33 @@ def get_SWVER_param(link):
     return fetch_param(link, "GMB_SWVER")
 
 def set_offsets(link, kind, offsets):    
-    set_param(link, "GMB_OFF_" + kind + "_X", offsets.x);
-    set_param(link, "GMB_OFF_" + kind + "_Y", offsets.y);
-    set_param(link, "GMB_OFF_" + kind + "_Z", offsets.z);
+    set_param(link, "GMB_OFF_" + kind + "_X", offsets.x)
+    set_param(link, "GMB_OFF_" + kind + "_Y", offsets.y)
+    set_param(link, "GMB_OFF_" + kind + "_Z", offsets.z)
     commit_to_flash(link)
 
 def get_offsets(link, kind):   
-    x = fetch_param(link, "GMB_OFF_" + kind + "_X").param_value;
-    y = fetch_param(link, "GMB_OFF_" + kind + "_Y").param_value;    
-    z = fetch_param(link, "GMB_OFF_" + kind + "_Z").param_value;
-    return Vector3(x=x, y=y, z=z)
+    x = fetch_param(link, "GMB_OFF_" + kind + "_X")
+    y = fetch_param(link, "GMB_OFF_" + kind + "_Y")
+    z = fetch_param(link, "GMB_OFF_" + kind + "_Z")
+    if x == None or y == None or z == None:
+        return None
+    else:
+        return Vector3(x=x.param_value, y=y.param_value, z=z.param_value)
 
 def get_gains(link, kind):   
-    P = fetch_param(link, "GMB_" + kind + "_P").param_value;
-    I = fetch_param(link, "GMB_" + kind + "_I").param_value;    
-    D = fetch_param(link, "GMB_" + kind + "_D").param_value;
-    return (P, I, D)
-    
+    P = fetch_param(link, "GMB_" + kind + "_P")
+    I = fetch_param(link, "GMB_" + kind + "_I")
+    D = fetch_param(link, "GMB_" + kind + "_D")
+    if P == None or I == None or D == None:
+        return None
+    else:
+        return P.param_value, I.param_value, D.param_value
+
 def getAxisCalibrationParam(link, axis_enum):
     icept = fetch_param(link, "GMB_" + axis_enum + "_ICEPT")
     slope = fetch_param(link, "GMB_" + axis_enum + "_SLOPE")
-    if icept and slope:
-        return [axis_enum, icept.param_value, slope.param_value]
-    else:
+    if icept == None or slope == None:
         return None
+    else:
+        return [icept.param_value, slope.param_value]
