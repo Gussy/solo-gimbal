@@ -46,7 +46,7 @@ EXPECTED_YAW_D = 7.00
 EXPECTED_K_RATE = 10.0
 
 class Results:
-    Pass, Fail, Error = range(3)
+    Pass, Fail, Error = 'pass', 'fail', 'error'
 
 def show(link):
     ver = setup_factory.readSWver(link)
