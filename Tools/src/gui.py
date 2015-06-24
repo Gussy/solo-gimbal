@@ -24,16 +24,17 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabsClosable(False)
         self.tabWidget.setMovable(False)
         self.tabWidget.setObjectName("tabWidget")
-        self.tab = QtGui.QWidget()
-        self.tab.setEnabled(True)
-        self.tab.setObjectName("tab")
-        self.tabWidget.addTab(self.tab, "")
-        self.tab_3 = QtGui.QWidget()
-        self.tab_3.setObjectName("tab_3")
-        self.tabWidget.addTab(self.tab_3, "")
-        self.tab_2 = QtGui.QWidget()
-        self.tab_2.setObjectName("tab_2")
-        self.tabWidget.addTab(self.tab_2, "")
+        self.tabWidget.setEnabled(False)
+        self.tabTests = QtGui.QWidget()
+        self.tabTests.setEnabled(True)
+        self.tabTests.setObjectName("tabTests")
+        self.tabWidget.addTab(self.tabTests, "")
+        self.tabFirmware = QtGui.QWidget()
+        self.tabFirmware.setObjectName("tabFirmware")
+        self.tabWidget.addTab(self.tabFirmware, "")
+        self.tabCalibration = QtGui.QWidget()
+        self.tabCalibration.setObjectName("tabCalibration")
+        self.tabWidget.addTab(self.tabCalibration, "")
         self.formLayoutWidget = QtGui.QWidget(self.centralWidget)
         self.formLayoutWidget.setGeometry(QtCore.QRect(9, 10, 255, 101))
         self.formLayoutWidget.setObjectName("formLayoutWidget")
@@ -65,12 +66,12 @@ class Ui_MainWindow(object):
         self.frmlytConnectionType.setWidget(0, QtGui.QFormLayout.FieldRole, self.rbSerial)
         self.frmlytConnection.setLayout(0, QtGui.QFormLayout.FieldRole, self.frmlytConnectionType)
         self.cbSerialPort = QtGui.QComboBox(self.formLayoutWidget)
-        self.cbSerialPort.setObjectName("cbSerialPort")
         self.cbSerialPort.setEnabled(False)
+        self.cbSerialPort.setObjectName("cbSerialPort")
         self.frmlytConnection.setWidget(1, QtGui.QFormLayout.FieldRole, self.cbSerialPort)
         self.cbBaudrate = QtGui.QComboBox(self.formLayoutWidget)
-        self.cbBaudrate.setObjectName("cbBaudrate")
         self.cbBaudrate.setEnabled(False)
+        self.cbBaudrate.setObjectName("cbBaudrate")
         self.frmlytConnection.setWidget(2, QtGui.QFormLayout.FieldRole, self.cbBaudrate)
         self.btnConnect = QtGui.QPushButton(self.centralWidget)
         self.btnConnect.setGeometry(QtCore.QRect(10, 110, 251, 34))
@@ -101,6 +102,7 @@ class Ui_MainWindow(object):
         self.lblSoftwareVersionLabel.setObjectName("lblSoftwareVersionLabel")
         self.frmlytParameters.setWidget(0, QtGui.QFormLayout.LabelRole, self.lblSoftwareVersionLabel)
         self.lblSoftwareVersion = QtGui.QLabel(self.formLayoutWidget_3)
+        self.lblSoftwareVersion.setText("")
         self.lblSoftwareVersion.setObjectName("lblSoftwareVersion")
         self.frmlytParameters.setWidget(0, QtGui.QFormLayout.FieldRole, self.lblSoftwareVersion)
         self.lblSerialNumberLabel = QtGui.QLabel(self.formLayoutWidget_3)
@@ -118,9 +120,11 @@ class Ui_MainWindow(object):
         self.lblAssemblyDateLabel.setObjectName("lblAssemblyDateLabel")
         self.frmlytParameters.setWidget(2, QtGui.QFormLayout.LabelRole, self.lblAssemblyDateLabel)
         self.lblSerialNumber = QtGui.QLabel(self.formLayoutWidget_3)
+        self.lblSerialNumber.setText("")
         self.lblSerialNumber.setObjectName("lblSerialNumber")
         self.frmlytParameters.setWidget(1, QtGui.QFormLayout.FieldRole, self.lblSerialNumber)
         self.lblAssemblyDate = QtGui.QLabel(self.formLayoutWidget_3)
+        self.lblAssemblyDate.setText("")
         self.lblAssemblyDate.setObjectName("lblAssemblyDate")
         self.frmlytParameters.setWidget(2, QtGui.QFormLayout.FieldRole, self.lblAssemblyDate)
         MainWindow.setCentralWidget(self.centralWidget)
@@ -131,9 +135,9 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "3DR Gimbal Tools", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QtGui.QApplication.translate("MainWindow", "One", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), QtGui.QApplication.translate("MainWindow", "Two", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QtGui.QApplication.translate("MainWindow", "Three", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabTests), QtGui.QApplication.translate("MainWindow", "Tests", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabFirmware), QtGui.QApplication.translate("MainWindow", "Firmware", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabCalibration), QtGui.QApplication.translate("MainWindow", "Calibration", None, QtGui.QApplication.UnicodeUTF8))
         self.lblConnectionLabel.setText(QtGui.QApplication.translate("MainWindow", "Connection:", None, QtGui.QApplication.UnicodeUTF8))
         self.lblSerialPortLabel.setText(QtGui.QApplication.translate("MainWindow", "Serial Port:", None, QtGui.QApplication.UnicodeUTF8))
         self.lblBaurdateLabel.setText(QtGui.QApplication.translate("MainWindow", "Baudrate:", None, QtGui.QApplication.UnicodeUTF8))
@@ -142,11 +146,12 @@ class Ui_MainWindow(object):
         self.btnConnect.setText(QtGui.QApplication.translate("MainWindow", "Connect", None, QtGui.QApplication.UnicodeUTF8))
         self.lblConnectionStatus.setText(QtGui.QApplication.translate("MainWindow", "Disconnected", None, QtGui.QApplication.UnicodeUTF8))
         self.lblSoftwareVersionLabel.setText(QtGui.QApplication.translate("MainWindow", "Software Version:", None, QtGui.QApplication.UnicodeUTF8))
-        self.lblSoftwareVersion.setText(QtGui.QApplication.translate("MainWindow", "", None, QtGui.QApplication.UnicodeUTF8))
         self.lblSerialNumberLabel.setText(QtGui.QApplication.translate("MainWindow", "Serial Number:", None, QtGui.QApplication.UnicodeUTF8))
         self.lblAssemblyDateLabel.setText(QtGui.QApplication.translate("MainWindow", "Assembly Date:", None, QtGui.QApplication.UnicodeUTF8))
-        self.lblSerialNumber.setText(QtGui.QApplication.translate("MainWindow", "", None, QtGui.QApplication.UnicodeUTF8))
-        self.lblAssemblyDate.setText(QtGui.QApplication.translate("MainWindow", "", None, QtGui.QApplication.UnicodeUTF8))
+
+class UiUtils():
+    def getComboboxSelection(self, combobox):
+        return combobox.itemText(combobox.currentIndex())
 
 class ControlMainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -168,6 +173,8 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.connectWithAuto = True
         self.connected = False
 
+        self.utils = UiUtils()
+
     def updateSerialPorts(self, ports=None):
         self.ui.cbSerialPort.clear()
         if ports:
@@ -183,20 +190,21 @@ class ControlMainWindow(QtGui.QMainWindow):
     def setConnectionState(self, connected):
         if connected:
             self.connected = True
+            self.setConnectionStatusBanner('connecting')
             self.ui.cbSerialPort.setEnabled(False)
             self.ui.cbBaudrate.setEnabled(False)
             self.ui.rbAuto.setEnabled(False)
             self.ui.rbSerial.setEnabled(False)
             self.ui.btnConnect.setText("Disconnect")
-            self.setConnectionStatusBanner('connecting')
         else:
             self.connected = False
+            self.setConnectionStatusBanner('disconnected')
             self.ui.cbSerialPort.setEnabled(True)
             self.ui.cbBaudrate.setEnabled(True)
             self.ui.rbAuto.setEnabled(True)
             self.ui.rbSerial.setEnabled(True)
             self.ui.btnConnect.setText("Connect")
-            self.setConnectionStatusBanner('disconnected')
+            self.ui.tabWidget.setEnabled(False)
 
     def setConnectionStatusBanner(self, state):
         if state == 'disconnected':
@@ -244,8 +252,11 @@ class ControlMainWindow(QtGui.QMainWindow):
             self.closeConnection()
             self.setConnectionState(False)
 
-    def connectionWorker(self):
+    def autoConnectionWorker(self):
         return setup_mavlink.open_comm()
+
+    def serialConnectionWorker(self, port, baudrate):
+        return setup_mavlink.open_comm(port, baudrate)
 
     def waitForHeartbeatWorker(self):
         return setup_mavlink.wait_for_heartbeat(self.link)
@@ -256,20 +267,25 @@ class ControlMainWindow(QtGui.QMainWindow):
     @coroutine
     def attemptConnection(self):
         self.ui.btnConnect.setEnabled(False)
-        # Get the current serial port if connecting with serial
-        if not self.connectWithAuto:
-            port = self.ui.cbSerialPort.itemText(self.ui.cbSerialPort.currentIndex())
-            print port
 
         # Open the mavlink connection
-        self.mavport, self.link = yield AsyncTask(self.connectionWorker)
+        if self.connectWithAuto:
+            self.mavport, self.link = yield AsyncTask(self.autoConnectionWorker)
+        else:
+            # Get the current serial port if connecting with serial
+            port = self.utils.getComboboxSelection(self.ui.cbSerialPort)
+            baudrate = self.utils.getComboboxSelection(self.ui.cbBaudrate)
+            self.mavport, self.link = yield AsyncTask(self.serialConnectionWorker, port, baudrate)
+
         heartbeat = yield AsyncTask(self.waitForHeartbeatWorker)
         if heartbeat == None:
             self.setConnectionState(False)
+            self.ui.tabWidget.setEnabled(False)
         else:
             self.setConnectionStatusBanner('connected')
             softwareVersion = yield AsyncTask(self.getGimbalParameters)
             self.setStatusInfo(softwareVersion)
+            self.ui.tabWidget.setEnabled(True)
         self.ui.btnConnect.setEnabled(True)
 
     def closeConnection(self):
