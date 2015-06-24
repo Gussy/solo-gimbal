@@ -10,10 +10,10 @@ from pymavlink.dialects.v10.ardupilotmega import MAV_PARAM_TYPE_REAL32
 from pymavlink.rotmat import Vector3
 
 def fetch_param(link, param, timeout=5):
-    # Get a parameter
-    link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
-    # Wait for a response
     for i in range(timeout):
+        # Get a parameter
+        link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
+        # Wait for a response
         msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=2)
         if msg:
             return msg

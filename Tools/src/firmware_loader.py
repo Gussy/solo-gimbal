@@ -38,7 +38,7 @@ def start_bootloader(link):
         timeout_counter += 1
         
         if (msg is None):
-            if timeout_counter > 10:
+            if timeout_counter > 20:
                 return Results.NoResponse
         else:
             break
