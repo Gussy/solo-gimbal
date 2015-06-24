@@ -9,12 +9,15 @@ from pymavlink.mavparm import MAVParmDict
 from pymavlink.dialects.v10.ardupilotmega import MAV_PARAM_TYPE_REAL32
 from pymavlink.rotmat import Vector3
 
-def fetch_param(link, param, timeout=1):
+def fetch_param(link, param, timeout=5):
     # Get a parameter
     link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
     # Wait for a response
-    msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=timeout)
-    return msg
+    for i in range(timeout):
+        msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=2)
+        if msg:
+            return msg
+    return None
 
 def set_param(link, param_name, param_value):
     parameters = MAVParmDict()
@@ -52,13 +55,13 @@ def message_brodcasting(link, broadcast=True):
 def get_SWVER_param(link):
     return fetch_param(link, "GMB_SWVER")
 
-def set_offsets(link, kind, offsets):    
+def set_offsets(link, kind, offsets):
     set_param(link, "GMB_OFF_" + kind + "_X", offsets.x)
     set_param(link, "GMB_OFF_" + kind + "_Y", offsets.y)
     set_param(link, "GMB_OFF_" + kind + "_Z", offsets.z)
     commit_to_flash(link)
 
-def get_offsets(link, kind):   
+def get_offsets(link, kind):
     x = fetch_param(link, "GMB_OFF_" + kind + "_X")
     y = fetch_param(link, "GMB_OFF_" + kind + "_Y")
     z = fetch_param(link, "GMB_OFF_" + kind + "_Z")
@@ -67,7 +70,7 @@ def get_offsets(link, kind):
     else:
         return Vector3(x=x.param_value, y=y.param_value, z=z.param_value)
 
-def get_gains(link, kind):   
+def get_gains(link, kind):
     P = fetch_param(link, "GMB_" + kind + "_P")
     I = fetch_param(link, "GMB_" + kind + "_I")
     D = fetch_param(link, "GMB_" + kind + "_D")
