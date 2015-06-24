@@ -45,6 +45,9 @@ EXPECTED_YAW_I = 0.00
 EXPECTED_YAW_D = 7.00
 EXPECTED_K_RATE = 10.0
 
+class Results:
+    Pass, Fail, Error = range(3)
+
 def show(link):
     ver = setup_factory.readSWver(link)
     asm_date = setup_factory.get_assembly_time(link)
@@ -94,13 +97,13 @@ def show(link):
 def validate_version(link):
     swver = readSWver(link)
     if not swver:
-        return None
+        return Results.Error
     ver = LooseVersion("%i.%i.%i" % (swver[0], swver[1], swver[2]))
     ver_expected = LooseVersion(EXPECTED_VERSION)
     if ver >= ver_expected:
-        return True
+        return Results.Pass
     else:
-        return False
+        return Results.Fail
 
 
 def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
@@ -117,47 +120,47 @@ def validate_comutation(link):
     "The acceptable range values where collected from the batch of DVT1 gimbals"
     pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
     if pitch_com == None or roll_com == None or yaw_com == None:
-        return None
+        return Results.Error
     if (validate_comutation_axis(link, pitch_com, EXPECTED_PITCH_ICEPT_MAX, EXPECTED_PITCH_ICEPT_MIN, EXPECTED_PITCH_SLOPE_MAX, EXPECTED_PITCH_SLOPE_MIN) and 
         validate_comutation_axis(link, roll_com, EXPECTED_ROLL_ICEPT_MAX, EXPECTED_ROLL_ICEPT_MIN, EXPECTED_ROLL_SLOPE_MAX, EXPECTED_ROLL_SLOPE_MIN) and 
         validate_comutation_axis(link, yaw_com, EXPECTED_YAW_ICEPT_MAX, EXPECTED_YAW_ICEPT_MIN, EXPECTED_YAW_SLOPE_MAX, EXPECTED_YAW_SLOPE_MIN)):
-        return True
+        return Results.Pass
     else:
-        return False
+        return Results.Fail
 
 def validate_joints(link):
     "The acceptable range values where collected from the batch of DVT1 gimbals"
     joint = setup_param.get_offsets(link, 'JNT')
     if not joint:
-        return None
+        return Results.Error
     if ((joint.x <= EXPECTED_JOINT_X_MAX) and (joint.x >= EXPECTED_JOINT_X_MIN) and (joint.x != 0) and
         (joint.y <= EXPECTED_JOINT_Y_MAX) and (joint.y >= EXPECTED_JOINT_Y_MIN) and (joint.y != 0) and
         (joint.z <= EXPECTED_JOINT_Z_MAX) and (joint.z >= EXPECTED_JOINT_Z_MIN) and (joint.z != 0)):
-        return True
+        return Results.Pass
     else:
-        return False
+        return Results.Fail
 
 def validate_gyros(link):
     "The acceptable range values where collected from the batch of DVT1 gimbals"
     gyro = setup_param.get_offsets(link, 'GYRO')
     if not gyro:
-        return None
+        return Results.Error
     if ((gyro.x <= EXPECTED_GYRO) and (gyro.x >= -EXPECTED_GYRO) and (gyro.x != 0) and
         (gyro.y <= EXPECTED_GYRO) and (gyro.y >= -EXPECTED_GYRO) and (gyro.y != 0) and
         (gyro.z <= EXPECTED_GYRO) and (gyro.z >= -EXPECTED_GYRO) and (gyro.z != 0)):
-        return True
+        return Results.Pass
     else:
-        return False
+        return Results.Fail
 
 def validate_accelerometers(link):
     "Since there is no accelerometer cal yet, just check if the values are zeroed"
     acc = setup_param.get_offsets(link, 'ACC')
     if not acc:
-        return None
+        return Results.Error
     if acc.x == 0 and acc.y == 0 and acc.z == 0:
-        return True
+        return Results.Pass
     else:
-        return False
+        return Results.Fail
 
 def validate_gain_axis(link, axis, p_e, i_e, d_e):
     p, i, d = setup_param.get_gains(link, axis)
@@ -180,11 +183,11 @@ def validate_gains(link):
     yaw = validate_gain_axis(link, 'YAW',   EXPECTED_YAW_P, EXPECTED_YAW_I, EXPECTED_YAW_D)
     krate = validate_k_rate(link, EXPECTED_K_RATE)
     if pitch == True and roll == True and yaw == True and krate == True:
-        return True
+        return Results.Pass
     elif pitch == False or roll == False or yaw == False or krate == False:
-        return False
+        return Results.Fail
     else:
-        return None
+        return Results.Error
 
 
 def validate_date(link):

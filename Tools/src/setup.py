@@ -121,49 +121,49 @@ def runCalibration(link):
 
 def printValidation(link):
     valid = setup_validate.validate_version(link)
-    if valid is True:
+    if valid == setup_validate.Results.Pass:
         print("Version \t- PASS")
-    elif valid is False:
+    elif valid == setup_validate.Results.Fail:
         print("Version \t- FAIL - please update to latest gimbal software")
     else:
         print("Version \t- ERROR")
 
     valid = setup_validate.validate_comutation(link)
-    if valid is True:
+    if valid == setup_validate.Results.Pass:
         print("Comutation \t- PASS")
-    elif valid is False:
+    elif valid == setup_validate.Results.Fail:
         print("Comutation \t- FAIL - please redo the comutation calibration (-c)")
     else:
         print("Comutation \t- ERROR")
 
     valid = setup_validate.validate_joints(link)
-    if valid is True:
+    if valid == setup_validate.Results.Pass:
         print("Joints  \t- PASS")
-    elif valid is False:
+    elif valid == setup_validate.Results.Fail:
         print("Joints  \t- FAIL - redo joint calibration (-j)")
     else:
         print("Joints  \t- ERROR")
 
     valid = setup_validate.validate_gyros(link)
-    if valid is True:
+    if valid == setup_validate.Results.Pass:
         print("Gyros   \t- PASS")
-    elif valid is False:
+    elif valid == setup_validate.Results.Fail:
         print("Gyros   \t- FAIL - redo gyro calibration (-g)")
     else:
         print("Gyros   \t- ERROR")
 
     valid = setup_validate.validate_accelerometers(link)
-    if valid is True:
+    if valid == setup_validate.Results.Pass:
         print("Accelerometer\t- PASS")
-    elif valid is False:
+    elif valid == setup_validate.Results.Fail:
         print("Accelerometer\t- FAIL - redo accelerometer calibration (-a)")
     else:
         print("Accelerometer\t- ERROR")
 
     valid = setup_validate.validate_gains(link)
-    if valid is True:
+    if valid == setup_validate.Results.Pass:
         print("Gains   \t- PASS")
-    elif valid is False:
+    elif valid == setup_validate.Results.Fail:
         print("Gains   \t- FAIL - restore parameters to default values (-d)")
     else:
         print("Gains   \t- ERROR")
