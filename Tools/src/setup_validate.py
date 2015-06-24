@@ -233,3 +233,4 @@ def restore_defaults(link):
     parameters.mavset(link.file, "GMB_BROADCAST", EXPECTED_BROADCAST);    
     setup_param.commit_to_flash(link)
     setup_mavlink.reset_gimbal(link)
+    return True
