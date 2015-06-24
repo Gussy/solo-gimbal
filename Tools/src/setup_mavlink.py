@@ -13,9 +13,12 @@ MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 TARGET_SYSTEM_ID = 1
 TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
-def open_comm(port, baudrate):
+def getSerialPorts():
+    return mavutil.auto_detect_serial(preferred_list=['*FTDI*',"*Arduino_Mega_2560*", "*3D_Robotics*", "*USB_to_UART*", '*PX4*', '*FMU*'])
+
+def open_comm(port=None, baudrate=230400):
     if not port:
-        serial_list = mavutil.auto_detect_serial(preferred_list=['*FTDI*',"*Arduino_Mega_2560*", "*3D_Robotics*", "*USB_to_UART*", '*PX4*', '*FMU*'])
+        serial_list = getSerialPorts()
         if len(serial_list) == 1:
             port = serial_list[0].device
         else:

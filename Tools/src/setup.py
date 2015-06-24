@@ -194,7 +194,7 @@ def command_interface():
     args = parser.parse_args()
 
     # Open the serial port
-    port, link = open_comm(args.port, 230400)
+    port, link = open_comm(args.port)
     print("Connecting via port %s" % port)
 
     if wait_for_heartbeat(link) == None:
