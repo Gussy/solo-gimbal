@@ -16,7 +16,7 @@ progressHandler = None
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
 class Results:
-    Success, NoResponse, Timeout, InBoot, Restarting = range(5)
+    Success, NoResponse, Timeout, InBoot, Restarting = 'Success', 'NoResponse', 'Timeout', 'InBoot', 'Restarting'
 
 def decode_bootloader_version(msg):
     """The first message handshake contains the bootloader version int the height field as a 16bit int"""
