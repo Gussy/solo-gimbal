@@ -38,7 +38,6 @@ def start_bootloader(link):
         timeout_counter += 1
         
         if (msg is None):
-            print("no response")
             if timeout_counter > 10:
                 return Results.NoResponse
         else:
@@ -116,10 +115,6 @@ def finish_upload(link):
             return Results.Timeout
         if msg.width == 0xFFFF:
             return Results.Success
-
-def prepare_binary(firmware_file):
-    image = load_firmware(firmware_file)
-    return append_checksum(image)
 
 def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None):
     global bootloaderVersionHandler, progressHandler

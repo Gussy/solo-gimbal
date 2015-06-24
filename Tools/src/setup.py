@@ -5,7 +5,8 @@
 '''
 import sys, argparse, time, numpy, json
 
-from firmware_loader import prepare_binary, load_binary, start_bootloader
+from firmware_helper import load_firmware, append_checksum
+from firmware_loader import load_binary, start_bootloader
 from firmware_loader import Results as loader_results
 import setup_comutation, setup_home
 from setup_comutation import Results as calibration_results
@@ -31,7 +32,8 @@ def handle_file(args, link):
     elif fileExtension == 'ax':
         # Prepare the binary to load from the compressed .ax file
         print('Application firmware_file: %s' % args.file)
-        binary, checksum = prepare_binary(args.file)
+        firmware = load_firmware(args.file)
+        binary, checksum = append_checksum(firmware['binary'])
         print('Checksum: 0x%04X' % checksum)
 
         # Start the bootloader

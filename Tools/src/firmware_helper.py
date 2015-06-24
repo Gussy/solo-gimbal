@@ -50,7 +50,8 @@ def load_firmware(filename):
     '''Load the image from the JSON firmware file into a byte array'''
     with open(filename, "r") as f:
         desc = json.load(f)
-        return bytearray(zlib.decompress(base64.b64decode(desc['image'])))
+        desc['binary'] = bytearray(zlib.decompress(base64.b64decode(desc['image'])))
+        return desc
     
     
 def load_binary(filename):
