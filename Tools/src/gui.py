@@ -1,8 +1,9 @@
-import sys, time
+import sys, time, datetime
 from PySide import QtCore, QtGui
 from PySide.QtCore import QThread, Slot
 from qtasync import AsyncTask, coroutine
 import setup_mavlink, setup_read_sw_version, setup_validate
+import firmware_helper, firmware_loader
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -16,8 +17,8 @@ class Ui_MainWindow(object):
         self.centralWidget = QtGui.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
         self.tabWidget = QtGui.QTabWidget(self.centralWidget)
-        self.tabWidget.setEnabled(False)
-        self.tabWidget.setGeometry(QtCore.QRect(10, 149, 581, 341))
+        self.tabWidget.setEnabled(True)
+        self.tabWidget.setGeometry(QtCore.QRect(10, 150, 581, 341))
         self.tabWidget.setTabPosition(QtGui.QTabWidget.North)
         self.tabWidget.setTabShape(QtGui.QTabWidget.Rounded)
         self.tabWidget.setElideMode(QtCore.Qt.ElideNone)
@@ -29,10 +30,11 @@ class Ui_MainWindow(object):
         self.tabTests.setEnabled(True)
         self.tabTests.setObjectName("tabTests")
         self.formLayoutWidget_4 = QtGui.QWidget(self.tabTests)
-        self.formLayoutWidget_4.setGeometry(QtCore.QRect(10, 70, 551, 231))
+        self.formLayoutWidget_4.setGeometry(QtCore.QRect(10, 80, 551, 221))
         self.formLayoutWidget_4.setObjectName("formLayoutWidget_4")
         self.frmlytValidationResults = QtGui.QFormLayout(self.formLayoutWidget_4)
         self.frmlytValidationResults.setContentsMargins(0, 0, 0, 0)
+        self.frmlytValidationResults.setHorizontalSpacing(20)
         self.frmlytValidationResults.setObjectName("frmlytValidationResults")
         self.lblVersionLabel = QtGui.QLabel(self.formLayoutWidget_4)
         self.lblVersionLabel.setEnabled(True)
@@ -101,6 +103,7 @@ class Ui_MainWindow(object):
         self.lblValidationGyros.setObjectName("lblValidationGyros")
         self.frmlytValidationResults.setWidget(3, QtGui.QFormLayout.FieldRole, self.lblValidationGyros)
         self.lblValidationAccelerometer = QtGui.QLabel(self.formLayoutWidget_4)
+        self.lblValidationAccelerometer.setEnabled(True)
         self.lblValidationAccelerometer.setText("")
         self.lblValidationAccelerometer.setObjectName("lblValidationAccelerometer")
         self.frmlytValidationResults.setWidget(4, QtGui.QFormLayout.FieldRole, self.lblValidationAccelerometer)
@@ -119,6 +122,109 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tabTests, "")
         self.tabFirmware = QtGui.QWidget()
         self.tabFirmware.setObjectName("tabFirmware")
+        self.btnFirmwareFileDialog = QtGui.QPushButton(self.tabFirmware)
+        self.btnFirmwareFileDialog.setGeometry(QtCore.QRect(440, 10, 121, 31))
+        self.btnFirmwareFileDialog.setObjectName("btnFirmwareFileDialog")
+        self.txtFirmwareFilename = QtGui.QLineEdit(self.tabFirmware)
+        self.txtFirmwareFilename.setEnabled(True)
+        self.txtFirmwareFilename.setGeometry(QtCore.QRect(10, 10, 421, 31))
+        self.txtFirmwareFilename.setFrame(True)
+        self.txtFirmwareFilename.setEchoMode(QtGui.QLineEdit.Normal)
+        self.txtFirmwareFilename.setReadOnly(True)
+        self.txtFirmwareFilename.setObjectName("txtFirmwareFilename")
+        self.formLayoutWidget_5 = QtGui.QWidget(self.tabFirmware)
+        self.formLayoutWidget_5.setGeometry(QtCore.QRect(10, 50, 551, 191))
+        self.formLayoutWidget_5.setObjectName("formLayoutWidget_5")
+        self.formLayout = QtGui.QFormLayout(self.formLayoutWidget_5)
+        self.formLayout.setContentsMargins(0, 0, 0, 0)
+        self.formLayout.setHorizontalSpacing(20)
+        self.formLayout.setObjectName("formLayout")
+        self.lblFirmwareVersionLabel = QtGui.QLabel(self.formLayoutWidget_5)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.lblFirmwareVersionLabel.setFont(font)
+        self.lblFirmwareVersionLabel.setObjectName("lblFirmwareVersionLabel")
+        self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.lblFirmwareVersionLabel)
+        self.lblFirmwareBuildTimeLabel = QtGui.QLabel(self.formLayoutWidget_5)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.lblFirmwareBuildTimeLabel.setFont(font)
+        self.lblFirmwareBuildTimeLabel.setObjectName("lblFirmwareBuildTimeLabel")
+        self.formLayout.setWidget(1, QtGui.QFormLayout.LabelRole, self.lblFirmwareBuildTimeLabel)
+        self.lblFirmwareReleaseNameLabel = QtGui.QLabel(self.formLayoutWidget_5)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.lblFirmwareReleaseNameLabel.setFont(font)
+        self.lblFirmwareReleaseNameLabel.setObjectName("lblFirmwareReleaseNameLabel")
+        self.formLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.lblFirmwareReleaseNameLabel)
+        self.lblFirmwareGitIdentityLabel = QtGui.QLabel(self.formLayoutWidget_5)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.lblFirmwareGitIdentityLabel.setFont(font)
+        self.lblFirmwareGitIdentityLabel.setObjectName("lblFirmwareGitIdentityLabel")
+        self.formLayout.setWidget(3, QtGui.QFormLayout.LabelRole, self.lblFirmwareGitIdentityLabel)
+        self.lblFirmwareSizeLabel = QtGui.QLabel(self.formLayoutWidget_5)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.lblFirmwareSizeLabel.setFont(font)
+        self.lblFirmwareSizeLabel.setObjectName("lblFirmwareSizeLabel")
+        self.formLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.lblFirmwareSizeLabel)
+        self.lblFirmwareVersion = QtGui.QLabel(self.formLayoutWidget_5)
+        self.lblFirmwareVersion.setText("")
+        self.lblFirmwareVersion.setObjectName("lblFirmwareVersion")
+        self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.lblFirmwareVersion)
+        self.lblFirmwareBuildTime = QtGui.QLabel(self.formLayoutWidget_5)
+        self.lblFirmwareBuildTime.setText("")
+        self.lblFirmwareBuildTime.setObjectName("lblFirmwareBuildTime")
+        self.formLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.lblFirmwareBuildTime)
+        self.lblFirmwareReleaseName = QtGui.QLabel(self.formLayoutWidget_5)
+        self.lblFirmwareReleaseName.setText("")
+        self.lblFirmwareReleaseName.setObjectName("lblFirmwareReleaseName")
+        self.formLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.lblFirmwareReleaseName)
+        self.lblFirmwareGitIdentity = QtGui.QLabel(self.formLayoutWidget_5)
+        self.lblFirmwareGitIdentity.setText("")
+        self.lblFirmwareGitIdentity.setObjectName("lblFirmwareGitIdentity")
+        self.formLayout.setWidget(3, QtGui.QFormLayout.FieldRole, self.lblFirmwareGitIdentity)
+        self.lblFirmwareSize = QtGui.QLabel(self.formLayoutWidget_5)
+        self.lblFirmwareSize.setText("")
+        self.lblFirmwareSize.setObjectName("lblFirmwareSize")
+        self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.lblFirmwareSize)
+        self.lblFirmwareChecksumLabel = QtGui.QLabel(self.formLayoutWidget_5)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.lblFirmwareChecksumLabel.setFont(font)
+        self.lblFirmwareChecksumLabel.setObjectName("lblFirmwareChecksumLabel")
+        self.formLayout.setWidget(5, QtGui.QFormLayout.LabelRole, self.lblFirmwareChecksumLabel)
+        self.lblFirmwareChecksum = QtGui.QLabel(self.formLayoutWidget_5)
+        self.lblFirmwareChecksum.setText("")
+        self.lblFirmwareChecksum.setObjectName("lblFirmwareChecksum")
+        self.formLayout.setWidget(5, QtGui.QFormLayout.FieldRole, self.lblFirmwareChecksum)
+        self.lblFirmwareStatusLabel = QtGui.QLabel(self.formLayoutWidget_5)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.lblFirmwareStatusLabel.setFont(font)
+        self.lblFirmwareStatusLabel.setObjectName("lblFirmwareStatusLabel")
+        self.formLayout.setWidget(6, QtGui.QFormLayout.LabelRole, self.lblFirmwareStatusLabel)
+        self.lblFirmwareStatus = QtGui.QLabel(self.formLayoutWidget_5)
+        self.lblFirmwareStatus.setText("")
+        self.lblFirmwareStatus.setObjectName("lblFirmwareStatus")
+        self.formLayout.setWidget(6, QtGui.QFormLayout.FieldRole, self.lblFirmwareStatus)
+        self.btnLoadFirmware = QtGui.QPushButton(self.tabFirmware)
+        self.btnLoadFirmware.setEnabled(False)
+        self.btnLoadFirmware.setGeometry(QtCore.QRect(441, 260, 121, 41))
+        self.btnLoadFirmware.setObjectName("btnLoadFirmware")
+        self.pbarFirmwareUpdate = QtGui.QProgressBar(self.tabFirmware)
+        self.pbarFirmwareUpdate.setGeometry(QtCore.QRect(10, 260, 421, 41))
+        self.pbarFirmwareUpdate.setProperty("value", 0)
+        self.pbarFirmwareUpdate.setTextVisible(False)
+        self.pbarFirmwareUpdate.setObjectName("pbarFirmwareUpdate")
         self.tabWidget.addTab(self.tabFirmware, "")
         self.tabCalibration = QtGui.QWidget()
         self.tabCalibration.setObjectName("tabCalibration")
@@ -218,7 +324,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralWidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -232,6 +338,15 @@ class Ui_MainWindow(object):
         self.btnValidationRunTests.setText(QtGui.QApplication.translate("MainWindow", "Run Tests", None, QtGui.QApplication.UnicodeUTF8))
         self.btnValidationSetDefaults.setText(QtGui.QApplication.translate("MainWindow", "Set Defaults", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabTests), QtGui.QApplication.translate("MainWindow", "Tests", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnFirmwareFileDialog.setText(QtGui.QApplication.translate("MainWindow", "Open Firmware", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblFirmwareVersionLabel.setText(QtGui.QApplication.translate("MainWindow", "Version:", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblFirmwareBuildTimeLabel.setText(QtGui.QApplication.translate("MainWindow", "Build Time:", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblFirmwareReleaseNameLabel.setText(QtGui.QApplication.translate("MainWindow", "Release Name:", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblFirmwareGitIdentityLabel.setText(QtGui.QApplication.translate("MainWindow", "Git Identity:", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblFirmwareSizeLabel.setText(QtGui.QApplication.translate("MainWindow", "Firmware Size:", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblFirmwareChecksumLabel.setText(QtGui.QApplication.translate("MainWindow", "Checksum:", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblFirmwareStatusLabel.setText(QtGui.QApplication.translate("MainWindow", "Status:", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnLoadFirmware.setText(QtGui.QApplication.translate("MainWindow", "Load Firmware", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabFirmware), QtGui.QApplication.translate("MainWindow", "Firmware", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabCalibration), QtGui.QApplication.translate("MainWindow", "Calibration", None, QtGui.QApplication.UnicodeUTF8))
         self.lblConnectionLabel.setText(QtGui.QApplication.translate("MainWindow", "Connection:", None, QtGui.QApplication.UnicodeUTF8))
@@ -255,6 +370,9 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # Disable the tabwidget
+        self.ui.tabWidget.setEnabled(False)
+
         # Setup connection UI
         self.addBaudrates()
         self.ui.rbAuto.clicked.connect(self.handleConnectionTypeAuto)
@@ -265,6 +383,10 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.ui.btnValidationRunTests.clicked.connect(self.handleRunValidation)
         self.ui.btnValidationSetDefaults.clicked.connect(self.handleSetDefaults)
 
+        # Setup firmware UI
+        self.ui.btnFirmwareFileDialog.clicked.connect(self.handleFirmwareDialog)
+        self.ui.btnLoadFirmware.clicked.connect(self.handleFirmwareLoad)
+
         # MAVLink
         self.mavport = None
         self.link = None
@@ -272,6 +394,9 @@ class ControlMainWindow(QtGui.QMainWindow):
         # Setup states
         self.connectWithAuto = True
         self.connected = False
+
+        # Firmware
+        self.firmwareBinary = None
 
         self.utils = UiUtils()
 
@@ -308,6 +433,7 @@ class ControlMainWindow(QtGui.QMainWindow):
 
     def resetUI(self):
         self.clearValidationResults()
+        self.clearFirmwareInfoUI()
 
     def setConnectionStatusBanner(self, state):
         if state == 'disconnected':
@@ -364,6 +490,86 @@ class ControlMainWindow(QtGui.QMainWindow):
     def handleSetDefaults(self):
         if self.connected:
             self.runAsyncSetDefaults()
+
+    @Slot()
+    def handleFirmwareDialog(self):
+        filename, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open Firmware', '')
+        fileExtension = str(filename).split(".")[-1].lower()
+        if filename and fileExtension == "ax":
+            self.ui.txtFirmwareFilename.setText(filename)
+            self.parseFirmware(filename)
+            self.ui.btnLoadFirmware.setEnabled(True)
+
+    @Slot()
+    def handleFirmwareLoad(self):
+        if self.connected and self.firmwareBinary != None:
+            self.runAsyncFirmwareLoad()
+
+    def parseFirmware(self, filename):
+        firmware = firmware_helper.load_firmware(filename)
+        self.firmwareBinary, checksum = firmware_helper.append_checksum(firmware['binary'])
+        self.updateFirmwareInfoUI(
+            "v%s" % firmware['version'],
+            datetime.datetime.fromtimestamp(firmware['build_time']).strftime('%d/%m/%Y @ %H:%M:%S'),
+            firmware['release'],
+            firmware['git_identity'],
+            "%i kB" % int(firmware['image_size'] / 1024),
+            "%04X" % checksum
+        )
+
+    def updateFirmwareInfoUI(self, version, buildTime, releaseName, gitIdentity, firmwareSize, checksum):
+        self.ui.lblFirmwareVersion.setText(version)
+        self.ui.lblFirmwareBuildTime.setText(buildTime)
+        self.ui.lblFirmwareReleaseName.setText(releaseName)
+        self.ui.lblFirmwareGitIdentity.setText(gitIdentity)
+        self.ui.lblFirmwareSize.setText(firmwareSize)
+        self.ui.lblFirmwareChecksum.setText(checksum)
+
+    def clearFirmwareInfoUI(self):
+        self.updateFirmwareInfoUI("", "", "", "", "", "")
+
+    def firmwareStartBootloader(self):
+        return firmware_loader.start_bootloader(self.link)
+
+    def firmwareLoadBinary(self):
+        def loaderProgressCallback(uploaded_kb, total_kb, percentage):
+            self.ui.pbarFirmwareUpdate.setValue(percentage)
+        return firmware_loader.load_binary(self.firmwareBinary, self.link, progressCallback=loaderProgressCallback)
+
+    @coroutine
+    def runAsyncFirmwareLoad(self):
+        self.ui.pbarFirmwareUpdate.setValue(0)
+        self.ui.btnFirmwareFileDialog.setEnabled(False)
+        self.ui.btnLoadFirmware.setEnabled(False)
+        self.ui.lblFirmwareStatus.setText("")
+
+        # Start the bootloader
+        self.ui.lblFirmwareStatus.setText("Starting firmware update")
+        bootloader = yield AsyncTask(self.firmwareStartBootloader)
+        if bootloader == firmware_loader.Results.NoResponse:
+            self.ui.lblFirmwareStatus.setText("No response from gimbal")
+        elif bootloader == firmware_loader.Results.InBoot:
+            self.ui.lblFirmwareStatus.setText('Target already in bootloader mode')
+        elif bootloader == firmware_loader.Results.Restarting:
+            self.ui.lblFirmwareStatus.setText("Target in bootloader mode, restarting")
+
+        # Load the binary using the bootloader
+        if bootloader != firmware_loader.Results.NoResponse:
+            self.ui.lblFirmwareStatus.setText("Loading firmware")
+            load = yield AsyncTask(self.firmwareLoadBinary)
+            if load == firmware_loader.Results.Success:
+                self.ui.lblFirmwareStatus.setText("Upload successful")
+            elif load == firmware_loader.Results.NoResponse:
+                self.ui.lblFirmwareStatus.setText("No response from gimbal, exiting.")
+            elif load == firmware_loader.Results.Timeout:
+                self.ui.lblFirmwareStatus.setText("Timeout")
+            else:
+                self.ui.lblFirmwareStatus.setText("Unknown error while finishing bootloading")
+
+        self.ui.pbarFirmwareUpdate.setValue(0)
+        self.ui.btnFirmwareFileDialog.setEnabled(True)
+        self.ui.btnLoadFirmware.setEnabled(True)
+        self.ui.lblFirmwareStatus.setText("")
 
     def validateVersion(self):
         return setup_validate.validate_version(self.link)
@@ -452,7 +658,6 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.clearValidationResults()
 
         result = yield AsyncTask(self.setDefaults)
-        print("defaults", result)
 
         self.ui.btnValidationRunTests.setEnabled(True)
         self.ui.btnValidationSetDefaults.setEnabled(True)
