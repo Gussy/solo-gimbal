@@ -14,7 +14,7 @@ def fetch_param(link, param, timeout=5):
         # Get a parameter
         link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
         # Wait for a response
-        msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=2)
+        msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=1)
         if msg:
             return msg
     return None
