@@ -19,15 +19,13 @@ def open_comm(port, baudrate):
         serial_list = mavutil.auto_detect_serial(preferred_list=['*FTDI*',"*Arduino_Mega_2560*", "*3D_Robotics*", "*USB_to_UART*", '*PX4*', '*FMU*'])
         if len(serial_list) == 1:
             port = serial_list[0].device
-            print("Connecting via serial port %s" % port)
         else:
-            port = '0.0.0.0:14550'    
-            print("Connecting via WiFi on port %s" % port)
+            port = '0.0.0.0:14550'
     mavserial = mavutil.mavlink_connection(device=port, baud=baudrate)
     link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
     link.target_sysid = TARGET_SYSTEM_ID
     link.target_compid = TARGET_COMPONENT_ID
-    return link
+    return (port, link)
 
 
 def wait_for_heartbeat(link):
@@ -88,7 +86,6 @@ def reset_gimbal(link):
     if result:
         return True
     else:
-        print 'failed to reboot'
         return False 
 
 def reset_into_bootloader(link):
@@ -117,7 +114,7 @@ def getCalibrationProgress(link):
     progress = int(msg_progress.param2)
     status = setup_comutation.status_enum[int(msg_progress.param3)]
     
-    return axis, progress, status
+    return [axis, progress, status]
 
 def receive_home_offset_result(link):
     return link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
