@@ -17,25 +17,32 @@ def getAverage(link,get_variable, sample_count=NUMBER_OF_SAMPLES):
     sum_angles = Vector3()
     for i in range(sample_count):
         angles = get_variable(link)
-        sum_angles += angles    
-    offset = sum_angles/sample_count
+        if angles:
+            sum_angles += angles
+        else:
+            return None
+    offset = sum_angles / sample_count
     return offset
 
 def calibrate_joints(link):
     message_brodcasting(link, True)
     average = getAverage(link, get_current_joint_angles)
-    print [average.x,average.y,average.z]
-    set_offsets(link,'JNT',average)
+    if average:
+        set_offsets(link, 'JNT', average)
+    else:
+        return None
     message_brodcasting(link, False)
-    return
+    return average
 
 def calibrate_gyro(link):
     message_brodcasting(link, True)
     average = getAverage(link, get_current_delta_angles)
-    print [average.x,average.y,average.z]
-    set_offsets(link,'GYRO',average)
+    if average:
+        set_offsets(link, 'GYRO', average)
+    else:
+        return None
     message_brodcasting(link, False)
-    return
+    return average
 
 
 def getAccelSample(link, ui_msg, AVG_COUNT=10):
@@ -49,23 +56,23 @@ def calibrate_accel(link):
         
     # Get samples
     samples = [];
-    samples.append(getAccelSample(link,"Place the gimbal leveled"))
-    samples.append(getAccelSample(link,"Place the gimbal on it's side"))
-    samples.append(getAccelSample(link,"Place the gimbal on it's back"))
-    samples.append(getAccelSample(link,"Place the gimbal on it's other side"))
-    samples.append(getAccelSample(link,"Place the gimbal on it's front side"))
-    samples.append(getAccelSample(link,"Place the gimbal upside-down"))
-    print ' '
+    samples.append(getAccelSample(link, "Place the gimbal leveled"))
+    samples.append(getAccelSample(link, "Place the gimbal on it's side"))
+    samples.append(getAccelSample(link, "Place the gimbal on it's back"))
+    samples.append(getAccelSample(link, "Place the gimbal on it's other side"))
+    samples.append(getAccelSample(link, "Place the gimbal on it's front side"))
+    samples.append(getAccelSample(link, "Place the gimbal upside-down"))
+    print(' ')
     
     p = setup_accelcal.calibrate_accel_6dof(samples)
     level = setup_accelcal.calc_level_euler_rpy(p, samples[0])
     
-    print 'calibration values are '+ str(p)
-    print 'offset values are '+ str(level.T*degrees(1))
+    print('calibration values are '+ str(p))
+    print('offset values are '+ str(level.T*degrees(1)))
         
     # Save values
     set_offsets(link, 'ACC', Vector3()) # TODO: implement accel calibration
     message_brodcasting(link, False)
-    return
+    return average
 
 

@@ -71,6 +71,7 @@ def get_gains(link, kind):
 def getAxisCalibrationParam(link, axis_enum):
     icept = fetch_param(link, "GMB_" + axis_enum + "_ICEPT")
     slope = fetch_param(link, "GMB_" + axis_enum + "_SLOPE")
-    return axis_enum, icept.param_value, slope.param_value
-
-
+    if icept and slope:
+        return [axis_enum, icept.param_value, slope.param_value]
+    else:
+        return None
