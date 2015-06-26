@@ -1,12 +1,12 @@
 '''
 
 '''
-import sys
+import sys, time
 from pymavlink import mavutil
 from pymavlink.mavutil import mavlink, mavserial
 from pymavlink.dialects.v10 import ardupilotmega
 from pymavlink.rotmat import Vector3
-import setup_comutation
+import setup_comutation, setup_mavlink
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
@@ -49,7 +49,7 @@ def wait_handshake(m, timeout=1):
 def get_current_joint_angles(link):
     while(True):
         msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
-        if msg_gimbal is None:
+        if msg_gimbal == None:
             return None
         else:
             return Vector3([msg_gimbal.joint_roll, msg_gimbal.joint_el, msg_gimbal.joint_az])
@@ -57,7 +57,7 @@ def get_current_joint_angles(link):
 def get_current_delta_angles(link):
     while(True):
         msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
-        if msg_gimbal is None:
+        if msg_gimbal == None:
             return None
         else:
             return Vector3([msg_gimbal.delta_angle_x, msg_gimbal.delta_angle_y, msg_gimbal.delta_angle_z])
@@ -69,7 +69,7 @@ def get_current_delta_velocity(link):
     link.file.port.flushInput() # clear any messages in the buffer, so we get a current one
     while(True):
         msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
-        if msg_gimbal is None:
+        if msg_gimbal == None:
             return None
         else:
             return Vector3([msg_gimbal.delta_velocity_x, msg_gimbal.delta_velocity_y, msg_gimbal.delta_velocity_z])
@@ -85,7 +85,10 @@ def reset_gimbal(link):
     link.file.mav.command_long_send(link.target_sysid, link.target_compid, ardupilotmega.MAV_CMD_GIMBAL_RESET, 0, 0, 0, 0, 0, 0, 0, 0)
     result = link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
     if result:
-        return True
+        # Sleep to allow the reset command to take
+        time.sleep(1)
+        # Wait for the gimbal to reset and begin comms again
+        return setup_mavlink.wait_for_heartbeat(link)
     else:
         return False 
 

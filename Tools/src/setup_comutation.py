@@ -39,6 +39,7 @@ def getAxisCalibrationParams(link):
 def resetCalibration(link):
     setup_param.clear_comutation_params(link)
     setup_mavlink.reset_gimbal(link)
+    return True
 
 def calibrate(link, progressCallback=None):
     # Check if a calibration exists, exit if it does

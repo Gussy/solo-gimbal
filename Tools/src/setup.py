@@ -254,6 +254,7 @@ def command_interface():
     if args.forcecal:
         eraseCalibration(link)
         wait_for_heartbeat(link)
+        # TODO: Check if this timeout is necessary
         time.sleep(5)
         runCalibration(link)
         return
@@ -293,8 +294,7 @@ def command_interface():
             print('gyro', offsets)
         else:
             print('Failed to calibrate gyro offsets')
-        if not args.staticcal:
-            return
+        return
     
     if args.accelcalibration:
         setup_home.calibrate_accel(link)
@@ -330,7 +330,7 @@ def command_interface():
         else:
             print("Assembly time: not set")
     else:
-        print("Unable to read assembly time")
+        print("Assembly time: unknown")
 
 if __name__ == '__main__':
     command_interface()
