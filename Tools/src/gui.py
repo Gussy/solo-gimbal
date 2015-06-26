@@ -31,6 +31,7 @@ class ControlMainWindow(QtGui.QMainWindow):
 
     def resetUI(self, isCycling):
         self.validationUI.clearValidationResults()
+        self.firmwareUI.resetDidBootload()
         if not isCycling:
             self.calibrationUI.resetCalibrationAttempted()
             self.calibrationUI.resetCalibrationTable()

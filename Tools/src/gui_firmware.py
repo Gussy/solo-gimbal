@@ -11,6 +11,9 @@ class firmwareUI(object):
         self.parent = parent
         self.connection = parent.connectionUI
 
+        # Public
+        self.didBootload = False
+
         # Private
         self.firmwareBinary = None
 
@@ -26,6 +29,9 @@ class firmwareUI(object):
     def handleFirmwareLoad(self):
         if self.connection.isConnected() and self.firmwareBinary != None:
             self.runAsyncFirmwareLoad()
+
+    def resetDidBootload(self):
+        self.didBootload = False
 
     def readyToLoad(self):
         return self.firmwareBinary
@@ -102,6 +108,8 @@ class firmwareUI(object):
                 self.ui.lblFirmwareStatus.setText("Timeout")
             else:
                 self.ui.lblFirmwareStatus.setText("Unknown error while finishing bootloading")
+
+        self.didBootload = True
 
         self.ui.pbarFirmwareUpdate.setValue(0)
         self.ui.btnFirmwareFileDialog.setEnabled(True)

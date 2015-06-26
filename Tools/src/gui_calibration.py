@@ -100,6 +100,11 @@ class calibrationUI(object):
         self.ui.pbarCalibration.setValue(0)
         self.calibrationAttempted = True
 
+        # Erase calibration first
+        result = yield AsyncTask(self.eraseCalibration)
+        self.resetCalibrationTable()
+
+        # Run calibration
         result = yield AsyncTask(self.runMotorCalibration)
 
         if result == setup_comutation.Results.ParamFetchFailed:
@@ -111,7 +116,7 @@ class calibrationUI(object):
             if result == setup_comutation.Results.Success:
                 self.setCalibrationStatus("Calibration successful!")
             elif result == setup_comutation.Results.CalibrationExists:
-                self.setCalibrationStatus("A calibration already exists, erase current calibration first (-e)")
+                self.setCalibrationStatus("A calibration already exists, erase current calibration first")
             # Below assumes that the calibration runs in the order: pitch->roll->yaw
             elif result == setup_comutation.Results.PitchFailed:
                 self.setCalibrationStatus("Pitch calibration failed")
@@ -127,7 +132,6 @@ class calibrationUI(object):
                 self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, False)
 
             # Reset the gimbal
-            self.setCalibrationStatus("Rebooting Gimbal")
             result = yield AsyncTask(self.resetGimbal)
 
             # Re-connect to the gimbal after rebooting

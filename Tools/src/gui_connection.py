@@ -173,11 +173,10 @@ class connectionUI(object):
             softwareVersion, serialNumber, assemblyTime = yield AsyncTask(self.getGimbalParameters)
 
             # Prompt a for the serial number if the gimbal is factory fresh
-            if serialNumber == '' and assemblyTime == 0:
+            if serialNumber == '' or assemblyTime == 0:
                 text, ok = QtGui.QInputDialog.getText(self.parent, '3DR Gimbal', 'Serial Number:')
                 if ok and text != '':
                     serialNumber, assemblyTime = yield AsyncTask(self.writeSerialNumber, text)
-
             # Update the status display
             self.setStatusInfo(
                 softwareVersion=softwareVersion,
@@ -193,7 +192,7 @@ class connectionUI(object):
                 if self.parent.firmwareUI.readyToLoad():
                     self.ui.btnLoadFirmware.clicked.emit()
             # Run motor commutation calibration after updating firmware if required
-            elif self.parent.autoMotorCal and self.isCycling and not self.parent.calibrationUI.getCalibrationAttempted():
+            elif self.parent.autoMotorCal and (self.isCycling or self.parent.firmwareUI.didBootload) and not self.parent.calibrationUI.getCalibrationAttempted():
                 self.ui.tabWidget.setCurrentIndex(2)
                 self.ui.btnRunMotorCalibration.clicked.emit()
 
