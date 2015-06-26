@@ -21,7 +21,7 @@ def float_to_uint32(f):
 def string12_to_float3(s):
     return struct.unpack('3f',struct.pack('<12s', s))
 
-def float3_to_string12(f1,f2,f3):
+def float3_to_string12(f1, f2, f3):
     return struct.unpack('12s',struct.pack('<3f', f1, f2, f3))[0]
 
 def readSWver(link):
@@ -43,8 +43,8 @@ def set_assembly_date(link):
     setup_param.commit_to_flash(link)
     return timestamp
 
-def set_serial_number(link, serial_str):    
-    ser_num_1, ser_num_2, ser_num_3 = string12_to_float3(serial_str)
+def set_serial_number(link, serial_str):
+    ser_num_1, ser_num_2, ser_num_3 = string12_to_float3(str(serial_str)[:12])
     setup_param.set_param(link, "GMB_SER_NUM_1", ser_num_1)
     setup_param.set_param(link, "GMB_SER_NUM_2", ser_num_2)
     setup_param.set_param(link, "GMB_SER_NUM_3", ser_num_3)
