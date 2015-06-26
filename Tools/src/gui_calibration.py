@@ -128,9 +128,6 @@ class calibrationUI(object):
                 allParams = yield AsyncTask(self.getAllParams)
                 self.updateCalibrationTable(allParams)
 
-                # Set the serial number at the end of a successful calibration
-                self.parent.connection.setSerialNumber()
-
         self.setCalibrationStatus()
         self.ui.pbarCalibration.setValue(0)
         self.setButtonsEnabled(True)

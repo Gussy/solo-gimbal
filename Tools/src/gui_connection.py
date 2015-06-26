@@ -70,16 +70,14 @@ class connectionUI(object):
                 "border-radius: 20px;")
 
     def setStatusInfo(self, softwareVersion=None, serialNumber=None, assemblyTime=None):
-        if softwareVersion:
+        if softwareVersion != None:
             self.ui.lblSoftwareVersion.setText("v%i.%i.%i" % (softwareVersion[0], softwareVersion[1], softwareVersion[2]))
-        else:
+        elif softwareVersion != '':
             self.ui.lblSoftwareVersion.setText("Unknown")
 
-        factoryFresh = False
         if serialNumber != None:
             if serialNumber == '':
                 self.ui.lblSerialNumber.setText("Not set")
-                factoryFresh = True
             else:
                 self.ui.lblSerialNumber.setText(str(serialNumber))
         else:
@@ -88,15 +86,11 @@ class connectionUI(object):
         if assemblyTime != None:
             if assemblyTime == 0:
                 self.ui.lblAssemblyTime.setText("Not set")
-                factoryFresh = True
             else:
                 strTime = datetime.datetime.fromtimestamp(assemblyTime).strftime('%d/%m/%Y %H:%M:%S')
                 self.ui.lblAssemblyTime.setText(strTime)
         else:
             self.ui.lblAssemblyTime.setText("Unknown")
-
-        if factoryFresh:
-            self.setSerialNumber()
 
     def setConnectionState(self, connected):
         if connected:
@@ -129,12 +123,6 @@ class connectionUI(object):
             for baud in bauds:
                 self.ui.cbBaudrate.addItem(str(baud))
 
-    def setSerialNumber(self):
-        text, ok = QtGui.QInputDialog.getText(self.parent, '3DR Gimbal', 'Serial Number:')
-        if ok and text:
-            pass
-            #print text
-
     @gui_utils.waitCursor
     def autoConnectionWorker(self):
         return setup_mavlink.open_comm()
@@ -153,6 +141,12 @@ class connectionUI(object):
         serialNumber = setup_factory.get_serial_number(self.link)
         assemblyTime = setup_factory.get_assembly_time(self.link)
         return version, serialNumber, assemblyTime
+
+    @gui_utils.waitCursor
+    def writeSerialNumber(self, serialNumber):
+        serialNumber = setup_factory.set_serial_number(self.link, serialNumber)
+        assemblyTime = setup_factory.set_assembly_date(self.link)
+        return serialNumber, assemblyTime
 
     @coroutine
     def attemptConnection(self):
@@ -174,11 +168,20 @@ class connectionUI(object):
         else:
             self.setConnectionStatusBanner('connected')
             softwareVersion, serialNumber, assemblyTime = yield AsyncTask(self.getGimbalParameters)
+
+            # Prompt a for the serial number if the gimbal is factory fresh
+            if serialNumber == '' and assemblyTime == 0:
+                text, ok = QtGui.QInputDialog.getText(self.parent, '3DR Gimbal', 'Serial Number:')
+                if ok and text != '':
+                    serialNumber, assemblyTime = yield AsyncTask(self.writeSerialNumber, text)
+
+            # Update the status display
             self.setStatusInfo(
                 softwareVersion=softwareVersion,
                 serialNumber=serialNumber,
                 assemblyTime=assemblyTime
             )
+
             self.ui.tabWidget.setEnabled(True)
         self.ui.btnConnect.setEnabled(True)
 
