@@ -87,6 +87,9 @@ class firmwareUI(object):
             load = yield AsyncTask(self.firmwareLoadBinary)
             if load == firmware_loader.Results.Success:
                 self.ui.lblFirmwareStatus.setText("Upload successful")
+
+                # Re-connect to the gimbal after bootloading
+                self.connection.cycleConnection()
             elif load == firmware_loader.Results.NoResponse:
                 self.ui.lblFirmwareStatus.setText("No response from gimbal, exiting.")
             elif load == firmware_loader.Results.Timeout:

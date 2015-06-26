@@ -100,11 +100,9 @@ class calibrationUI(object):
             # These results require a reset of the Gimbal
             if result == setup_comutation.Results.Success:
                 self.setCalibrationStatus("Calibration successful!")
-                # Get all the parameters if the calibration was successful
-                allParams = yield AsyncTask(self.getAllParams)
-                self.updateCalibrationTable(allParams)
             elif result == setup_comutation.Results.CalibrationExists:
                 self.setCalibrationStatus("A calibration already exists, erase current calibration first (-e)")
+            # Below assumes that the calibration runs in the order: pitch->roll->yaw
             elif result == setup_comutation.Results.PitchFailed:
                 self.setCalibrationStatus("Pitch calibration failed")
                 self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, False)
@@ -121,6 +119,17 @@ class calibrationUI(object):
             # Reset the gimbal
             self.setCalibrationStatus("Rebooting Gimbal")
             result = yield AsyncTask(self.resetGimbal)
+
+            # Re-connect to the gimbal after rebooting
+            self.connection.cycleConnection()
+
+            if result == setup_comutation.Results.Success:
+                # Get all the parameters if the calibration was successful
+                allParams = yield AsyncTask(self.getAllParams)
+                self.updateCalibrationTable(allParams)
+
+                # Set the serial number at the end of a successful calibration
+                self.parent.connection.setSerialNumber()
 
         self.setCalibrationStatus()
         self.ui.pbarCalibration.setValue(0)
