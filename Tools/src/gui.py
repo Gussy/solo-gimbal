@@ -26,10 +26,11 @@ class ControlMainWindow(QtGui.QMainWindow):
         # Setup calibration UI
         self.calibrationUI = gui_calibration.calibrationUI(self)
 
-    def resetUI(self):
+    def resetUI(self, isCycling):
         self.validationUI.clearValidationResults()
         self.firmwareUI.clearFirmwareInfoUI()
-        self.calibrationUI.resetCalibrationTable()
+        if not isCycling:
+            self.calibrationUI.resetCalibrationTable()
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)

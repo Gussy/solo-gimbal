@@ -17,6 +17,7 @@ class connectionUI(object):
         # Private
         self.mavport = None
         self.connectWithAuto = True
+        self.isCycling = False
 
         self.addBaudrates()
         self.ui.rbAuto.clicked.connect(self.handleConnectionTypeAuto)
@@ -187,10 +188,11 @@ class connectionUI(object):
 
     def closeConnection(self):
         self.link.file.close()
-        self.parent.resetUI()
+        self.parent.resetUI(self.isCycling)
         self.setStatusInfo()
 
     def cycleConnection(self):
+        self.isCycling = True
         self.ui.btnConnect.clicked.emit()
         self.ui.btnConnect.clicked.emit()
-            
+        self.isCycling = False
