@@ -9,6 +9,9 @@ class calibrationUI(object):
         self.parent = parent
         self.connection = parent.connectionUI
 
+        # Public
+        self.calibrationAttempted = False
+
         self.ui.btnGetCalibration.clicked.connect(self.handleGetCalibration)
         self.ui.btnEraseCalibration.clicked.connect(self.handleEraseCalibration)
         self.ui.btnRunStaticCalibration.clicked.connect(self.handleRunStaticCalibration)
@@ -36,6 +39,12 @@ class calibrationUI(object):
             self.resetCalibrationTable()
             self.runAsyncMotorCalibration()
 
+    def getCalibrationAttempted(self):
+        return self.calibrationAttempted
+
+    def resetCalibrationAttempted(self):
+        self.calibrationAttempted = False
+
     @gui_utils.waitCursor
     def getAllParams(self):
         return setup_validate.show(self.connection.getLink())
@@ -54,7 +63,7 @@ class calibrationUI(object):
     def runMotorCalibration(self):
         def calibrationProgressCallback(axis, progress, status):
             self.ui.pbarCalibration.setValue(progress)
-            self.setCalibrationStatus(axis)
+            self.setCalibrationStatus("Calibrating %s" % axis.title())
         return setup_comutation.calibrate(self.connection.getLink(), calibrationProgressCallback)
 
     @gui_utils.waitCursor
@@ -89,6 +98,7 @@ class calibrationUI(object):
     def runAsyncMotorCalibration(self):
         self.setButtonsEnabled(False)
         self.ui.pbarCalibration.setValue(0)
+        self.calibrationAttempted = True
 
         result = yield AsyncTask(self.runMotorCalibration)
 
@@ -128,7 +138,6 @@ class calibrationUI(object):
                 allParams = yield AsyncTask(self.getAllParams)
                 self.updateCalibrationTable(allParams)
 
-        self.setCalibrationStatus()
         self.ui.pbarCalibration.setValue(0)
         self.setButtonsEnabled(True)
 

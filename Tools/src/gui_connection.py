@@ -185,13 +185,20 @@ class connectionUI(object):
                 assemblyTime=assemblyTime
             )
 
+            self.ui.tabWidget.setEnabled(True)
+
             # Attempt to bootload a the gimbal if the serial number is none
             if serialNumber == None:
                 self.ui.tabWidget.setCurrentIndex(1)
                 if self.parent.firmwareUI.readyToLoad():
                     self.ui.btnLoadFirmware.clicked.emit()
+            # Run motor commutation calibration after updating firmware if required
+            elif self.parent.autoMotorCal and self.isCycling and not self.parent.calibrationUI.getCalibrationAttempted():
+                self.ui.tabWidget.setCurrentIndex(2)
+                self.ui.btnRunMotorCalibration.clicked.emit()
 
-            self.ui.tabWidget.setEnabled(True)
+        if self.isCycling:
+            self.isCycling = False
         self.ui.btnConnect.setEnabled(True)
 
     def closeConnection(self):
@@ -203,4 +210,3 @@ class connectionUI(object):
         self.isCycling = True
         self.ui.btnConnect.clicked.emit()
         self.ui.btnConnect.clicked.emit()
-        self.isCycling = False
