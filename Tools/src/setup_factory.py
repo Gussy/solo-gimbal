@@ -31,47 +31,45 @@ def readSWver(link):
     if not msg:
         return None
     else:
-        return float_to_bytes4(msg.param_value)
+        return float_to_bytes4(msg.param_value)[1:]
 
 def get_assembly_time(link):
-    value = setup_param.fetch_param(link, "GMB_ASM_TIME").param_value
-    asm_time = float_to_uint32(value)
-    if(asm_time == 0):
-        asm_time = None    
-    return asm_time
+    value = setup_param.fetch_param(link, "GMB_ASM_TIME")
+    if value:
+        return float_to_uint32(value.param_value)
+    return None
 
 def set_assembly_date(link):
-    timestamp =  time.time()
+    timestamp = time.time()
     setup_param.set_param(link, "GMB_ASM_TIME", uint32_to_float(timestamp))
     commit_to_flash(link)
-    print "Assembly date set to %s" % (time.ctime(timestamp))
+    return timestamp
 
-def set_serial_number(link,serial_str):    
-    ser_num_1, ser_num_2,ser_num_3 = string12_to_float3(serial_str)
+def set_serial_number(link, serial_str):    
+    ser_num_1, ser_num_2, ser_num_3 = string12_to_float3(serial_str)
     setup_param.set_param(link, "GMB_SER_NUM_1", ser_num_1)
     setup_param.set_param(link, "GMB_SER_NUM_2", ser_num_2)
     setup_param.set_param(link, "GMB_SER_NUM_3", ser_num_3)
     commit_to_flash(link)
-    print "Serial number set to %s" % serial_str
     
 def get_serial_number(link):
-    ser_num_1 = setup_param.fetch_param(link, "GMB_SER_NUM_1").param_value
-    ser_num_2 = setup_param.fetch_param(link, "GMB_SER_NUM_2").param_value
-    ser_num_3 = setup_param.fetch_param(link, "GMB_SER_NUM_3").param_value
-    serial_str = float3_to_string12(ser_num_1, ser_num_2, ser_num_3)
-    if serial_str.startswith('GB'):
-        return serial_str
-    else:
-        return None
+    ser_num_1 = setup_param.fetch_param(link, "GMB_SER_NUM_1")
+    ser_num_2 = setup_param.fetch_param(link, "GMB_SER_NUM_2")
+    ser_num_3 = setup_param.fetch_param(link, "GMB_SER_NUM_3")
+    if ser_num_1 != None and ser_num_2 != None and ser_num_3 != None:
+        serial_str = float3_to_string12(ser_num_1.param_value, ser_num_2.param_value, ser_num_3.param_value)
+        if serial_str.startswith('GB'):
+            return serial_str
+    return None
 
 def set_serial_number_3dr(link,month_serial_number):
     today = datetime.date.today() 
     
     # Build year identifier
-    year = hex(((today.year-2010)%16))[2]
+    year = hex((today.year - 2010) % 16)[2]
     
     # Build month indentifier
-    if today.month<10:
+    if today.month < 10:
         month = today.month
     elif today.month == 10:
         month = '0'
@@ -81,11 +79,12 @@ def set_serial_number_3dr(link,month_serial_number):
         month = 'B'        
     
     # Build per-mount serial number (5 digits)
-    number = '%05d'%(month_serial_number%100000)    
+    number = '%05d' % (month_serial_number % 100000)    
     
     # Build serial number string
-    serial_str = 'GB11A'+str(year)+str(month)+str(number)
+    serial_str = 'GB11A' + str(year) + str(month) + str(number)
     
     # Save the serial number on the gimbal
     set_serial_number(link, serial_str)
-    pass
+    
+    return serial_str

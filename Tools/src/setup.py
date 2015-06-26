@@ -130,6 +130,22 @@ def printValidation(link):
     else:
         print("Version \t- ERROR")
 
+    valid = setup_validate.validate_serial_number(link)
+    if valid == setup_validate.Results.Pass:
+        print("Serial Number \t- PASS")
+    elif valid == setup_validate.Results.Fail:
+        print("Serial Number \t- FAIL - Serial number was not set (--serialnumber SERIALNUMBER)")
+    else:
+        print("Serial Number \t- ERROR")
+
+    valid = setup_validate.validate_date(link)
+    if valid == setup_validate.Results.Pass:
+        print("Assembly date \t- PASS")
+    elif valid == setup_validate.Results.Fail:
+        print("Assembly date \t- FAIL - assembly date was not set on the factory (--date)")
+    else:
+        print("Assembly date \t- ERROR")
+
     valid = setup_validate.validate_comutation(link)
     if valid == setup_validate.Results.Pass:
         print("Comutation \t- PASS")
@@ -210,11 +226,13 @@ def command_interface():
         return
 
     if args.date:
-        setup_factory.set_assembly_date(link)
+        timestamp = setup_factory.set_assembly_date(link)
+        print("Assembly time set to %s" % time.ctime(timestamp))
         return
 
     if args.serialnumber is not None:
-        setup_factory.set_serial_number_3dr(link, args.serialnumber)
+        serial = setup_factory.set_serial_number_3dr(link, args.serialnumber)
+        print("Serial number set to %s" % serial)
         return
     
     if args.run:
@@ -277,15 +295,9 @@ def command_interface():
             print('Failed to calibrate gyro offsets')
         if not args.staticcal:
             return
-
-    if args.staticcal:
-        # Accelerometer calibration not implemented
-        #set_offsets(link, 'ACC', numpy.zeros(3)) # Until we have accel cal zero the offsets on calibration
-        return
     
     if args.accelcalibration:
-        #setup_home.calibrate_accel(link)
-        print('Accelerometer calibration not implemented')
+        setup_home.calibrate_accel(link)
         return
     
     if args.reboot:
@@ -301,16 +313,24 @@ def command_interface():
     ver = setup_factory.readSWver(link)
     asm_time = setup_factory.get_assembly_time(link)
     serial_number = setup_factory.get_serial_number(link)
-    if ver:
+    if ver != None:
         major, minor, rev = ver[0], ver[1], ver[2]
         print("Software version: v%i.%i.%i" % (major, minor, rev))
     else:
         print("Unable to read software version")
-        sys.exit(1)
-    if serial_number:    
+
+    if serial_number != None:
         print("Serial number: " + serial_number)
-    if asm_time:
-        print("Assembled on " + time.ctime(asm_time))
+    else:
+        print("Serial number: unknown")
+
+    if asm_time != None:
+        if asm_time > 0:
+            print("Assembled time: " + time.ctime(asm_time))
+        else:
+            print("Assembly time: not set")
+    else:
+        print("Unable to read assembly time")
 
 if __name__ == '__main__':
     command_interface()

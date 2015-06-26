@@ -50,17 +50,19 @@ class Results:
 
 def show(link):
     ver = setup_factory.readSWver(link)
-    asm_date = setup_factory.get_assembly_time(link)
-    serial = setup_factory.get_serial_number(link)
+    serial_number = setup_factory.get_serial_number(link)
+    assembly_time = setup_factory.get_assembly_time(link)
     pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
     joint = setup_param.get_offsets(link, 'JNT')
     gyro = setup_param.get_offsets(link, 'GYRO')
     acc = setup_param.get_offsets(link, 'ACC')
     k_rate = setup_param.fetch_param(link, "GMB_K_RATE")
 
-    if ver != None and pitch_com != None and roll_com != None and yaw_com != None and joint and gyro and acc and k_rate != None:
+    if ver != None and serial_number != None and assembly_time != None and pitch_com != None and roll_com != None and yaw_com != None and joint and gyro and acc and k_rate != None:
         params = {
             'version': ver,
+            'serial_number': serial_number,
+            'assembly_time': assembly_time,
             'pitch': {
                 'icept': pitch_com[0],
                 'slope': pitch_com[1],
@@ -95,7 +97,7 @@ def show(link):
         return None
 
 def validate_version(link):
-    swver = readSWver(link)
+    swver = setup_factory.readSWver(link)
     if not swver:
         return Results.Error
     ver = LooseVersion("%i.%i.%i" % (swver[0], swver[1], swver[2]))
@@ -192,18 +194,22 @@ def validate_gains(link):
 
 def validate_date(link):
     assembly_time = setup_factory.get_assembly_time(link)
-    if (assembly_time > EXPETED_ASSEMBLY_DATE_MIN):
-        print 'Assembly date\t- PASS'
+    if assembly_time == None:
+        return Results.Error
+    elif assembly_time > EXPETED_ASSEMBLY_DATE_MIN:
+        return Results.Pass
     else:
-        print 'Assembly date\t- FAIL - assembly date was not set on the factory (--date)'
+        return Results.Fail
 
 
 def validate_serial_number(link):
     serial_number = setup_factory.get_serial_number(link)
-    if (serial_number) and (serial_number.startswith(EXPECTED_SERIAL_NUMBER_START)):
-        print 'Serial number\t- PASS'
+    if serial_number == None:
+        return Results.Error
+    elif serial_number.startswith(EXPECTED_SERIAL_NUMBER_START):
+        return Results.Pass
     else:
-        print 'Serial number\t- FAIL - Serial number was not set (--serialnumber SERIALNUMBER)'
+        return Results.Fail
         
 def validate(link):
     validation = {
