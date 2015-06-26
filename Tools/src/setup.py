@@ -188,8 +188,6 @@ def printValidation(link):
 
 # Main method when called directly
 def command_interface():
-    global prettyPrint, outputJSON
-
     parser = argparse.ArgumentParser()
     parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default=None)

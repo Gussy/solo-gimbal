@@ -139,9 +139,11 @@ class connectionUI(object):
     @gui_utils.waitCursor
     def getGimbalParameters(self):
         version = setup_factory.readSWver(self.link)
-        serialNumber = setup_factory.get_serial_number(self.link)
-        assemblyTime = setup_factory.get_assembly_time(self.link)
-        return version, serialNumber, assemblyTime
+        if version != None:
+            serialNumber = setup_factory.get_serial_number(self.link)
+            assemblyTime = setup_factory.get_assembly_time(self.link)
+            return version, serialNumber, assemblyTime
+        return version, None, None
 
     @gui_utils.waitCursor
     def writeSerialNumber(self, serialNumber):
@@ -182,6 +184,12 @@ class connectionUI(object):
                 serialNumber=serialNumber,
                 assemblyTime=assemblyTime
             )
+
+            # Attempt to bootload a the gimbal if the serial number is none
+            if serialNumber == None:
+                self.ui.tabWidget.setCurrentIndex(1)
+                if self.parent.firmwareUI.readyToLoad():
+                    self.ui.btnLoadFirmware.clicked.emit()
 
             self.ui.tabWidget.setEnabled(True)
         self.ui.btnConnect.setEnabled(True)

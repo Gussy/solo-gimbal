@@ -1,4 +1,4 @@
-import sys
+import sys, argparse
 from PySide import QtCore, QtGui
 from PySide.QtCore import QThread, Slot
 from qtasync import AsyncTask, coroutine
@@ -28,12 +28,23 @@ class ControlMainWindow(QtGui.QMainWindow):
 
     def resetUI(self, isCycling):
         self.validationUI.clearValidationResults()
-        self.firmwareUI.clearFirmwareInfoUI()
         if not isCycling:
+            #self.firmwareUI.clearFirmwareInfoUI()
             self.calibrationUI.resetCalibrationTable()
 
+    def setFirmwareFile(self, filename):
+        self.firmwareUI.loadFirmwareFile(filename)
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
+    args = parser.parse_args()
+
     app = QtGui.QApplication(sys.argv)
     gui = ControlMainWindow()
     gui.show()
+    
+    if args.file:
+        gui.setFirmwareFile(args.file)
+
     sys.exit(app.exec_())

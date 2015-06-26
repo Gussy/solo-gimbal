@@ -20,16 +20,22 @@ class firmwareUI(object):
     @Slot()
     def handleFirmwareDialog(self):
         filename, _ = QtGui.QFileDialog.getOpenFileName(self.parent, 'Open Firmware', '')
-        fileExtension = str(filename).split(".")[-1].lower()
-        if filename and fileExtension == "ax":
-            self.ui.txtFirmwareFilename.setText(filename)
-            self.parseFirmware(filename)
-            self.ui.btnLoadFirmware.setEnabled(True)
+        self.loadFirmwareFile(filename)
 
     @Slot()
     def handleFirmwareLoad(self):
         if self.connection.isConnected() and self.firmwareBinary != None:
             self.runAsyncFirmwareLoad()
+
+    def readyToLoad(self):
+        return self.firmwareBinary
+
+    def loadFirmwareFile(self, filename):
+        fileExtension = str(filename).split(".")[-1].lower()
+        if filename and fileExtension == "ax":
+            self.ui.txtFirmwareFilename.setText(filename)
+            self.parseFirmware(filename)
+            self.ui.btnLoadFirmware.setEnabled(True)
 
     def parseFirmware(self, filename):
         firmware = firmware_helper.load_firmware(filename)

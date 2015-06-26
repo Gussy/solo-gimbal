@@ -9,7 +9,7 @@ from pymavlink.mavparm import MAVParmDict
 from pymavlink.dialects.v10.ardupilotmega import MAV_PARAM_TYPE_REAL32
 from pymavlink.rotmat import Vector3
 
-def fetch_param(link, param, timeout=5):
+def fetch_param(link, param, timeout=2):
     for i in range(timeout):
         link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
         msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=1)
