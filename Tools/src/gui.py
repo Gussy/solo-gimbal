@@ -2,7 +2,7 @@ import sys, time, datetime
 from PySide import QtCore, QtGui
 from PySide.QtCore import QThread, Slot
 from qtasync import AsyncTask, coroutine
-import setup_mavlink, setup_read_sw_version, setup_validate, setup_factory
+import setup_mavlink, setup_validate, setup_factory, setup_comutation, setup_home
 import firmware_helper, firmware_loader
 
 class Ui_MainWindow(object):
@@ -250,9 +250,9 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tabFirmware, "")
         self.tabCalibration = QtGui.QWidget()
         self.tabCalibration.setObjectName("tabCalibration")
-        self.btnLoadCalibration = QtGui.QPushButton(self.tabCalibration)
-        self.btnLoadCalibration.setGeometry(QtCore.QRect(10, 10, 131, 51))
-        self.btnLoadCalibration.setObjectName("btnLoadCalibration")
+        self.btnGetCalibration = QtGui.QPushButton(self.tabCalibration)
+        self.btnGetCalibration.setGeometry(QtCore.QRect(10, 10, 131, 51))
+        self.btnGetCalibration.setObjectName("btnGetCalibration")
         self.btnRunMotorCalibration = QtGui.QPushButton(self.tabCalibration)
         self.btnRunMotorCalibration.setGeometry(QtCore.QRect(150, 10, 131, 51))
         self.btnRunMotorCalibration.setObjectName("btnRunMotorCalibration")
@@ -620,7 +620,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralWidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -646,7 +646,7 @@ class Ui_MainWindow(object):
         self.lblFirmwareStatusLabel.setText(QtGui.QApplication.translate("MainWindow", "Status:", None, QtGui.QApplication.UnicodeUTF8))
         self.btnLoadFirmware.setText(QtGui.QApplication.translate("MainWindow", "Load Firmware", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabFirmware), QtGui.QApplication.translate("MainWindow", "Firmware", None, QtGui.QApplication.UnicodeUTF8))
-        self.btnLoadCalibration.setText(QtGui.QApplication.translate("MainWindow", "Load\n"
+        self.btnGetCalibration.setText(QtGui.QApplication.translate("MainWindow", "Load\n"
 "Calibration", None, QtGui.QApplication.UnicodeUTF8))
         self.btnRunMotorCalibration.setText(QtGui.QApplication.translate("MainWindow", "Run Motor\n"
 "Calibration", None, QtGui.QApplication.UnicodeUTF8))
@@ -726,6 +726,11 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.ui.btnFirmwareFileDialog.clicked.connect(self.handleFirmwareDialog)
         self.ui.btnLoadFirmware.clicked.connect(self.handleFirmwareLoad)
 
+        # Setup calibration UI
+        self.ui.btnGetCalibration.clicked.connect(self.handleGetCalibration)
+        self.ui.btnEraseCalibration.clicked.connect(self.handleEraseCalibration)
+        self.ui.btnRunStaticCalibration.clicked.connect(self.handleRunStaticCalibration)
+
         # MAVLink
         self.mavport = None
         self.link = None
@@ -773,6 +778,7 @@ class ControlMainWindow(QtGui.QMainWindow):
     def resetUI(self):
         self.clearValidationResults()
         self.clearFirmwareInfoUI()
+        self.resetCalibrationTable()
 
     def setConnectionStatusBanner(self, state):
         if state == 'disconnected':
@@ -854,6 +860,167 @@ class ControlMainWindow(QtGui.QMainWindow):
     def handleFirmwareLoad(self):
         if self.connected and self.firmwareBinary != None:
             self.runAsyncFirmwareLoad()
+
+    @Slot()
+    def handleGetCalibration(self):
+        if self.connected:
+            self.runAsyncGetCalibration()
+
+    @Slot()
+    def handleEraseCalibration(self):
+        if self.connected:
+            self.runAsyncEraseCalibration()
+
+    @Slot()
+    def handleRunStaticCalibration(self):
+        if self.connected:
+            self.resetCalibrationTable()
+            self.runAsyncStaticCalibration()
+
+    @UiUtils.waitCursor
+    def getAllParams(self):
+        return setup_validate.show(self.link)
+
+    @UiUtils.waitCursor
+    def eraseCalibration(self):
+        return setup_comutation.resetCalibration(self.link)
+
+    @UiUtils.waitCursor
+    def staticCalibration(self):
+        joints = setup_home.calibrate_joints(self.link)
+        gyros = setup_home.calibrate_gyro(self.link)
+        return joints, gyros
+
+    @coroutine
+    def runAsyncGetCalibration(self):
+        self.enableCalibrationButtons(False)
+        allParams = yield AsyncTask(self.getAllParams)
+        self.updateCalibrationTable(allParams)
+        self.enableCalibrationButtons(True)
+
+    @coroutine
+    def runAsyncEraseCalibration(self):
+        self.enableCalibrationButtons(False)
+        result = yield AsyncTask(self.eraseCalibration)
+        self.resetCalibrationTable()
+        self.enableCalibrationButtons(True)
+
+    @coroutine
+    def runAsyncStaticCalibration(self):
+        self.enableCalibrationButtons(False)
+        joints, gyros = yield AsyncTask(self.staticCalibration)
+        if joints == None:
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, False)
+        if gyros == None:
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, False)
+        self.enableCalibrationButtons(True)
+
+    def enableCalibrationButtons(self, enabled):
+        self.ui.btnGetCalibration.setEnabled(enabled)
+        self.ui.btnRunMotorCalibration.setEnabled(enabled)
+        self.ui.btnRunStaticCalibration.setEnabled(enabled)
+        self.ui.btnEraseCalibration.setEnabled(enabled)
+
+    def isCalibrated(self, params):
+        if 'icept' in params.keys():
+            if params['icept'] == 0 or params['slope'] == 0:
+                return None
+            return True
+        elif 'x' in params.keys():
+            if params['x'] == 0 or params['y'] == 0 or params['z'] == 0:
+                return None
+            return True
+        return None
+
+    def setCalibrationStatusLabel(self, uiLabel, isCalibrated):
+        if isCalibrated == True:
+            uiLabel.setText("")
+            uiLabel.setStyleSheet("color: rgb(0, 0, 0);\n"
+                "background-color: rgb(255, 255, 255);")
+        elif isCalibrated == False:
+            uiLabel.setText("Failed")
+            uiLabel.setStyleSheet("color: rgb(255, 255, 255);\n"
+                "background-color: rgb(255, 0, 0);")
+        elif isCalibrated == None:
+            uiLabel.setText("Missing")
+            uiLabel.setStyleSheet("color: rgb(255, 255, 255);\n"
+                "background-color: rgb(255, 0, 0);")
+
+    def updateCalibrationTable(self, params):
+        # Axis statuses
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, self.isCalibrated(params['pitch']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, self.isCalibrated(params['roll']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, self.isCalibrated(params['yaw']))
+
+        # Static statuses
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isCalibrated(params['joint']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, self.isCalibrated(params['gyro']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isCalibrated(params['accel']))
+
+        # Pitch values
+        self.ui.lblCalibrationPitchIntercept.setText(str(params['pitch']['icept']))
+        self.ui.lblCalibrationPitchSlope.setText(str(params['pitch']['slope']))
+
+        # Roll values
+        self.ui.lblCalibrationRollIntercept.setText(str(params['roll']['icept']))
+        self.ui.lblCalibrationRollSlope.setText(str(params['roll']['slope']))
+
+        # Yaw values
+        self.ui.lblCalibrationYawIntercept.setText(str(params['yaw']['icept']))
+        self.ui.lblCalibrationYawSlope.setText(str(params['yaw']['slope']))
+
+        # Joint values
+        self.ui.lblCalibrationJointX.setText(str(params['joint']['x']))
+        self.ui.lblCalibrationJointY.setText(str(params['joint']['y']))
+        self.ui.lblCalibrationJointZ.setText(str(params['joint']['z']))
+
+        # Gyro values
+        self.ui.lblCalibrationGyroX.setText(str(params['gyro']['x']))
+        self.ui.lblCalibrationGyroY.setText(str(params['gyro']['y']))
+        self.ui.lblCalibrationGyroZ.setText(str(params['gyro']['z']))
+
+        # Accel values
+        self.ui.lblCalibrationAccelX.setText(str(params['accel']['x']))
+        self.ui.lblCalibrationAccelY.setText(str(params['accel']['y']))
+        self.ui.lblCalibrationAccelZ.setText(str(params['accel']['z']))
+
+    def resetCalibrationTable(self):
+        # Axis statuses
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, True)
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, True)
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, True)
+
+        # Static statuses
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, True)
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, True)
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, True)
+
+        # Pitch values
+        self.ui.lblCalibrationPitchIntercept.setText("")
+        self.ui.lblCalibrationPitchSlope.setText("")
+
+        # Roll values
+        self.ui.lblCalibrationRollIntercept.setText("")
+        self.ui.lblCalibrationRollSlope.setText("")
+
+        # Yaw values
+        self.ui.lblCalibrationYawIntercept.setText("")
+        self.ui.lblCalibrationYawSlope.setText("")
+
+        # Joint values
+        self.ui.lblCalibrationJointX.setText("")
+        self.ui.lblCalibrationJointY.setText("")
+        self.ui.lblCalibrationJointZ.setText("")
+
+        # Gyro values
+        self.ui.lblCalibrationGyroX.setText("")
+        self.ui.lblCalibrationGyroY.setText("")
+        self.ui.lblCalibrationGyroZ.setText("")
+
+        # Accel values
+        self.ui.lblCalibrationAccelX.setText("")
+        self.ui.lblCalibrationAccelY.setText("")
+        self.ui.lblCalibrationAccelZ.setText("")
 
     def parseFirmware(self, filename):
         firmware = firmware_helper.load_firmware(filename)
@@ -1047,7 +1214,7 @@ class ControlMainWindow(QtGui.QMainWindow):
 
     @UiUtils.waitCursor
     def getGimbalParameters(self):
-        version = setup_read_sw_version.readSWver(self.link)
+        version = setup_factory.readSWver(self.link)
         serialNumber = setup_factory.get_serial_number(self.link)
         assemblyTime = setup_factory.get_assembly_time(self.link)
         return version, serialNumber, assemblyTime
