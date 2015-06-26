@@ -10,7 +10,7 @@ from pymavlink.mavparm import MAVParmDict
 import setup_param
 
 def float_to_bytes4(f):
-    return struct.unpack('4b', struct.pack('<f', f))
+    return struct.unpack('4b', struct.pack('>f', f))
 
 def uint32_to_float(i):
     return struct.unpack('f', struct.pack('<I', i))[0]
@@ -29,7 +29,7 @@ def readSWver(link):
     if not msg:
         return None
     else:
-        return float_to_bytes4(msg.param_value)[1:]
+        return float_to_bytes4(msg.param_value)[:-1]
 
 def get_assembly_time(link):
     value = setup_param.fetch_param(link, "GMB_ASM_TIME")
