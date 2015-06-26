@@ -2,7 +2,7 @@ import sys, time, datetime
 from PySide import QtCore, QtGui
 from PySide.QtCore import QThread, Slot
 from qtasync import AsyncTask, coroutine
-import setup_mavlink, setup_read_sw_version, setup_validate
+import setup_mavlink, setup_read_sw_version, setup_validate, setup_factory
 import firmware_helper, firmware_loader
 
 class Ui_MainWindow(object):
@@ -452,11 +452,22 @@ class ControlMainWindow(QtGui.QMainWindow):
                 "background-color: rgb(0, 255, 0);\n"
                 "border-radius: 20px;")
 
-    def setStatusInfo(self, version):
-        if version:
-            self.ui.lblSoftwareVersion.setText("v%i.%i.%i" % (version[0], version[1], version[2]))
+    def setStatusInfo(self, softwareVersion=None, serialNumber=None, assemblyTime=None):
+        if softwareVersion:
+            self.ui.lblSoftwareVersion.setText("v%i.%i.%i" % (softwareVersion[0], softwareVersion[1], softwareVersion[2]))
         else:
-            self.ui.lblSoftwareVersion.setText("")
+            self.ui.lblSoftwareVersion.setText("Unknown")
+
+        if serialNumber:
+            self.ui.lblSerialNumber.setText(str(serialNumber))
+        else:
+            self.ui.lblSerialNumber.setText("Unknown")
+
+        if assemblyTime:
+            strTime = datetime.datetime.fromtimestamp(assemblyTime).strftime('%d/%m/%Y %H:%M:%S')
+            self.ui.lblAssemblyDate.setText(strTime)
+        else:
+            self.ui.lblAssemblyDate.setText("Unknown")
 
     @Slot()
     def handleConnectionTypeAuto(self):
@@ -672,7 +683,10 @@ class ControlMainWindow(QtGui.QMainWindow):
         return setup_mavlink.wait_for_heartbeat(self.link)
 
     def getGimbalParameters(self):
-        return setup_read_sw_version.readSWver(self.link)
+        version = setup_read_sw_version.readSWver(self.link)
+        serialNumber = setup_factory.get_serial_number(self.link)
+        assemblyTime = setup_factory.get_assembly_time(self.link)
+        return version, serialNumber, assemblyTime
 
     @coroutine
     def attemptConnection(self):
@@ -693,14 +707,18 @@ class ControlMainWindow(QtGui.QMainWindow):
             self.ui.tabWidget.setEnabled(False)
         else:
             self.setConnectionStatusBanner('connected')
-            softwareVersion = yield AsyncTask(self.getGimbalParameters)
-            self.setStatusInfo(softwareVersion)
+            softwareVersion, serialNumber, assemblyTime = yield AsyncTask(self.getGimbalParameters)
+            self.setStatusInfo(
+                softwareVersion=softwareVersion,
+                serialNumber=serialNumber,
+                assemblyTime=assemblyTime
+            )
             self.ui.tabWidget.setEnabled(True)
         self.ui.btnConnect.setEnabled(True)
 
     def closeConnection(self):
         self.link.file.close()
-        self.setStatusInfo(None)
+        self.setStatusInfo()
         self.resetUI()
 
 if __name__ == '__main__':
