@@ -49,12 +49,11 @@ def calibrate(link, progressCallback=None):
     elif pitch[0] != 0 or pitch[1] != 0 or roll[0] != 0 or roll[1] != 0 or yaw[0] != 0 or yaw[1] != 0:
         return Results.CalibrationExists
     
-    setup_mavlink.requestCalibration(link)
-
     calibratied_axes = 0
     axis_statuses = {'pitch': 'not started', 'roll': 'not started', 'yaw': 'not started'}
     retries = 0
     while(calibratied_axes < 3):
+        setup_mavlink.requestCalibration(link)
         result = setup_mavlink.getCalibrationProgress(link)
         if result:
             axis, progress, status = result[0], result[1], result[2]

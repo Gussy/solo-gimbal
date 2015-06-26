@@ -37,13 +37,11 @@ def wait_for_heartbeat(link):
 
 def wait_handshake(m, timeout=1):
     '''wait for a handshake so we know the target system IDs'''
-    msg = m.recv_match(
-        type='DATA_TRANSMISSION_HANDSHAKE',
-        blocking=True,
-        timeout=timeout)
-    if msg != None:
-        if(msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL):
-            return msg
+    for retries in range(timeout):
+        msg = m.recv_match(type='DATA_TRANSMISSION_HANDSHAKE', blocking=True, timeout=1)
+        if msg != None:
+            if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
+                return msg
     return None
 
 def get_current_joint_angles(link):
