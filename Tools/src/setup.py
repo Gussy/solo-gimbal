@@ -208,6 +208,7 @@ def command_interface():
     parser.add_argument("--date", help="Setup assembly date", action='store_true')
     parser.add_argument("--serialnumber", help="Setup gimbal serial number", type=int)
     parser.add_argument("--factoryreset", help="Reset gimbal factory parameters to default", action='store_true')
+    parser.add_argument("--eraseapp", help="Erase the application", action='store_true')
     args = parser.parse_args()
 
     # Open the serial port
@@ -237,6 +238,11 @@ def command_interface():
     if args.factoryreset:
         serial = setup_factory.reset(link)
         print("Facroty parameters cleared")
+        return
+
+    if args.eraseapp:
+        start_bootloader(link)
+        print("Application erased")
         return
     
     if args.run:
