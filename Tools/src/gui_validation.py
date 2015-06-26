@@ -9,7 +9,6 @@ class validationUI(object):
         self.parent = parent
         self.connection = parent.connectionUI
 
-    def setupUI(self):
         self.ui.btnValidationRunTests.clicked.connect(self.handleRunValidation)
         self.ui.btnValidationSetDefaults.clicked.connect(self.handleSetDefaults)
 

@@ -14,7 +14,6 @@ class firmwareUI(object):
         # Private
         self.firmwareBinary = None
 
-    def setupUI(self):
         self.ui.btnFirmwareFileDialog.clicked.connect(self.handleFirmwareDialog)
         self.ui.btnLoadFirmware.clicked.connect(self.handleFirmwareLoad)
 

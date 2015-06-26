@@ -16,19 +16,15 @@ class ControlMainWindow(QtGui.QMainWindow):
 
         # Setup connection UI
         self.connectionUI = gui_connection.connectionUI(self)
-        self.connectionUI.setupUI()
 
         # Setup validation UI
         self.validationUI = gui_validation.validationUI(self)
-        self.validationUI.setupUI()
 
         # Setup firmware UI
         self.firmwareUI = gui_firmware.firmwareUI(self)
-        self.firmwareUI.setupUI()
 
         # Setup calibration UI
         self.calibrationUI = gui_calibration.calibrationUI(self)
-        self.calibrationUI.setupUI()
 
     def resetUI(self):
         self.validationUI.clearValidationResults()

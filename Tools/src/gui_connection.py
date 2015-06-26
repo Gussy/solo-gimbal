@@ -17,7 +17,6 @@ class connectionUI(object):
         self.mavport = None
         self.connectWithAuto = True
 
-    def setupUI(self):
         self.addBaudrates()
         self.ui.rbAuto.clicked.connect(self.handleConnectionTypeAuto)
         self.ui.rbSerial.clicked.connect(self.handleConnectionTypeSerial)
