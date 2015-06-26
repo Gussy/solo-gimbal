@@ -208,7 +208,8 @@ def command_interface():
     parser.add_argument("-x", "--staticcal", help="Calibrate all static home values", action='store_true')
     parser.add_argument("-e", "--erase", help="Erase calibration values", action='store_true')
     parser.add_argument("--date", help="Setup assembly date", action='store_true')
-    parser.add_argument("--serialnumber", help="Setup gimbal serial number", type=int)    
+    parser.add_argument("--serialnumber", help="Setup gimbal serial number", type=int)
+    parser.add_argument("--factoryreset", help="Reset gimbal factory parameters to default", action='store_true')
     args = parser.parse_args()
 
     # Open the serial port
@@ -233,6 +234,11 @@ def command_interface():
     if args.serialnumber is not None:
         serial = setup_factory.set_serial_number_3dr(link, args.serialnumber)
         print("Serial number set to %s" % serial)
+        return
+
+    if args.factoryreset:
+        serial = setup_factory.reset(link)
+        print("Facroty parameters cleared")
         return
     
     if args.run:
@@ -320,7 +326,10 @@ def command_interface():
         print("Unable to read software version")
 
     if serial_number != None:
-        print("Serial number: " + serial_number)
+        if serial_number == '':
+            print("Serial number: not set")
+        else:
+            print("Serial number: " + serial_number)
     else:
         print("Serial number: unknown")
 

@@ -5,11 +5,9 @@ Utility for reading the software version from a 3DR Gimbal.
 
 """
 
-import struct
+import struct, time, datetime
+from pymavlink.mavparm import MAVParmDict
 import setup_param
-import time
-from setup_param import commit_to_flash
-import datetime
 
 def float_to_bytes4(f):
     return struct.unpack('4b', struct.pack('<f', f))
@@ -42,7 +40,7 @@ def get_assembly_time(link):
 def set_assembly_date(link):
     timestamp = time.time()
     setup_param.set_param(link, "GMB_ASM_TIME", uint32_to_float(timestamp))
-    commit_to_flash(link)
+    setup_param.commit_to_flash(link)
     return timestamp
 
 def set_serial_number(link, serial_str):    
@@ -50,7 +48,7 @@ def set_serial_number(link, serial_str):
     setup_param.set_param(link, "GMB_SER_NUM_1", ser_num_1)
     setup_param.set_param(link, "GMB_SER_NUM_2", ser_num_2)
     setup_param.set_param(link, "GMB_SER_NUM_3", ser_num_3)
-    commit_to_flash(link)
+    setup_param.commit_to_flash(link)
     
 def get_serial_number(link):
     ser_num_1 = setup_param.fetch_param(link, "GMB_SER_NUM_1")
@@ -60,9 +58,11 @@ def get_serial_number(link):
         serial_str = float3_to_string12(ser_num_1.param_value, ser_num_2.param_value, ser_num_3.param_value)
         if serial_str.startswith('GB'):
             return serial_str
+        else:
+            return ''
     return None
 
-def set_serial_number_3dr(link,month_serial_number):
+def set_serial_number_3dr(link, month_serial_number):
     today = datetime.date.today() 
     
     # Build year identifier
@@ -88,3 +88,11 @@ def set_serial_number_3dr(link,month_serial_number):
     set_serial_number(link, serial_str)
     
     return serial_str
+
+def reset(link):
+    parameters = MAVParmDict()
+    parameters.mavset(link.file, "GMB_SER_NUM_1", 0.0, 3)
+    parameters.mavset(link.file, "GMB_SER_NUM_1", 0.0, 3)
+    parameters.mavset(link.file, "GMB_SER_NUM_1", 0.0, 3)
+    parameters.mavset(link.file, "GMB_ASM_TIME", 0.0, 3)
+    setup_param.commit_to_flash(link)
