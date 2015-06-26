@@ -1,4 +1,5 @@
 import datetime
+from PySide import QtCore, QtGui
 from PySide.QtCore import Slot
 from qtasync import AsyncTask, coroutine
 import setup_mavlink, setup_factory
@@ -74,16 +75,28 @@ class connectionUI(object):
         else:
             self.ui.lblSoftwareVersion.setText("Unknown")
 
-        if serialNumber:
-            self.ui.lblSerialNumber.setText(str(serialNumber))
+        factoryFresh = False
+        if serialNumber != None:
+            if serialNumber == '':
+                self.ui.lblSerialNumber.setText("Not set")
+                factoryFresh = True
+            else:
+                self.ui.lblSerialNumber.setText(str(serialNumber))
         else:
             self.ui.lblSerialNumber.setText("Unknown")
 
-        if assemblyTime:
-            strTime = datetime.datetime.fromtimestamp(assemblyTime).strftime('%d/%m/%Y %H:%M:%S')
-            self.ui.lblAssemblyTime.setText(strTime)
+        if assemblyTime != None:
+            if assemblyTime == 0:
+                self.ui.lblAssemblyTime.setText("Not set")
+                factoryFresh = True
+            else:
+                strTime = datetime.datetime.fromtimestamp(assemblyTime).strftime('%d/%m/%Y %H:%M:%S')
+                self.ui.lblAssemblyTime.setText(strTime)
         else:
             self.ui.lblAssemblyTime.setText("Unknown")
+
+        if factoryFresh:
+            self.setSerialNumber()
 
     def setConnectionState(self, connected):
         if connected:
@@ -115,6 +128,12 @@ class connectionUI(object):
         if bauds:
             for baud in bauds:
                 self.ui.cbBaudrate.addItem(str(baud))
+
+    def setSerialNumber(self):
+        text, ok = QtGui.QInputDialog.getText(self.parent, '3DR Gimbal', 'Serial Number:')
+        if ok and text:
+            pass
+            #print text
 
     @gui_utils.waitCursor
     def autoConnectionWorker(self):
@@ -167,3 +186,8 @@ class connectionUI(object):
         self.link.file.close()
         self.parent.resetUI()
         self.setStatusInfo()
+
+    def cycleConnection(self):
+        self.ui.btnConnect.clicked.emit()
+        self.ui.btnConnect.clicked.emit()
+            
