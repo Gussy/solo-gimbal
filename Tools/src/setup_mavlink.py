@@ -84,7 +84,7 @@ def reset_gimbal(link):
     result = link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
     if result:
         # Sleep to allow the reset command to take
-        time.sleep(1)
+        time.sleep(2)
         # Wait for the gimbal to reset and begin comms again
         return setup_mavlink.wait_for_heartbeat(link)
     else:
