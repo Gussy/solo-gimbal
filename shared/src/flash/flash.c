@@ -3,6 +3,10 @@
 #include "Flash2806x_API_Library.h"
 #include "F2806x_SysCtrl.h"
 
+typedef union {
+	Uint32 uint32_val;
+	float float_val;
+} IntOrFloat;
 
 /*--- Callback function.  Function specified by defining Flash_CallbackPtr */
 void MyCallbackFunction(void);
@@ -185,9 +189,105 @@ int init_flash(void)
 		while (1);
 	}
 
+	// Flash verification will fail if the *size* of the struct has changed
+	// If the *size* has stayed the same but the order has changed, incorrect params could be loaded from flash
 	if (verify_checksum((Uint16 *)START_ADDR)) {
-		// copy to ram
-		memcpy(&flash_params,(Uint16 *)START_ADDR,sizeof(flash_params));
+		// Copy the parameters in flash into a shadow struct first
+		struct flash_param_struct_0001 flash_params_shadow;
+		memcpy(&flash_params_shadow, (Uint16 *)START_ADDR, sizeof(flash_params_shadow));
+
+		// Run a parameter migration if the struct id has changed
+		// This relies on the first 32 bit float of the flash param struct *always* being the id
+		if(flash_params_shadow.flash_struct_id != flash_params.flash_struct_id) {
+
+			// Declare all older param structs outside of the switch case
+			struct flash_param_struct_0000 flash_params_old = {0};
+
+			// Handle flash param migrations *from* the id stored in flash *to* this version of the compiled firmware
+			switch(flash_params_shadow.flash_struct_id) {
+
+				// Last seen in 047d3dfda2072b3d7c8d4143330aabe7e7c72bb0
+				case 0x0000:
+					// Load the struct from flash into the old struct layout
+					memcpy(&flash_params_old, (Uint16 *)START_ADDR, sizeof(flash_params_old));
+
+					// The following parameters were stored as uint32_t in the version 0x0000 struct
+					IntOrFloat float_converter;
+					float_converter.uint32_val = flash_params_old.ser_num_1;
+					flash_params.ser_num_1 = float_converter.float_val;
+
+					float_converter.uint32_val = flash_params_old.ser_num_2;
+					flash_params.ser_num_2 = float_converter.float_val;
+
+					float_converter.uint32_val = flash_params_old.ser_num_3;
+					flash_params.ser_num_3 = float_converter.float_val;
+
+					float_converter.uint32_val = flash_params_old.assy_time;
+					flash_params.assy_time = float_converter.float_val;
+
+					// Copy floats
+					flash_params.broadcast_msgs = flash_params_old.broadcast_msgs;
+					flash_params.k_rate = flash_params_old.k_rate;
+
+					// Copy arrays
+					memcpy(flash_params.commutation_slope, flash_params_old.AxisCalibrationSlopes, sizeof(flash_params_old.AxisCalibrationSlopes) * AXIS_CNT);
+					memcpy(flash_params.commutation_icept, flash_params_old.AxisCalibrationIntercepts, sizeof(flash_params_old.AxisCalibrationIntercepts) * AXIS_CNT);
+
+					memcpy(flash_params.torque_pid_kp, flash_params_old.torque_pid_kp, sizeof(flash_params_old.torque_pid_kp) * AXIS_CNT);
+					memcpy(flash_params.torque_pid_ki, flash_params_old.torque_pid_ki, sizeof(flash_params_old.torque_pid_ki) * AXIS_CNT);
+					memcpy(flash_params.torque_pid_kd, flash_params_old.torque_pid_kd, sizeof(flash_params_old.torque_pid_kd) * AXIS_CNT);
+
+					memcpy(flash_params.rate_pid_p, flash_params_old.rate_pid_p, sizeof(flash_params_old.rate_pid_p) * AXIS_CNT);
+					memcpy(flash_params.rate_pid_i, flash_params_old.rate_pid_i, sizeof(flash_params_old.rate_pid_i) * AXIS_CNT);
+					memcpy(flash_params.rate_pid_d, flash_params_old.rate_pid_d, sizeof(flash_params_old.rate_pid_d) * AXIS_CNT);
+					memcpy(flash_params.rate_pid_windup, flash_params_old.rate_pid_windup, sizeof(flash_params_old.rate_pid_windup) * AXIS_CNT);
+
+					memcpy(flash_params.offset_joint, flash_params_old.offset_joint, sizeof(flash_params_old.offset_joint) * AXIS_CNT);
+					memcpy(flash_params.offset_accelerometer, flash_params_old.offset_accelerometer, sizeof(flash_params_old.offset_accelerometer) * AXIS_CNT);
+					memcpy(flash_params.offset_gyro, flash_params_old.offset_gyro, sizeof(flash_params_old.offset_gyro) * AXIS_CNT);
+
+					/* Deleted parameters:
+					 * 	board_id
+					 * 	other_id
+					 * 	assy_date
+					 * 	mavlink_baud_rate
+					 * 	AxisHomePositions
+					 * 	pos_pid_p
+					 * 	pos_pid_i
+					 * 	pos_pid_d
+					 * 	pos_pid_windup
+					 * 	balance_axis
+					 * 	balance_step_duration
+					 */
+					break;
+
+				// Migrations are one only forwards compatible. When loading an older firmware it's
+				//	not possible to determine the unknown newer struct layout, so instead of
+				//	potentially harming hardware, the software erase the incompatible firmware and
+				//	reset into the bootloader.
+				// This could be handled better, but downgrades should be rare to non-existent.
+				default:
+					erase_our_flash();
+
+					// reset
+					extern void WDogEnable(void);
+					WDogEnable();
+
+					EALLOW;
+					// Cause a device reset by writing incorrect values into WDCHK
+					SysCtrlRegs.WDCR = 0x0010;
+					EDIS;
+
+					// This should never be reached.
+					for(;;) {};
+			}
+
+			// Save the new param struct to flash
+			write_flash();
+		}
+
+		// Copy parameters from flash to ram
+		memcpy(&flash_params, (Uint16 *)START_ADDR, sizeof(flash_params));
 		return 1;
 	}
 
