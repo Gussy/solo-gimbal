@@ -138,7 +138,7 @@ class connectionUI(object):
 
     @gui_utils.waitCursor
     def getGimbalParameters(self):
-        version = setup_factory.readSWver(self.link)
+        version = setup_factory.readSWver(self.link, timeout=5)
         if version != None:
             serialNumber = setup_factory.get_serial_number(self.link)
             assemblyTime = setup_factory.get_assembly_time(self.link)
