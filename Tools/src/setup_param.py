@@ -50,14 +50,12 @@ def message_brodcasting(link, broadcast=True):
     else:
         set_param(link, "GMB_BROADCAST", 0)
 
-def get_SWVER_param(link):
-    return fetch_param(link, "GMB_SWVER")
-
 def set_offsets(link, kind, offsets):
-    set_param(link, "GMB_OFF_" + kind + "_X", offsets.x)
-    set_param(link, "GMB_OFF_" + kind + "_Y", offsets.y)
-    set_param(link, "GMB_OFF_" + kind + "_Z", offsets.z)
-    commit_to_flash(link)
+    if offsets and kind:
+        set_param(link, "GMB_OFF_" + kind + "_X", offsets.x)
+        set_param(link, "GMB_OFF_" + kind + "_Y", offsets.y)
+        set_param(link, "GMB_OFF_" + kind + "_Z", offsets.z)
+        commit_to_flash(link)
 
 def get_offsets(link, kind):
     x = fetch_param(link, "GMB_OFF_" + kind + "_X")
