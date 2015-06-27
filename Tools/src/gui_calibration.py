@@ -60,11 +60,25 @@ class calibrationUI(object):
         return joints, gyros
 
     @gui_utils.waitCursor
+    def jointCalibration(self):
+        return setup_home.calibrate_joints(self.connection.getLink())
+
+    @gui_utils.waitCursor
+    def gyroCalibration(self):
+        return setup_home.calibrate_gyro(self.connection.getLink())
+
+    @gui_utils.waitCursor
     def runMotorCalibration(self):
-        def calibrationProgressCallback(axis, progress, status):
-            self.ui.pbarCalibration.setValue(progress)
-            self.setCalibrationStatus("Calibrating %s" % axis.title())
-        return setup_comutation.calibrate(self.connection.getLink(), calibrationProgressCallback)
+        result = None
+        try:
+            def calibrationProgressCallback(axis, progress, status):
+                self.ui.pbarCalibration.setValue(progress)
+                self.setCalibrationStatus("Calibrating %s" % axis.title())
+            result = setup_comutation.calibrate(self.connection.getLink(), calibrationProgressCallback)
+        except Exception as e:
+            print e
+        finally:
+            return result
 
     @gui_utils.waitCursor
     def resetGimbal(self):
@@ -87,10 +101,28 @@ class calibrationUI(object):
     @coroutine
     def runAsyncStaticCalibration(self):
         self.setButtonsEnabled(False)
-        joints, gyros = yield AsyncTask(self.staticCalibration)
-        if joints == None:
+        #joints, gyros = yield AsyncTask(self.staticCalibration)
+
+        joints = yield AsyncTask(self.jointCalibration)
+        
+        # Show joints results
+        if joints:
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, True)
+            self.ui.lblCalibrationJointX.setText('%0.6f' % joints.x)
+            self.ui.lblCalibrationJointY.setText('%0.6f' % joints.y)
+            self.ui.lblCalibrationJointZ.setText('%0.6f' % joints.z)
+        else:
             self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, False)
-        if gyros == None:
+        
+        gyros = yield AsyncTask(self.gyroCalibration)
+
+        # Show joints results
+        if gyros:
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, True)
+            self.ui.lblCalibrationGyroX.setText('%0.6f' % gyros.x)
+            self.ui.lblCalibrationGyroY.setText('%0.6f' % gyros.y)
+            self.ui.lblCalibrationGyroZ.setText('%0.6f' % gyros.z)
+        else:
             self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, False)
         self.setButtonsEnabled(True)
 
@@ -100,10 +132,6 @@ class calibrationUI(object):
         self.ui.pbarCalibration.setValue(0)
         self.calibrationAttempted = True
 
-        # Erase calibration first
-        result = yield AsyncTask(self.eraseCalibration)
-        self.resetCalibrationTable()
-
         # Run calibration
         result = yield AsyncTask(self.runMotorCalibration)
 
@@ -111,12 +139,12 @@ class calibrationUI(object):
             self.setCalibrationStatus("Failed to get calibration parameters from the gimbal")
         elif result == setup_comutation.Results.CommsFailed:
             self.setCalibrationStatus("Gimbal failed to communicate calibration progress")
-        else:
+        elif result == setup_comutation.Results.CalibrationExists:
+            self.setCalibrationStatus("A calibration already exists, erase current calibration first")
+        elif result != None:
             # These results require a reset of the Gimbal
             if result == setup_comutation.Results.Success:
-                self.setCalibrationStatus("Calibration successful!")
-            elif result == setup_comutation.Results.CalibrationExists:
-                self.setCalibrationStatus("A calibration already exists, erase current calibration first")
+                pass
             # Below assumes that the calibration runs in the order: pitch->roll->yaw
             elif result == setup_comutation.Results.PitchFailed:
                 self.setCalibrationStatus("Pitch calibration failed")
@@ -132,12 +160,10 @@ class calibrationUI(object):
                 self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, False)
 
             # Reset the gimbal
-            result = yield AsyncTask(self.resetGimbal)
-
-            # Re-connect to the gimbal after rebooting
-            self.connection.cycleConnection()
+            reset = yield AsyncTask(self.resetGimbal)
 
             if result == setup_comutation.Results.Success:
+                self.setCalibrationStatus("Calibration successful!")
                 # Get all the parameters if the calibration was successful
                 allParams = yield AsyncTask(self.getAllParams)
                 self.updateCalibrationTable(allParams)
@@ -195,31 +221,31 @@ class calibrationUI(object):
         self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isCalibrated(params['accel']))
 
         # Pitch values
-        self.ui.lblCalibrationPitchIntercept.setText(str(params['pitch']['icept']))
-        self.ui.lblCalibrationPitchSlope.setText(str(params['pitch']['slope']))
+        self.ui.lblCalibrationPitchIntercept.setText('%0.6f' % params['pitch']['icept'])
+        self.ui.lblCalibrationPitchSlope.setText('%0.6f' % params['pitch']['slope'])
 
         # Roll values
-        self.ui.lblCalibrationRollIntercept.setText(str(params['roll']['icept']))
-        self.ui.lblCalibrationRollSlope.setText(str(params['roll']['slope']))
+        self.ui.lblCalibrationRollIntercept.setText('%0.6f' % params['roll']['icept'])
+        self.ui.lblCalibrationRollSlope.setText('%0.6f' % params['roll']['slope'])
 
         # Yaw values
-        self.ui.lblCalibrationYawIntercept.setText(str(params['yaw']['icept']))
-        self.ui.lblCalibrationYawSlope.setText(str(params['yaw']['slope']))
+        self.ui.lblCalibrationYawIntercept.setText('%0.6f' % params['yaw']['icept'])
+        self.ui.lblCalibrationYawSlope.setText('%0.6f' % params['yaw']['slope'])
 
         # Joint values
-        self.ui.lblCalibrationJointX.setText(str(params['joint']['x']))
-        self.ui.lblCalibrationJointY.setText(str(params['joint']['y']))
-        self.ui.lblCalibrationJointZ.setText(str(params['joint']['z']))
+        self.ui.lblCalibrationJointX.setText('%0.6f' % params['joint']['x'])
+        self.ui.lblCalibrationJointY.setText('%0.6f' % params['joint']['y'])
+        self.ui.lblCalibrationJointZ.setText('%0.6f' % params['joint']['z'])
 
         # Gyro values
-        self.ui.lblCalibrationGyroX.setText(str(params['gyro']['x']))
-        self.ui.lblCalibrationGyroY.setText(str(params['gyro']['y']))
-        self.ui.lblCalibrationGyroZ.setText(str(params['gyro']['z']))
+        self.ui.lblCalibrationGyroX.setText('%0.6f' % params['gyro']['x'])
+        self.ui.lblCalibrationGyroY.setText('%0.6f' % params['gyro']['y'])
+        self.ui.lblCalibrationGyroZ.setText('%0.6f' % params['gyro']['z'])
 
         # Accel values
-        self.ui.lblCalibrationAccelX.setText(str(params['accel']['x']))
-        self.ui.lblCalibrationAccelY.setText(str(params['accel']['y']))
-        self.ui.lblCalibrationAccelZ.setText(str(params['accel']['z']))
+        self.ui.lblCalibrationAccelX.setText('%0.6f' % params['accel']['x'])
+        self.ui.lblCalibrationAccelY.setText('%0.6f' % params['accel']['y'])
+        self.ui.lblCalibrationAccelZ.setText('%0.6f' % params['accel']['z'])
 
     def resetCalibrationTable(self):
         # Axis statuses

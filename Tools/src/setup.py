@@ -291,7 +291,7 @@ def command_interface():
         print('Calibrating home position')
         offsets = setup_home.calibrate_joints(link)
         if offsets:
-            print('joint', offsets)
+            print('Calibrated home position')
         else:
             print('Failed to calibrate home position')
         if not args.staticcal:
@@ -301,7 +301,7 @@ def command_interface():
         print('Calibrating gyro offsets')
         offsets = setup_home.calibrate_gyro(link)
         if offsets:
-            print('gyro', offsets)
+            print('Calibrated gyro offsets')
         else:
             print('Failed to calibrate gyro offsets')
         return

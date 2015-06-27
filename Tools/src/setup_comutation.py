@@ -11,7 +11,7 @@ axis_enum = ['PITCH', 'ROLL', 'YAW']
 status_enum = ['in progress', 'succeeded', 'failed']
 
 class Results:
-    Success, ParamFetchFailed, CalibrationExists, CommsFailed, PitchFailed, RollFailed, YawFailed = range(7)
+    Success, ParamFetchFailed, CalibrationExists, CommsFailed, PitchFailed, RollFailed, YawFailed = 'Success', 'ParamFetchFailed', 'CalibrationExists', 'CommsFailed', 'PitchFailed', 'RollFailed', 'YawFailed'
 
 def getAxisCalibrationValues(link):
     values = {
@@ -47,11 +47,17 @@ def calibrate(link, progressCallback=None):
     if pitch == None or roll == None or yaw == None:
         return Results.ParamFetchFailed
     elif pitch[0] != 0 or pitch[1] != 0 or roll[0] != 0 or roll[1] != 0 or yaw[0] != 0 or yaw[1] != 0:
-        return Results.CalibrationExists
+        # Check if a calibration is in progress
+        result = setup_mavlink.getCalibrationProgress(link)
+        if result == None:
+            return Results.CalibrationExists
+        elif result[2] != status_enum[0]:
+            return Results.CalibrationExists
     
     calibratied_axes = 0
     axis_statuses = {'pitch': 'not started', 'roll': 'not started', 'yaw': 'not started'}
     retries = 0
+    lastProgress = None
     while(calibratied_axes < 3):
         setup_mavlink.requestCalibration(link)
         result = setup_mavlink.getCalibrationProgress(link)
@@ -70,7 +76,10 @@ def calibrate(link, progressCallback=None):
         elif calibratied_axes == 0 and axis == axis_enum[2]:
             calibratied_axes == 2
         
-        progressCallback(axis, progress, status)
+        # Only run callback when progress has changed
+        if int(progress) != lastProgress:
+            progressCallback(axis, int(progress), status)
+            lastProgress = int(progress)
 
         if status != 'in progress':
             axis_statuses[axis.lower()] = status
