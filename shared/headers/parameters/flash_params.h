@@ -4,6 +4,8 @@
 #include "hardware/HWSpecific.h"
 #include "Flash2806x_API_Library.h"
 
+#define CURRENT_FLASH_PARAM_STRUCT	flash_param_struct_0001
+
 struct flash_param_struct_0001 {
 	Uint16 flash_struct_id;
 	float sys_swver;
