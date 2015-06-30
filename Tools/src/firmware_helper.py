@@ -32,7 +32,6 @@ def append_checksum(binary):
     # Compute the checksum
     for i in range(len(wordarray)):
         checksum ^= wordarray[i]
-    print("Checksum: 0x%04X" % checksum)
 
     # Add the checksum to the end of the wordarray
     wordarray.extend([checksum & 0xFFFF, (checksum & 0xFFFF) >> 16, 0x0000])
@@ -45,14 +44,14 @@ def append_checksum(binary):
         barray.append(lsb)
         barray.append(msb)
 
-    return barray
+    return barray, checksum
 
 def load_firmware(filename):
     '''Load the image from the JSON firmware file into a byte array'''
     with open(filename, "r") as f:
         desc = json.load(f)
-
-        return bytearray(zlib.decompress(base64.b64decode(desc['image'])))
+        desc['binary'] = bytearray(zlib.decompress(base64.b64decode(desc['image'])))
+        return desc
     
     
 def load_binary(filename):
