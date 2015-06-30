@@ -46,7 +46,7 @@ def calibrate(link, progressCallback=None):
     pitch, roll, yaw = getAxisCalibrationParams(link)
     if pitch == None or roll == None or yaw == None:
         return Results.ParamFetchFailed
-    elif pitch[0] != 0 or pitch[1] != 0 or roll[0] != 0 or roll[1] != 0 or yaw[0] != 0 or yaw[1] != 0:
+    elif (pitch[0] != 0 or pitch[1] != 0) and (roll[0] != 0 or roll[1] != 0) and (yaw[0] != 0 or yaw[1] != 0):
         # Check if a calibration is in progress
         result = setup_mavlink.getCalibrationProgress(link)
         if result == None:
