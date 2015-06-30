@@ -243,7 +243,7 @@ Uint32 MAVLINK_Flash()
 							send_serial_port(buffer, length);
 
 							/* must be done */
-							WatchDogEnable();
+							watchdog_enable();
 
 							// Don't reset immediately, otherwise the MAVLink message above won't be flushed.
 
