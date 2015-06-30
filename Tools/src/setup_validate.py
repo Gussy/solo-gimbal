@@ -52,7 +52,7 @@ def show(link):
     ver = setup_factory.readSWver(link)
     if ver != None:
         major, minor, rev = int(ver[0]), int(ver[1]), int(ver[2])
-        if major > 0 and minor >= 18:
+        if major >= 0 and minor >= 18:
             serial_number = setup_factory.get_serial_number(link)
             assembly_time = setup_factory.get_assembly_time(link)
         else:
