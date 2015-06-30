@@ -72,8 +72,8 @@ def get_current_delta_velocity(link):
         else:
             return Vector3([msg_gimbal.delta_velocity_x, msg_gimbal.delta_velocity_y, msg_gimbal.delta_velocity_z])
 
-def get_gimbal_report(link):
-    msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
+def get_gimbal_report(link, timeout=2):
+    msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=timeout)
     return msg_gimbal
 
 def send_gimbal_control(link,rate):

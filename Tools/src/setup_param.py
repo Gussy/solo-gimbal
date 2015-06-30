@@ -12,7 +12,7 @@ from pymavlink.rotmat import Vector3
 def fetch_param(link, param, timeout=2):
     for i in range(timeout):
         link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
-        msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=1)
+        msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=timeout)
         if msg:
             return msg
     return None
@@ -57,10 +57,10 @@ def set_offsets(link, kind, offsets):
         set_param(link, "GMB_OFF_" + kind + "_Z", offsets.z)
         commit_to_flash(link)
 
-def get_offsets(link, kind):
-    x = fetch_param(link, "GMB_OFF_" + kind + "_X")
-    y = fetch_param(link, "GMB_OFF_" + kind + "_Y")
-    z = fetch_param(link, "GMB_OFF_" + kind + "_Z")
+def get_offsets(link, kind, timeout=2):
+    x = fetch_param(link, "GMB_OFF_" + kind + "_X", timeout=timeout)
+    y = fetch_param(link, "GMB_OFF_" + kind + "_Y", timeout=timeout)
+    z = fetch_param(link, "GMB_OFF_" + kind + "_Z", timeout=timeout)
     if x == None or y == None or z == None:
         return None
     else:
