@@ -327,7 +327,7 @@ def command_interface():
         major, minor, rev = ver[0], ver[1], ver[2]
         print("Software version: v%i.%i.%i" % (major, minor, rev))
     else:
-        print("Unable to read software version")
+        print("Software version: unknown")
 
     if serial_number != None:
         if serial_number == '':

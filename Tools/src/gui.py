@@ -12,6 +12,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.ui.setupUi(self)
 
         # Public
+        self.autoUpdate = False
         self.autoMotorCal = False
 
         # Disable the tabwidget
@@ -39,12 +40,10 @@ class ControlMainWindow(QtGui.QMainWindow):
     def setFirmwareFile(self, filename):
         self.firmwareUI.loadFirmwareFile(filename)
 
-    def setAutoMotorCal(self):
-        self.autoMotorCal = True
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
+    parser.add_argument("--autoupdate", help="Automatically bootload firmware onto the gimbal", action='store_true')
     parser.add_argument("--automotorcal", help="Automatically run motor commutation the gimbal", action='store_true')
     args = parser.parse_args()
 
@@ -55,7 +54,10 @@ if __name__ == '__main__':
     if args.file:
         gui.setFirmwareFile(args.file)
 
+    if args.autoupdate:
+        gui.autoUpdate = True
+
     if args.automotorcal:
-        gui.setAutoMotorCal()
+        gui.autoMotorCal = True
 
     sys.exit(app.exec_())

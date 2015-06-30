@@ -140,9 +140,14 @@ class connectionUI(object):
     def getGimbalParameters(self):
         version = setup_factory.readSWver(self.link, timeout=5)
         if version != None:
-            serialNumber = setup_factory.get_serial_number(self.link)
-            assemblyTime = setup_factory.get_assembly_time(self.link)
-            return version, serialNumber, assemblyTime
+            major, minor, rev = int(version[0]), int(version[1]), int(version[2])
+            if major > 0 and minor > 18:
+                serial_number = setup_factory.get_serial_number(self.link)
+                assembly_time = setup_factory.get_assembly_time(self.link)
+            else:
+                serial_number = None
+                assembly_time = None
+            return version, serial_number, assembly_time
         return version, None, None
 
     @gui_utils.waitCursor
@@ -175,7 +180,7 @@ class connectionUI(object):
             # Prompt a for the serial number if the gimbal is factory fresh
             if serialNumber == '' or assemblyTime == 0:
                 text, ok = QtGui.QInputDialog.getText(self.parent, '3DR Gimbal', 'Serial Number:')
-                if ok and text != '':
+                if ok and text != '' and softwareVersion[0] > 0 and softwareVersion[1] >= 18:
                     serialNumber, assemblyTime = yield AsyncTask(self.writeSerialNumber, text)
             # Update the status display
             self.setStatusInfo(
@@ -187,7 +192,7 @@ class connectionUI(object):
             self.ui.tabWidget.setEnabled(True)
 
             # Attempt to bootload a the gimbal if the serial number is none
-            if serialNumber == None:
+            if serialNumber == None and self.parent.autoUpdate:
                 self.ui.tabWidget.setCurrentIndex(1)
                 if self.parent.firmwareUI.readyToLoad():
                     self.ui.btnLoadFirmware.clicked.emit()

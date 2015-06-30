@@ -88,7 +88,8 @@ class calibrationUI(object):
     def runAsyncGetCalibration(self):
         self.setButtonsEnabled(False)
         allParams = yield AsyncTask(self.getAllParams)
-        self.updateCalibrationTable(allParams)
+        if allParams != None:
+            self.updateCalibrationTable(allParams)
         self.setButtonsEnabled(True)
 
     @coroutine
