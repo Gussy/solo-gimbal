@@ -10,6 +10,7 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
+#include "hardware/watchdog.h"
 #include "version_git.h"
 #include <stdio.h>
 
@@ -75,17 +76,9 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 		if (erase_our_flash() < 0) {
 			// something went wrong... but what do I do?
 		}
-		// reset
-		extern void WDogEnable(void);
-		WDogEnable();
-		
-		EALLOW;
-		// Cause a device reset by writing incorrect values into WDCHK
-		SysCtrlRegs.WDCR = 0x0010;
-		EDIS;
 
-		// This should never be reached.
-		while(1);
+		// reset
+		watchdog_reset();
 	}
 }
 
@@ -318,10 +311,7 @@ static void handle_reset_gimbal()
         cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
 
         // reset this axes
-        extern void WDogEnable(void);
-        WDogEnable();
-        while(1)
-        {}
+        watchdog_reset();
 }
 
 static void handle_request_axis_calibration(MotorDriveParms* md_parms)
