@@ -77,8 +77,8 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 			// something went wrong... but what do I do?
 		}
 
-		// reset
-		watchdog_reset();
+		// reset now
+		watchdog_immediate_reset();
 	}
 }
 

@@ -25,7 +25,16 @@ void watchdog_enable()
 	EDIS;
 }
 
-void watchdog_reset() {
+void watchdog_reset()
+{
+	// Enable watchdog
+	watchdog_enable();
+
+	// This should never be reached.
+	for(;;);
+}
+
+void watchdog_immediate_reset() {
 	// Enable watchdog
 	watchdog_enable();
 
