@@ -80,6 +80,7 @@ def wobble(link):
     gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=1)
     joint_offsets = setup_param.get_offsets(link, 'JNT', timeout=1)
     target = Vector3()
+    error_integral = Vector3()
     
     log = Log()
     
@@ -105,7 +106,11 @@ def wobble(link):
         Tvg.from_euler312(report.joint_roll - joint_offsets.x, report.joint_el - joint_offsets.y, report.joint_az - joint_offsets.z)
         current_angle = Vector3(*Tvg.to_euler312())
                                    
-        rate = Tvg.transposed() * (pointing_gain * (target - current_angle))
+        error = target - current_angle
+        error_integral = error+error_integral
+        control_p = pointing_gain * (error)
+        control_i = 0.00001 * (error_integral)
+        rate = Tvg.transposed() * (control_p+control_i)
         setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
         
         print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
