@@ -1,5 +1,6 @@
 
 #include "flash/flash.h"
+#include "hardware/watchdog.h"
 #include "Flash2806x_API_Library.h"
 #include "F2806x_SysCtrl.h"
 
@@ -268,17 +269,8 @@ int init_flash(void)
 				default:
 					erase_our_flash();
 
-					// reset
-					extern void WDogEnable(void);
-					WDogEnable();
-
-					EALLOW;
-					// Cause a device reset by writing incorrect values into WDCHK
-					SysCtrlRegs.WDCR = 0x0010;
-					EDIS;
-
-					// This should never be reached.
-					for(;;) {};
+					// Reset
+					watchdog_immediate_reset();
 			}
 
 			// Save the new param struct to flash

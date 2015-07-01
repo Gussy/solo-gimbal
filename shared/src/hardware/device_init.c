@@ -17,7 +17,7 @@ static void init_gpio();
 
 void DeviceInit(void)
 {
-	WatchDogDisable();	// Disable the watchdog initially
+	watchdog_disable();	// Disable the watchdog initially
 	DINT;			// Global Disable all Interrupts
 	IER = 0x0000;	// Disable CPU interrupts
 	IFR = 0x0000;	// Clear all CPU interrupt flags
