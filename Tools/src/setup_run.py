@@ -115,7 +115,7 @@ def wobble(link):
         
         print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
         
-        if (time() - start_time>4):
+        if (time() - start_time>5):
             i = i + report.delta_time
             g1_r.plot(pos=(i,measured_joint_corrected.x))
             g1_g.plot(pos=(i,measured_joint_corrected.y))
@@ -125,7 +125,7 @@ def wobble(link):
             g2_b.plot(pos=(i,measured_rate_corrected.z))
             log.write(measured_rate_corrected,measured_joint_corrected)
 
-        if (time() - start_time>3):
+        if (time() - start_time>4):
             pointing_gain = 0.01
             
 def stop(link):
