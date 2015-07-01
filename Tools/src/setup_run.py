@@ -56,27 +56,32 @@ def align(link):
 @niceExit
 def wobble(link):
     i = 0
-    gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=1);
-    offsets = setup_param.get_offsets(link, 'JNT', timeout=1)
+    gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=1)
+    joint_offsets = setup_param.get_offsets(link, 'JNT', timeout=1)
     target = Vector3()
     
     #log = open('gyro_test_%d.txt'%time.time(),'w')
     
     while(True):
+        
         report = setup_mavlink.get_gimbal_report(link, timeout=1)
+        measured_rate = Vector3(report.delta_angle_x/report.delta_time , report.delta_angle_y/report.delta_time , report.delta_angle_z/report.delta_time)
+        measured_rate_corrected = measured_rate - gyro_offsets/report.delta_time
+        measured_joint = Vector3(report.joint_roll,report.joint_el,report.joint_az)
+        measured_joint_corrected = measured_joint - joint_offsets
 
         #log_str = "%1.2f \t%+02.3f\t%+02.3f\t%+02.3f\n"%(time.time(),report.delta_angle_x*1000.0,report.delta_angle_y*1000.0,report.delta_angle_z*1000.0)
         #print log_str
         #log.write(log_str)
 
         Tvg = Matrix3()
-        Tvg.from_euler312(report.joint_roll - offsets.x, report.joint_el - offsets.y, report.joint_az - offsets.z)
+        Tvg.from_euler312(report.joint_roll - joint_offsets.x, report.joint_el - joint_offsets.y, report.joint_az - joint_offsets.z)
         current_angle = Vector3(*Tvg.to_euler312())
                                    
-        rate = 0.1 * (target - current_angle) + gyro_offsets
+        rate = Tvg.transposed() * (pointing_gain * (target - current_angle))
         
-        setup_mavlink.send_gimbal_control(link, Tvg.transposed() * rate)
         i += 1
+        setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
 
 def stop(link):
     rate = Vector3()
