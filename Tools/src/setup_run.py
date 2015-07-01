@@ -3,7 +3,7 @@
 """
 
 """
-import sys
+import sys, time
 import setup_mavlink
 from pymavlink.rotmat import Matrix3, Vector3
 from math import sin, cos, radians
@@ -13,6 +13,21 @@ from time import time
 import visual.graph
 import visual.crayola as color
 from visual.graph import gdisplay
+
+testTargets = [
+     Vector3(radians(-30),radians(-30),radians(-00)),
+     Vector3(radians(-30),radians(+30),radians(-00)),
+     Vector3(radians(+30),radians(+30),radians(-00)),
+     Vector3(radians(+30),radians(-30),radians(-00)),
+     Vector3(radians(-30),radians(-30),radians(-10)),
+     Vector3(radians(-30),radians(+30),radians(-10)),
+     Vector3(radians(+30),radians(+30),radians(-10)),
+     Vector3(radians(+30),radians(-30),radians(-10)),
+     Vector3(radians(-30),radians(-30),radians(+10)),
+     Vector3(radians(-30),radians(+30),radians(+10)),
+     Vector3(radians(+30),radians(+30),radians(+10)),
+     Vector3(radians(+30),radians(-30),radians(+10))
+]
 
 class Log:
     def __init__(self):
@@ -37,52 +52,70 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def run(link):
+def run(link, stopTestsCallback=None):
     i = 0
     target = Vector3()
-    while(True):
+
+    while True:
+        if stopTestsCallback:
+            if stopTestsCallback():
+                break
+
         report = setup_mavlink.get_gimbal_report(link, timeout=1)
+        if report == None:
+            continue
+
         Tvg = Matrix3()
-        Tvg.from_euler312( report.joint_roll, report.joint_el, report.joint_az)
+        Tvg.from_euler312(report.joint_roll, report.joint_el, report.joint_az)
         current_angle = Vector3(*Tvg.to_euler312())
-        
+
         target.y = 0.4 * (sin(i * 12.5) - 1)
         target.x = 0.2 * cos(i * 2.5)
         target.z = 0.1 * cos(i * 0.5)
-                           
+
         rate = 5 * (target - current_angle)
-        
+
         setup_mavlink.send_gimbal_control(link, Tvg.transposed() * rate)
         i += 0.01
+    return True
 
 @niceExit
-def align(link):
+def align(link, stopTestsCallback=None):
     i = 0
-    offsets = setup_param.get_offsets(link, 'JNT', timeout=1)
+    offsets = setup_param.get_offsets(link, 'JNT', timeout=4)
     target = Vector3()
-    while(True):
+
+    while True:
+        if stopTestsCallback:
+            if stopTestsCallback():
+                break
+
         report = setup_mavlink.get_gimbal_report(link, timeout=1)
+        if report == None:
+            continue
+
         Tvg = Matrix3()
-        Tvg.from_euler312( report.joint_roll - offsets.x, report.joint_el - offsets.y, report.joint_az - offsets.z)
+        Tvg.from_euler312(report.joint_roll - offsets.x, report.joint_el - offsets.y, report.joint_az - offsets.z)
         current_angle = Vector3(*Tvg.to_euler312())
 
         rate = 5 * (target-current_angle)
         
         setup_mavlink.send_gimbal_control(link, Tvg.transposed() * rate)
         i += 0.01
+    return True
 
 @niceExit
-def wobble(link):
+def wobble(link, stopTestsCallback=None):
     start_time = time()
     i=0
     pointing_gain = 2
-    gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=1)
-    joint_offsets = setup_param.get_offsets(link, 'JNT', timeout=1)
+    gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
+    joint_offsets = setup_param.get_offsets(link, 'JNT', timeout=4)
     target = Vector3()
     error_integral = Vector3()
     
     log = Log()
-    
+
     g1_r = visual.graph.gcurve(color=color.red)
     g1_g = visual.graph.gcurve(color=color.green)
     g1_b = visual.graph.gcurve(color=color.blue)
@@ -91,15 +124,18 @@ def wobble(link):
     g2_g = visual.graph.gcurve(color=color.green)
     g2_b = visual.graph.gcurve(color=color.blue)
     
-    while(True):
-
+    while True:
+        if stopTestsCallback:
+            if stopTestsCallback():
+                break
         
         report = setup_mavlink.get_gimbal_report(link, timeout=1)
+        if report == None:
+            continue
         measured_rate = Vector3(report.delta_angle_x/report.delta_time , report.delta_angle_y/report.delta_time , report.delta_angle_z/report.delta_time)
         measured_rate_corrected = measured_rate - gyro_offsets/report.delta_time
         measured_joint = Vector3(report.joint_roll,report.joint_el,report.joint_az)
         measured_joint_corrected = measured_joint - joint_offsets
-
 
         Tvg = Matrix3()
         Tvg.from_euler312(report.joint_roll - joint_offsets.x, report.joint_el - joint_offsets.y, report.joint_az - joint_offsets.z)
@@ -112,7 +148,7 @@ def wobble(link):
         rate = Tvg.transposed() * (control_p+control_i)
         setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
         
-        print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
+        #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
         
         if (time() - start_time>5):
             i = i + report.delta_time
@@ -126,22 +162,8 @@ def wobble(link):
 
         if (time() - start_time>4):
             pointing_gain = 0.01
-            
-            
-testTargets = [
-     Vector3(radians(-30),radians(-30),radians(-00)),
-     Vector3(radians(-30),radians(+30),radians(-00)),
-     Vector3(radians(+30),radians(+30),radians(-00)),
-     Vector3(radians(+30),radians(-30),radians(-00)),
-     Vector3(radians(-30),radians(-30),radians(-10)),
-     Vector3(radians(-30),radians(+30),radians(-10)),
-     Vector3(radians(+30),radians(+30),radians(-10)),
-     Vector3(radians(+30),radians(-30),radians(-10)),
-     Vector3(radians(-30),radians(-30),radians(+10)),
-     Vector3(radians(-30),radians(+30),radians(+10)),
-     Vector3(radians(+30),radians(+30),radians(+10)),
-     Vector3(radians(+30),radians(-30),radians(+10))     
-     ]
+
+    return True
 
 @niceExit
 def wobble2(link):
@@ -198,10 +220,9 @@ def wobble2(link):
             targetIndex = targetIndex % len(testTargets)
             target = testTargets[targetIndex]
             print str(targetIndex) + 'new target '+ str(target)
-            
+
+@niceExit    
 def stop(link):
     rate = Vector3()
-    while(True):        
+    while True:
         setup_mavlink.send_gimbal_control(link, rate)
-
-
