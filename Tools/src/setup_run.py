@@ -8,6 +8,7 @@ import setup_mavlink
 from pymavlink.rotmat import Matrix3, Vector3
 from math import sin, cos
 import setup_param
+from time import time
 
 def niceExit(function):
     def wrapper(self, *args, **kwargs):
@@ -55,7 +56,8 @@ def align(link):
 
 @niceExit
 def wobble(link):
-    i = 0
+    start_time = time()
+    pointing_gain = 2
     gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=1)
     joint_offsets = setup_param.get_offsets(link, 'JNT', timeout=1)
     target = Vector3()
@@ -63,6 +65,8 @@ def wobble(link):
     #log = open('gyro_test_%d.txt'%time.time(),'w')
     
     while(True):
+        if (time() - start_time>3):
+            pointing_gain = 0.005
         
         report = setup_mavlink.get_gimbal_report(link, timeout=1)
         measured_rate = Vector3(report.delta_angle_x/report.delta_time , report.delta_angle_y/report.delta_time , report.delta_angle_z/report.delta_time)
@@ -80,7 +84,6 @@ def wobble(link):
                                    
         rate = Tvg.transposed() * (pointing_gain * (target - current_angle))
         
-        i += 1
         setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
 
 def stop(link):
