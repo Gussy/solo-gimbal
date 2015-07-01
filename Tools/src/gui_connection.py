@@ -1,4 +1,4 @@
-import datetime
+import time, datetime
 from PySide import QtCore, QtGui
 from PySide.QtCore import Slot
 from qtasync import AsyncTask, coroutine
@@ -138,10 +138,14 @@ class connectionUI(object):
 
     @gui_utils.waitCursor
     def getGimbalParameters(self):
-        version = setup_factory.readSWver(self.link, timeout=5)
+        # Sleep to allow the gimbal to start up if we're cycling and auto-updating
+        if self.isCycling and self.parent.autoUpdate:
+            time.sleep(3)
+
+        version = setup_factory.readSWver(self.link)
         if version != None:
             major, minor, rev = int(version[0]), int(version[1]), int(version[2])
-            if major > 0 and minor > 18:
+            if major >= 0 and minor >= 18:
                 serial_number = setup_factory.get_serial_number(self.link)
                 assembly_time = setup_factory.get_assembly_time(self.link)
             else:

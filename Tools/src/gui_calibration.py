@@ -102,7 +102,6 @@ class calibrationUI(object):
     @coroutine
     def runAsyncStaticCalibration(self):
         self.setButtonsEnabled(False)
-        #joints, gyros = yield AsyncTask(self.staticCalibration)
 
         joints = yield AsyncTask(self.jointCalibration)
         
