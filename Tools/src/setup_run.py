@@ -10,6 +10,19 @@ from math import sin, cos
 import setup_param
 from time import time
 
+class Log:
+    def __init__(self):
+        self.file = open('gyro_test_%d.csv'%time(),'w')
+        self.file.write('time,rate_x,rate_y,rate_z,joint_x,joint_y,joint_z\n')
+
+    def write(self, measured_rate_corrected, measured_joint_corrected):
+        log_str = "%s,%s,%s\n"%(time(),csvVector(measured_rate_corrected),csvVector(measured_joint_corrected))
+        self.file.write(log_str)
+    
+
+def csvVector(v):
+    return '%f,%f,%f'%(v.x,v.y,v.z)
+
 def niceExit(function):
     def wrapper(self, *args, **kwargs):
         try:
@@ -62,7 +75,7 @@ def wobble(link):
     joint_offsets = setup_param.get_offsets(link, 'JNT', timeout=1)
     target = Vector3()
     
-    #log = open('gyro_test_%d.txt'%time.time(),'w')
+    log = Log()
     
     while(True):
         if (time() - start_time>3):
@@ -74,9 +87,7 @@ def wobble(link):
         measured_joint = Vector3(report.joint_roll,report.joint_el,report.joint_az)
         measured_joint_corrected = measured_joint - joint_offsets
 
-        #log_str = "%1.2f \t%+02.3f\t%+02.3f\t%+02.3f\n"%(time.time(),report.delta_angle_x*1000.0,report.delta_angle_y*1000.0,report.delta_angle_z*1000.0)
-        #print log_str
-        #log.write(log_str)
+        log.write(measured_rate_corrected,measured_joint_corrected)
 
         Tvg = Matrix3()
         Tvg.from_euler312(report.joint_roll - joint_offsets.x, report.joint_el - joint_offsets.y, report.joint_az - joint_offsets.z)
@@ -84,6 +95,7 @@ def wobble(link):
                                    
         rate = Tvg.transposed() * (pointing_gain * (target - current_angle))
         
+        print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
         setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
 
 def stop(link):

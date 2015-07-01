@@ -30,4 +30,5 @@ Tools/3DRGimbalFactoryApplication/build-*/
 *linkinfo.xml
 
 .vagrant
+*.csv
 
