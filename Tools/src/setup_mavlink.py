@@ -126,3 +126,7 @@ def start_home_calibration(link):
 
 def requestCalibration(link):
     return link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42503, 0, 0, 0, 0, 0, 0, 0, 0)
+
+def get_all(link, timeout=1):
+    return link.file.recv_match(blocking=True, timeout=timeout)
+

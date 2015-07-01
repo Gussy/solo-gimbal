@@ -13,6 +13,8 @@ class testsUI(object):
         # Private
         self.stopTests = False
         self.startTime = 0
+        self.faults = 0
+        self.logMessages = list()
 
         self.ui.btnTestsRun.clicked.connect(self.handleTestsRun)
         self.ui.btnTestsAlign.clicked.connect(self.handleTestsAlign)
@@ -77,8 +79,18 @@ class testsUI(object):
     def stopTestsCallback(self):
         return self.stopTests
 
+    def testFaultCallback(self, fault):
+        elapsedTime = int(time.time() - self.startTime)
+        message = "%is - %s" % (elapsedTime, fault)
+        self.logMessages.append(message)
+        
+
     def testsRun(self):
-        return setup_run.run(self.connection.getLink(), self.stopTestsCallback)
+        return setup_run.run(
+            self.connection.getLink(),
+            stopTestsCallback=self.stopTestsCallback,
+            faultCallback=self.testFaultCallback
+        )
 
     def testsAlign(self):
         return setup_run.align(self.connection.getLink(), self.stopTestsCallback)
@@ -90,15 +102,15 @@ class testsUI(object):
         self.ui.btnTestsRun.setEnabled(enabled)
         self.ui.btnTestsAlign.setEnabled(enabled)
         self.ui.btnTestsWobble.setEnabled(enabled)
-
         self.ui.btnTestsStop.setEnabled(not enabled)
-
         self.ui.tabValidate.setEnabled(enabled)
         self.ui.tabFirmware.setEnabled(enabled)
         self.ui.tabCalibration.setEnabled(enabled)
 
     def timerStart(self, interval=500):
         self.ui.lblTestsRunTime.setText("0:00:00")
+        self.ui.lblTestsFaults.setText("0")
+        self.ui.txtTestsLog.setPlainText("")
         self.startTime = time.time()
         self.timer.start(interval)
 
@@ -110,3 +122,7 @@ class testsUI(object):
         m, s = divmod(time_delta, 60)
         h, m = divmod(m, 60)
         self.ui.lblTestsRunTime.setText("%d:%02d:%02d" % (h, m, s))
+        for i in range(len(self.logMessages)):
+            self.ui.txtTestsLog.appendPlainText(self.logMessages.pop())
+            self.faults += 1
+        self.ui.lblTestsFaults.setText(str(self.faults))

@@ -52,17 +52,31 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def run(link, stopTestsCallback=None):
+def run(link, stopTestsCallback=None, faultCallback=None):
     i = 0
     target = Vector3()
 
+    lastCycle = time.time()
     while True:
         if stopTestsCallback:
             if stopTestsCallback():
                 break
 
-        report = setup_mavlink.get_gimbal_report(link, timeout=1)
+        report = setup_mavlink.get_all(link, timeout=1)
         if report == None:
+            continue
+        elif report.get_type() == 'GIMBAL_REPORT':
+            delta = int(time.time() - lastCycle)
+            if delta > 0:
+                if faultCallback:
+                    faultCallback('gimbal reset')
+        elif report.get_type() == 'STATUSTEXT':
+            if 'Over current' in report.text:
+                axis = report.text.split(' ')[1].lower()
+                if faultCallback:
+                    faultCallback('overcurrent on %s' % axis)
+            continue
+        else:
             continue
 
         Tvg = Matrix3()
@@ -77,6 +91,9 @@ def run(link, stopTestsCallback=None):
 
         setup_mavlink.send_gimbal_control(link, Tvg.transposed() * rate)
         i += 0.01
+
+        lastCycle = time.time()
+
     return True
 
 @niceExit
