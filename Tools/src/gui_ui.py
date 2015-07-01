@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui_design.ui'
 #
-# Created: Wed Jul 01 10:32:42 2015
+# Created: Wed Jul 01 14:12:55 2015
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -550,6 +550,26 @@ class Ui_MainWindow(object):
         self.btnTestsStop.setEnabled(False)
         self.btnTestsStop.setGeometry(QtCore.QRect(10, 240, 112, 61))
         self.btnTestsStop.setObjectName("btnTestsStop")
+        self.formLayoutWidget_8 = QtGui.QWidget(self.tabTests)
+        self.formLayoutWidget_8.setGeometry(QtCore.QRect(130, 10, 431, 201))
+        self.formLayoutWidget_8.setObjectName("formLayoutWidget_8")
+        self.formLayout_5 = QtGui.QFormLayout(self.formLayoutWidget_8)
+        self.formLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.formLayout_5.setObjectName("formLayout_5")
+        self.lblTestsRunTimeLabel = QtGui.QLabel(self.formLayoutWidget_8)
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.lblTestsRunTimeLabel.setFont(font)
+        self.lblTestsRunTimeLabel.setObjectName("lblTestsRunTimeLabel")
+        self.formLayout_5.setWidget(0, QtGui.QFormLayout.LabelRole, self.lblTestsRunTimeLabel)
+        self.lblTestsRunTime = QtGui.QLabel(self.formLayoutWidget_8)
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.lblTestsRunTime.setFont(font)
+        self.lblTestsRunTime.setText("")
+        self.lblTestsRunTime.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.lblTestsRunTime.setObjectName("lblTestsRunTime")
+        self.formLayout_5.setWidget(0, QtGui.QFormLayout.FieldRole, self.lblTestsRunTime)
         self.tabWidget.addTab(self.tabTests, "")
         self.formLayoutWidget = QtGui.QWidget(self.centralWidget)
         self.formLayoutWidget.setGeometry(QtCore.QRect(9, 10, 255, 101))
@@ -706,6 +726,7 @@ class Ui_MainWindow(object):
         self.btnTestsAlign.setText(QtGui.QApplication.translate("MainWindow", "Align", None, QtGui.QApplication.UnicodeUTF8))
         self.btnTestsWobble.setText(QtGui.QApplication.translate("MainWindow", "Wobble", None, QtGui.QApplication.UnicodeUTF8))
         self.btnTestsStop.setText(QtGui.QApplication.translate("MainWindow", "Stop Test", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblTestsRunTimeLabel.setText(QtGui.QApplication.translate("MainWindow", "Run Time", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabTests), QtGui.QApplication.translate("MainWindow", "Tests", None, QtGui.QApplication.UnicodeUTF8))
         self.lblConnectionLabel.setText(QtGui.QApplication.translate("MainWindow", "Connection:", None, QtGui.QApplication.UnicodeUTF8))
         self.lblSerialPortLabel.setText(QtGui.QApplication.translate("MainWindow", "Serial Port:", None, QtGui.QApplication.UnicodeUTF8))

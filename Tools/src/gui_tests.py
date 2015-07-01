@@ -1,4 +1,5 @@
-from PySide.QtCore import Slot
+import time, datetime
+from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
 import setup_run
 import gui_utils
@@ -11,11 +12,15 @@ class testsUI(object):
 
         # Private
         self.stopTests = False
+        self.startTime = 0
 
         self.ui.btnTestsRun.clicked.connect(self.handleTestsRun)
         self.ui.btnTestsAlign.clicked.connect(self.handleTestsAlign)
         self.ui.btnTestsWobble.clicked.connect(self.handleTestsWobble)
         self.ui.btnTestsStop.clicked.connect(self.handleTestsStop)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.timerUpdate)
 
     @Slot()
     def handleTestsRun(self):
@@ -43,7 +48,9 @@ class testsUI(object):
     def runAsyncTestsRun(self):
         self.enableUI(False)
         self.stopTests = False
+        self.timerStart()
         result = yield AsyncTask(self.testsRun)
+        self.timerStop()
         self.stopTests = True
         self.enableUI(True)
 
@@ -51,7 +58,9 @@ class testsUI(object):
     def runAsyncTestsAlign(self):
         self.enableUI(False)
         self.stopTests = False
+        self.timerStart()
         result = yield AsyncTask(self.testsAlign)
+        self.timerStop()
         self.stopTests = True
         self.enableUI(True)
 
@@ -59,7 +68,9 @@ class testsUI(object):
     def handleTestsWobble(self):
         self.enableUI(False)
         self.stopTests = False
+        self.timerStart()
         result = yield AsyncTask(self.testsWobble)
+        self.timerStop()
         self.stopTests = True
         self.enableUI(True)
 
@@ -85,3 +96,17 @@ class testsUI(object):
         self.ui.tabValidate.setEnabled(enabled)
         self.ui.tabFirmware.setEnabled(enabled)
         self.ui.tabCalibration.setEnabled(enabled)
+
+    def timerStart(self, interval=500):
+        self.ui.lblTestsRunTime.setText("0:00:00")
+        self.startTime = time.time()
+        self.timer.start(interval)
+
+    def timerStop(self):
+        self.timer.stop()
+
+    def timerUpdate(self):
+        time_delta = time.time() - self.startTime
+        m, s = divmod(time_delta, 60)
+        h, m = divmod(m, 60)
+        self.ui.lblTestsRunTime.setText("%d:%02d:%02d" % (h, m, s))
