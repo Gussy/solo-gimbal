@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'gui_design.ui'
+#
+# Created: Wed Jul 01 10:32:42 2015
+#      by: pyside-uic 0.2.15 running on PySide 1.2.2
+#
+# WARNING! All changes made in this file will be lost!
+
 from PySide import QtCore, QtGui
 
 class Ui_MainWindow(object):
@@ -21,10 +30,10 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabsClosable(False)
         self.tabWidget.setMovable(False)
         self.tabWidget.setObjectName("tabWidget")
-        self.tabTests = QtGui.QWidget()
-        self.tabTests.setEnabled(True)
-        self.tabTests.setObjectName("tabTests")
-        self.formLayoutWidget_4 = QtGui.QWidget(self.tabTests)
+        self.tabValidate = QtGui.QWidget()
+        self.tabValidate.setEnabled(True)
+        self.tabValidate.setObjectName("tabValidate")
+        self.formLayoutWidget_4 = QtGui.QWidget(self.tabValidate)
         self.formLayoutWidget_4.setGeometry(QtCore.QRect(10, 70, 551, 231))
         self.formLayoutWidget_4.setObjectName("formLayoutWidget_4")
         self.frmlytValidationResults = QtGui.QFormLayout(self.formLayoutWidget_4)
@@ -128,15 +137,15 @@ class Ui_MainWindow(object):
         self.lblValidationSerialNumber.setText("")
         self.lblValidationSerialNumber.setObjectName("lblValidationSerialNumber")
         self.frmlytValidationResults.setWidget(1, QtGui.QFormLayout.FieldRole, self.lblValidationSerialNumber)
-        self.btnValidationRunTests = QtGui.QPushButton(self.tabTests)
+        self.btnValidationRunTests = QtGui.QPushButton(self.tabValidate)
         self.btnValidationRunTests.setEnabled(True)
         self.btnValidationRunTests.setGeometry(QtCore.QRect(10, 10, 271, 51))
         self.btnValidationRunTests.setObjectName("btnValidationRunTests")
-        self.btnValidationSetDefaults = QtGui.QPushButton(self.tabTests)
+        self.btnValidationSetDefaults = QtGui.QPushButton(self.tabValidate)
         self.btnValidationSetDefaults.setEnabled(True)
         self.btnValidationSetDefaults.setGeometry(QtCore.QRect(290, 10, 271, 51))
         self.btnValidationSetDefaults.setObjectName("btnValidationSetDefaults")
-        self.tabWidget.addTab(self.tabTests, "")
+        self.tabWidget.addTab(self.tabValidate, "")
         self.tabFirmware = QtGui.QWidget()
         self.tabFirmware.setObjectName("tabFirmware")
         self.btnFirmwareFileDialog = QtGui.QPushButton(self.tabFirmware)
@@ -526,6 +535,22 @@ class Ui_MainWindow(object):
         self.lblCalibrationStatus.setAlignment(QtCore.Qt.AlignCenter)
         self.lblCalibrationStatus.setObjectName("lblCalibrationStatus")
         self.tabWidget.addTab(self.tabCalibration, "")
+        self.tabTests = QtGui.QWidget()
+        self.tabTests.setObjectName("tabTests")
+        self.btnTestsRun = QtGui.QPushButton(self.tabTests)
+        self.btnTestsRun.setGeometry(QtCore.QRect(10, 10, 112, 61))
+        self.btnTestsRun.setObjectName("btnTestsRun")
+        self.btnTestsAlign = QtGui.QPushButton(self.tabTests)
+        self.btnTestsAlign.setGeometry(QtCore.QRect(10, 150, 112, 61))
+        self.btnTestsAlign.setObjectName("btnTestsAlign")
+        self.btnTestsWobble = QtGui.QPushButton(self.tabTests)
+        self.btnTestsWobble.setGeometry(QtCore.QRect(10, 80, 112, 61))
+        self.btnTestsWobble.setObjectName("btnTestsWobble")
+        self.btnTestsStop = QtGui.QPushButton(self.tabTests)
+        self.btnTestsStop.setEnabled(False)
+        self.btnTestsStop.setGeometry(QtCore.QRect(10, 240, 112, 61))
+        self.btnTestsStop.setObjectName("btnTestsStop")
+        self.tabWidget.addTab(self.tabTests, "")
         self.formLayoutWidget = QtGui.QWidget(self.centralWidget)
         self.formLayoutWidget.setGeometry(QtCore.QRect(9, 10, 255, 101))
         self.formLayoutWidget.setObjectName("formLayoutWidget")
@@ -621,7 +646,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralWidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(3)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -636,7 +661,7 @@ class Ui_MainWindow(object):
         self.lblValidationAssemblyTimeLabel.setText(QtGui.QApplication.translate("MainWindow", "Assembly Time:", None, QtGui.QApplication.UnicodeUTF8))
         self.btnValidationRunTests.setText(QtGui.QApplication.translate("MainWindow", "Run Self Tests", None, QtGui.QApplication.UnicodeUTF8))
         self.btnValidationSetDefaults.setText(QtGui.QApplication.translate("MainWindow", "Set Defaults", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabTests), QtGui.QApplication.translate("MainWindow", "Tests", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabValidate), QtGui.QApplication.translate("MainWindow", "Validate", None, QtGui.QApplication.UnicodeUTF8))
         self.btnFirmwareFileDialog.setText(QtGui.QApplication.translate("MainWindow", "Open Firmware", None, QtGui.QApplication.UnicodeUTF8))
         self.lblFirmwareVersionLabel.setText(QtGui.QApplication.translate("MainWindow", "Version:", None, QtGui.QApplication.UnicodeUTF8))
         self.lblFirmwareBuildTimeLabel.setText(QtGui.QApplication.translate("MainWindow", "Build Time:", None, QtGui.QApplication.UnicodeUTF8))
@@ -677,6 +702,11 @@ class Ui_MainWindow(object):
         self.lblCalibrationAccelYLabel.setText(QtGui.QApplication.translate("MainWindow", "Y", None, QtGui.QApplication.UnicodeUTF8))
         self.lblCalibrationAccelZLabel.setText(QtGui.QApplication.translate("MainWindow", "Z", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabCalibration), QtGui.QApplication.translate("MainWindow", "Calibration", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnTestsRun.setText(QtGui.QApplication.translate("MainWindow", "Test Run", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnTestsAlign.setText(QtGui.QApplication.translate("MainWindow", "Align", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnTestsWobble.setText(QtGui.QApplication.translate("MainWindow", "Wobble", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnTestsStop.setText(QtGui.QApplication.translate("MainWindow", "Stop Test", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabTests), QtGui.QApplication.translate("MainWindow", "Tests", None, QtGui.QApplication.UnicodeUTF8))
         self.lblConnectionLabel.setText(QtGui.QApplication.translate("MainWindow", "Connection:", None, QtGui.QApplication.UnicodeUTF8))
         self.lblSerialPortLabel.setText(QtGui.QApplication.translate("MainWindow", "Serial Port:", None, QtGui.QApplication.UnicodeUTF8))
         self.lblBaurdateLabel.setText(QtGui.QApplication.translate("MainWindow", "Baudrate:", None, QtGui.QApplication.UnicodeUTF8))

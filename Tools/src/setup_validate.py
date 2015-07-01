@@ -103,7 +103,7 @@ def show(link):
         return None
 
 def validate_version(link):
-    swver = setup_factory.readSWver(link)
+    swver = setup_factory.readSWver(link, timeout=2)
     if not swver:
         return Results.Error
     ver = LooseVersion("%i.%i.%i" % (swver[0], swver[1], swver[2]))
@@ -112,7 +112,6 @@ def validate_version(link):
         return Results.Pass
     else:
         return Results.Fail
-
 
 def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
     icept = axis[0]
