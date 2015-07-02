@@ -28,11 +28,12 @@ testTargets = [
 class Log:
     def __init__(self):
         self.logdir = 'logs'
-        self.mkdir_p(self.logdir)
+        if not os.path.isdir(self.logdir):
+            os.makedirs(self.logdir)
 
         self.valuesLogfile = os.path.join(self.logdir, 'gyro_test_values_%d.csv' % time.time())
         self.valuesFile = open(self.valuesLogfile, 'w')
-        self.valuesFile.write('time,rate_x,rate_y,rate_z,joint_x,joint_y,joint_z\n')
+        self.valuesFile.write('time,rate_x,rate_y,rate_z,joint_x,joint_y,joint_z,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z\n')
 
         self.eventsLogfile = os.path.join(self.logdir, 'gyro_test_events_%d.csv' % time.time())
         self.eventsFile = open(self.eventsLogfile, 'w')
@@ -46,8 +47,8 @@ class Log:
                 pass
             else: raise
 
-    def writeValues(self, measured_rate_corrected, measured_joint_corrected):
-        log_str = "%s,%s,%s\n" % (time.time(), csvVector(measured_rate_corrected), csvVector(measured_joint_corrected))
+    def writeValues(self, measured_rate_corrected, measured_joint_corrected, min, max, rms):
+        log_str = "%s,%s,%s,%s,%s,%s\n" % (time.time(), csvVector(measured_rate_corrected), csvVector(measured_joint_corrected), csvVector(min), csvVector(max), csvVector(rms))
         self.valuesFile.write(log_str)
 
     def writeEvent(self, message):
@@ -205,7 +206,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
                     
                 #print('max ' + str(max) + ' min ' + str(min) + ' rms ' + str(rms * 1000))
 
-                log.writeValues(measured_rate_corrected,measured_joint_corrected)
+                log.writeValues(measured_rate_corrected, measured_joint_corrected, min, max, rms * 1000)
 
                 if reportCallback:
                     reportCallback(measured_rate_corrected.x, measured_rate_corrected.y, measured_rate_corrected.z)
