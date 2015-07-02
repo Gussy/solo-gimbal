@@ -54,7 +54,7 @@
      <enum>QTabWidget::Rounded</enum>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>3</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideNone</enum>
@@ -1183,7 +1183,7 @@ Calibration</string>
         <x>130</x>
         <y>10</y>
         <width>431</width>
-        <height>111</height>
+        <height>131</height>
        </rect>
       </property>
       <layout class="QFormLayout" name="formLayout_5">
@@ -1191,7 +1191,7 @@ Calibration</string>
         <widget class="QLabel" name="lblTestsRunTimeLabel">
          <property name="font">
           <font>
-           <pointsize>20</pointsize>
+           <pointsize>14</pointsize>
           </font>
          </property>
          <property name="text">
@@ -1203,7 +1203,7 @@ Calibration</string>
         <widget class="QLabel" name="lblTestsRunTime">
          <property name="font">
           <font>
-           <pointsize>20</pointsize>
+           <pointsize>14</pointsize>
           </font>
          </property>
          <property name="text">
@@ -1218,7 +1218,7 @@ Calibration</string>
         <widget class="QLabel" name="lblTestsFaultsLabel">
          <property name="font">
           <font>
-           <pointsize>20</pointsize>
+           <pointsize>14</pointsize>
           </font>
          </property>
          <property name="text">
@@ -1230,7 +1230,34 @@ Calibration</string>
         <widget class="QLabel" name="lblTestsFaults">
          <property name="font">
           <font>
-           <pointsize>20</pointsize>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="lblTestsLogFileLabel">
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Logfile</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLabel" name="lblTestsLogfile">
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
           </font>
          </property>
          <property name="text">
@@ -1247,9 +1274,9 @@ Calibration</string>
       <property name="geometry">
        <rect>
         <x>130</x>
-        <y>130</y>
+        <y>150</y>
         <width>431</width>
-        <height>171</height>
+        <height>151</height>
        </rect>
       </property>
       <property name="readOnly">

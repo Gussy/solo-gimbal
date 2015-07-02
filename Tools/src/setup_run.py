@@ -31,11 +31,13 @@ class Log:
         if not os.path.isdir(self.logdir):
             os.makedirs(self.logdir)
 
-        self.valuesLogfile = os.path.join(self.logdir, 'gyro_test_values_%d.csv' % time.time())
+        self.logTimestamp = time.time()
+
+        self.valuesLogfile = os.path.join(self.logdir, 'gyro_test_values_%d.csv' % self.logTimestamp)
         self.valuesFile = open(self.valuesLogfile, 'w')
         self.valuesFile.write('time,rate_x,rate_y,rate_z,joint_x,joint_y,joint_z,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z\n')
 
-        self.eventsLogfile = os.path.join(self.logdir, 'gyro_test_events_%d.csv' % time.time())
+        self.eventsLogfile = os.path.join(self.logdir, 'gyro_test_events_%d.csv' % self.logTimestamp)
         self.eventsFile = open(self.eventsLogfile, 'w')
         self.eventsFile.write('time,message\n')
 
@@ -218,7 +220,8 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
         lastCycle = time.time()
 
     if log:
-        log.writeEvent('test started')
+        log.writeEvent('test finished')
+        return str(int(log.logTimestamp))
 
     return True
 

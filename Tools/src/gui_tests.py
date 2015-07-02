@@ -71,6 +71,9 @@ class testsUI(object):
 
         result = yield AsyncTask(self.testsWobble)
 
+        if result != True:
+            self.ui.lblTestsLogfile.setText(result)
+
         self.graph = None
 
         self.testStop()
