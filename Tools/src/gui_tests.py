@@ -2,7 +2,7 @@ import time, datetime
 from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
 import setup_run
-import gui_utils
+import gui_utils, gui_graph
 
 class testsUI(object):
     def __init__(self, parent):
@@ -15,6 +15,14 @@ class testsUI(object):
         self.startTime = 0
         self.faults = 0
         self.logMessages = list()
+
+        self.graph = None
+        self.pitchGraph = None
+        self.rollGraph = None
+        self.yawGraph = None
+        self.pitchValues = list()
+        self.rollValues = list()
+        self.yawValues = list()
 
         self.ui.btnTestsRun.clicked.connect(self.handleTestsRun)
         self.ui.btnTestsAlign.clicked.connect(self.handleTestsAlign)
@@ -48,33 +56,30 @@ class testsUI(object):
 
     @coroutine
     def runAsyncTestsRun(self):
-        self.enableUI(False)
-        self.stopTests = False
-        self.timerStart()
+        self.testStart()
         result = yield AsyncTask(self.testsRun)
-        self.timerStop()
-        self.stopTests = True
-        self.enableUI(True)
-
-    @coroutine
-    def runAsyncTestsAlign(self):
-        self.enableUI(False)
-        self.stopTests = False
-        self.timerStart()
-        result = yield AsyncTask(self.testsAlign)
-        self.timerStop()
-        self.stopTests = True
-        self.enableUI(True)
+        self.testStop()
 
     @coroutine
     def handleTestsWobble(self):
-        self.enableUI(False)
-        self.stopTests = False
-        self.timerStart()
+        self.testStart()
+
+        self.graph = gui_graph.GraphWindow()
+        self.pitchGraph = self.graph.newGraph('Pitch gyro')
+        self.rollGraph = self.graph.newGraph('Roll gyro')
+        self.yawGraph = self.graph.newGraph('Yaw gyro')
+
         result = yield AsyncTask(self.testsWobble)
-        self.timerStop()
-        self.stopTests = True
-        self.enableUI(True)
+
+        self.graph = None
+
+        self.testStop()
+
+    @coroutine
+    def runAsyncTestsAlign(self):
+        self.testStart()
+        result = yield AsyncTask(self.testsAlign)
+        self.testStop()
 
     def stopTestsCallback(self):
         return self.stopTests
@@ -83,7 +88,12 @@ class testsUI(object):
         elapsedTime = int(time.time() - self.startTime)
         message = "%is - %s" % (elapsedTime, fault)
         self.logMessages.append(message)
-        
+
+    def reportCallback(self, a, b, c):
+        now = time.time()
+        self.pitchValues.append((now, a))
+        self.rollValues.append((now, b))
+        self.yawValues.append((now, c))
 
     def testsRun(self):
         return setup_run.run(
@@ -93,10 +103,19 @@ class testsUI(object):
         )
 
     def testsAlign(self):
-        return setup_run.align(self.connection.getLink(), self.stopTestsCallback)
+        return setup_run.align(
+            self.connection.getLink(),
+            stopTestsCallback=self.stopTestsCallback,
+            faultCallback=self.testFaultCallback
+        )
 
     def testsWobble(self):
-        return setup_run.wobble(self.connection.getLink(), self.stopTestsCallback)
+        return setup_run.wobble(
+            self.connection.getLink(),
+            stopTestsCallback=self.stopTestsCallback,
+            faultCallback=self.testFaultCallback,
+            reportCallback=self.reportCallback
+        )
 
     def enableUI(self, enabled):
         self.ui.btnTestsRun.setEnabled(enabled)
@@ -107,15 +126,22 @@ class testsUI(object):
         self.ui.tabFirmware.setEnabled(enabled)
         self.ui.tabCalibration.setEnabled(enabled)
 
-    def timerStart(self, interval=500):
+    def testStart(self, interval=100):
+        self.enableUI(False)
+        self.stopTests = False
+        self.pitchValues = list()
+        self.rollValues = list()
+        self.yawValues = list()
         self.ui.lblTestsRunTime.setText("0:00:00")
         self.ui.lblTestsFaults.setText("0")
         self.ui.txtTestsLog.setPlainText("")
         self.startTime = time.time()
         self.timer.start(interval)
 
-    def timerStop(self):
+    def testStop(self):
         self.timer.stop()
+        self.stopTests = True
+        self.enableUI(True)
 
     def timerUpdate(self):
         time_delta = time.time() - self.startTime
@@ -126,3 +152,12 @@ class testsUI(object):
             self.ui.txtTestsLog.appendPlainText(self.logMessages.pop())
             self.faults += 1
         self.ui.lblTestsFaults.setText(str(self.faults))
+        self.dequeueValues(self.pitchValues, self.pitchGraph)
+        self.dequeueValues(self.rollValues, self.rollGraph)
+        self.dequeueValues(self.yawValues, self.yawGraph)
+
+    def dequeueValues(self, values, graph):
+        if self.graph:
+            for i in range(len(values)):
+                t, v = values.pop(0)
+                self.graph.updateGraph(graph, t, v)

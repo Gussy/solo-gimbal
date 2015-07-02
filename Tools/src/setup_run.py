@@ -1,46 +1,41 @@
 #!/usr/bin/python
 
-"""
-
-"""
-import sys, time
-import setup_mavlink
-from pymavlink.rotmat import Matrix3, Vector3
+import os, sys, time, threading
 from math import sin, cos, radians
-import setup_param
-from time import time
+from pymavlink.rotmat import Matrix3, Vector3
+import setup_mavlink, setup_param, gui_graph
 
-import visual.graph
-import visual.crayola as color
-from visual.graph import gdisplay
+#import visual.graph
+#import visual.crayola as color
+#from visual.graph import gdisplay
 
 testTargets = [
-     Vector3(radians(-30),radians(-30),radians(-00)),
-     Vector3(radians(-30),radians(+30),radians(-00)),
-     Vector3(radians(+30),radians(+30),radians(-00)),
-     Vector3(radians(+30),radians(-30),radians(-00)),
-     Vector3(radians(-30),radians(-30),radians(-10)),
-     Vector3(radians(-30),radians(+30),radians(-10)),
-     Vector3(radians(+30),radians(+30),radians(-10)),
-     Vector3(radians(+30),radians(-30),radians(-10)),
-     Vector3(radians(-30),radians(-30),radians(+10)),
-     Vector3(radians(-30),radians(+30),radians(+10)),
-     Vector3(radians(+30),radians(+30),radians(+10)),
-     Vector3(radians(+30),radians(-30),radians(+10))
+     Vector3(radians(-30), radians(-30), radians(-00)),
+     Vector3(radians(-30), radians(+30), radians(-00)),
+     Vector3(radians(+30), radians(+30), radians(-00)),
+     Vector3(radians(+30), radians(-30), radians(-00)),
+     Vector3(radians(-30), radians(-30), radians(-10)),
+     Vector3(radians(-30), radians(+30), radians(-10)),
+     Vector3(radians(+30), radians(+30), radians(-10)),
+     Vector3(radians(+30), radians(-30), radians(-10)),
+     Vector3(radians(-30), radians(-30), radians(+10)),
+     Vector3(radians(-30), radians(+30), radians(+10)),
+     Vector3(radians(+30), radians(+30), radians(+10)),
+     Vector3(radians(+30), radians(-30), radians(+10))
 ]
 
 class Log:
     def __init__(self):
-        self.file = open('gyro_test_%d.csv'%time(),'w')
+        self.logfile = os.path.join('gyro_test_%d.csv' % time.time())
+        self.file = open(self.logfile, 'w')
         self.file.write('time,rate_x,rate_y,rate_z,joint_x,joint_y,joint_z\n')
 
     def write(self, measured_rate_corrected, measured_joint_corrected):
-        log_str = "%s,%s,%s\n"%(time(),csvVector(measured_rate_corrected),csvVector(measured_joint_corrected))
+        log_str = "%s,%s,%s\n" % (time.time(), csvVector(measured_rate_corrected), csvVector(measured_joint_corrected))
         self.file.write(log_str)
-    
 
 def csvVector(v):
-    return '%f,%f,%f'%(v.x,v.y,v.z)
+    return '%f,%f,%f' % (v.x, v.y, v.z)
 
 def niceExit(function):
     def wrapper(self, *args, **kwargs):
@@ -52,31 +47,36 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def run(link, stopTestsCallback=None, faultCallback=None):
+def run(link, stopTestsCallback=None, faultCallback=None, reportCallback=None):
     i = 0
     target = Vector3()
 
     lastCycle = time.time()
+    lastReport = time.time()
+    commsLost = False
     while True:
         if stopTestsCallback:
             if stopTestsCallback():
                 break
 
+        # Receive all mavlink messages
         report = setup_mavlink.get_all(link, timeout=1)
         if report == None:
             continue
         elif report.get_type() == 'GIMBAL_REPORT':
-            delta = int(time.time() - lastCycle)
-            if delta > 0:
-                if faultCallback:
-                    faultCallback('gimbal reset')
+            commsLost = False
+            lastReport = time.time()
+            delta = int(lastReport - lastCycle)
+            if delta > 0 and faultCallback:
+                faultCallback('gimbal connected')
         elif report.get_type() == 'STATUSTEXT':
-            if 'Over current' in report.text:
-                axis = report.text.split(' ')[1].lower()
-                if faultCallback:
-                    faultCallback('overcurrent on %s' % axis)
+            if faultCallback:
+                faultCallback(report.text)
             continue
         else:
+            if (time.time() - lastReport) > 0.2 and faultCallback and not commsLost:
+                faultCallback('gimbal reset')
+                commsLost = True
             continue
 
         Tvg = Matrix3()
@@ -92,23 +92,44 @@ def run(link, stopTestsCallback=None, faultCallback=None):
         setup_mavlink.send_gimbal_control(link, Tvg.transposed() * rate)
         i += 0.01
 
-        lastCycle = time.time()
+        if reportCallback:
+            reportCallback(report.joint_roll, report.joint_el, report.joint_az)
 
+        lastCycle = time.time()
     return True
 
 @niceExit
-def align(link, stopTestsCallback=None):
+def align(link, stopTestsCallback=None, faultCallback=None, reportCallback=None):
     i = 0
     offsets = setup_param.get_offsets(link, 'JNT', timeout=4)
     target = Vector3()
 
+    lastCycle = time.time()
+    lastReport = time.time()
+    commsLost = False
     while True:
         if stopTestsCallback:
             if stopTestsCallback():
                 break
 
-        report = setup_mavlink.get_gimbal_report(link, timeout=1)
+        # Receive all mavlink messages
+        report = setup_mavlink.get_all(link, timeout=1)
         if report == None:
+            continue
+        elif report.get_type() == 'GIMBAL_REPORT':
+            commsLost = False
+            lastReport = time.time()
+            delta = int(lastReport - lastCycle)
+            if delta > 0 and faultCallback:
+                faultCallback('gimbal connected')
+        elif report.get_type() == 'STATUSTEXT':
+            if faultCallback:
+                faultCallback(report.text)
+            continue
+        else:
+            if (time.time() - lastReport) > 0.2 and faultCallback and not commsLost:
+                faultCallback('gimbal reset')
+                commsLost = True
             continue
 
         Tvg = Matrix3()
@@ -119,11 +140,16 @@ def align(link, stopTestsCallback=None):
         
         setup_mavlink.send_gimbal_control(link, Tvg.transposed() * rate)
         i += 0.01
+
+        if reportCallback:
+            reportCallback(report.joint_roll, report.joint_el, report.joint_az)
+
+        lastCycle = time.time()
     return True
 
 @niceExit
-def wobble(link, stopTestsCallback=None):
-    start_time = time()
+def wobble(link, stopTestsCallback=None, faultCallback=None, reportCallback=None):
+    start_time = time.time()
     i=0
     pointing_gain = 2
     gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
@@ -133,22 +159,42 @@ def wobble(link, stopTestsCallback=None):
     
     log = Log()
 
-    g1_r = visual.graph.gcurve(color=color.red)
-    g1_g = visual.graph.gcurve(color=color.green)
-    g1_b = visual.graph.gcurve(color=color.blue)
-    gdisplay()
-    g2_r = visual.graph.gcurve(color=color.red)
-    g2_g = visual.graph.gcurve(color=color.green)
-    g2_b = visual.graph.gcurve(color=color.blue)
+    #g1_r = visual.graph.gcurve(color=color.red)
+    #g1_g = visual.graph.gcurve(color=color.green)
+    #g1_b = visual.graph.gcurve(color=color.blue)
+    #gdisplay()
+    #g2_r = visual.graph.gcurve(color=color.red)
+    #g2_g = visual.graph.gcurve(color=color.green)
+    #g2_b = visual.graph.gcurve(color=color.blue)
     
+    lastCycle = time.time()
+    lastReport = time.time()
+    commsLost = False
     while True:
         if stopTestsCallback:
             if stopTestsCallback():
                 break
         
-        report = setup_mavlink.get_gimbal_report(link, timeout=1)
+        # Receive all mavlink messages
+        report = setup_mavlink.get_all(link, timeout=1)
         if report == None:
             continue
+        elif report.get_type() == 'GIMBAL_REPORT':
+            commsLost = False
+            lastReport = time.time()
+            delta = int(lastReport - lastCycle)
+            if delta > 0 and faultCallback:
+                faultCallback('gimbal connected')
+        elif report.get_type() == 'STATUSTEXT':
+            if faultCallback:
+                faultCallback(report.text)
+            continue
+        else:
+            if (time.time() - lastReport) > 0.2 and faultCallback and not commsLost:
+                faultCallback('gimbal reset')
+                commsLost = True
+            continue
+
         measured_rate = Vector3(report.delta_angle_x/report.delta_time , report.delta_angle_y/report.delta_time , report.delta_angle_z/report.delta_time)
         measured_rate_corrected = measured_rate - gyro_offsets/report.delta_time
         measured_joint = Vector3(report.joint_roll,report.joint_el,report.joint_az)
@@ -167,76 +213,79 @@ def wobble(link, stopTestsCallback=None):
         
         #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
         
-        if (time() - start_time>5):
+        if time.time() - start_time > 5:
             i = i + report.delta_time
-            g1_r.plot(pos=(i,measured_joint_corrected.x))
-            g1_g.plot(pos=(i,measured_joint_corrected.y))
-            g1_b.plot(pos=(i,measured_joint_corrected.z))
-            g2_r.plot(pos=(i,measured_rate_corrected.x))
-            g2_g.plot(pos=(i,measured_rate_corrected.y))
-            g2_b.plot(pos=(i,measured_rate_corrected.z))
+            #g1_r.plot(pos=(i,measured_joint_corrected.x))
+            #g1_g.plot(pos=(i,measured_joint_corrected.y))
+            #g1_b.plot(pos=(i,measured_joint_corrected.z))
+            #g2_r.plot(pos=(i,measured_rate_corrected.x))
+            #g2_g.plot(pos=(i,measured_rate_corrected.y))
+            #g2_b.plot(pos=(i,measured_rate_corrected.z))
             log.write(measured_rate_corrected,measured_joint_corrected)
 
-        if (time() - start_time>4):
+            if reportCallback:
+                reportCallback(measured_rate_corrected.x, measured_rate_corrected.y, measured_rate_corrected.z)
+
+        if time.time() - start_time > 4:
             pointing_gain = 0.01
+
+        lastCycle = time.time()
 
     return True
 
-@niceExit
-def wobble2(link):
-    start_time = time()
-    i=0
-    pointing_gain = 3
-    gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=1)
-    joint_offsets = setup_param.get_offsets(link, 'JNT', timeout=1)
-    targetIndex = 1
-    target = Vector3()
-    loopCounter = 0
+# @niceExit
+# def wobble2(link):
+#     start_time = time.time()
+#     i=0
+#     pointing_gain = 3
+#     gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=1)
+#     joint_offsets = setup_param.get_offsets(link, 'JNT', timeout=1)
+#     targetIndex = 1
+#     target = Vector3()
+#     loopCounter = 0
     
-    log = Log()
+#     log = Log()
     
-    g1_r = visual.graph.gcurve(color=color.red)
-    g1_g = visual.graph.gcurve(color=color.green)
-    g1_b = visual.graph.gcurve(color=color.blue)
-    gdisplay()
-    g2_r = visual.graph.gcurve(color=color.red)
-    g2_g = visual.graph.gcurve(color=color.green)
-    g2_b = visual.graph.gcurve(color=color.blue)
+#     # g1_r = visual.graph.gcurve(color=color.red)
+#     # g1_g = visual.graph.gcurve(color=color.green)
+#     # g1_b = visual.graph.gcurve(color=color.blue)
+#     # gdisplay()
+#     # g2_r = visual.graph.gcurve(color=color.red)
+#     # g2_g = visual.graph.gcurve(color=color.green)
+#     # g2_b = visual.graph.gcurve(color=color.blue)
     
-    while(True):
-        loopCounter = loopCounter +1
+#     while True:
+#         loopCounter = loopCounter +1
 
-        
-        report = setup_mavlink.get_gimbal_report(link, timeout=1)
-        measured_rate = Vector3(report.delta_angle_x/report.delta_time , report.delta_angle_y/report.delta_time , report.delta_angle_z/report.delta_time)
-        measured_rate_corrected = measured_rate - gyro_offsets/report.delta_time
-        measured_joint = Vector3(report.joint_roll,report.joint_el,report.joint_az)
-        measured_joint_corrected = measured_joint - joint_offsets
+#         report = setup_mavlink.get_gimbal_report(link, timeout=1)
+#         measured_rate = Vector3(report.delta_angle_x/report.delta_time , report.delta_angle_y/report.delta_time , report.delta_angle_z/report.delta_time)
+#         measured_rate_corrected = measured_rate - gyro_offsets/report.delta_time
+#         measured_joint = Vector3(report.joint_roll,report.joint_el,report.joint_az)
+#         measured_joint_corrected = measured_joint - joint_offsets
 
-
-        Tvg = Matrix3()
-        Tvg.from_euler312(report.joint_roll - joint_offsets.x, report.joint_el - joint_offsets.y, report.joint_az - joint_offsets.z)
-        current_angle = Vector3(*Tvg.to_euler312())
+#         Tvg = Matrix3()
+#         Tvg.from_euler312(report.joint_roll - joint_offsets.x, report.joint_el - joint_offsets.y, report.joint_az - joint_offsets.z)
+#         current_angle = Vector3(*Tvg.to_euler312())
                                    
-        rate = Tvg.transposed() * (pointing_gain * (target - current_angle))
-        setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
+#         rate = Tvg.transposed() * (pointing_gain * (target - current_angle))
+#         setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
         
-        #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
+#         #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
 
-        i = i + report.delta_time
-        g1_r.plot(pos=(i,measured_joint_corrected.x))
-        g1_g.plot(pos=(i,measured_joint_corrected.y))
-        g1_b.plot(pos=(i,measured_joint_corrected.z))
-        g2_r.plot(pos=(i,measured_rate_corrected.x))
-        g2_g.plot(pos=(i,measured_rate_corrected.y))
-        g2_b.plot(pos=(i,measured_rate_corrected.z))
-        log.write(measured_rate_corrected,measured_joint_corrected)
+#         i = i + report.delta_time
+#         # g1_r.plot(pos=(i,measured_joint_corrected.x))
+#         # g1_g.plot(pos=(i,measured_joint_corrected.y))
+#         # g1_b.plot(pos=(i,measured_joint_corrected.z))
+#         # g2_r.plot(pos=(i,measured_rate_corrected.x))
+#         # g2_g.plot(pos=(i,measured_rate_corrected.y))
+#         # g2_b.plot(pos=(i,measured_rate_corrected.z))
+#         log.write(measured_rate_corrected,measured_joint_corrected)
 
-        if  loopCounter % 100 ==0:
-            targetIndex = targetIndex+1
-            targetIndex = targetIndex % len(testTargets)
-            target = testTargets[targetIndex]
-            print str(targetIndex) + 'new target '+ str(target)
+#         if  loopCounter % 100 ==0:
+#             targetIndex = targetIndex+1
+#             targetIndex = targetIndex % len(testTargets)
+#             target = testTargets[targetIndex]
+#             print str(targetIndex) + 'new target '+ str(target)
 
 @niceExit    
 def stop(link):

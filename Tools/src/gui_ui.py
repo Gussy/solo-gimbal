@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui_design.ui'
 #
-# Created: Wed Jul 01 17:42:17 2015
+# Created: Thu Jul 02 14:26:42 2015
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -255,16 +255,16 @@ class Ui_MainWindow(object):
         self.tabCalibration = QtGui.QWidget()
         self.tabCalibration.setObjectName("tabCalibration")
         self.btnGetCalibration = QtGui.QPushButton(self.tabCalibration)
-        self.btnGetCalibration.setGeometry(QtCore.QRect(10, 10, 131, 51))
+        self.btnGetCalibration.setGeometry(QtCore.QRect(10, 10, 101, 51))
         self.btnGetCalibration.setObjectName("btnGetCalibration")
         self.btnRunMotorCalibration = QtGui.QPushButton(self.tabCalibration)
-        self.btnRunMotorCalibration.setGeometry(QtCore.QRect(150, 10, 131, 51))
+        self.btnRunMotorCalibration.setGeometry(QtCore.QRect(120, 10, 101, 51))
         self.btnRunMotorCalibration.setObjectName("btnRunMotorCalibration")
-        self.btnRunStaticCalibration = QtGui.QPushButton(self.tabCalibration)
-        self.btnRunStaticCalibration.setGeometry(QtCore.QRect(290, 10, 131, 51))
-        self.btnRunStaticCalibration.setObjectName("btnRunStaticCalibration")
+        self.btnRunJointCalibration = QtGui.QPushButton(self.tabCalibration)
+        self.btnRunJointCalibration.setGeometry(QtCore.QRect(230, 10, 101, 51))
+        self.btnRunJointCalibration.setObjectName("btnRunJointCalibration")
         self.btnEraseCalibration = QtGui.QPushButton(self.tabCalibration)
-        self.btnEraseCalibration.setGeometry(QtCore.QRect(430, 10, 131, 51))
+        self.btnEraseCalibration.setGeometry(QtCore.QRect(460, 10, 101, 51))
         self.btnEraseCalibration.setObjectName("btnEraseCalibration")
         self.pbarCalibration = QtGui.QProgressBar(self.tabCalibration)
         self.pbarCalibration.setGeometry(QtCore.QRect(10, 70, 551, 31))
@@ -534,6 +534,9 @@ class Ui_MainWindow(object):
         self.lblCalibrationStatus.setText("")
         self.lblCalibrationStatus.setAlignment(QtCore.Qt.AlignCenter)
         self.lblCalibrationStatus.setObjectName("lblCalibrationStatus")
+        self.btnRunGyroCalibration = QtGui.QPushButton(self.tabCalibration)
+        self.btnRunGyroCalibration.setGeometry(QtCore.QRect(340, 10, 101, 51))
+        self.btnRunGyroCalibration.setObjectName("btnRunGyroCalibration")
         self.tabWidget.addTab(self.tabCalibration, "")
         self.tabTests = QtGui.QWidget()
         self.tabTests.setObjectName("tabTests")
@@ -685,7 +688,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralWidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(3)
+        self.tabWidget.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -715,7 +718,7 @@ class Ui_MainWindow(object):
 "Calibration", None, QtGui.QApplication.UnicodeUTF8))
         self.btnRunMotorCalibration.setText(QtGui.QApplication.translate("MainWindow", "Run Motor\n"
 "Calibration", None, QtGui.QApplication.UnicodeUTF8))
-        self.btnRunStaticCalibration.setText(QtGui.QApplication.translate("MainWindow", "Run Gyro+Joint\n"
+        self.btnRunJointCalibration.setText(QtGui.QApplication.translate("MainWindow", "Run Joint\n"
 "Calibration", None, QtGui.QApplication.UnicodeUTF8))
         self.btnEraseCalibration.setText(QtGui.QApplication.translate("MainWindow", "Erase\n"
 "Calibration", None, QtGui.QApplication.UnicodeUTF8))
@@ -740,6 +743,8 @@ class Ui_MainWindow(object):
         self.lblCalibrationAccelXLabel.setText(QtGui.QApplication.translate("MainWindow", "X", None, QtGui.QApplication.UnicodeUTF8))
         self.lblCalibrationAccelYLabel.setText(QtGui.QApplication.translate("MainWindow", "Y", None, QtGui.QApplication.UnicodeUTF8))
         self.lblCalibrationAccelZLabel.setText(QtGui.QApplication.translate("MainWindow", "Z", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnRunGyroCalibration.setText(QtGui.QApplication.translate("MainWindow", "Run Gyro\n"
+"Calibration", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabCalibration), QtGui.QApplication.translate("MainWindow", "Calibration", None, QtGui.QApplication.UnicodeUTF8))
         self.btnTestsRun.setText(QtGui.QApplication.translate("MainWindow", "Test Run", None, QtGui.QApplication.UnicodeUTF8))
         self.btnTestsAlign.setText(QtGui.QApplication.translate("MainWindow", "Align", None, QtGui.QApplication.UnicodeUTF8))
