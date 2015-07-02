@@ -138,11 +138,12 @@ class connectionUI(object):
 
     @gui_utils.waitCursor
     def getGimbalParameters(self):
-        # Sleep to allow the gimbal to start up if we're cycling and auto-updating
+        # Delay to allow the gimbal to start up if we're cycling and auto-updating
+        timeout = 1
         if self.isCycling and self.parent.autoUpdate:
-            time.sleep(3)
+            timeout = 5
 
-        version = setup_factory.readSWver(self.link)
+        version = setup_factory.readSWver(self.link, timeout=timeout)
         if version != None:
             major, minor, rev = int(version[0]), int(version[1]), int(version[2])
             if major >= 0 and minor >= 18:

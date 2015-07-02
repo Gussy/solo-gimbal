@@ -69,14 +69,13 @@ def send_block(link, binary, msg):
 
 
 def get_handshake_msg(link, timeout=1):
-    msg = setup_mavlink.wait_handshake(link.file, timeout)
-    return msg
+    return setup_mavlink.wait_handshake(link.file, timeout)
 
 def upload_data(link, binary):
     global progressHandler, bootloaderVersionHandler
 
     msg = get_handshake_msg(link)
-    if (msg == None):
+    if msg == None:
         return Results.NoResponse
 
     # Print bootloader version
@@ -87,12 +86,12 @@ def upload_data(link, binary):
     # Loop until we are finished
     end_idx = 0
     retries = 0
-    while (end_idx < len(binary)):
+    while end_idx < len(binary):
         msg = get_handshake_msg(link)
         if msg == None:
             retries += 1
             continue
-        if retries > 10:
+        if retries > 20:
             return Results.NoResponse
         retries = 0
 
