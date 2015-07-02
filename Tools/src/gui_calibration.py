@@ -1,4 +1,4 @@
-from PySide.QtCore import Slot
+from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
 import setup_mavlink, setup_validate, setup_comutation, setup_home
 import gui_utils
@@ -12,11 +12,18 @@ class calibrationUI(object):
         # Public
         self.calibrationAttempted = False
 
+        # Private
+        self.progress = -1
+        self.status = ''
+
         self.ui.btnGetCalibration.clicked.connect(self.handleGetCalibration)
         self.ui.btnEraseCalibration.clicked.connect(self.handleEraseCalibration)
         self.ui.btnRunJointCalibration.clicked.connect(self.handleRunJointCalibration)
         self.ui.btnRunGyroCalibration.clicked.connect(self.handleRunGyroCalibration)
         self.ui.btnRunMotorCalibration.clicked.connect(self.handleRunMotorCalibration)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.timerUpdate)
 
     @Slot()
     def handleGetCalibration(self):
@@ -73,8 +80,8 @@ class calibrationUI(object):
         result = None
         try:
             def calibrationProgressCallback(axis, progress, status):
-                self.ui.pbarCalibration.setValue(progress)
-                self.setCalibrationStatus("Calibrating %s" % axis.title())
+                self.progress = progress
+                self.status = "Calibrating %s" % axis.title()
             result = setup_comutation.calibrate(self.connection.getLink(), calibrationProgressCallback)
         except Exception as e:
             print e
@@ -144,10 +151,10 @@ class calibrationUI(object):
     @coroutine
     def runAsyncMotorCalibration(self):
         self.setButtonsEnabled(False)
-        self.ui.pbarCalibration.setValue(0)
         self.calibrationAttempted = True
 
         # Run calibration
+        self.timerStart()
         result = yield AsyncTask(self.runMotorCalibration)
 
         if result == setup_comutation.Results.ParamFetchFailed:
@@ -183,7 +190,7 @@ class calibrationUI(object):
                 allParams = yield AsyncTask(self.getAllParams)
                 self.updateCalibrationTable(allParams)
 
-        self.ui.pbarCalibration.setValue(0)
+        self.timerStop()
         self.setButtonsEnabled(True)
 
     def setCalibrationStatus(self, msg=''):
@@ -303,3 +310,17 @@ class calibrationUI(object):
 
         # Calibration status
         self.setCalibrationStatus()
+
+    def timerStart(self, interval=100):
+        self.ui.pbarCalibration.setValue(0)
+        self.progress = -1
+        self.status = ''
+        self.timer.start()
+
+    def timerStop(self):
+        self.ui.pbarCalibration.setValue(0)
+        self.timer.stop()
+
+    def timerUpdate(self):
+        self.ui.pbarCalibration.setValue(self.progress)
+        self.setCalibrationStatus(self.status)
