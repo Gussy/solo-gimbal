@@ -14,7 +14,8 @@ class calibrationUI(object):
 
         self.ui.btnGetCalibration.clicked.connect(self.handleGetCalibration)
         self.ui.btnEraseCalibration.clicked.connect(self.handleEraseCalibration)
-        self.ui.btnRunStaticCalibration.clicked.connect(self.handleRunStaticCalibration)
+        self.ui.btnRunJointCalibration.clicked.connect(self.handleRunJointCalibration)
+        self.ui.btnRunGyroCalibration.clicked.connect(self.handleRunGyroCalibration)
         self.ui.btnRunMotorCalibration.clicked.connect(self.handleRunMotorCalibration)
 
     @Slot()
@@ -28,10 +29,16 @@ class calibrationUI(object):
             self.runAsyncEraseCalibration()
 
     @Slot()
-    def handleRunStaticCalibration(self):
+    def handleRunJointCalibration(self):
         if self.connection.isConnected():
             self.resetCalibrationTable()
-            self.runAsyncStaticCalibration()
+            self.runAsyncJointCalibration()
+
+    @Slot()
+    def handleRunGyroCalibration(self):
+        if self.connection.isConnected():
+            self.resetCalibrationTable()
+            self.runAsyncGyroCalibration()
 
     @Slot()
     def handleRunMotorCalibration(self):
@@ -52,12 +59,6 @@ class calibrationUI(object):
     @gui_utils.waitCursor
     def eraseCalibration(self):
         return setup_comutation.resetCalibration(self.connection.getLink())
-
-    @gui_utils.waitCursor
-    def staticCalibration(self):
-        joints = setup_home.calibrate_joints(self.connection.getLink())
-        gyros = setup_home.calibrate_gyro(self.connection.getLink())
-        return joints, gyros
 
     @gui_utils.waitCursor
     def jointCalibration(self):
@@ -93,6 +94,14 @@ class calibrationUI(object):
         self.setButtonsEnabled(True)
 
     @coroutine
+    def runAsyncGetCalibration(self):
+        self.setButtonsEnabled(False)
+        allParams = yield AsyncTask(self.getAllParams)
+        if allParams != None:
+            self.updateCalibrationTable(allParams)
+        self.setButtonsEnabled(True)
+
+    @coroutine
     def runAsyncEraseCalibration(self):
         self.setButtonsEnabled(False)
         result = yield AsyncTask(self.eraseCalibration)
@@ -100,7 +109,7 @@ class calibrationUI(object):
         self.setButtonsEnabled(True)
 
     @coroutine
-    def runAsyncStaticCalibration(self):
+    def runAsyncJointCalibration(self):
         self.setButtonsEnabled(False)
 
         joints = yield AsyncTask(self.jointCalibration)
@@ -113,6 +122,12 @@ class calibrationUI(object):
             self.ui.lblCalibrationJointZ.setText('%0.6f' % joints.z)
         else:
             self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, False)
+        
+        self.setButtonsEnabled(True)
+
+    @coroutine
+    def runAsyncGyroCalibration(self):
+        self.setButtonsEnabled(False)
         
         gyros = yield AsyncTask(self.gyroCalibration)
 
@@ -177,7 +192,8 @@ class calibrationUI(object):
     def setButtonsEnabled(self, enabled):
         self.ui.btnGetCalibration.setEnabled(enabled)
         self.ui.btnRunMotorCalibration.setEnabled(enabled)
-        self.ui.btnRunStaticCalibration.setEnabled(enabled)
+        self.ui.btnRunJointCalibration.setEnabled(enabled)
+        self.ui.btnRunGyroCalibration.setEnabled(enabled)
         self.ui.btnEraseCalibration.setEnabled(enabled)
 
     def isCalibrated(self, params):

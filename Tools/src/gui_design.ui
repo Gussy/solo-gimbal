@@ -54,7 +54,7 @@
      <enum>QTabWidget::Rounded</enum>
     </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>2</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideNone</enum>
@@ -537,7 +537,7 @@
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>131</width>
+        <width>101</width>
         <height>51</height>
        </rect>
       </property>
@@ -549,9 +549,9 @@ Calibration</string>
      <widget class="QPushButton" name="btnRunMotorCalibration">
       <property name="geometry">
        <rect>
-        <x>150</x>
+        <x>120</x>
         <y>10</y>
-        <width>131</width>
+        <width>101</width>
         <height>51</height>
        </rect>
       </property>
@@ -560,26 +560,26 @@ Calibration</string>
 Calibration</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="btnRunStaticCalibration">
+     <widget class="QPushButton" name="btnRunJointCalibration">
       <property name="geometry">
        <rect>
-        <x>290</x>
+        <x>230</x>
         <y>10</y>
-        <width>131</width>
+        <width>101</width>
         <height>51</height>
        </rect>
       </property>
       <property name="text">
-       <string>Run Gyro+Joint
+       <string>Run Joint
 Calibration</string>
       </property>
      </widget>
      <widget class="QPushButton" name="btnEraseCalibration">
       <property name="geometry">
        <rect>
-        <x>430</x>
+        <x>460</x>
         <y>10</y>
-        <width>131</width>
+        <width>101</width>
         <height>51</height>
        </rect>
       </property>
@@ -1101,6 +1101,20 @@ Calibration</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="btnRunGyroCalibration">
+      <property name="geometry">
+       <rect>
+        <x>340</x>
+        <y>10</y>
+        <width>101</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Run Gyro
+Calibration</string>
       </property>
      </widget>
     </widget>
