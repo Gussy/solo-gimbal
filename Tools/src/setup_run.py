@@ -2,6 +2,7 @@
 
 import os, sys, time, threading
 from math import sin, cos, radians
+import math
 from pymavlink.rotmat import Matrix3, Vector3
 import setup_mavlink, setup_param, gui_graph
 
@@ -83,6 +84,12 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
         error_integral = Vector3()
         log = Log()
         log.writeEvent('test started')
+
+        max = Vector3()
+        min = Vector3()
+        sqsum = Vector3()
+        rms = Vector3()
+        sample_count = 0
 
         #g1_r = visual.graph.gcurve(color=color.red)
         #g1_g = visual.graph.gcurve(color=color.green)
@@ -167,12 +174,37 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
 
             if time.time() - start_time > 5:
                 i = i + report.delta_time
+
                 #g1_r.plot(pos=(i,measured_joint_corrected.x))
                 #g1_g.plot(pos=(i,measured_joint_corrected.y))
                 #g1_b.plot(pos=(i,measured_joint_corrected.z))
                 #g2_r.plot(pos=(i,measured_rate_corrected.x))
                 #g2_g.plot(pos=(i,measured_rate_corrected.y))
                 #g2_b.plot(pos=(i,measured_rate_corrected.z))
+
+                if(max.x < measured_rate_corrected.x):
+                    max.x = measured_rate_corrected.x
+                if(min.x > measured_rate_corrected.x):
+                    min.x = measured_rate_corrected.x
+                if(max.y < measured_rate_corrected.y):
+                    max.y = measured_rate_corrected.y
+                if(min.y > measured_rate_corrected.y):
+                    min.y = measured_rate_corrected.y
+                if(max.z < measured_rate_corrected.z):
+                    max.z = measured_rate_corrected.z
+                if(min.z > measured_rate_corrected.z):
+                    min.z = measured_rate_corrected.z
+                    
+                sample_count = sample_count + 1
+                sqsum.x = sqsum.x + measured_rate_corrected.x * measured_rate_corrected.x
+                rms.x = (1.0 / sample_count) * math.sqrt(sqsum.x)
+                sqsum.y = sqsum.y + measured_rate_corrected.y * measured_rate_corrected.y
+                rms.y = (1.0 / sample_count) * math.sqrt(sqsum.y)
+                sqsum.z = sqsum.z + measured_rate_corrected.z * measured_rate_corrected.z
+                rms.z = (1.0 / sample_count) * math.sqrt(sqsum.z)
+                    
+                #print('max ' + str(max) + ' min ' + str(min) + ' rms ' + str(rms * 1000))
+
                 log.writeValues(measured_rate_corrected,measured_joint_corrected)
 
                 if reportCallback:
