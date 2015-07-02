@@ -2,7 +2,7 @@ import sys, argparse
 from PySide import QtCore, QtGui
 from PySide.QtCore import QThread, Slot
 from qtasync import AsyncTask, coroutine
-import gui_ui, gui_utils, gui_connection, gui_validation, gui_firmware, gui_calibration
+import gui_ui, gui_utils, gui_connection, gui_validation, gui_firmware, gui_calibration, gui_tests
 from gui_utils import waitCursor
 
 class ControlMainWindow(QtGui.QMainWindow):
@@ -29,6 +29,9 @@ class ControlMainWindow(QtGui.QMainWindow):
 
         # Setup calibration UI
         self.calibrationUI = gui_calibration.calibrationUI(self)
+
+        # Setup tests UI
+        self.testsUI = gui_tests.testsUI(self)
 
     def resetUI(self, isCycling):
         self.validationUI.clearValidationResults()

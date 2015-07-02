@@ -247,19 +247,19 @@ def command_interface():
         return
     
     if args.run:
-        setup_run.run(link)
-        return
-    
-    if args.stop:
-        setup_run.stop(link)
+        setup_run.runTest(link, 'run')
         return
     
     if args.align:
-        setup_run.align(link)
+        setup_run.runTest(link, 'align')
         return
 
     if args.wobble:
-        setup_run.wobble(link)
+        setup_run.runTest(link, 'wobble')
+        return
+
+    if args.stop:
+        setup_run.stop(link)
         return
     
     if args.calibrate:

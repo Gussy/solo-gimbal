@@ -32,7 +32,7 @@ def readSWver(link, timeout=1):
         return float_to_bytes4(msg.param_value)[:-1]
 
 def get_assembly_time(link):
-    value = setup_param.fetch_param(link, "GMB_ASM_TIME")
+    value = setup_param.fetch_param(link, "GMB_ASM_TIME", timeout=1)
     if value:
         return float_to_uint32(value.param_value)
     return None
@@ -53,9 +53,9 @@ def set_serial_number(link, serial_str):
     return sanitised_serial
     
 def get_serial_number(link):
-    ser_num_1 = setup_param.fetch_param(link, "GMB_SER_NUM_1")
-    ser_num_2 = setup_param.fetch_param(link, "GMB_SER_NUM_2")
-    ser_num_3 = setup_param.fetch_param(link, "GMB_SER_NUM_3")
+    ser_num_1 = setup_param.fetch_param(link, "GMB_SER_NUM_1", timeout=1)
+    ser_num_2 = setup_param.fetch_param(link, "GMB_SER_NUM_2", timeout=1)
+    ser_num_3 = setup_param.fetch_param(link, "GMB_SER_NUM_3", timeout=1)
     if ser_num_1 != None and ser_num_2 != None and ser_num_3 != None:
         serial_str = float3_to_string12(ser_num_1.param_value, ser_num_2.param_value, ser_num_3.param_value)
         if serial_str.startswith('GB'):

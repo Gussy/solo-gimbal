@@ -1,6 +1,6 @@
-import datetime
+import time, datetime
 from PySide import QtCore, QtGui
-from PySide.QtCore import Slot
+from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
 import firmware_helper, firmware_loader
 import gui_utils
@@ -16,9 +16,14 @@ class firmwareUI(object):
 
         # Private
         self.firmwareBinary = None
+        self.progress = -1
+        self.eraseStartTime = None
 
         self.ui.btnFirmwareFileDialog.clicked.connect(self.handleFirmwareDialog)
         self.ui.btnLoadFirmware.clicked.connect(self.handleFirmwareLoad)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.timerUpdate)
 
     @Slot()
     def handleFirmwareDialog(self):
@@ -73,7 +78,7 @@ class firmwareUI(object):
     @gui_utils.waitCursor
     def firmwareLoadBinary(self):
         def loaderProgressCallback(uploaded_kb, total_kb, percentage):
-            self.ui.pbarFirmwareUpdate.setValue(percentage)
+            self.progress = percentage
         return firmware_loader.load_binary(self.firmwareBinary, self.connection.getLink(), progressCallback=loaderProgressCallback)
 
     @coroutine
@@ -93,6 +98,8 @@ class firmwareUI(object):
         elif bootloader == firmware_loader.Results.Restarting:
             self.ui.lblFirmwareStatus.setText("Target in bootloader mode, restarting")
 
+        self.timerStart()
+
         # Load the binary using the bootloader
         if bootloader != firmware_loader.Results.NoResponse:
             self.ui.lblFirmwareStatus.setText("Loading firmware")
@@ -109,9 +116,32 @@ class firmwareUI(object):
             else:
                 self.ui.lblFirmwareStatus.setText("Unknown error while finishing bootloading")
 
+        self.timerStop()
+
         self.didBootload = True
 
         self.ui.pbarFirmwareUpdate.setValue(0)
         self.ui.btnFirmwareFileDialog.setEnabled(True)
         self.ui.btnLoadFirmware.setEnabled(True)
-        self.ui.lblFirmwareStatus.setText("")
+
+    def timerStart(self, interval=100):
+        self.progress = -1
+        self.eraseStartTime = None
+        self.timer.start(interval)
+
+    def timerStop(self):
+        self.timer.stop()
+
+    def timerUpdate(self):
+        if self.progress == 0:
+            if not self.eraseStartTime:
+                self.eraseStartTime = time.time()
+            elapsedTime = time.time() - self.eraseStartTime
+            # An erase can take up to 12 seconds to complete
+            eraseProgress = elapsedTime / 12
+            self.ui.pbarFirmwareUpdate.setValue(eraseProgress * 100)
+            self.ui.lblFirmwareStatus.setText("Erasing flash")
+        elif self.progress > 0:
+            self.ui.lblFirmwareStatus.setText("Loading firmware")
+            self.ui.pbarFirmwareUpdate.setValue(self.progress)
+        
