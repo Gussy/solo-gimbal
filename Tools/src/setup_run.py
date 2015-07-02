@@ -26,13 +26,32 @@ testTargets = [
 
 class Log:
     def __init__(self):
-        self.logfile = os.path.join('gyro_test_%d.csv' % time.time())
-        self.file = open(self.logfile, 'w')
-        self.file.write('time,rate_x,rate_y,rate_z,joint_x,joint_y,joint_z\n')
+        self.logdir = 'logs'
+        self.mkdir_p(self.logdir)
 
-    def write(self, measured_rate_corrected, measured_joint_corrected):
+        self.valuesLogfile = os.path.join(self.logdir, 'gyro_test_values_%d.csv' % time.time())
+        self.valuesFile = open(self.valuesLogfile, 'w')
+        self.valuesFile.write('time,rate_x,rate_y,rate_z,joint_x,joint_y,joint_z\n')
+
+        self.eventsLogfile = os.path.join(self.logdir, 'gyro_test_events_%d.csv' % time.time())
+        self.eventsFile = open(self.eventsLogfile, 'w')
+        self.eventsFile.write('time,message\n')
+
+    def mkdir_p(self, path):
+        try:
+            os.makedirs(path)
+        except OSError as exc:
+            if exc.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else: raise
+
+    def writeValues(self, measured_rate_corrected, measured_joint_corrected):
         log_str = "%s,%s,%s\n" % (time.time(), csvVector(measured_rate_corrected), csvVector(measured_joint_corrected))
-        self.file.write(log_str)
+        self.valuesFile.write(log_str)
+
+    def writeEvent(self, message):
+        log_str = "%s,%s\n" % (time.time(), message)
+        self.eventsFile.write(log_str)
 
 def csvVector(v):
     return '%f,%f,%f' % (v.x, v.y, v.z)
@@ -50,6 +69,7 @@ def niceExit(function):
 def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallback=None):
     i = 0
     target = Vector3()
+    log = None
 
     # For align and wobble tests
     if test in ['align', 'wobble']:
@@ -62,6 +82,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
         gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
         error_integral = Vector3()
         log = Log()
+        log.writeEvent('test started')
 
         #g1_r = visual.graph.gcurve(color=color.red)
         #g1_g = visual.graph.gcurve(color=color.green)
@@ -87,16 +108,24 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
             commsLost = False
             lastReport = time.time()
             delta = int(lastReport - lastCycle)
-            if delta > 0 and faultCallback:
-                faultCallback('gimbal connected')
+            if delta > 0:
+                if log:
+                    log.writeEvent('gimbal connected')
+                if faultCallback:
+                    faultCallback('gimbal connected')
         elif report.get_type() == 'STATUSTEXT':
+            if log:
+                log.writeEvent(report.text)
             if faultCallback:
                 faultCallback(report.text)
             continue
         else:
-            if (time.time() - lastReport) > 0.2 and faultCallback and not commsLost:
-                faultCallback('gimbal reset')
+            if (time.time() - lastReport) > 0.2 and not commsLost:
                 commsLost = True
+                if log:
+                    log.writeEvent('gimbal reset')
+                if faultCallback:
+                    faultCallback('gimbal reset')
             continue
 
         if test == 'wobble':
@@ -144,7 +173,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
                 #g2_r.plot(pos=(i,measured_rate_corrected.x))
                 #g2_g.plot(pos=(i,measured_rate_corrected.y))
                 #g2_b.plot(pos=(i,measured_rate_corrected.z))
-                log.write(measured_rate_corrected,measured_joint_corrected)
+                log.writeValues(measured_rate_corrected,measured_joint_corrected)
 
                 if reportCallback:
                     reportCallback(measured_rate_corrected.x, measured_rate_corrected.y, measured_rate_corrected.z)
@@ -154,6 +183,10 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
 
         current_angle = Vector3(*Tvg.to_euler312())
         lastCycle = time.time()
+
+    if log:
+        log.writeEvent('test started')
+
     return True
 
 @niceExit    
