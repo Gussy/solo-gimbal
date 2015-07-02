@@ -96,22 +96,25 @@ class testsUI(object):
         self.yawValues.append((now, c))
 
     def testsRun(self):
-        return setup_run.run(
+        return setup_run.runTest(
             self.connection.getLink(),
+            'run',
             stopTestsCallback=self.stopTestsCallback,
             faultCallback=self.testFaultCallback
         )
 
     def testsAlign(self):
-        return setup_run.align(
+        return setup_run.runTest(
             self.connection.getLink(),
+            'align',
             stopTestsCallback=self.stopTestsCallback,
             faultCallback=self.testFaultCallback
         )
 
     def testsWobble(self):
-        return setup_run.wobble(
+        return setup_run.runTest(
             self.connection.getLink(),
+            'wobble',
             stopTestsCallback=self.stopTestsCallback,
             faultCallback=self.testFaultCallback,
             reportCallback=self.reportCallback
@@ -132,6 +135,7 @@ class testsUI(object):
         self.pitchValues = list()
         self.rollValues = list()
         self.yawValues = list()
+        self.faults = 0
         self.ui.lblTestsRunTime.setText("0:00:00")
         self.ui.lblTestsFaults.setText("0")
         self.ui.txtTestsLog.setPlainText("")
