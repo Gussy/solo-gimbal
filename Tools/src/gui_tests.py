@@ -155,10 +155,10 @@ class testsUI(object):
 
     def timerUpdate(self):
         time_delta = time.time() - self.startTime
-        if time_delta < 0:
-            time_delta = 0
         m, s = divmod(time_delta, 60)
         h, m = divmod(m, 60)
+        if time_delta < 0:
+            h, m, s = 0, 0, abs(time_delta)
         self.ui.lblTestsRunTime.setText("%d:%02d:%02d" % (h, m, s))
         for i in range(len(self.logMessages)):
             self.ui.txtTestsLog.appendPlainText(self.logMessages.pop())
@@ -169,9 +169,9 @@ class testsUI(object):
         self.dequeueValues(self.yawValues, self.yawGraph)
 
     def dequeueValues(self, values, graph):
-        if self.graph:
-            for i in range(len(values)):
-                t, v = values.pop(0)
+        for i in range(len(values)):
+            t, v = values.pop(0)
+            if self.graph:
                 self.graph.updateGraph(graph, t, v)
 
     def getTestTimeout(self):
