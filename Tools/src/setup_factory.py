@@ -37,21 +37,29 @@ def get_assembly_time(link):
         return float_to_uint32(value.param_value)
     return None
 
-def set_assembly_date(link):
+def set_assembly_date(link, commit=True):
     timestamp = time.time()
     setup_param.set_param(link, "GMB_ASM_TIME", uint32_to_float(timestamp))
-    setup_param.commit_to_flash(link)
+    if commit:
+        setup_param.commit_to_flash(link)
     return timestamp
 
-def set_serial_number(link, serial_str):
+def set_serial_number(link, serial_str, commit=True):
     sanitised_serial = str(serial_str)[:12]
     ser_num_1, ser_num_2, ser_num_3 = string12_to_float3(sanitised_serial)
     setup_param.set_param(link, "GMB_SER_NUM_1", ser_num_1)
     setup_param.set_param(link, "GMB_SER_NUM_2", ser_num_2)
     setup_param.set_param(link, "GMB_SER_NUM_3", ser_num_3)
-    setup_param.commit_to_flash(link)
+    if commit:
+        setup_param.commit_to_flash(link)
     return sanitised_serial
-    
+
+def set_serial_number_with_time(link, serial_str):
+    sanitised_serial = set_serial_number(link, serial_str, commit=False)
+    timestamp = set_assembly_date(link, commit=False)
+    setup_param.commit_to_flash(link)
+    return sanitised_serial, timestamp
+
 def get_serial_number(link):
     ser_num_1 = setup_param.fetch_param(link, "GMB_SER_NUM_1", timeout=1)
     ser_num_2 = setup_param.fetch_param(link, "GMB_SER_NUM_2", timeout=1)

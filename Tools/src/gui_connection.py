@@ -157,8 +157,7 @@ class connectionUI(object):
 
     @gui_utils.waitCursor
     def writeSerialNumber(self, serialNumber):
-        serialNumber = setup_factory.set_serial_number(self.link, serialNumber)
-        assemblyTime = setup_factory.set_assembly_date(self.link)
+        serialNumber, assemblyTime = setup_factory.set_serial_number_with_time(self.link, serialNumber)
         return serialNumber, assemblyTime
 
     @coroutine
@@ -185,7 +184,7 @@ class connectionUI(object):
             # Prompt a for the serial number if the gimbal is factory fresh
             if serialNumber == '' or assemblyTime == 0:
                 text, ok = QtGui.QInputDialog.getText(self.parent, '3DR Gimbal', 'Serial Number:')
-                if ok and text != '' and softwareVersion[0] > 0 and softwareVersion[1] >= 18:
+                if ok and text != '' and softwareVersion[0] >= 0 and softwareVersion[1] >= 18:
                     serialNumber, assemblyTime = yield AsyncTask(self.writeSerialNumber, text)
             # Update the status display
             self.setStatusInfo(
