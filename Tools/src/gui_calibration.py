@@ -1,3 +1,4 @@
+import os, json
 from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
 import setup_mavlink, setup_validate, setup_comutation, setup_home
@@ -106,6 +107,16 @@ class calibrationUI(object):
         allParams = yield AsyncTask(self.getAllParams)
         if allParams != None:
             self.updateCalibrationTable(allParams)
+
+            # Save the params to a file
+            if not os.path.isdir('logs'):
+                os.makedirs('logs')
+
+            if allParams['serial_number'] != None and allParams['serial_number'] != '':
+                filePath = os.path.join('logs', '%s.json' % allParams['serial_number'])
+                with open(filePath, 'w') as f:
+                    json.dump(allParams, f)
+
         self.setButtonsEnabled(True)
 
     @coroutine
