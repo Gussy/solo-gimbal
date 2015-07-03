@@ -47,7 +47,7 @@ class Log:
         self.eventsFile = open(self.eventsLogfile, 'w')
         self.eventsFile.write('time,message\n')
         
-        self.limitsLogfile = os.path.join(self.logdir, 'gyro_test_limits_%s_%d.csv' % (self.logSerialNumber, self.logTimestamp))
+        self.limitsLogfile = os.path.join(self.logdir, 'gyro_test_limits_%s.csv' % (self.logSerialNumber))
         if os.path.exists(self.limitsLogfile):
             self.limitsFile = open(self.limitsLogfile, 'a')
         else:
