@@ -10,6 +10,8 @@ import setup_mavlink, setup_param, setup_factory, gui_graph
 #import visual.crayola as color
 #from visual.graph import gdisplay
 
+WOBBLE_TEST_ALIGNMENT_TIME = 5
+
 testTargets = [
      Vector3(radians(-30), radians(-30), radians(-00)),
      Vector3(radians(-30), radians(+30), radians(-00)),
@@ -78,6 +80,8 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
     i = 0
     target = Vector3()
     log = None
+    if timeout is not None:
+        timeout = timeout + WOBBLE_TEST_ALIGNMENT_TIME
 
     # For align and wobble tests
     if test in ['align', 'wobble']:
@@ -179,7 +183,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
             setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
             #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
 
-            if time.time() - start_time > 5:
+            if time.time() - start_time > WOBBLE_TEST_ALIGNMENT_TIME:
                 i = i + report.delta_time
 
                 #g1_r.plot(pos=(i,measured_joint_corrected.x))
