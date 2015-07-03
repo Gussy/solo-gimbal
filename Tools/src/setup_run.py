@@ -4,11 +4,13 @@ import os, sys, time, threading
 from math import sin, cos, radians
 import math
 from pymavlink.rotmat import Matrix3, Vector3
-import setup_mavlink, setup_param, gui_graph
+import setup_mavlink, setup_param, setup_factory, gui_graph
 
 #import visual.graph
 #import visual.crayola as color
 #from visual.graph import gdisplay
+
+WOBBLE_TEST_ALIGNMENT_TIME = 5
 
 testTargets = [
      Vector3(radians(-30), radians(-30), radians(-00)),
@@ -26,20 +28,31 @@ testTargets = [
 ]
 
 class Log:
-    def __init__(self):
+    def __init__(self, link):
         self.logdir = 'logs'
         if not os.path.isdir(self.logdir):
             os.makedirs(self.logdir)
 
         self.logTimestamp = time.time()
+        
+        self.logSerialNumber = setup_factory.get_serial_number(link)
+        if self.logSerialNumber == None:
+            self.logSerialNumber = 'unknown'
 
-        self.valuesLogfile = os.path.join(self.logdir, 'gyro_test_values_%d.csv' % self.logTimestamp)
+        self.valuesLogfile = os.path.join(self.logdir, 'gyro_test_values_%s_%d.csv' % (self.logSerialNumber, self.logTimestamp))
         self.valuesFile = open(self.valuesLogfile, 'w')
         self.valuesFile.write('time,rate_x,rate_y,rate_z,joint_x,joint_y,joint_z,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z\n')
 
-        self.eventsLogfile = os.path.join(self.logdir, 'gyro_test_events_%d.csv' % self.logTimestamp)
+        self.eventsLogfile = os.path.join(self.logdir, 'gyro_test_events_%s_%d.csv' % (self.logSerialNumber, self.logTimestamp))
         self.eventsFile = open(self.eventsLogfile, 'w')
         self.eventsFile.write('time,message\n')
+        
+        self.limitsLogfile = os.path.join(self.logdir, 'gyro_test_limits_%s.csv' % (self.logSerialNumber))
+        if os.path.exists(self.limitsLogfile):
+            self.limitsFile = open(self.limitsLogfile, 'a')
+        else:
+            self.limitsFile = open(self.limitsLogfile, 'w')
+            self.limitsFile.write('time,duration,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z\n')
 
     def mkdir_p(self, path):
         try:
@@ -53,9 +66,14 @@ class Log:
         log_str = "%s,%s,%s,%s,%s,%s\n" % (time.time(), csvVector(measured_rate_corrected), csvVector(measured_joint_corrected), csvVector(min), csvVector(max), csvVector(rms))
         self.valuesFile.write(log_str)
 
+    def writeLimits(self, test_duration, min, max, rms):
+        log_str = "%s,%s,%s,%s,%s\n" % (time.time(), test_duration, csvVector(min), csvVector(max), csvVector(rms))
+        self.limitsFile.write(log_str)
+
     def writeEvent(self, message):
         log_str = "%s,%s\n" % (time.time(), message)
         self.eventsFile.write(log_str)
+        
 
 def csvVector(v):
     return '%f,%f,%f' % (v.x, v.y, v.z)
@@ -70,10 +88,14 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallback=None):
+def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallback=None, timeout=None):
     i = 0
     target = Vector3()
     log = None
+
+    start_time = time.time()
+    if timeout is not None:
+        timeout = timeout + WOBBLE_TEST_ALIGNMENT_TIME
 
     # For align and wobble tests
     if test in ['align', 'wobble']:
@@ -82,10 +104,9 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
     # For wobble test
     if test == 'wobble':
         pointing_gain = 2
-        start_time = time.time()
         gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
         error_integral = Vector3()
-        log = Log()
+        log = Log(link)
         log.writeEvent('test started')
 
         max = Vector3()
@@ -105,7 +126,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
     lastCycle = time.time()
     lastReport = time.time()
     commsLost = False
-    while True:
+    while timeout is None or (time.time()-start_time) < timeout:
         if stopTestsCallback:
             if stopTestsCallback():
                 break
@@ -175,7 +196,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
             setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
             #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
 
-            if time.time() - start_time > 5:
+            if time.time() - start_time > WOBBLE_TEST_ALIGNMENT_TIME:
                 i = i + report.delta_time
 
                 #g1_r.plot(pos=(i,measured_joint_corrected.x))
@@ -220,9 +241,13 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
         lastCycle = time.time()
 
     if log:
+        if test == 'wobble':
+            test_duration = int(time.time()-start_time - WOBBLE_TEST_ALIGNMENT_TIME)
+            log.writeLimits(test_duration, min, max, rms)
         log.writeEvent('test finished')
         return str(int(log.logTimestamp))
 
+    
     return True
 
 @niceExit    

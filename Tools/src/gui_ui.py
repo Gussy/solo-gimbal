@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui_design.ui'
 #
-# Created: Thu Jul 02 17:49:05 2015
+# Created: Fri Jul 03 12:09:02 2015
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -118,6 +118,7 @@ class Ui_MainWindow(object):
         self.frmlytValidationResults.setWidget(7, QtGui.QFormLayout.LabelRole, self.lblValidationGainsLabel)
         self.lblValidationSerialNumberLabel = QtGui.QLabel(self.formLayoutWidget_4)
         font = QtGui.QFont()
+        font.setPointSize(8)
         font.setWeight(75)
         font.setBold(True)
         self.lblValidationSerialNumberLabel.setFont(font)
@@ -125,6 +126,7 @@ class Ui_MainWindow(object):
         self.frmlytValidationResults.setWidget(1, QtGui.QFormLayout.LabelRole, self.lblValidationSerialNumberLabel)
         self.lblValidationAssemblyTimeLabel = QtGui.QLabel(self.formLayoutWidget_4)
         font = QtGui.QFont()
+        font.setPointSize(8)
         font.setWeight(75)
         font.setBold(True)
         self.lblValidationAssemblyTimeLabel.setFont(font)
@@ -542,13 +544,13 @@ class Ui_MainWindow(object):
         self.tabTests = QtGui.QWidget()
         self.tabTests.setObjectName("tabTests")
         self.btnTestsRun = QtGui.QPushButton(self.tabTests)
-        self.btnTestsRun.setGeometry(QtCore.QRect(10, 10, 112, 61))
+        self.btnTestsRun.setGeometry(QtCore.QRect(10, 10, 112, 41))
         self.btnTestsRun.setObjectName("btnTestsRun")
         self.btnTestsAlign = QtGui.QPushButton(self.tabTests)
-        self.btnTestsAlign.setGeometry(QtCore.QRect(10, 150, 112, 61))
+        self.btnTestsAlign.setGeometry(QtCore.QRect(10, 60, 112, 41))
         self.btnTestsAlign.setObjectName("btnTestsAlign")
         self.btnTestsWobble = QtGui.QPushButton(self.tabTests)
-        self.btnTestsWobble.setGeometry(QtCore.QRect(10, 80, 112, 61))
+        self.btnTestsWobble.setGeometry(QtCore.QRect(10, 110, 112, 41))
         self.btnTestsWobble.setObjectName("btnTestsWobble")
         self.btnTestsStop = QtGui.QPushButton(self.tabTests)
         self.btnTestsStop.setEnabled(False)
@@ -607,6 +609,21 @@ class Ui_MainWindow(object):
         self.txtTestsLog.setReadOnly(True)
         self.txtTestsLog.setPlainText("")
         self.txtTestsLog.setObjectName("txtTestsLog")
+        self.sbxTestsTimeout = QtGui.QSpinBox(self.tabTests)
+        self.sbxTestsTimeout.setGeometry(QtCore.QRect(10, 180, 111, 25))
+        self.sbxTestsTimeout.setMaximum(3600)
+        self.sbxTestsTimeout.setSingleStep(5)
+        self.sbxTestsTimeout.setObjectName("sbxTestsTimeout")
+        self.lblTestsTimeoutLabel = QtGui.QLabel(self.tabTests)
+        self.lblTestsTimeoutLabel.setGeometry(QtCore.QRect(10, 160, 111, 19))
+        self.lblTestsTimeoutLabel.setObjectName("lblTestsTimeoutLabel")
+        self.lblTestsTimeoutHint = QtGui.QLabel(self.tabTests)
+        self.lblTestsTimeoutHint.setGeometry(QtCore.QRect(10, 210, 111, 19))
+        font = QtGui.QFont()
+        font.setPointSize(7)
+        font.setItalic(True)
+        self.lblTestsTimeoutHint.setFont(font)
+        self.lblTestsTimeoutHint.setObjectName("lblTestsTimeoutHint")
         self.tabWidget.addTab(self.tabTests, "")
         self.formLayoutWidget = QtGui.QWidget(self.centralWidget)
         self.formLayoutWidget.setGeometry(QtCore.QRect(9, 10, 255, 101))
@@ -768,6 +785,8 @@ class Ui_MainWindow(object):
         self.lblTestsRunTimeLabel.setText(QtGui.QApplication.translate("MainWindow", "Run Time", None, QtGui.QApplication.UnicodeUTF8))
         self.lblTestsFaultsLabel.setText(QtGui.QApplication.translate("MainWindow", "Faults", None, QtGui.QApplication.UnicodeUTF8))
         self.lblTestsLogFileLabel.setText(QtGui.QApplication.translate("MainWindow", "Logfile", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblTestsTimeoutLabel.setText(QtGui.QApplication.translate("MainWindow", "Test time (s)", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblTestsTimeoutHint.setText(QtGui.QApplication.translate("MainWindow", "0 = no timeout", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabTests), QtGui.QApplication.translate("MainWindow", "Tests", None, QtGui.QApplication.UnicodeUTF8))
         self.lblConnectionLabel.setText(QtGui.QApplication.translate("MainWindow", "Connection:", None, QtGui.QApplication.UnicodeUTF8))
         self.lblSerialPortLabel.setText(QtGui.QApplication.translate("MainWindow", "Serial Port:", None, QtGui.QApplication.UnicodeUTF8))

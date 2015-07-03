@@ -199,6 +199,7 @@ def command_interface():
     parser.add_argument("--align", help="move the gimbal to the home position", action='store_true')
     parser.add_argument("--stop", help="Hold the gimbal at the current position", action='store_true')
     parser.add_argument("--wobble", help="Wobble fixture test", action='store_true')
+    parser.add_argument("--timeout", help="timeout for action", type=int)
     parser.add_argument("-c", "--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("-f", "--forcecal", help="Force the comutation setup", action='store_true')
     parser.add_argument("-j", "--jointcalibration", help="Calibrate joint angles", action='store_true')
@@ -255,7 +256,7 @@ def command_interface():
         return
 
     if args.wobble:
-        setup_run.runTest(link, 'wobble')
+        setup_run.runTest(link, 'wobble', timeout=args.timeout)
         return
 
     if args.stop:

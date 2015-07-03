@@ -230,6 +230,7 @@
         <widget class="QLabel" name="lblValidationSerialNumberLabel">
          <property name="font">
           <font>
+           <pointsize>8</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
@@ -243,6 +244,7 @@
         <widget class="QLabel" name="lblValidationAssemblyTimeLabel">
          <property name="font">
           <font>
+           <pointsize>8</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
@@ -1128,7 +1130,7 @@ Calibration</string>
         <x>10</x>
         <y>10</y>
         <width>112</width>
-        <height>61</height>
+        <height>41</height>
        </rect>
       </property>
       <property name="text">
@@ -1139,9 +1141,9 @@ Calibration</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>150</y>
+        <y>60</y>
         <width>112</width>
-        <height>61</height>
+        <height>41</height>
        </rect>
       </property>
       <property name="text">
@@ -1152,9 +1154,9 @@ Calibration</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>80</y>
+        <y>110</y>
         <width>112</width>
-        <height>61</height>
+        <height>41</height>
        </rect>
       </property>
       <property name="text">
@@ -1284,6 +1286,54 @@ Calibration</string>
       </property>
       <property name="plainText">
        <string/>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="sbxTestsTimeout">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>180</y>
+        <width>111</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="maximum">
+       <number>3600</number>
+      </property>
+      <property name="singleStep">
+       <number>5</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblTestsTimeoutLabel">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>160</y>
+        <width>111</width>
+        <height>19</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Test time (s)</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lblTestsTimeoutHint">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>210</y>
+        <width>111</width>
+        <height>19</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>7</pointsize>
+        <italic>true</italic>
+       </font>
+      </property>
+      <property name="text">
+       <string>0 = no timeout</string>
       </property>
      </widget>
     </widget>
