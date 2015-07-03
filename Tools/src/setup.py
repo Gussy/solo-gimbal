@@ -256,7 +256,7 @@ def command_interface():
         return
 
     if args.wobble:
-        setup_run.runTest(link, 'wobble', timeout= args.timeout)
+        setup_run.runTest(link, 'wobble', timeout=args.timeout)
         return
 
     if args.stop:

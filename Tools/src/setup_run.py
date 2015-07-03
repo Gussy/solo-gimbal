@@ -76,10 +76,12 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallback=None, timeout = None):
+def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallback=None, timeout=None):
     i = 0
     target = Vector3()
     log = None
+
+    start_time = time.time()
     if timeout is not None:
         timeout = timeout + WOBBLE_TEST_ALIGNMENT_TIME
 
@@ -90,7 +92,6 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
     # For wobble test
     if test == 'wobble':
         pointing_gain = 2
-        start_time = time.time()
         gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
         error_integral = Vector3()
         log = Log(link)
@@ -113,7 +114,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
     lastCycle = time.time()
     lastReport = time.time()
     commsLost = False
-    while timeout is None or (time.time()-start_time)< timeout:
+    while timeout is None or (time.time()-start_time) < timeout:
         if stopTestsCallback:
             if stopTestsCallback():
                 break

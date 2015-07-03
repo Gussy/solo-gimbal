@@ -62,7 +62,7 @@ class testsUI(object):
 
     @coroutine
     def handleTestsWobble(self):
-        self.testStart()
+        self.testStart(delay=setup_run.WOBBLE_TEST_ALIGNMENT_TIME)
 
         self.graph = gui_graph.GraphWindow()
         self.pitchGraph = self.graph.newGraph('Pitch gyro')
@@ -103,7 +103,8 @@ class testsUI(object):
             self.connection.getLink(),
             'run',
             stopTestsCallback=self.stopTestsCallback,
-            faultCallback=self.testFaultCallback
+            faultCallback=self.testFaultCallback,
+            timeout=self.getTestTimeout()
         )
 
     def testsAlign(self):
@@ -111,7 +112,8 @@ class testsUI(object):
             self.connection.getLink(),
             'align',
             stopTestsCallback=self.stopTestsCallback,
-            faultCallback=self.testFaultCallback
+            faultCallback=self.testFaultCallback,
+            timeout=self.getTestTimeout()
         )
 
     def testsWobble(self):
@@ -120,7 +122,8 @@ class testsUI(object):
             'wobble',
             stopTestsCallback=self.stopTestsCallback,
             faultCallback=self.testFaultCallback,
-            reportCallback=self.reportCallback
+            reportCallback=self.reportCallback,
+            timeout=self.getTestTimeout()
         )
 
     def enableUI(self, enabled):
@@ -132,7 +135,7 @@ class testsUI(object):
         self.ui.tabFirmware.setEnabled(enabled)
         self.ui.tabCalibration.setEnabled(enabled)
 
-    def testStart(self, interval=100):
+    def testStart(self, interval=100, delay=0):
         self.enableUI(False)
         self.stopTests = False
         self.pitchValues = list()
@@ -142,7 +145,7 @@ class testsUI(object):
         self.ui.lblTestsRunTime.setText("0:00:00")
         self.ui.lblTestsFaults.setText("0")
         self.ui.txtTestsLog.setPlainText("")
-        self.startTime = time.time()
+        self.startTime = time.time() + delay
         self.timer.start(interval)
 
     def testStop(self):
@@ -152,6 +155,8 @@ class testsUI(object):
 
     def timerUpdate(self):
         time_delta = time.time() - self.startTime
+        if time_delta < 0:
+            time_delta = 0
         m, s = divmod(time_delta, 60)
         h, m = divmod(m, 60)
         self.ui.lblTestsRunTime.setText("%d:%02d:%02d" % (h, m, s))
@@ -168,3 +173,9 @@ class testsUI(object):
             for i in range(len(values)):
                 t, v = values.pop(0)
                 self.graph.updateGraph(graph, t, v)
+
+    def getTestTimeout(self):
+        timeout = self.ui.sbxTestsTimeout.value()
+        if timeout == 0:
+            return None
+        return timeout
