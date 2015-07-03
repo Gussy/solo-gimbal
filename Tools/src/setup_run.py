@@ -46,6 +46,13 @@ class Log:
         self.eventsLogfile = os.path.join(self.logdir, 'gyro_test_events_%s_%d.csv' % (self.logSerialNumber, self.logTimestamp))
         self.eventsFile = open(self.eventsLogfile, 'w')
         self.eventsFile.write('time,message\n')
+        
+        self.limitsLogfile = os.path.join(self.logdir, 'gyro_test_limits_%s_%d.csv' % (self.logSerialNumber, self.logTimestamp))
+        if os.path.exists(self.limitsLogfile):
+            self.limitsFile = open(self.limitsLogfile, 'a')
+        else:
+            self.limitsFile = open(self.limitsLogfile, 'w')
+            self.limitsFile.write('time,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z\n')
 
     def mkdir_p(self, path):
         try:
@@ -59,9 +66,14 @@ class Log:
         log_str = "%s,%s,%s,%s,%s,%s\n" % (time.time(), csvVector(measured_rate_corrected), csvVector(measured_joint_corrected), csvVector(min), csvVector(max), csvVector(rms))
         self.valuesFile.write(log_str)
 
+    def writeLimits(self, min, max, rms):
+        log_str = "%s,%s,%s,%s\n" % (time.time(), csvVector(min), csvVector(max), csvVector(rms))
+        self.limitsFile.write(log_str)
+
     def writeEvent(self, message):
         log_str = "%s,%s\n" % (time.time(), message)
         self.eventsFile.write(log_str)
+        
 
 def csvVector(v):
     return '%f,%f,%f' % (v.x, v.y, v.z)
@@ -229,9 +241,12 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
         lastCycle = time.time()
 
     if log:
+        if test == 'wobble':
+            log.writeLimits(min, max, rms)
         log.writeEvent('test finished')
         return str(int(log.logTimestamp))
 
+    
     return True
 
 @niceExit    
