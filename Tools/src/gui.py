@@ -41,11 +41,15 @@ class ControlMainWindow(QtGui.QMainWindow):
             self.calibrationUI.resetCalibrationTable()
 
     def setFirmwareFile(self, filename):
-        self.firmwareUI.loadFirmwareFile(filename)
+        self.firmwareUI.loadFirmwareFile(filename)  
+
+    def autoConnect(self):
+        self.ui.btnConnect.clicked.emit()  
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
+    parser.add_argument("--autoconnect", help="Automatically connect to the gimbal", action='store_true')
     parser.add_argument("--autoupdate", help="Automatically bootload firmware onto the gimbal", action='store_true')
     parser.add_argument("--automotorcal", help="Automatically run motor commutation the gimbal", action='store_true')
     args = parser.parse_args()
@@ -53,7 +57,7 @@ if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     gui = ControlMainWindow()
     gui.show()
-    
+
     if args.file:
         gui.setFirmwareFile(args.file)
 
@@ -62,5 +66,8 @@ if __name__ == '__main__':
 
     if args.automotorcal:
         gui.autoMotorCal = True
+
+    if args.autoconnect:
+        gui.autoConnect()
 
     sys.exit(app.exec_())
