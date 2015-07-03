@@ -240,6 +240,9 @@ def restore_defaults(link):
     parameters.mavset(link.file, "GMB_YAW_P", EXPECTED_YAW_P);
     parameters.mavset(link.file, "GMB_YAW_I", EXPECTED_YAW_I);
     parameters.mavset(link.file, "GMB_YAW_D", EXPECTED_YAW_D);
+    parameters.mavset(link.file, "GMB_OFF_ACC_X", 0);
+    parameters.mavset(link.file, "GMB_OFF_ACC_Y", 0);
+    parameters.mavset(link.file, "GMB_OFF_ACC_Z", 0);
     parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);
     parameters.mavset(link.file, "GMB_BROADCAST", EXPECTED_BROADCAST);    
     setup_param.commit_to_flash(link)
