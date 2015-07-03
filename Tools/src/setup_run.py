@@ -74,7 +74,7 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallback=None):
+def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallback=None, timeout = None):
     i = 0
     target = Vector3()
     log = None
@@ -109,7 +109,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
     lastCycle = time.time()
     lastReport = time.time()
     commsLost = False
-    while True:
+    while timeout is None or (time.time()-start_time)< timeout:
         if stopTestsCallback:
             if stopTestsCallback():
                 break
