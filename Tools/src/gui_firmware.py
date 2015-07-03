@@ -102,7 +102,6 @@ class firmwareUI(object):
 
         # Load the binary using the bootloader
         if bootloader != firmware_loader.Results.NoResponse:
-            self.ui.lblFirmwareStatus.setText("Loading firmware")
             load = yield AsyncTask(self.firmwareLoadBinary)
             if load == firmware_loader.Results.Success:
                 self.ui.lblFirmwareStatus.setText("Upload successful")
