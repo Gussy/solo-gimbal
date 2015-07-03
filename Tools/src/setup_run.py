@@ -52,7 +52,7 @@ class Log:
             self.limitsFile = open(self.limitsLogfile, 'a')
         else:
             self.limitsFile = open(self.limitsLogfile, 'w')
-            self.limitsFile.write('time,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z\n')
+            self.limitsFile.write('time,duration,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z\n')
 
     def mkdir_p(self, path):
         try:
@@ -66,8 +66,8 @@ class Log:
         log_str = "%s,%s,%s,%s,%s,%s\n" % (time.time(), csvVector(measured_rate_corrected), csvVector(measured_joint_corrected), csvVector(min), csvVector(max), csvVector(rms))
         self.valuesFile.write(log_str)
 
-    def writeLimits(self, min, max, rms):
-        log_str = "%s,%s,%s,%s\n" % (time.time(), csvVector(min), csvVector(max), csvVector(rms))
+    def writeLimits(self, test_duration, min, max, rms):
+        log_str = "%s,%s,%s,%s,%s\n" % (time.time(), test_duration, csvVector(min), csvVector(max), csvVector(rms))
         self.limitsFile.write(log_str)
 
     def writeEvent(self, message):
@@ -242,7 +242,8 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
 
     if log:
         if test == 'wobble':
-            log.writeLimits(min, max, rms)
+            test_duration = int(time.time()-start_time - WOBBLE_TEST_ALIGNMENT_TIME)
+            log.writeLimits(test_duration, min, max, rms)
         log.writeEvent('test finished')
         return str(int(log.logTimestamp))
 
