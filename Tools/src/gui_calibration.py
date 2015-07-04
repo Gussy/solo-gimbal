@@ -1,6 +1,7 @@
 import os, json
 from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
+from pymavlink.rotmat import Vector3
 import setup_mavlink, setup_validate, setup_comutation, setup_home
 import gui_utils
 
@@ -70,11 +71,17 @@ class calibrationUI(object):
 
     @gui_utils.waitCursor
     def jointCalibration(self):
-        return setup_home.calibrate_joints(self.connection.getLink())
+        self.status = "Calibrating Joints"
+        def jointProgressCallback(progress):
+            self.progress = progress
+        return setup_home.calibrate_joints(self.connection.getLink(), jointProgressCallback)
 
     @gui_utils.waitCursor
     def gyroCalibration(self):
-        return setup_home.calibrate_gyro(self.connection.getLink())
+        self.status = "Calibrating Gyros"
+        def gyroProgressCallback(progress):
+            self.progress = progress
+        return setup_home.calibrate_gyro(self.connection.getLink(), gyroProgressCallback)
 
     @gui_utils.waitCursor
     def runMotorCalibration(self):
@@ -130,10 +137,13 @@ class calibrationUI(object):
     def runAsyncJointCalibration(self):
         self.setButtonsEnabled(False)
 
+        self.timerStart()
         joints = yield AsyncTask(self.jointCalibration)
+        self.timerStop()
+        self.setCalibrationStatus('')
         
         # Show joints results
-        if joints:
+        if isinstance(joints, Vector3):
             self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, True)
             self.ui.lblCalibrationJointX.setText('%0.6f' % joints.x)
             self.ui.lblCalibrationJointY.setText('%0.6f' % joints.y)
@@ -147,10 +157,13 @@ class calibrationUI(object):
     def runAsyncGyroCalibration(self):
         self.setButtonsEnabled(False)
         
+        self.timerStart()
         gyros = yield AsyncTask(self.gyroCalibration)
+        self.timerStop()
+        self.setCalibrationStatus('')
 
         # Show joints results
-        if gyros:
+        if isinstance(gyros, Vector3):
             self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, True)
             self.ui.lblCalibrationGyroX.setText('%0.6f' % gyros.x)
             self.ui.lblCalibrationGyroY.setText('%0.6f' % gyros.y)

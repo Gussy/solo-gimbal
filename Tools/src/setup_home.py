@@ -13,9 +13,12 @@ from math import degrees
 NUMBER_OF_SAMPLES = 200
 ENCODER_COUNTS_PER_RADIAN = 1000.0 / (2 * math.pi)
 
-def getAverage(link, get_variable, sample_count=NUMBER_OF_SAMPLES):
+def getAverage(link, get_variable, sample_count=NUMBER_OF_SAMPLES, progressCallback=None):
     sum_angles = Vector3()
     for i in range(sample_count):
+        if progressCallback:
+            progress = float(i) / float(sample_count) * 100
+            progressCallback(progress)
         angles = get_variable(link)
         if angles:
             sum_angles += angles
@@ -34,9 +37,9 @@ def calibrate_joints(link):
     message_brodcasting(link, False)
     return average
 
-def calibrate_gyro(link):
+def calibrate_gyro(link, progressCallback=None):
     message_brodcasting(link, True)
-    average = getAverage(link, get_current_delta_angles)
+    average = getAverage(link, get_current_delta_angles, progressCallback=progressCallback)
     if average:
         set_offsets(link, 'GYRO', average)
     else:
