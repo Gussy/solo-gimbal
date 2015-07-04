@@ -202,9 +202,46 @@ int init_flash(void)
 
 			// Declare all older param structs outside of the switch case
 			struct flash_param_struct_0000 flash_params_0000 = {0};
+			struct flash_param_struct_0001 flash_params_0001 = {0};
 
 			// Handle flash param migrations *from* the id stored in flash *to* this version of the compiled firmware
 			switch(flash_params_shadow.flash_struct_id) {
+
+				// Last seen in 2e89f5a10768188863f3e456638c7966e72723d3
+				case 0x0001:
+					// Load the struct from flash into the old struct layout
+					memcpy(&flash_params_0001, (Uint16 *)START_ADDR, sizeof(flash_params_0001));
+
+					// Copy floats
+					flash_params.ser_num_1 = flash_params_0001.ser_num_1;
+					flash_params.ser_num_2 = flash_params_0001.ser_num_2;
+					flash_params.ser_num_3 = flash_params_0001.ser_num_3;
+					flash_params.assy_time = flash_params_0001.assy_time;
+					flash_params.broadcast_msgs = flash_params_0001.broadcast_msgs;
+					flash_params.k_rate = flash_params_0001.k_rate;
+
+					// Copy arrays
+					memcpy(flash_params.commutation_slope, flash_params_0001.commutation_slope, sizeof(flash_params_0001.commutation_slope) * AXIS_CNT);
+					memcpy(flash_params.commutation_icept, flash_params_0001.commutation_icept, sizeof(flash_params_0001.commutation_icept) * AXIS_CNT);
+
+					memcpy(flash_params.torque_pid_kp, flash_params_0001.torque_pid_kp, sizeof(flash_params_0001.torque_pid_kp) * AXIS_CNT);
+					memcpy(flash_params.torque_pid_ki, flash_params_0001.torque_pid_ki, sizeof(flash_params_0001.torque_pid_ki) * AXIS_CNT);
+					memcpy(flash_params.torque_pid_kd, flash_params_0001.torque_pid_kd, sizeof(flash_params_0001.torque_pid_kd) * AXIS_CNT);
+
+					memcpy(flash_params.rate_pid_p, flash_params_0001.rate_pid_p, sizeof(flash_params_0001.rate_pid_p) * AXIS_CNT);
+					memcpy(flash_params.rate_pid_i, flash_params_0001.rate_pid_i, sizeof(flash_params_0001.rate_pid_i) * AXIS_CNT);
+					memcpy(flash_params.rate_pid_d, flash_params_0001.rate_pid_d, sizeof(flash_params_0001.rate_pid_d) * AXIS_CNT);
+					memcpy(flash_params.rate_pid_windup, flash_params_0001.rate_pid_windup, sizeof(flash_params_0001.rate_pid_windup) * AXIS_CNT);
+
+					memcpy(flash_params.offset_joint, flash_params_0001.offset_joint, sizeof(flash_params_0001.offset_joint) * AXIS_CNT);
+					memcpy(flash_params.offset_accelerometer, flash_params_0001.offset_accelerometer, sizeof(flash_params_0001.offset_accelerometer) * AXIS_CNT);
+					memcpy(flash_params.offset_gyro, flash_params_0001.offset_gyro, sizeof(flash_params_0001.offset_gyro) * AXIS_CNT);
+
+					/* Added parameters:
+					 * 	gain_accelerometer
+					 * 	alignment_accelerometer
+					 */
+					break;
 
 				// Last seen in 047d3dfda2072b3d7c8d4143330aabe7e7c72bb0
 				case 0x0000:
@@ -246,7 +283,7 @@ int init_flash(void)
 					memcpy(flash_params.offset_accelerometer, flash_params_0000.offset_accelerometer, sizeof(flash_params_0000.offset_accelerometer) * AXIS_CNT);
 					memcpy(flash_params.offset_gyro, flash_params_0000.offset_gyro, sizeof(flash_params_0000.offset_gyro) * AXIS_CNT);
 
-					/* Deleted parameters:
+					/* Removed parameters:
 					 * 	board_id
 					 * 	other_id
 					 * 	assy_date
