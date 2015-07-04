@@ -52,7 +52,7 @@ class Log:
             self.limitsFile = open(self.limitsLogfile, 'a')
         else:
             self.limitsFile = open(self.limitsLogfile, 'w')
-            self.limitsFile.write('time,duration,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z\n')
+            self.limitsFile.write('time,duration,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z,rms\n')
 
     def mkdir_p(self, path):
         try:
@@ -67,7 +67,7 @@ class Log:
         self.valuesFile.write(log_str)
 
     def writeLimits(self, test_duration, min, max, rms):
-        log_str = "%s,%s,%s,%s,%s\n" % (time.time(), test_duration, csvVector(min), csvVector(max), csvVector(rms))
+        log_str = "%s,%s,%s,%s,%s,%f\n" % (time.time(), test_duration, csvVector(min), csvVector(max), csvVector(rms),rms.length())
         self.limitsFile.write(log_str)
 
     def writeEvent(self, message):
