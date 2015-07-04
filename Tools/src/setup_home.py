@@ -48,31 +48,52 @@ def calibrate_gyro(link, progressCallback=None):
     message_brodcasting(link, False)
     return average
 
-def getAccelSample(link, ui_msg, AVG_COUNT=10):
-    raw_input(ui_msg)
-    v = getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT)
-    v = v*100 # sample needs to be in units of m/s
-    return np.asarray([v.x,v.y,v.z])
+def getAccelSample(link, AVG_COUNT=10, progressCallback=None):
+    v = getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT, progressCallback=progressCallback)
+    v = v * 100 # sample needs to be in units of m/s
+    return np.asarray([v.x, v.y, v.z])
 
-def calibrate_accel(link):
+def calibrate_accel(link, progressCallback=None):
     message_brodcasting(link, True)
-        
+
+    # Orientations
+    orientations = [
+        'level',
+        'on it\'s side',
+        'on it\'s back',
+        'on it\'s other side',
+        'on it\'s front side',
+        'upside down',
+    ]
+
+    currentMessage = ''
+    currentProgress = 0
+    progressStep = (1.0 / float(len(orientations))) * 100.0
+
+    def averageProgressCallback(progress):
+        averageProgress = currentProgress + (progressStep * float(progress / 100.0))
+        progressCallback(averageProgress, currentMessage, False)
+
     # Get samples
-    samples = [];
-    samples.append(getAccelSample(link, "Place the gimbal leveled"))
-    samples.append(getAccelSample(link, "Place the gimbal on it's side"))
-    samples.append(getAccelSample(link, "Place the gimbal on it's back"))
-    samples.append(getAccelSample(link, "Place the gimbal on it's other side"))
-    samples.append(getAccelSample(link, "Place the gimbal on it's front side"))
-    samples.append(getAccelSample(link, "Place the gimbal upside-down"))
-    print(' ')
+    samples = list()
+    for orientation in orientations:
+        currentProgress = float(orientations.index(orientation) / float(len(orientations))) * 100.0
+        currentMessage = "Place the gimbal %s" % orientation
+        if progressCallback is None:
+            raw_input(currentMessage)
+        else:
+            # Spin while waiting for a continue signal
+            while not progressCallback(currentProgress, currentMessage, True):
+                pass
+        sample = getAccelSample(link, progressCallback=averageProgressCallback)
+        samples.append(sample)
     
     p = setup_accelcal.calibrate_accel_6dof(samples)
     level = setup_accelcal.calc_level_euler_rpy(p, samples[0])
-    
-    print('calibration values are '+ str(p))
-    print('offset values are '+ str(level.T*degrees(1)))
-        
+
+    if progressCallback is None:
+        print('\nCalibration values are ' + str(p))
+        print('Offset values are ' + str(level.T * degrees(1)))
     
     set_param(link, "GMB_OFF_ACC_X", p[0])
     set_param(link, "GMB_OFF_ACC_Y", p[1])
@@ -85,6 +106,4 @@ def calibrate_accel(link):
     set_param(link, "GMB_ALN_ACC_Z", level[2])
     
     message_brodcasting(link, False)
-    return
-
-
+    return Vector3()

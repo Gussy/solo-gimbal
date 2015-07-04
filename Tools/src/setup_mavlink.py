@@ -60,13 +60,13 @@ def get_current_delta_angles(link):
         else:
             return Vector3([msg_gimbal.delta_angle_x, msg_gimbal.delta_angle_y, msg_gimbal.delta_angle_z])
 
-def get_current_delta_velocity(link):
+def get_current_delta_velocity(link, timeout=1):
     if not isinstance(link.file, mavserial):
         print "accelerometer calibration requires a serial connection"
         sys.exit(1)    
     link.file.port.flushInput() # clear any messages in the buffer, so we get a current one
     while(True):
-        msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
+        msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=timeout)
         if msg_gimbal == None:
             return None
         else:
