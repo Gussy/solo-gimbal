@@ -214,6 +214,60 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].float_data_ptr = &(flash_params.offset_accelerometer[Z_AXIS]);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].access_type = GIMBAL_PARAM_READ_WRITE;
 
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].param_id, "GMB_OFF_ACC_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].float_data_ptr = &(flash_params.offset_accelerometer[X_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].param_id, "GMB_OFF_ACC_Y", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].float_data_ptr = &(flash_params.offset_accelerometer[Y_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].param_id, "GMB_OFF_ACC_Z", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].float_data_ptr = &(flash_params.offset_accelerometer[Z_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].param_id, "GMB_GN_ACC_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].float_data_ptr = &(flash_params.gain_accelerometer[X_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].param_id, "GMB_GN_ACC_Y", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].float_data_ptr = &(flash_params.offset_accelerometer[Y_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].param_id, "GMB_GN_ACC_Z", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].float_data_ptr = &(flash_params.offset_accelerometer[Z_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].param_id, "GMB_ALN_ACC_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].float_data_ptr = &(flash_params.alignment_accelerometer[X_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].param_id, "GMB_ALN_ACC_Y", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].float_data_ptr = &(flash_params.alignment_accelerometer[Y_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].param_id, "GMB_ALN_ACC_Z", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].float_data_ptr = &(flash_params.alignment_accelerometer[Z_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].access_type = GIMBAL_PARAM_READ_WRITE;
+
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_X].param_id, "GMB_OFF_GYRO_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_X].can_parameter_id = CAND_PID_INVALID;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_X].param_type = MAV_PARAM_TYPE_REAL32;
