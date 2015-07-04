@@ -11,6 +11,7 @@ import setup_mavlink, setup_param, setup_factory, gui_graph
 #from visual.graph import gdisplay
 
 WOBBLE_TEST_ALIGNMENT_TIME = 5
+RMS_WOBBLE_TEST_THRESHOLD = 0.005
 
 testTargets = [
      Vector3(radians(-30), radians(-30), radians(-00)),
@@ -244,6 +245,12 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
         if test == 'wobble':
             test_duration = int(time.time()-start_time - WOBBLE_TEST_ALIGNMENT_TIME)
             log.writeLimits(test_duration, min, max, rms)
+            if rms.length()<RMS_WOBBLE_TEST_THRESHOLD:
+                print 'PASSED wobble test - rms value of %f rad/s(threshold of %f rad/s)'%(rms.length(),RMS_WOBBLE_TEST_THRESHOLD)
+            else:
+                print 'FAILED wobble test - rms value of %f rad/s(threshold of %f rad/s)'%(rms.length(),RMS_WOBBLE_TEST_THRESHOLD)
+            
+            
         log.writeEvent('test finished')
         return str(int(log.logTimestamp))
 
