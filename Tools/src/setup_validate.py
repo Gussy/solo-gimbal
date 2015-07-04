@@ -5,7 +5,7 @@ from distutils.version import LooseVersion
 from pymavlink.mavparm import MAVParmDict
 import setup_mavlink
 
-EXPECTED_VERSION = '0.16.0'
+EXPECTED_VERSION = '0.18.0'
 EXPECTED_BROADCAST = 0
 
 EXPECTED_SERIAL_NUMBER_START = 'GB11A'
@@ -43,6 +43,9 @@ EXPECTED_ROLL_D = 0.10
 EXPECTED_YAW_P = 0.80
 EXPECTED_YAW_I = 0.30
 EXPECTED_YAW_D = 7.00
+EXPECTED_OFF_ACC_X = 0.0
+EXPECTED_OFF_ACC_Y = 0.0
+EXPECTED_OFF_ACC_Z= 0.0
 EXPECTED_K_RATE = 10.0
 
 class Results:
@@ -240,9 +243,9 @@ def restore_defaults(link):
     parameters.mavset(link.file, "GMB_YAW_P", EXPECTED_YAW_P);
     parameters.mavset(link.file, "GMB_YAW_I", EXPECTED_YAW_I);
     parameters.mavset(link.file, "GMB_YAW_D", EXPECTED_YAW_D);
-    parameters.mavset(link.file, "GMB_OFF_ACC_X", 0);
-    parameters.mavset(link.file, "GMB_OFF_ACC_Y", 0);
-    parameters.mavset(link.file, "GMB_OFF_ACC_Z", 0);
+    parameters.mavset(link.file, "GMB_OFF_ACC_X", EXPECTED_OFF_ACC_X);
+    parameters.mavset(link.file, "GMB_OFF_ACC_Y", EXPECTED_OFF_ACC_Y);
+    parameters.mavset(link.file, "GMB_OFF_ACC_Z", EXPECTED_OFF_ACC_Z);
     parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);
     parameters.mavset(link.file, "GMB_BROADCAST", EXPECTED_BROADCAST);    
     setup_param.commit_to_flash(link)
