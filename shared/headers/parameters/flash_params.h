@@ -89,6 +89,6 @@ struct flash_param_struct_0000 {
 	float balance_step_duration;
 };
 
-extern struct flash_param_struct_0001 flash_params;
+extern struct CURRENT_FLASH_PARAM_STRUCT flash_params;
 
 #endif /* FLASH_PARAMS_H_ */
