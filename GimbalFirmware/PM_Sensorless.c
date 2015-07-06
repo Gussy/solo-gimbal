@@ -107,6 +107,9 @@ Uint32 GyroDataOverflowCount = 0;
 
 Uint16 IndexTimeOut = 0;
 
+// Interlock flag to avoid repeatedly sending disable messages
+static Uint8 gp_connected = TRUE;
+
 EncoderParms encoder_parms = {
     0,              // Raw theta
     0,              // Virtual counts
@@ -657,6 +660,21 @@ void A2(void) // SPARE (not used)
                 RelaxAZAxis();
                 mavlink_gimbal_info.gimbal_active = FALSE;
             }
+        }
+    }
+
+    // Disable the gimbal when the GoPro is disconnected, re-enable when it's connected again
+    if (GetBoardHWID() == EL) {
+        if (!GP_VON && gp_connected) {
+            // Disable the other two axes and ourselves
+            cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_DISABLE);
+            RelaxAZAxis();
+            gp_connected = FALSE;
+        } else if (GP_VON && !gp_connected) {
+            // Disable the other two axes and ourselves
+            cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
+            EnableAZAxis();
+            gp_connected = TRUE;
         }
     }
 
