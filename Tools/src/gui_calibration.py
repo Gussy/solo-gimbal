@@ -87,7 +87,8 @@ class calibrationUI(object):
                 self.status = "Calibrating %s" % axis.title()
             result = setup_comutation.calibrate(self.connection.getLink(), calibrationProgressCallback)
         except Exception as e:
-            print e
+            pass
+            #print e
         finally:
             return result
 
@@ -205,7 +206,8 @@ class calibrationUI(object):
         self.setCalibrationStatus('')
         
         if isinstance(joints, Vector3):
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, True)
+            valid = setup_validate.validate_joints(None, joints)
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isValid(valid))
             self.ui.lblCalibrationJointX.setText('%0.6f' % joints.x)
             self.ui.lblCalibrationJointY.setText('%0.6f' % joints.y)
             self.ui.lblCalibrationJointZ.setText('%0.6f' % joints.z)
@@ -224,7 +226,8 @@ class calibrationUI(object):
         self.setCalibrationStatus('')
 
         if isinstance(gyros, Vector3):
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, True)
+            valid = setup_validate.validate_gyros(None, gyros)
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, self.isValid(valid))
             self.ui.lblCalibrationGyroX.setText('%0.6f' % gyros.x)
             self.ui.lblCalibrationGyroY.setText('%0.6f' % gyros.y)
             self.ui.lblCalibrationGyroZ.setText('%0.6f' % gyros.z)
@@ -265,6 +268,7 @@ class calibrationUI(object):
         self.ui.btnRunMotorCalibration.setEnabled(enabled)
         self.ui.btnRunJointCalibration.setEnabled(enabled)
         self.ui.btnRunGyroCalibration.setEnabled(enabled)
+        self.ui.btnRunAccelCalibration.setEnabled(enabled)
         self.ui.btnEraseCalibration.setEnabled(enabled)
 
     def isCalibrated(self, params):
@@ -277,6 +281,14 @@ class calibrationUI(object):
                 return None
             return True
         return None
+
+    def isValid(self, valid):
+        if valid == setup_validate.Results.Pass:
+            return True
+        elif valid == setup_validate.Results.Fail:
+            return False
+        else:
+            return None
 
     def setCalibrationStatusLabel(self, uiLabel, isCalibrated):
         if isCalibrated == True:
@@ -298,14 +310,14 @@ class calibrationUI(object):
 
     def updateCalibrationTable(self, params):
         # Axis statuses
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, self.isCalibrated(params['pitch']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, self.isCalibrated(params['roll']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, self.isCalibrated(params['yaw']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, self.isValid(params['validation']['commutation']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, self.isValid(params['validation']['commutation']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, self.isValid(params['validation']['commutation']))
 
         # Static statuses
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isCalibrated(params['joint']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, self.isCalibrated(params['gyro']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isCalibrated(params['accel']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isValid(params['validation']['joints']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, self.isValid(params['validation']['gyros']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isValid(params['validation']['accels']))
 
         # Pitch values
         self.ui.lblCalibrationPitchIntercept.setText('%0.6f' % params['pitch']['icept'])

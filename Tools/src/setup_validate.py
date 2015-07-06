@@ -6,7 +6,7 @@ from pymavlink.mavparm import MAVParmDict
 from pymavlink.rotmat import Vector3
 import setup_mavlink
 
-EXPECTED_VERSION = '0.18.0'
+EXPECTED_VERSION = '0.19.0'
 EXPECTED_BROADCAST = 0
 
 EXPECTED_SERIAL_NUMBER_START = 'GB11A'
@@ -111,7 +111,6 @@ def show(link):
                 'accels': validate_accelerometers(link, acc=acc)
             }
         }
-        print params
         return params
     else:
         return None
@@ -189,10 +188,7 @@ def validate_accelerometers(link, acc=None):
         return Results.Fail
 
 def validate_gain_axis(link, axis, p_e, i_e, d_e):
-    if values == None:
-        p, i, d = setup_param.get_gains(link, axis)
-    else:
-        p, i, d = values
+    p, i, d = setup_param.get_gains(link, axis)
     if p == None or i == None or d == None:
         return None
     return (abs(p - p_e) < GAIN_TOLERANCE and
@@ -200,8 +196,7 @@ def validate_gain_axis(link, axis, p_e, i_e, d_e):
             abs(d - d_e) < GAIN_TOLERANCE)
 
 def validate_k_rate(link, value):
-    if k_rate == None:
-        k_rate = setup_param.fetch_param(link, "GMB_K_RATE")
+    k_rate = setup_param.fetch_param(link, "GMB_K_RATE")
     if k_rate:
         return (abs(k_rate.param_value - value) < GAIN_TOLERANCE)
     else:
@@ -211,7 +206,7 @@ def validate_gains(link):
     pitch = validate_gain_axis(link, 'PITCH', EXPECTED_PITCH_P, EXPECTED_PITCH_I, EXPECTED_PITCH_D)
     roll = validate_gain_axis(link, 'ROLL',  EXPECTED_ROLL_P, EXPECTED_ROLL_I, EXPECTED_ROLL_D)
     yaw = validate_gain_axis(link, 'YAW',   EXPECTED_YAW_P, EXPECTED_YAW_I, EXPECTED_YAW_D)
-    krate = validate_k_rate(link, EXPECTED_K_RATE, k_rate=k_rate)
+    krate = validate_k_rate(link, EXPECTED_K_RATE)
     if pitch == True and roll == True and yaw == True and krate == True:
         return Results.Pass
     elif pitch == False or roll == False or yaw == False or krate == False:
