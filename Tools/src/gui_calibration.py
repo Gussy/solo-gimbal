@@ -1,5 +1,8 @@
+import os, json
+from PySide import QtGui
 from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
+from pymavlink.rotmat import Vector3
 import setup_mavlink, setup_validate, setup_comutation, setup_home
 import gui_utils
 
@@ -15,12 +18,15 @@ class calibrationUI(object):
         # Private
         self.progress = -1
         self.status = ''
+        self.waitingForContinue = False
+        self.continueAccelCal = False
 
         self.ui.btnGetCalibration.clicked.connect(self.handleGetCalibration)
-        self.ui.btnEraseCalibration.clicked.connect(self.handleEraseCalibration)
+        self.ui.btnRunMotorCalibration.clicked.connect(self.handleRunMotorCalibration)
         self.ui.btnRunJointCalibration.clicked.connect(self.handleRunJointCalibration)
         self.ui.btnRunGyroCalibration.clicked.connect(self.handleRunGyroCalibration)
-        self.ui.btnRunMotorCalibration.clicked.connect(self.handleRunMotorCalibration)
+        self.ui.btnRunAccelCalibration.clicked.connect(self.handleRunAccelCalibration)
+        self.ui.btnEraseCalibration.clicked.connect(self.handleEraseCalibration)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.timerUpdate)
@@ -31,9 +37,10 @@ class calibrationUI(object):
             self.runAsyncGetCalibration()
 
     @Slot()
-    def handleEraseCalibration(self):
+    def handleRunMotorCalibration(self):
         if self.connection.isConnected():
-            self.runAsyncEraseCalibration()
+            self.resetCalibrationTable()
+            self.runAsyncMotorCalibration()
 
     @Slot()
     def handleRunJointCalibration(self):
@@ -48,10 +55,18 @@ class calibrationUI(object):
             self.runAsyncGyroCalibration()
 
     @Slot()
-    def handleRunMotorCalibration(self):
+    def handleRunAccelCalibration(self):
         if self.connection.isConnected():
             self.resetCalibrationTable()
-            self.runAsyncMotorCalibration()
+            self.runAsyncAccelCalibration()
+
+    @Slot()
+    def handleEraseCalibration(self):
+        if self.connection.isConnected():
+            self.runAsyncEraseCalibration()
+
+    def showInformationMessageBox(self, title, message):
+        return QtGui.QMessageBox.information(self.parent, title, message)
 
     def getCalibrationAttempted(self):
         return self.calibrationAttempted
@@ -64,18 +79,6 @@ class calibrationUI(object):
         return setup_validate.show(self.connection.getLink())
 
     @gui_utils.waitCursor
-    def eraseCalibration(self):
-        return setup_comutation.resetCalibration(self.connection.getLink())
-
-    @gui_utils.waitCursor
-    def jointCalibration(self):
-        return setup_home.calibrate_joints(self.connection.getLink())
-
-    @gui_utils.waitCursor
-    def gyroCalibration(self):
-        return setup_home.calibrate_gyro(self.connection.getLink())
-
-    @gui_utils.waitCursor
     def runMotorCalibration(self):
         result = None
         try:
@@ -84,9 +87,39 @@ class calibrationUI(object):
                 self.status = "Calibrating %s" % axis.title()
             result = setup_comutation.calibrate(self.connection.getLink(), calibrationProgressCallback)
         except Exception as e:
-            print e
+            pass
+            #print e
         finally:
             return result
+
+    @gui_utils.waitCursor
+    def jointCalibration(self):
+        self.status = "Calibrating Joints"
+        def jointProgressCallback(progress):
+            self.progress = progress
+        return setup_home.calibrate_joints(self.connection.getLink(), jointProgressCallback)
+
+    @gui_utils.waitCursor
+    def gyroCalibration(self):
+        self.status = "Calibrating Gyros"
+        def gyroProgressCallback(progress):
+            self.progress = progress
+        return setup_home.calibrate_gyro(self.connection.getLink(), gyroProgressCallback)
+
+    @gui_utils.waitCursor
+    def accelCalibration(self):
+        def accelProgressCallback(progress, message, waiting):
+            if not waiting:
+                self.continueAccelCal = False
+            self.waitingForContinue = waiting
+            self.progress = progress
+            self.status = message
+            return self.continueAccelCal
+        return setup_home.calibrate_accel(self.connection.getLink(), accelProgressCallback)
+
+    @gui_utils.waitCursor
+    def eraseCalibration(self):
+        return setup_comutation.resetCalibration(self.connection.getLink())
 
     @gui_utils.waitCursor
     def resetGimbal(self):
@@ -106,46 +139,16 @@ class calibrationUI(object):
         allParams = yield AsyncTask(self.getAllParams)
         if allParams != None:
             self.updateCalibrationTable(allParams)
-        self.setButtonsEnabled(True)
 
-    @coroutine
-    def runAsyncEraseCalibration(self):
-        self.setButtonsEnabled(False)
-        result = yield AsyncTask(self.eraseCalibration)
-        self.resetCalibrationTable()
-        self.setButtonsEnabled(True)
+            # Save the params to a file
+            if not os.path.isdir('logs'):
+                os.makedirs('logs')
 
-    @coroutine
-    def runAsyncJointCalibration(self):
-        self.setButtonsEnabled(False)
+            if allParams['serial_number'] != None and allParams['serial_number'] != '':
+                filePath = os.path.join('logs', '%s.json' % allParams['serial_number'])
+                with open(filePath, 'w') as f:
+                    json.dump(allParams, f)
 
-        joints = yield AsyncTask(self.jointCalibration)
-        
-        # Show joints results
-        if joints:
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, True)
-            self.ui.lblCalibrationJointX.setText('%0.6f' % joints.x)
-            self.ui.lblCalibrationJointY.setText('%0.6f' % joints.y)
-            self.ui.lblCalibrationJointZ.setText('%0.6f' % joints.z)
-        else:
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, False)
-        
-        self.setButtonsEnabled(True)
-
-    @coroutine
-    def runAsyncGyroCalibration(self):
-        self.setButtonsEnabled(False)
-        
-        gyros = yield AsyncTask(self.gyroCalibration)
-
-        # Show joints results
-        if gyros:
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, True)
-            self.ui.lblCalibrationGyroX.setText('%0.6f' % gyros.x)
-            self.ui.lblCalibrationGyroY.setText('%0.6f' % gyros.y)
-            self.ui.lblCalibrationGyroZ.setText('%0.6f' % gyros.z)
-        else:
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, False)
         self.setButtonsEnabled(True)
 
     @coroutine
@@ -193,6 +196,71 @@ class calibrationUI(object):
         self.timerStop()
         self.setButtonsEnabled(True)
 
+    @coroutine
+    def runAsyncJointCalibration(self):
+        self.setButtonsEnabled(False)
+
+        self.timerStart()
+        joints = yield AsyncTask(self.jointCalibration)
+        self.timerStop()
+        self.setCalibrationStatus('')
+        
+        if isinstance(joints, Vector3):
+            valid = setup_validate.validate_joints(None, joints)
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isValid(valid))
+            self.ui.lblCalibrationJointX.setText('%0.6f' % joints.x)
+            self.ui.lblCalibrationJointY.setText('%0.6f' % joints.y)
+            self.ui.lblCalibrationJointZ.setText('%0.6f' % joints.z)
+        else:
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, False)
+        
+        self.setButtonsEnabled(True)
+
+    @coroutine
+    def runAsyncGyroCalibration(self):
+        self.setButtonsEnabled(False)
+        
+        self.timerStart()
+        gyros = yield AsyncTask(self.gyroCalibration)
+        self.timerStop()
+        self.setCalibrationStatus('')
+
+        if isinstance(gyros, Vector3):
+            valid = setup_validate.validate_gyros(None, gyros)
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, self.isValid(valid))
+            self.ui.lblCalibrationGyroX.setText('%0.6f' % gyros.x)
+            self.ui.lblCalibrationGyroY.setText('%0.6f' % gyros.y)
+            self.ui.lblCalibrationGyroZ.setText('%0.6f' % gyros.z)
+        else:
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, False)
+        self.setButtonsEnabled(True)
+
+    @coroutine
+    def runAsyncAccelCalibration(self):
+        self.setButtonsEnabled(False)
+        
+        self.timerStart()
+        accel = yield AsyncTask(self.accelCalibration)
+        self.timerStop()
+        self.setCalibrationStatus('')
+
+        if isinstance(accel, Vector3):
+            valid = setup_validate.validate_accelerometers(None, accel)
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isValid(valid))
+            self.ui.lblCalibrationAccelX.setText('%0.6f' % accel.x)
+            self.ui.lblCalibrationAccelY.setText('%0.6f' % accel.y)
+            self.ui.lblCalibrationAccelZ.setText('%0.6f' % accel.z)
+        else:
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, False)
+        self.setButtonsEnabled(True)
+
+    @coroutine
+    def runAsyncEraseCalibration(self):
+        self.setButtonsEnabled(False)
+        result = yield AsyncTask(self.eraseCalibration)
+        self.resetCalibrationTable()
+        self.setButtonsEnabled(True)
+
     def setCalibrationStatus(self, msg=''):
         self.ui.lblCalibrationStatus.setText(msg)
 
@@ -201,6 +269,7 @@ class calibrationUI(object):
         self.ui.btnRunMotorCalibration.setEnabled(enabled)
         self.ui.btnRunJointCalibration.setEnabled(enabled)
         self.ui.btnRunGyroCalibration.setEnabled(enabled)
+        self.ui.btnRunAccelCalibration.setEnabled(enabled)
         self.ui.btnEraseCalibration.setEnabled(enabled)
 
     def isCalibrated(self, params):
@@ -213,6 +282,14 @@ class calibrationUI(object):
                 return None
             return True
         return None
+
+    def isValid(self, valid):
+        if valid == setup_validate.Results.Pass:
+            return True
+        elif valid == setup_validate.Results.Fail:
+            return False
+        else:
+            return None
 
     def setCalibrationStatusLabel(self, uiLabel, isCalibrated):
         if isCalibrated == True:
@@ -234,14 +311,14 @@ class calibrationUI(object):
 
     def updateCalibrationTable(self, params):
         # Axis statuses
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, self.isCalibrated(params['pitch']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, self.isCalibrated(params['roll']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, self.isCalibrated(params['yaw']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, self.isValid(params['validation']['commutation']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, self.isValid(params['validation']['commutation']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, self.isValid(params['validation']['commutation']))
 
         # Static statuses
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isCalibrated(params['joint']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, self.isCalibrated(params['gyro']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isCalibrated(params['accel']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isValid(params['validation']['joints']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, self.isValid(params['validation']['gyros']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isValid(params['validation']['accels']))
 
         # Pitch values
         self.ui.lblCalibrationPitchIntercept.setText('%0.6f' % params['pitch']['icept'])
@@ -322,5 +399,8 @@ class calibrationUI(object):
         self.timer.stop()
 
     def timerUpdate(self):
+        if self.waitingForContinue:
+            result = self.showInformationMessageBox('Accel Calibration', self.status)
+            self.continueAccelCal = True
         self.ui.pbarCalibration.setValue(self.progress)
         self.setCalibrationStatus(self.status)
