@@ -109,6 +109,8 @@ Uint16 IndexTimeOut = 0;
 
 // Interlock flag to avoid repeatedly sending disable messages
 static Uint8 gp_connected = TRUE;
+static Uint32 gp_connected_elapsed = 0;
+static const Uint32 gp_connected_delay_ms = 10000;
 
 EncoderParms encoder_parms = {
     0,              // Raw theta
@@ -671,10 +673,13 @@ void A2(void) // SPARE (not used)
             RelaxAZAxis();
             gp_connected = FALSE;
         } else if (GP_VON && !gp_connected) {
-            // Disable the other two axes and ourselves
-            cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
-            EnableAZAxis();
-            gp_connected = TRUE;
+            if (gp_connected_elapsed++ > (gp_connected_delay_ms / 3)) {
+                // Disable the other two axes and ourselves
+                cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
+                EnableAZAxis();
+                gp_connected = TRUE;
+                gp_connected_elapsed = 0;
+            }
         }
     }
 
