@@ -296,11 +296,6 @@ void main(void)
 	// initialize flash
     board_hw_id = GetBoardHWID();
 
-    // Program the EEPROM on every boot
-    if(board_hw_id == EL) {
-    	gp_write_eeprom();
-    }
-
     if (board_hw_id == AZ) {
 		int i;
 		init_flash();
@@ -363,6 +358,9 @@ void main(void)
     if (board_hw_id == EL) {
         // Initialize Gyro
         InitGyro();
+
+        // Program the EEPROM on every boot
+        gp_write_eeprom();
 
         // Initialize the HeroBus interface
         init_gp_interface();
