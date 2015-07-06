@@ -53,7 +53,7 @@ bool gp_cmd_has_param(const GPCmd* c)
      * Commands are 2 uppercase characters, queries are 2 lowercase characters
      */
 
-    if (islower(c->cmd[0]) || isupper(c->cmd[1])) {
+    if (islower(c->cmd[0])) {
         return false;
     }
 
