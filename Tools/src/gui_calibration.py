@@ -245,7 +245,8 @@ class calibrationUI(object):
         self.setCalibrationStatus('')
 
         if isinstance(accel, Vector3):
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, True)
+            valid = setup_validate.validate_accelerometers(None, accel)
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isValid(valid))
             self.ui.lblCalibrationAccelX.setText('%0.6f' % accel.x)
             self.ui.lblCalibrationAccelY.setText('%0.6f' % accel.y)
             self.ui.lblCalibrationAccelZ.setText('%0.6f' % accel.z)

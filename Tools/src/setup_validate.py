@@ -33,6 +33,7 @@ EXPECTED_JOINT_Z_MAX = 0.18
 EXPECTED_JOINT_Z_MIN = -0.18
 
 EXPECTED_GYRO = 5E-04
+EXPECTED_OFF_ACC = 2.5
 
 GAIN_TOLERANCE = 1e-6
 EXPECTED_PITCH_P = 3.00
@@ -46,7 +47,7 @@ EXPECTED_YAW_I = 0.30
 EXPECTED_YAW_D = 7.00
 EXPECTED_OFF_ACC_X = 0.0
 EXPECTED_OFF_ACC_Y = 0.0
-EXPECTED_OFF_ACC_Z= 0.0
+EXPECTED_OFF_ACC_Z = 0.0
 EXPECTED_K_RATE = 10.0
 
 class Results:
@@ -182,7 +183,9 @@ def validate_accelerometers(link, acc=None):
         acc = setup_param.get_offsets(link, 'ACC')
     if not isinstance(acc, Vector3):
         return Results.Error
-    if acc.x == EXPECTED_OFF_ACC_X and acc.y == EXPECTED_OFF_ACC_Y and acc.z == EXPECTED_OFF_ACC_Z:
+    if ((acc.x <= EXPECTED_OFF_ACC) and (acc.x >= -EXPECTED_OFF_ACC) and (acc.x != 0) and
+        (acc.y <= EXPECTED_OFF_ACC) and (acc.y >= -EXPECTED_OFF_ACC) and (acc.y != 0) and
+        (acc.z <= EXPECTED_OFF_ACC) and (acc.z >= -EXPECTED_OFF_ACC) and (acc.z != 0)):
         return Results.Pass
     else:
         return Results.Fail

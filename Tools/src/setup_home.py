@@ -106,4 +106,4 @@ def calibrate_accel(link, progressCallback=None):
     set_param(link, "GMB_ALN_ACC_Z", level[2])
     
     message_brodcasting(link, False)
-    return Vector3()
+    return Vector3(p[0], p[1], p[2])
