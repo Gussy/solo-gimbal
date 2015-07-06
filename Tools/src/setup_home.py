@@ -59,10 +59,10 @@ def calibrate_accel(link, progressCallback=None):
     # Orientations
     orientations = [
         'level',
-        'on it\'s side',
+        'on it\'s left side',
+        'on it\'s right side',
         'on it\'s back',
-        'on it\'s other side',
-        'on it\'s front side',
+        'on it\'s front',
         'upside down',
     ]
 
