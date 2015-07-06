@@ -80,7 +80,7 @@ mavserial = mavutil.mavserial(
 link = mavlink.MAVLink(mavserial, 0, 0)
 
 # Request the model
-link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_MODEL)
+#link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_MODEL)
 
 #link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_BATTERY)
 
