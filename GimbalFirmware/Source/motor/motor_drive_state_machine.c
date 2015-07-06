@@ -324,7 +324,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_DISABLED:
-            axis_parms->blink_state = BLINK_READY;
+            if(axis_parms->blink_state != BLINK_NO_CAMERA)
+                axis_parms->blink_state = BLINK_READY;
             // Set park transformation angle to currently measured rotor electrical angle
             md_parms->park_xform_parms.Angle = encoder_parms->elec_theta;
 

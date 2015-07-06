@@ -145,6 +145,7 @@ typedef enum {
 typedef enum  {
     CAND_CMD_ENABLE = 0,
     CAND_CMD_RELAX,
+    CAND_CMD_DISABLE,
     CAND_CMD_GOPRO_HEARTBEAT,
     CAND_CMD_INIT,
     CAND_CMD_SET_HOME_OFFSETS,

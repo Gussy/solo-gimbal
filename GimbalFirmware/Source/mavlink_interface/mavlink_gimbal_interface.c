@@ -313,7 +313,8 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
 
         // If the gimbal is not enabled, we want to enable it when we receive a rate command (we disable the gimbal if
         // we lose rate commands, and we want to re-enable it when we re-acquire rate commands)
-        if (!(mavlink_info->gimbal_active)) {
+        // Unless the state is set internally to disabled (ie. when a GoPro is disconnected)
+        if (!(mavlink_info->gimbal_active) && GetEnableFlag() == TRUE) {
             // Enable the other two axes
             cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
             // Enable ourselves

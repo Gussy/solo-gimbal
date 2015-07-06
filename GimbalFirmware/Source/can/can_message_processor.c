@@ -76,6 +76,11 @@ void Process_CAN_Messages(AxisParms* axis_parms,
             md_parms->motor_drive_state = STATE_DISABLED;
             break;
 
+        case CAND_CMD_DISABLE:
+            axis_parms->enable_flag = FALSE;
+            md_parms->motor_drive_state = STATE_DISABLED;
+            break;
+
         case CAND_CMD_RESET:
         	axis_parms->enable_flag = FALSE;
         	md_parms->motor_drive_state = STATE_DISABLED;

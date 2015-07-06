@@ -67,6 +67,15 @@ void (*C_Task_Ptr)(void);		// State pointer C branch
 
 // Used for running BackGround in flash, and ISR in RAM
 extern Uint16 *RamfuncsLoadStart, *RamfuncsLoadEnd, *RamfuncsRunStart;
+#define TASKS_PER_BRANCH        3
+
+#define A_TASK_PERIOD_MS        1
+#define B_TASK_PERIOD_MS        5
+#define C_TASK_PERIOD_MS        50
+
+#define A_TASK_FREQUENCY_MS     (A_TASK_PERIOD_MS * TASKS_PER_BRANCH)
+#define B_TASK_FREQUENCY_MS     (B_TASK_PERIOD_MS * TASKS_PER_BRANCH)
+#define C_TASK_FREQUENCY_MS     (C_TASK_PERIOD_MS * TASKS_PER_BRANCH)
 
 int16	VTimer0[4];			// Virtual Timers slaved off CPU Timer 0 (A events)
 int16	VTimer1[4]; 		// Virtual Timers slaved off CPU Timer 1 (B events)
@@ -107,6 +116,20 @@ Uint8 GyroDataOverflowLatch = FALSE;
 Uint32 GyroDataOverflowCount = 0;
 
 Uint16 IndexTimeOut = 0;
+
+// Interlock flag to avoid repeatedly sending disable messages
+static bool gp_connected = true;
+static Uint32 gp_connected_elapsed = 0;
+static const Uint32 gp_connected_delay_ms = 4000;
+
+static int led_cnt = 0;
+static uint16_t beacon_startup_counter = 0;
+static const uint16_t beacon_startup_delay_cycles = 14;
+static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
+static const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
+static const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
+static const LED_RGBA rgba_blue = {0, 0, 0xff, 0xff};
+static const LED_RGBA rgba_purple = {0xff, 0, 0xff, 0xff};
 
 EncoderParms encoder_parms = {
     .raw_theta = 0,
@@ -645,7 +668,7 @@ void A2(void) // SPARE (not used)
     // rate command
     if (GetBoardHWID() == AZ) {
         if (mavlink_gimbal_info.gimbal_active) {
-            if (++mavlink_gimbal_info.rate_cmd_timeout_counter >= 33) {
+            if (++mavlink_gimbal_info.rate_cmd_timeout_counter >= (100 / A_TASK_FREQUENCY_MS)) {
                 // Disable the other two axes
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RELAX);
                 // Disable ourselves
@@ -689,9 +712,37 @@ void A3(void) // SPARE (not used)
 //----------------------------------- USER ----------------------------------------
 
 //----------------------------------------
-void B1(void) // SPARE
+void B1(void)
 //----------------------------------------
 {
+    // Disable the gimbal when the GoPro is disconnected, re-enable when it's connected again
+    if (GetBoardHWID() == EL) {
+        if (!GP_VON && gp_connected) {
+            // Disable the other two axes and ourselves
+            cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_DISABLE);
+            RelaxAZAxis();
+            gp_connected = false;
+            axis_parms.blink_state = BLINK_NO_CAMERA;
+        } else if (!GP_VON) {
+            axis_parms.blink_state = BLINK_NO_CAMERA;
+            led_set_mode(LED_MODE_BLINK, rgba_purple, 0);
+            gp_connected = false;
+        } else if (GP_VON && !gp_connected) {
+            if (gp_connected_elapsed++ > (gp_connected_delay_ms / B_TASK_FREQUENCY_MS)) {
+                // Enable the other two axes and ourselves
+                cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
+                if (motor_drive_parms.md_initialized) {
+                    motor_drive_parms.motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
+                }
+                gp_connected = true;
+                gp_connected_elapsed = 0;
+                beacon_startup_counter = 0;
+            } else {
+                led_set_mode(LED_MODE_SOLID, rgba_purple, 0);
+            }
+        }
+    }
+
 	//-----------------
 	//the next time CpuTimer1 'counter' reaches Period value go to B2
 	B_Task_Ptr = &B2;	
@@ -723,16 +774,6 @@ void B3(void) //  SPARE
 //	C - TASKS (executed in every 50 msec)
 //=================================================================================
 
-//--------------------------------- USER ------------------------------------------
-
-static int led_cnt = 0;
-static uint16_t beacon_startup_counter = 0;
-static const uint16_t beacon_startup_delay_cycles = 14;
-static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
-static const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
-static const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
-static const LED_RGBA rgba_blue = {0, 0, 0xff, 0xff};
-
 //----------------------------------------
 void C1(void) // Update Status LEDs
 //----------------------------------------
@@ -744,6 +785,10 @@ void C1(void) // Update Status LEDs
         switch (axis_parms.blink_state) {
             case BLINK_NO_COMM:
                 led_set_mode(LED_MODE_BLINK_FOREVER, rgba_blue, 0);
+                break;
+
+            case BLINK_NO_CAMERA:
+                led_set_mode(LED_MODE_BLINK, rgba_purple, 0);
                 break;
 
             case BLINK_INIT:
