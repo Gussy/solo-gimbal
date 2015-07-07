@@ -1,13 +1,9 @@
-
+#include "PM_Sensorless.h"
 #include "flash/flash.h"
 #include "hardware/watchdog.h"
+#include "can/cand.h"
 #include "Flash2806x_API_Library.h"
 #include "F2806x_SysCtrl.h"
-
-typedef union {
-	Uint32 uint32_val;
-	float float_val;
-} IntOrFloat;
 
 /*--- Callback function.  Function specified by defining Flash_CallbackPtr */
 void MyCallbackFunction(void);
@@ -306,8 +302,9 @@ int init_flash(void)
 				default:
 					erase_our_flash();
 
-					// Reset
-					watchdog_immediate_reset();
+					// Reset other axes then ourselves
+					cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
+					watchdog_reset();
 			}
 
 			// Save the new param struct to flash
