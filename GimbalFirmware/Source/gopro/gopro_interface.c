@@ -172,20 +172,6 @@ int gp_request_power_on()
     }
 }
 
-int gp_request_power_off()
-{
-    if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
-        GPCmd cmd;
-        cmd.cmd[0] = 'P';
-        cmd.cmd[1] = 'W';
-        cmd.cmd_parm = 0x00;
-        gp_send_command(&cmd);
-        return 0;
-    } else {
-        return -1;
-    }
-}
-
 int gp_get_request(Uint8 cmd_id)
 {
 	last_request_type = GP_REQUEST_GET;
