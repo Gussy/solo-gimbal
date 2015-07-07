@@ -7,14 +7,15 @@ from pymavlink.mavutil import mavlink, mavserial
 from pymavlink.dialects.v10 import ardupilotmega
 from pymavlink.rotmat import Vector3
 import setup_comutation, setup_mavlink
+import serial
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 TARGET_SYSTEM_ID = 1
 TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
-def getSerialPorts():
-    return mavutil.auto_detect_serial(preferred_list=['*FTDI*',"*Arduino_Mega_2560*", "*3D_Robotics*", "*USB_to_UART*", '*PX4*', '*FMU*'])
+def getSerialPorts(list = ['*FTDI*', "*3D_Robotics*", "*USB_to_UART*", '*PX4*', '*FMU*']):
+    return mavutil.auto_detect_serial(preferred_list=list)
 
 def open_comm(port=None, baudrate=230400):
     if not port:
