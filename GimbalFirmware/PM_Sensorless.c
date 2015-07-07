@@ -150,6 +150,7 @@ ControlBoardParms control_board_parms = {
     },
     .tuning_rate_inject = {0, 0, 0},
     .rate_cmd_inject = {0, 0, 0},
+    .rate_cmd_inject_filtered = {0, 0, 0},
     .rate_loop_pass = READ_GYRO_PASS,
     .initialized = FALSE,
     .enabled = FALSE,

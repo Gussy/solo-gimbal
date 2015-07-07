@@ -4,6 +4,8 @@
 #include "hardware/i2c.h"
 #include "PM_Sensorless-Settings.h"
 
+#include <stdbool.h>
+
 #define GP_COMMAND_REQUEST_SIZE 4
 #define GP_COMMAND_RESPONSE_SIZE 3
 #define GP_COMMAND_RECEIVE_BUFFER_SIZE 40
@@ -114,7 +116,7 @@ void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
 int gp_request_power_on();
 int gp_request_power_off();
-int gp_send_command(GPCmd* cmd);
+int gp_send_command(const GPCmd* cmd);
 Uint16 gp_ready_for_cmd();
 void gp_write_eeprom();
 void addressed_as_slave_callback(I2CAIntSrc int_src);

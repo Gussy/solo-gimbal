@@ -6,6 +6,8 @@
 #include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
 
+static const double RATE_UPSAMPLING_ALPHA = 0.1;
+
 static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);
 static void SendGyroTelemetry(int32 az_gyro, int32 el_gyro, int32 rl_gyro);
 static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
@@ -52,19 +54,25 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
         break;
 
         case ERROR_AZ_PASS:
-            cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject[AZ] - cb_parms->corrected_gyro_readings[AZ];
+        	// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
+        	cb_parms->rate_cmd_inject_filtered[AZ] = cb_parms->rate_cmd_inject_filtered[AZ]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[AZ] - cb_parms->rate_cmd_inject_filtered[AZ]);
+            cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject_filtered[AZ] - cb_parms->corrected_gyro_readings[AZ];
             // Set up the next rate loop pass to be the el error computation pass
             cb_parms->rate_loop_pass = ERROR_EL_PASS;
             break;
 
         case ERROR_EL_PASS:
-            cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject[EL] - cb_parms->corrected_gyro_readings[EL];
+        	// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
+        	cb_parms->rate_cmd_inject_filtered[EL] = cb_parms->rate_cmd_inject_filtered[EL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[EL] - cb_parms->rate_cmd_inject_filtered[EL]);
+            cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject_filtered[EL] - cb_parms->corrected_gyro_readings[EL];
             // Set up the next rate loop pass to be the roll error computation pass
             cb_parms->rate_loop_pass = ERROR_ROLL_PASS;
             break;
 
         case ERROR_ROLL_PASS:
-            cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
+        	// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
+        	cb_parms->rate_cmd_inject_filtered[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[ROLL] - cb_parms->rate_cmd_inject_filtered[ROLL]);
+            cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
             // Set up the next rate loop pass to be the torque command output pass
             cb_parms->rate_loop_pass = TORQUE_OUT_PASS;
             break;
