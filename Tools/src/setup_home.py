@@ -28,9 +28,9 @@ def getAverage(link, get_variable, sample_count=NUMBER_OF_SAMPLES, progressCallb
     offset = sum_angles / sample_count
     return offset
 
-def calibrate_joints(link):
+def calibrate_joints(link, progressCallback=None):
     message_brodcasting(link, True)
-    average = getAverage(link, get_current_joint_angles)
+    average = getAverage(link, get_current_joint_angles, progressCallback=progressCallback)
     if average:
         set_offsets(link, 'JNT', average)
     else:
