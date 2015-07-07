@@ -281,23 +281,12 @@ Uint32 can_init_fault_message_resend_counter = 0;
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
-
-	// initialize flash
     board_hw_id = GetBoardHWID();
 
     // Program the EEPROM on every boot
     if(board_hw_id == EL) {
     	gp_write_eeprom();
     }
-
-    if (board_hw_id == AZ) {
-		int i;
-		init_flash();
-		for ( i = 0; i < 3; i++) {
-			AxisCalibrationSlopes[i] = flash_params.commutation_slope[i];
-			AxisCalibrationIntercepts[i] = flash_params.commutation_icept[i];
-		}
-	}
 
 	// Initialize CAN peripheral, and CAND backend
 	ECanInit();
@@ -311,6 +300,16 @@ void main(void)
 	        }
 	    }
 	}
+
+	// Initialize flash (must be after CAN, in case the migration fails and resets all axes)
+	if (board_hw_id == AZ) {
+        int i;
+        init_flash();
+        for ( i = 0; i < AXIS_CNT; i++) {
+            AxisCalibrationSlopes[i] = flash_params.commutation_slope[i];
+            AxisCalibrationIntercepts[i] = flash_params.commutation_icept[i];
+        }
+    }
 
 	init_param_set();
 
