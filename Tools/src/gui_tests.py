@@ -151,6 +151,7 @@ class testsUI(object):
         self.timer.start(interval)
 
     def testStop(self):
+        self.timerUpdate()
         self.timer.stop()
         self.stopTests = True
         self.enableUI(True)
