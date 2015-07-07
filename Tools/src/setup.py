@@ -200,6 +200,7 @@ def command_interface():
     parser.add_argument("--stop", help="Hold the gimbal at the current position", action='store_true')
     parser.add_argument("--wobble", help="Wobble fixture test", action='store_true')
     parser.add_argument("--timeout", help="timeout for action", type=int)
+    parser.add_argument("--testloop", help="run a loop of 'run', 'align' and 'wobble' tests", type=str)
     parser.add_argument("-c", "--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("-f", "--forcecal", help="Force the comutation setup", action='store_true')
     parser.add_argument("-j", "--jointcalibration", help="Calibrate joint angles", action='store_true')
@@ -258,6 +259,13 @@ def command_interface():
     if args.wobble:
         setup_run.runTest(link, 'wobble', timeout=args.timeout)
         return
+
+    if args.testloop:
+        if args.testloop in ['run', 'align', 'wobble']:
+            setup_run.runTestLoop(link, args.testloop, timeout=args.timeout)
+            return
+        else:
+            print("Unknown test: %s" % args.testloop)
 
     if args.stop:
         setup_run.stop(link)

@@ -91,7 +91,26 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None):
+def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None):
+    def eventCallbackShim(msg, fault=False):
+        # Disable motors when the gimbal is in a fault state
+        if fault:
+            pass
+
+        # Call the original callback if there was one
+        if eventCallback:
+            eventCallback(msg, fault=fault)
+
+    wobble = fixtureWobble.init_fixture()
+
+    speeds = [100, 150, 200]
+    for speed in speeds:
+        if stopTestsCallback is None:
+            print("Running '%s' test at %i RPM" % (test, speed))
+        runTest(link, test, stopTestsCallback, eventCallbackShim, reportCallback, timeout, rpm=speed, wobble=wobble)
+
+@niceExit
+def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None, rpm=None, wobble=None):
     i = 0
     target = Vector3()
     log = None
@@ -126,8 +145,9 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         #g2_g = visual.graph.gcurve(color=color.green)
         #g2_b = visual.graph.gcurve(color=color.blue)
         
-        wobble = fixtureWobble.init_fixture()
-        fixtureWobble.set_rpm(wobble, 180)
+        if wobble is None:
+            wobble = fixtureWobble.init_fixture()
+        fixtureWobble.set_rpm(wobble, rpm)
 
     lastCycle = time.time()
     lastReport = time.time()
