@@ -31,7 +31,7 @@ testTargets = [
 ]
 
 class Log:
-    def __init__(self, link):
+    def __init__(self, link, tag=''):
         self.logdir = 'logs'
         if not os.path.isdir(self.logdir):
             os.makedirs(self.logdir)
@@ -42,11 +42,11 @@ class Log:
         if self.logSerialNumber == None:
             self.logSerialNumber = 'unknown'
 
-        self.valuesLogfile = os.path.join(self.logdir, 'gyro_test_values_%s_%d.csv' % (self.logSerialNumber, self.logTimestamp))
+        self.valuesLogfile = os.path.join(self.logdir, 'gyro_test_values_%s%s_%d.csv' % (self.logSerialNumber, tag, self.logTimestamp))
         self.valuesFile = open(self.valuesLogfile, 'w')
         self.valuesFile.write('time,rate_x,rate_y,rate_z,joint_x,joint_y,joint_z,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z\n')
 
-        self.eventsLogfile = os.path.join(self.logdir, 'gyro_test_events_%s_%d.csv' % (self.logSerialNumber, self.logTimestamp))
+        self.eventsLogfile = os.path.join(self.logdir, 'gyro_test_events_%s%s_%d.csv' % (self.logSerialNumber, tag, self.logTimestamp))
         self.eventsFile = open(self.eventsLogfile, 'w')
         self.eventsFile.write('time,message\n')
         
@@ -55,7 +55,7 @@ class Log:
             self.limitsFile = open(self.limitsLogfile, 'a')
         else:
             self.limitsFile = open(self.limitsLogfile, 'w')
-            self.limitsFile.write('time,duration,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z,rms\n')
+            self.limitsFile.write('time,duration,min_x,min_y,min_z,max_x,max_y,max_z,rms_x,rms_y,rms_z,rms,rpm\n')
 
     def mkdir_p(self, path):
         try:
@@ -69,8 +69,8 @@ class Log:
         log_str = "%s,%s,%s,%s,%s,%s\n" % (time.time(), csvVector(measured_rate_corrected), csvVector(measured_joint_corrected), csvVector(min), csvVector(max), csvVector(rms))
         self.valuesFile.write(log_str)
 
-    def writeLimits(self, test_duration, min, max, rms):
-        log_str = "%s,%s,%s,%s,%s,%f\n" % (time.time(), test_duration, csvVector(min), csvVector(max), csvVector(rms),rms.length())
+    def writeLimits(self, test_duration, min, max, rms, rpm):
+        log_str = "%s,%s,%s,%s,%s,%f,%i\n" % (time.time(), test_duration, csvVector(min), csvVector(max), csvVector(rms), rms.length(), rpm)
         self.limitsFile.write(log_str)
 
     def writeEvent(self, message):
@@ -128,7 +128,11 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         pointing_gain = 2
         gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
         error_integral = Vector3()
-        log = Log(link)
+        if rpm:
+            tag = '_%irpm' % rpm
+        else:
+            tag = None
+        log = Log(link, tag=tag)
         log.writeEvent('test started')
 
         max = Vector3()
@@ -269,7 +273,10 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     if log:
         if test == 'wobble':
             test_duration = int(time.time()-start_time - WOBBLE_TEST_ALIGNMENT_TIME)
-            log.writeLimits(test_duration, min, max, rms)
+            if rpm:
+                log.writeLimits(test_duration, min, max, rms, rpm)
+            else:
+                log.writeLimits(test_duration, min, max, rms, 0)
 
             if rms.length() < RMS_WOBBLE_TEST_THRESHOLD:
                 result = 'PASSED'
