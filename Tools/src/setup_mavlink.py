@@ -1,7 +1,7 @@
 '''
 
 '''
-import sys, time, fnmatch
+import os, sys, time, fnmatch
 import serial.tools.list_ports
 from pymavlink import mavutil
 from pymavlink.mavutil import mavlink, mavserial, SerialPort
@@ -16,17 +16,19 @@ TARGET_SYSTEM_ID = 1
 TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
 def getSerialPorts(preferred_list=[]):
-    ports = list(serial.tools.list_ports.comports())
-    ret = []
-    for port, desc, hwid in ports:
-        for preferred in preferred_list:
-            if fnmatch.fnmatch(desc, preferred) or fnmatch.fnmatch(hwid, preferred):
-                ret.append(SerialPort(port, description=desc, hwid=hwid))
-    return ret
+    if os.name == 'nt':
+        ports = list(serial.tools.list_ports.comports())
+        ret = []
+        for port, desc, hwid in ports:
+            for preferred in preferred_list:
+                if fnmatch.fnmatch(desc, preferred) or fnmatch.fnmatch(hwid, preferred):
+                    ret.append(SerialPort(port, description=desc, hwid=hwid))
+        return ret
+    return mavutil.auto_detect_serial(preferred_list=preferred_list)
 
 def open_comm(port=None, baudrate=230400):
     if not port:
-        serial_list = getSerialPorts(preferred_list=['*USB Serial*'])
+        serial_list = getSerialPorts(preferred_list=['*USB Serial*','*FTDI*'])
         if len(serial_list) == 1:
             port = serial_list[0].device
         else:
