@@ -103,7 +103,7 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
 
     wobble = fixtureWobble.init_fixture()
 
-    speeds = [100, 150, 200]
+    speeds = [120, 180, 220]
     for speed in speeds:
         if stopTestsCallback is None:
             print("Running '%s' test at %i RPM" % (test, speed))
