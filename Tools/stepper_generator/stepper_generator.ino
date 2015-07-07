@@ -10,7 +10,7 @@ void setup(){
   Serial.begin(115200);
   
   pinMode(8, OUTPUT);
-  setSpeed(60);
+  setSpeed(0);
 }
 
 void loop(){
