@@ -154,7 +154,8 @@ ControlBoardParms control_board_parms = {
         GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN
     },
     {0, 0, 0},                                              // Tuning rate inject
-    {0, 0, 0},                                              // Rate command inject
+	{0, 0, 0},                                              // Rate command inject
+	{0, 0, 0},                                              // Rate command inject filtered
     READ_GYRO_PASS,                                         // Rate loop pass
     FALSE,                                                  // Initialized
     FALSE,                                                  // Enabled

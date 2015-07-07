@@ -114,6 +114,7 @@ typedef struct {
     GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_status[AXIS_CNT];
     int16 tuning_rate_inject[AXIS_CNT];
     int16 rate_cmd_inject[AXIS_CNT];
+    int16 rate_cmd_inject_filtered[AXIS_CNT];
     RateLoopPass rate_loop_pass;
     Uint8 initialized;
     Uint8 enabled;
