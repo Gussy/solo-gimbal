@@ -103,7 +103,7 @@ def calibrate_accel(link, progressCallback=None):
     set_param(link, "GMB_ALN_ACC_X", level[0])
     set_param(link, "GMB_ALN_ACC_Y", level[1])
     set_param(link, "GMB_ALN_ACC_Z", level[2])
-    commit_to_flash()
+    commit_to_flash(link)
     
     message_brodcasting(link, False)
     return Vector3(p[0], p[1], p[2])
