@@ -71,7 +71,7 @@ class testsUI(object):
 
         result = yield AsyncTask(self.testsWobble)
 
-        if result != True:
+        if result != True and isinstance(result, str):
             self.ui.lblTestsLogfile.setText(result)
 
         self.graph = None
@@ -87,9 +87,11 @@ class testsUI(object):
     def stopTestsCallback(self):
         return self.stopTests
 
-    def testFaultCallback(self, fault):
+    def testEventCallback(self, msg, fault=False):
+        if fault:
+            self.faults += 1
         elapsedTime = int(time.time() - self.startTime)
-        message = "%is - %s" % (elapsedTime, fault)
+        message = "%is - %s" % (elapsedTime, msg)
         self.logMessages.append(message)
 
     def reportCallback(self, a, b, c):
@@ -103,7 +105,7 @@ class testsUI(object):
             self.connection.getLink(),
             'run',
             stopTestsCallback=self.stopTestsCallback,
-            faultCallback=self.testFaultCallback,
+            eventCallback=self.testEventCallback,
             timeout=self.getTestTimeout()
         )
 
@@ -112,7 +114,7 @@ class testsUI(object):
             self.connection.getLink(),
             'align',
             stopTestsCallback=self.stopTestsCallback,
-            faultCallback=self.testFaultCallback,
+            eventCallback=self.testEventCallback,
             timeout=self.getTestTimeout()
         )
 
@@ -121,7 +123,7 @@ class testsUI(object):
             self.connection.getLink(),
             'wobble',
             stopTestsCallback=self.stopTestsCallback,
-            faultCallback=self.testFaultCallback,
+            eventCallback=self.testEventCallback,
             reportCallback=self.reportCallback,
             timeout=self.getTestTimeout()
         )
@@ -162,7 +164,6 @@ class testsUI(object):
         self.ui.lblTestsRunTime.setText("%d:%02d:%02d" % (h, m, s))
         for i in range(len(self.logMessages)):
             self.ui.txtTestsLog.appendPlainText(self.logMessages.pop())
-            self.faults += 1
         self.ui.lblTestsFaults.setText(str(self.faults))
         self.dequeueValues(self.pitchValues, self.pitchGraph)
         self.dequeueValues(self.rollValues, self.rollGraph)

@@ -91,7 +91,7 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallback=None, timeout=None):
+def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None):
     i = 0
     target = Vector3()
     log = None
@@ -127,7 +127,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
         #g2_b = visual.graph.gcurve(color=color.blue)
         
         wobble = fixtureWobble.init_fixture()
-        fixtureWobble.set_rpm(wobble,180)
+        fixtureWobble.set_rpm(wobble, 180)
 
     lastCycle = time.time()
     lastReport = time.time()
@@ -148,21 +148,21 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
             if delta > 0:
                 if log:
                     log.writeEvent('gimbal connected')
-                if faultCallback:
-                    faultCallback('gimbal connected')
+                if eventCallback:
+                    eventCallback('gimbal connected')
         elif report.get_type() == 'STATUSTEXT':
             if log:
                 log.writeEvent(report.text)
-            if faultCallback:
-                faultCallback(report.text)
+            if eventCallback:
+                eventCallback(report.text, fault=True)
             continue
         else:
             if (time.time() - lastReport) > 0.2 and not commsLost:
                 commsLost = True
                 if log:
                     log.writeEvent('gimbal reset')
-                if faultCallback:
-                    faultCallback('gimbal reset')
+                if eventCallback:
+                    eventCallback('gimbal reset', fault=True)
             continue
 
         if test == 'wobble':
@@ -250,11 +250,19 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
         if test == 'wobble':
             test_duration = int(time.time()-start_time - WOBBLE_TEST_ALIGNMENT_TIME)
             log.writeLimits(test_duration, min, max, rms)
-            if rms.length()<RMS_WOBBLE_TEST_THRESHOLD:
-                print 'PASSED wobble test - rms value of %f rad/s(threshold of %f rad/s)'%(rms.length(),RMS_WOBBLE_TEST_THRESHOLD)
+
+            if rms.length() < RMS_WOBBLE_TEST_THRESHOLD:
+                result = 'PASSED'
             else:
-                print 'FAILED wobble test - rms value of %f rad/s(threshold of %f rad/s)'%(rms.length(),RMS_WOBBLE_TEST_THRESHOLD)
-            fixtureWobble.set_rpm(wobble,0)
+                result = 'FAILED'
+            message = '%s wobble test - rms value of %f rad/s(threshold of %f rad/s)' % (result, rms.length(), RMS_WOBBLE_TEST_THRESHOLD)
+
+            if eventCallback:
+                eventCallback(message)
+            else:
+                print(message)
+
+            fixtureWobble.set_rpm(wobble, 0)
             
             
         log.writeEvent('test finished')
