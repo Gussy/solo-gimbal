@@ -44,6 +44,7 @@ def wait_for_heartbeat(link):
         link.heartbeat_send(0, 0, 0, 0, 0)
         if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1):
             return True
+    return False
 
 def wait_handshake(m, timeout=1):
     '''wait for a handshake so we know the target system IDs'''

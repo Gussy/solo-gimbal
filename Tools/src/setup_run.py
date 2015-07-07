@@ -109,6 +109,8 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
             print("Running '%s' test at %i RPM" % (test, speed))
         runTest(link, test, stopTestsCallback, eventCallbackShim, reportCallback, timeout, rpm=speed, wobble=wobble)
 
+    return True
+
 @niceExit
 def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None, rpm=None, wobble=None):
     i = 0
