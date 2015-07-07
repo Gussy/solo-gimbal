@@ -64,17 +64,17 @@ class testsUI(object):
     def handleTestsWobble(self):
         self.testStart(delay=setup_run.WOBBLE_TEST_ALIGNMENT_TIME)
 
-        #self.graph = gui_graph.GraphWindow()
-        #self.pitchGraph = self.graph.newGraph('Pitch gyro')
-        #self.rollGraph = self.graph.newGraph('Roll gyro')
-        #self.yawGraph = self.graph.newGraph('Yaw gyro')
+        # self.graph = gui_graph.GraphWindow()
+        # self.pitchGraph = self.graph.newGraph('Pitch gyro')
+        # self.rollGraph = self.graph.newGraph('Roll gyro')
+        # self.yawGraph = self.graph.newGraph('Yaw gyro')
 
         result = yield AsyncTask(self.testsWobble)
 
         if result != True and isinstance(result, str):
             self.ui.lblTestsLogfile.setText(result)
 
-        #self.graph = None
+        # self.graph = None
 
         self.testStop()
 

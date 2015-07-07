@@ -54,7 +54,7 @@
      <enum>QTabWidget::Rounded</enum>
     </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>2</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideNone</enum>
@@ -539,7 +539,7 @@
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>101</width>
+        <width>91</width>
         <height>51</height>
        </rect>
       </property>
@@ -551,28 +551,28 @@ Calibration</string>
      <widget class="QPushButton" name="btnRunMotorCalibration">
       <property name="geometry">
        <rect>
-        <x>120</x>
+        <x>100</x>
         <y>10</y>
-        <width>101</width>
+        <width>91</width>
         <height>51</height>
        </rect>
       </property>
       <property name="text">
-       <string>Run Motor
+       <string>Motor
 Calibration</string>
       </property>
      </widget>
      <widget class="QPushButton" name="btnRunJointCalibration">
       <property name="geometry">
        <rect>
-        <x>230</x>
+        <x>190</x>
         <y>10</y>
-        <width>101</width>
+        <width>91</width>
         <height>51</height>
        </rect>
       </property>
       <property name="text">
-       <string>Run Joint
+       <string>Joint
 Calibration</string>
       </property>
      </widget>
@@ -1108,14 +1108,28 @@ Calibration</string>
      <widget class="QPushButton" name="btnRunGyroCalibration">
       <property name="geometry">
        <rect>
-        <x>340</x>
+        <x>280</x>
         <y>10</y>
-        <width>101</width>
+        <width>91</width>
         <height>51</height>
        </rect>
       </property>
       <property name="text">
-       <string>Run Gyro
+       <string>Gyro
+Calibration</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="btnRunAccelCalibration">
+      <property name="geometry">
+       <rect>
+        <x>370</x>
+        <y>10</y>
+        <width>91</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Accel
 Calibration</string>
       </property>
      </widget>
