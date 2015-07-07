@@ -16,7 +16,7 @@ def set_rpm(port, rpm):
 def open_fixture_comm(port=None):
     if not port:
         serial_list = getSerialPorts(preferred_list=['*Arduino*'])
-        if len(serial_list) == 1:
+        if len(serial_list) >= 1:
             device = serial_list[0].device
         else:
             return None

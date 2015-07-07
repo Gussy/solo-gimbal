@@ -29,7 +29,7 @@ def getSerialPorts(preferred_list=[]):
 def open_comm(port=None, baudrate=230400):
     if not port:
         serial_list = getSerialPorts(preferred_list=['*USB Serial*','*FTDI*'])
-        if len(serial_list) == 1:
+        if len(serial_list) >= 1:
             port = serial_list[0].device
         else:
             port = '0.0.0.0:14550'
