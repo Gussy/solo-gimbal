@@ -616,6 +616,7 @@ class Ui_MainWindow(object):
         self.sbxTestsTimeout.setGeometry(QtCore.QRect(10, 180, 111, 25))
         self.sbxTestsTimeout.setMaximum(3600)
         self.sbxTestsTimeout.setSingleStep(5)
+        self.sbxTestsTimeout.setValue(15)
         self.sbxTestsTimeout.setObjectName("sbxTestsTimeout")
         self.lblTestsTimeoutLabel = QtGui.QLabel(self.tabTests)
         self.lblTestsTimeoutLabel.setGeometry(QtCore.QRect(10, 160, 111, 19))
