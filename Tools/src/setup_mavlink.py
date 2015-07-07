@@ -1,25 +1,35 @@
 '''
 
 '''
-import sys, time
+import os, sys, time, fnmatch
+import serial.tools.list_ports
 from pymavlink import mavutil
-from pymavlink.mavutil import mavlink, mavserial
+from pymavlink.mavutil import mavlink, mavserial, SerialPort
 from pymavlink.dialects.v10 import ardupilotmega
 from pymavlink.rotmat import Vector3
 import setup_comutation, setup_mavlink
+import serial
 
 MAVLINK_SYSTEM_ID = 255
 MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 TARGET_SYSTEM_ID = 1
 TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
-def getSerialPorts():
-    return mavutil.auto_detect_serial(preferred_list=['*FTDI*',"*Arduino_Mega_2560*", "*3D_Robotics*", "*USB_to_UART*", '*PX4*', '*FMU*'])
+def getSerialPorts(preferred_list=[]):
+    if os.name == 'nt':
+        ports = list(serial.tools.list_ports.comports())
+        ret = []
+        for port, desc, hwid in ports:
+            for preferred in preferred_list:
+                if fnmatch.fnmatch(desc, preferred) or fnmatch.fnmatch(hwid, preferred):
+                    ret.append(SerialPort(port, description=desc, hwid=hwid))
+        return ret
+    return mavutil.auto_detect_serial(preferred_list=preferred_list)
 
 def open_comm(port=None, baudrate=230400):
     if not port:
-        serial_list = getSerialPorts()
-        if len(serial_list) == 1:
+        serial_list = getSerialPorts(preferred_list=['*USB Serial*','*FTDI*'])
+        if len(serial_list) >= 1:
             port = serial_list[0].device
         else:
             port = '0.0.0.0:14550'

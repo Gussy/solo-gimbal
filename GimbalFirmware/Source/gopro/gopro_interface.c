@@ -8,6 +8,7 @@
 #include <ctype.h>
 
 static void gp_timeout(GPCmdResult reason);
+static bool gp_cmd_has_param(const GPCmd* c);
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
@@ -45,53 +46,64 @@ Uint16 gp_ready_for_cmd()
     return (gp_control_state == GP_CONTROL_STATE_IDLE) && !i2c_get_bb();
 }
 
-int gp_send_command(GPCmd* cmd)
+bool gp_cmd_has_param(const GPCmd* c)
 {
-    if (gp_control_state == GP_CONTROL_STATE_IDLE) {
-        // Need to check if this is a command or a query.  Commands have a parameter, queries don't
-        // Commands are 2 uppercase characters, queries are 2 lowercase characters
-        if (isupper(cmd->cmd[0]) && isupper(cmd->cmd[1])) {
-            // This is a command
-            // Need to special case 'DL', 'DA', and 'FO' commands, since they don't have parameters
-            if (((cmd->cmd[0] == 'D') && ((cmd->cmd[1] == 'L') || (cmd->cmd[1] == 'A'))) ||
-                    ((cmd->cmd[0] == 'F') && (cmd->cmd[1] == 'O'))) {
-                request_cmd_buffer[0] = 0x2; // Length of 2 (2 command name bytes), with upper bit clear to indicate command originated from the gimbal (not the GoPro)
-                request_cmd_buffer[1] = cmd->cmd[0];
-                request_cmd_buffer[2] = cmd->cmd[1];
-            } else {
-                request_cmd_buffer[0] = 0x3; // Length of 3 (2 command name bytes, 1 parameter byte), with upper bit clear to indicate command originated from the gimbal (not the GoPro)
-                request_cmd_buffer[1] = cmd->cmd[0];
-                request_cmd_buffer[2] = cmd->cmd[1];
-                request_cmd_buffer[3] = cmd->cmd_parm;
-            }
-        } else {
-            // This is a query
-            request_cmd_buffer[0] = 0x2; // Length of 2 (2 query name bytes), with upper bit clear to indicate command originated from the gimbal (not the GoPro)
-            request_cmd_buffer[1] = cmd->cmd[0];
-            request_cmd_buffer[2] = cmd->cmd[1];
-        }
+    /*
+     * For the most part, commands have a parameter, queries never do.
+     * Commands are 2 uppercase characters, queries are 2 lowercase characters
+     */
 
-        // Clear the last command data
-        last_cmd_response.cmd_response = 0x00;
-		last_cmd_response.cmd_status = GP_CMD_STATUS_UNKNOWN;
-		last_cmd_response.cmd_result = GP_CMD_UNKNOWN;
+    if (islower(c->cmd[0])) {
+        return false;
+    }
 
-        // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
-        // this command, and this way a caller of gp_get_last_response can know what command the response goes with
-        last_cmd_response.cmd[0] = cmd->cmd[0];
-        last_cmd_response.cmd[1] = cmd->cmd[1];
+    // Need to special case 'DL', 'DA', and 'FO' commands, since they don't have parameters
+    if ((c->cmd[0] == 'F') && (c->cmd[1] == 'O')) {
+        return false;
+    }
 
-        // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
-        gp_assert_intr();
+    if (c->cmd[0] == 'D' && (c->cmd[1] == 'L' || c->cmd[1] == 'A')) {
+        return false;
+    }
 
-        // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
-        timeout_counter = 0;
-        gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
+    return true;
+}
 
-        return 0;
-    } else {
+int gp_send_command(const GPCmd* cmd)
+{
+    if (gp_control_state != GP_CONTROL_STATE_IDLE) {
         return -1;
     }
+
+    request_cmd_buffer[1] = cmd->cmd[0];
+    request_cmd_buffer[2] = cmd->cmd[1];
+
+    // first byte is len, upper bit clear to indicate command originated from the gimbal (not the GoPro)
+    if (gp_cmd_has_param(cmd)) {
+        request_cmd_buffer[0] = 0x3;
+        request_cmd_buffer[3] = cmd->cmd_parm;
+    } else {
+        request_cmd_buffer[0] = 0x2;
+    }
+
+    // Clear the last command data
+    last_cmd_response.cmd_response = 0x00;
+    last_cmd_response.cmd_status = GP_CMD_STATUS_UNKNOWN;
+    last_cmd_response.cmd_result = GP_CMD_UNKNOWN;
+
+    // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
+    // this command, and this way a caller of gp_get_last_response can know what command the response goes with
+    last_cmd_response.cmd[0] = cmd->cmd[0];
+    last_cmd_response.cmd[1] = cmd->cmd[1];
+
+    // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
+    gp_assert_intr();
+
+    // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
+    timeout_counter = 0;
+    gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
+
+    return 0;
 }
 
 Uint8 gp_get_new_heartbeat_available()
@@ -174,6 +186,14 @@ int gp_request_power_on()
 
 int gp_get_request(Uint8 cmd_id)
 {
+    /*
+     * Called when a CAN msg has been received with a `gopro get request` msg type.
+     *
+     * Fire off the transaction for the requested cmd,
+     * and assume that the CAN layer will pick up the response
+     * via gp_get_last_get_response()
+     */
+
 	last_request_type = GP_REQUEST_GET;
 	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
 		GPCmd cmd;
@@ -197,7 +217,7 @@ int gp_get_request(Uint8 cmd_id)
 			case GOPRO_COMMAND_BATTERY:
 				cmd.cmd[0] = 'b';
 				cmd.cmd[1] = 'l';
-			break;
+            break;
 
 			default:
 				// Unsupported Command ID
@@ -218,6 +238,14 @@ int gp_get_request(Uint8 cmd_id)
 
 int gp_set_request(GPSetRequest* request)
 {
+    /*
+     * Called when a CAN msg has been received with a 'gopro set request' msg type.
+     *
+     * Forward the requested set cmd,
+     * and assume that the CAN layer will pick up the response
+     * via gp_get_last_set_response()
+     */
+
 	last_request_type = GP_REQUEST_SET;
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
@@ -246,7 +274,25 @@ int gp_set_request(GPSetRequest* request)
 				cmd.cmd[0] = 'S';
 				cmd.cmd[1] = 'H';
 				cmd.cmd_parm = request->value;
-			break;
+                break;
+
+            case GOPRO_COMMAND_RESOLUTION:
+                cmd.cmd[0] = 'V';
+                cmd.cmd[1] = 'V';
+                cmd.cmd_parm = request->value;
+                break;
+
+            case GOPRO_COMMAND_FRAME_RATE:
+                cmd.cmd[0] = 'F';
+                cmd.cmd[1] = 'S';
+                cmd.cmd_parm = request->value;
+                break;
+
+            case GOPRO_COMMAND_FIELD_OF_VIEW:
+                cmd.cmd[0] = 'F';
+                cmd.cmd[1] = 'V';
+                cmd.cmd_parm = request->value;
+                break;
 
 			default:
 				// Unsupported Command ID
