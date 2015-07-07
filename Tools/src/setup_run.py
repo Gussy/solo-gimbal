@@ -5,6 +5,8 @@ from math import sin, cos, radians
 import math
 from pymavlink.rotmat import Matrix3, Vector3
 import setup_mavlink, setup_param, setup_factory, gui_graph
+import fixtureWobble
+
 
 #import visual.graph
 #import visual.crayola as color
@@ -123,6 +125,9 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
         #g2_r = visual.graph.gcurve(color=color.red)
         #g2_g = visual.graph.gcurve(color=color.green)
         #g2_b = visual.graph.gcurve(color=color.blue)
+        
+        wobble = fixtureWobble.init_fixture()
+        fixtureWobble.set_rpm(wobble,180)
 
     lastCycle = time.time()
     lastReport = time.time()
@@ -249,6 +254,7 @@ def runTest(link, test, stopTestsCallback=None, faultCallback=None, reportCallba
                 print 'PASSED wobble test - rms value of %f rad/s(threshold of %f rad/s)'%(rms.length(),RMS_WOBBLE_TEST_THRESHOLD)
             else:
                 print 'FAILED wobble test - rms value of %f rad/s(threshold of %f rad/s)'%(rms.length(),RMS_WOBBLE_TEST_THRESHOLD)
+            fixtureWobble.set_rpm(wobble,0)
             
             
         log.writeEvent('test finished')
