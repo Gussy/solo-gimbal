@@ -119,7 +119,7 @@ class testsUI(object):
         )
 
     def testsWobble(self):
-        return setup_run.runTest(
+        return setup_run.runTestLoop(
             self.connection.getLink(),
             'wobble',
             stopTestsCallback=self.stopTestsCallback,
