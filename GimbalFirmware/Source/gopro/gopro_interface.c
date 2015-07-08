@@ -341,16 +341,6 @@ GPPowerStatus gp_get_power_status()
     }
 }
 
-void gp_assert_intr(void)
-{
-	GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;
-}
-
-void gp_deassert_intr(void)
-{
-	GpioDataRegs.GPASET.bit.GPIO26 = 1;
-}
-
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
 // for proper gopro interface operation
 void gp_interface_state_machine()

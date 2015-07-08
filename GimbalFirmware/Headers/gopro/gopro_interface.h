@@ -121,8 +121,13 @@ Uint16 gp_ready_for_cmd();
 void gp_write_eeprom();
 void addressed_as_slave_callback(I2CAIntSrc int_src);
 
-void gp_assert_intr(void);
-void gp_deassert_intr(void);
+inline void gp_assert_intr() {
+    GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;
+}
+
+inline void gp_deassert_intr(void) {
+    GpioDataRegs.GPASET.bit.GPIO26 = 1;
+}
 
 Uint8 gp_get_new_heartbeat_available();
 Uint8 gp_get_new_get_response_available();
