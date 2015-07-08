@@ -21,9 +21,12 @@ def open_fixture_comm(port=None):
         else:
             return None
 
-    # we rather strangely set the baudrate initially to 1200, then change to the desired
-    # baudrate. This works around a kernel bug on some Linux kernels where the baudrate
-    # is not set correctly
-    port = serial.Serial(device, 1200, timeout=0, dsrdtr=False, rtscts=False, xonxoff=False)
-    port.setBaudrate(115200)
-    return port
+    try:
+        # we rather strangely set the baudrate initially to 1200, then change to the desired
+        # baudrate. This works around a kernel bug on some Linux kernels where the baudrate
+        # is not set correctly
+        port = serial.Serial(device, 1200, timeout=0, dsrdtr=False, rtscts=False, xonxoff=False)
+        port.setBaudrate(115200)
+        return port
+    except serial.serialutil.SerialException:
+        return None
