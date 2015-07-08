@@ -12,9 +12,9 @@ static void gp_timeout();
 static bool gp_cmd_has_param(const GPCmd* c);
 
 static void handle_rx_data();
-static bool collect_i2c_data(Uint8 *buf, Uint8 maxlen, bool *from_camera);
-static void gp_handle_command(Uint8 *cmdbuf);
-static void gp_handle_response();
+static bool collect_i2c_data(uint16_t *buf, uint16_t maxlen, bool *from_camera);
+static void gp_handle_command(const uint16_t *cmdbuf);
+static void gp_handle_response(const uint16_t *respbuf);
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
@@ -605,7 +605,7 @@ void handle_rx_data()
     }
 }
 
-bool collect_i2c_data(Uint8 *buf, Uint8 maxlen, bool *from_camera)
+bool collect_i2c_data(uint16_t *buf, uint16_t maxlen, bool *from_camera)
 {
     /*
      * Called when an i2c rx transaction has completed successfully,
@@ -622,35 +622,28 @@ bool collect_i2c_data(Uint8 *buf, Uint8 maxlen, bool *from_camera)
 
     // first byte is the length of the received data,
     // top bit signals the cmd originator, 1 == camera, 0 == backpack
-    Uint8 b = i2c_get_next_char();
+    uint16_t b = i2c_get_next_char();
     *from_camera = b & (1 << 7);
     buf[0] = b & 0x7f;
 
+    if (buf[0] != len - 1 || buf[0] > maxlen) {
+        // under/overflow, drain i2c ringbuf
+        // ... btw, why are we using a ringbuf, rather than a simple buffer per msg?
+        while (i2c_get_available_chars() > 0) {
+            (void)i2c_get_next_char();
+        }
+        return false;
+    }
+
     int i;
-    for (i = 1; i < buf[0]; ++i) {
-        buf[i] = i2c_get_next_char();
-    }
-
-    // always drain ringbuf to ensure we're not processing leftovers next time
-    // ... btw, why are we using a ringbuf, rather than a simple buffer per msg?
-    for ( ; i < len; ++i) {
-        i2c_get_next_char();
-    }
-
-    if (len > buf[0] || buf[0] > maxlen) {
-//        overflows++;
-        return false;
-    }
-
-    if (len < buf[0]) {
-//        underflows++;
-        return false;
+    for (i = 0; i < buf[0]; ++i) {
+        buf[i + 1] = i2c_get_next_char();
     }
 
     return true;
 }
 
-void gp_handle_command(Uint8 *cmdbuf)
+void gp_handle_command(const uint16_t *cmdbuf)
 {
     /*
      * A validated command has been received from the camera.
@@ -683,7 +676,7 @@ void gp_handle_command(Uint8 *cmdbuf)
     timeout_counter = 0;
 }
 
-void gp_handle_response(Uint8 *respbuf)
+void gp_handle_response(const uint16_t *respbuf)
 {
     /*
      * Process a response to one of our commands.
