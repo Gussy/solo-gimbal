@@ -108,12 +108,12 @@ int gp_send_command(const GPCmd* cmd)
     return 0;
 }
 
-bool gp_get_new_heartbeat_available()
+bool gp_new_heartbeat_available()
 {
     return new_heartbeat_available;
 }
 
-bool gp_get_new_get_response_available()
+bool gp_new_get_response_available()
 {
     if (last_request_type == GP_REQUEST_GET) {
         return new_response_available;
@@ -122,7 +122,7 @@ bool gp_get_new_get_response_available()
     return false;
 }
 
-bool gp_get_new_set_response_available()
+bool gp_new_set_response_available()
 {
     if (last_request_type == GP_REQUEST_SET) {
         return new_response_available;
@@ -131,7 +131,7 @@ bool gp_get_new_set_response_available()
     return false;
 }
 
-GPHeartbeatStatus gp_get_heartbeat_status()
+GPHeartbeatStatus gp_heartbeat_status()
 {
 	GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
 	/*if (gp_get_power_status() == GP_POWER_ON
@@ -152,7 +152,7 @@ GPHeartbeatStatus gp_get_heartbeat_status()
     return heartbeat_status;
 }
 
-GPGetResponse gp_get_last_get_response()
+GPGetResponse gp_last_get_response()
 {
 	last_get_response.cmd_id = last_request_cmd_id;
 	if (last_cmd_response.cmd_status == GP_CMD_STATUS_SUCCESS && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
@@ -167,7 +167,7 @@ GPGetResponse gp_get_last_get_response()
     return last_get_response;
 }
 
-GPSetResponse gp_get_last_set_response()
+GPSetResponse gp_last_set_response()
 {
 	last_set_response.cmd_id = last_request_cmd_id;
 	if (last_cmd_response.cmd_status == GP_CMD_STATUS_SUCCESS && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
