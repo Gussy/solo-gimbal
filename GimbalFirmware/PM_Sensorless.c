@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define getTempSlope() (*(int (*)(void))0x3D7E82)();
 #define getTempOffset() (*(int (*)(void))0x3D7E85)();
@@ -730,6 +731,9 @@ void B3(void) //  SPARE
 #define CH1Faultn GpioDataRegs.GPADAT.bit.GPIO13
 
 int led_cnt = 0;
+bool led_initial_state_cleared = false;
+bool led_show_error = false;
+const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
 
 //----------------------------------------
 void C1(void) // Update Status LEDs
@@ -740,12 +744,18 @@ void C1(void) // Update Status LEDs
 		// fast, 3Hz
 		if( led_cnt%2 ) {
 			STATUS_LED_ON();
+			if(board_hw_id == EL && led_initial_state_cleared)
+			    led_set_mode(LED_MODE_SOLID, rgba_red, 0);
 		} else {
 			STATUS_LED_OFF();
+			if(board_hw_id == EL && led_initial_state_cleared)
+			    led_set_mode(LED_MODE_OFF, rgba_red, 0);
 		}
 		break;
 
 	case BLINK_INIT:
+	    if(!led_initial_state_cleared)
+	        led_initial_state_cleared = true;
 		// slow, .8Hz, dudy cycle of 20%
 		if( (led_cnt%10) < 2 ) {
 			STATUS_LED_ON();
@@ -764,15 +774,26 @@ void C1(void) // Update Status LEDs
 		break;
 
 	case BLINK_RUNNING:
+	    if (board_hw_id == EL && led_show_error) {
+	        led_show_error = false;
+	        led_set_mode(LED_MODE_OFF, rgba_red, 0);
+	    }
+
 		STATUS_LED_ON();
 		break;
 
 	case BLINK_ERROR:
+	    if (!led_show_error)
+	        led_show_error = true;
 		// fast, 3Hz, pause after 3 cycles
 		if( (led_cnt%2) && (led_cnt%12)<=6 ) {
 			STATUS_LED_ON();
+			if(board_hw_id == EL)
+			    led_set_mode(LED_MODE_SOLID, rgba_red, 0);
 		} else {
 			STATUS_LED_OFF();
+			if(board_hw_id == EL)
+			    led_set_mode(LED_MODE_OFF, rgba_red, 0);
 		}
 		break;
 	}
