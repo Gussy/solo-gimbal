@@ -7,7 +7,6 @@ from pymavlink.rotmat import Matrix3, Vector3
 import setup_mavlink, setup_param, setup_factory, gui_graph
 import fixtureWobble
 
-
 #import visual.graph
 #import visual.crayola as color
 #from visual.graph import gdisplay
@@ -15,20 +14,7 @@ import fixtureWobble
 WOBBLE_TEST_ALIGNMENT_TIME = 5
 RMS_WOBBLE_TEST_THRESHOLD = 0.005
 
-testTargets = [
-     Vector3(radians(-30), radians(-30), radians(-00)),
-     Vector3(radians(-30), radians(+30), radians(-00)),
-     Vector3(radians(+30), radians(+30), radians(-00)),
-     Vector3(radians(+30), radians(-30), radians(-00)),
-     Vector3(radians(-30), radians(-30), radians(-10)),
-     Vector3(radians(-30), radians(+30), radians(-10)),
-     Vector3(radians(+30), radians(+30), radians(-10)),
-     Vector3(radians(+30), radians(-30), radians(-10)),
-     Vector3(radians(-30), radians(-30), radians(+10)),
-     Vector3(radians(-30), radians(+30), radians(+10)),
-     Vector3(radians(+30), radians(+30), radians(+10)),
-     Vector3(radians(+30), radians(-30), radians(+10))
-]
+stopTestLoop = False
 
 class Log:
     def __init__(self, link, tag=''):
@@ -92,6 +78,7 @@ def niceExit(function):
 
 @niceExit
 def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None):
+    global stopTestLoop
     def eventCallbackShim(msg, fault=False):
         # Disable motors when the gimbal is in a fault state
         if fault:
@@ -101,13 +88,38 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
         if eventCallback:
             eventCallback(msg, fault=fault)
 
+   
+    def stopCallbackShim():
+        global stopTestLoop
+        # Call the original callback if there was one
+        if stopTestsCallback:
+            stopTestLoop = stopTestsCallback()
+            return stopTestLoop
+
     wobble = fixtureWobble.init_fixture()
 
+    currentSpeed = 0
     speeds = [120, 180, 220]
     for speed in speeds:
+        currentSpeed = speed
         if stopTestsCallback is None:
             print("Running '%s' test at %i RPM" % (test, speed))
-        runTest(link, test, stopTestsCallback, eventCallbackShim, reportCallback, timeout, rpm=speed, wobble=wobble)
+        runTest(link, test,
+                stopTestsCallback=stopCallbackShim,
+                eventCallback=eventCallbackShim,
+                reportCallback=reportCallback,
+                timeout=timeout,
+                rpm=speed,
+                wobble=wobble
+                )
+        if stopTestLoop:
+            break
+
+    # Soft stop
+    for speed in range(currentSpeed):
+        fixtureWobble.set_rpm(wobble, currentSpeed - speed)
+    # To be sure
+    fixtureWobble.set_rpm(wobble, 0)
 
     return True
 
@@ -152,8 +164,12 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         #g2_b = visual.graph.gcurve(color=color.blue)
         
         if wobble is None:
-            wobble = fixtureWobble.init_fixture()
-        fixtureWobble.set_rpm(wobble, rpm)
+            _wobble = fixtureWobble.init_fixture()
+        else:
+            _wobble = wobble
+        fixtureWobble.set_rpm(_wobble, rpm)
+        if rpm:
+            log.writeEvent('setting rpm to %i' % rpm)
 
     lastCycle = time.time()
     lastReport = time.time()
@@ -291,7 +307,8 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
             else:
                 print(message)
 
-            fixtureWobble.set_rpm(wobble, 0)
+            if wobble is None:
+                fixtureWobble.set_rpm(_wobble, 0)
             
             
         log.writeEvent('test finished')
