@@ -12,6 +12,7 @@
 #include "helpers/fault_handling.h"
 #include "hardware/watchdog.h"
 #include "flash/flash.h"
+#include "hardware/watchdog.h"
 
 #include <string.h>
 #include <stdio.h>

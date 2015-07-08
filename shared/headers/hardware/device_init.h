@@ -6,7 +6,7 @@
 
 #include "F2806x_EPwm_defines.h"
 
-void DeviceInit(void);
+void DeviceInit();
 void InitInterrupts();
 void ISR_ILLEGAL(void);
 

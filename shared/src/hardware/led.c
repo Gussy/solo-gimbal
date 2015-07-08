@@ -144,7 +144,7 @@ void init_led()
 	EDIS;
 }
 
-void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration)
+void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 duration)
 {
 	// Update the current mode
 	state_mode = mode;

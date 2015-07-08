@@ -13,6 +13,7 @@
 #include "hardware/watchdog.h"
 #include "version_git.h"
 #include <stdio.h>
+#include "hardware/watchdog.h"
 
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
@@ -310,7 +311,7 @@ static void handle_reset_gimbal()
         // reset other axes
         cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
 
-        // reset this axes
+        // reset this axis
         watchdog_reset();
 }
 

@@ -6,7 +6,9 @@
 #include "led_red.h"
 
 #include "uart.h"
+#include "mavlink_interface.h"
 
+#include "mavlink_bootloader.h"
 
 #define	FLASH_F2806x 1
 #include "Flash2806x_API_Library.h"
@@ -29,15 +31,6 @@ mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];
 mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 
 
-#define BOOTLOADER_VERSION_MAJOR	0x02
-#define BOOTLOADER_VERSION_MINOR	0x07
-#define BOOTLOADER_VERSION			((BOOTLOADER_VERSION_MAJOR << 8) | BOOTLOADER_VERSION_MINOR)
-
-#define MAVLINK_SYSTEM_ID			1
-
-// Max payload of MAVLINK_MSG_ID_ENCAPSULATED_DATA message is 253 Bytes
-// Must be an even number or the uint8_t[] to uint16_t[] conversion will fail
-#define ENCAPSULATED_DATA_LENGTH 	252
 
 
 static Uint16 Example_CsmUnlock()
@@ -85,55 +78,39 @@ static Uint16 Example_CsmUnlock()
 #pragma    DATA_SECTION(buffer,"DMARAML5");
 mavlink_message_t msg, inmsg;
 mavlink_status_t status;
-#define BUFFER_LENGTH	300
 unsigned char buffer[BUFFER_LENGTH];
 
-void MAVLINK_send_heartbeat()
-{
+void mavlink_data_handshake(Uint16 seq) {
+	// send mavlink message to request data stream
+	mavlink_msg_data_transmission_handshake_pack(
+	MAVLINK_SYSTEM_ID, MAV_COMP_ID_GIMBAL, &msg, MAVLINK_TYPE_UINT16_T,
+			0 /* size */, seq /* width */,
+			BOOTLOADER_VERSION /*uint16_t height*/, 0 /*uint16_t packets*/,
+			ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/, 0 /*uint8_t jpg_quality*/
+			);
 	Uint16 length;
-	mavlink_message_t heartbeat_msg;
-	mavlink_msg_heartbeat_pack(MAVLINK_SYSTEM_ID,
-								MAV_COMP_ID_GIMBAL,
-								&heartbeat_msg,
-								MAV_TYPE_GIMBAL,
-								MAV_AUTOPILOT_INVALID,
-								MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-								0, /* MAV_MODE_GIMBAL_UNINITIALIZED */
-								0  /* MAV_STATE_UNINIT */
-								);
-
-	length = mavlink_msg_to_send_buffer(buffer, &heartbeat_msg);
+	length = mavlink_msg_to_send_buffer(buffer, &msg);
 	send_serial_port(buffer, length);
 }
 
-void send_mavlink_statustext(char* message)
-{
-	Uint16 length;
-    mavlink_message_t status_msg;
-    mavlink_msg_statustext_pack(MAVLINK_SYSTEM_ID,
-								MAV_COMP_ID_GIMBAL,
-								&status_msg,
-								MAV_SEVERITY_DEBUG,
-								message);
-
-    length = mavlink_msg_to_send_buffer(buffer, &status_msg);
-    send_serial_port(buffer, length);
+void clearBuffers(){
+	memset(&msg, 0, sizeof(msg));
+	memset(&status, 0, sizeof(status));
+	memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer[0]));
+	memset(&m_mavlink_status, 0, sizeof(m_mavlink_status[0]));
 }
 
 Uint32 MAVLINK_Flash()
 {
 	int getting_messages = 0;
-	Uint16 seq = 0, length;
+	Uint16 seq = 0;
 	FLASH_ST FlashStatus = {0};
 	Uint16  *Flash_ptr = (Uint16 *)APP_START;     // Pointer to a location in flash
     Uint16 blink_counter = 0;
     int idx1 = 0;
     Uint16 idx2 = 0;
 
-	memset(&msg, 0, sizeof(msg));
-	memset(&status, 0, sizeof(status));
-	memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer[0]));
-	memset(&m_mavlink_status, 0, sizeof(m_mavlink_status[0]));
+	clearBuffers();
 	setup_serial_port();
 
 	EALLOW;
@@ -147,21 +124,8 @@ Uint32 MAVLINK_Flash()
 			MAVLINK_send_heartbeat();
 
 		// send mavlink message to request data stream
-		mavlink_msg_data_transmission_handshake_pack(
-			MAVLINK_SYSTEM_ID,
-			MAV_COMP_ID_GIMBAL,
-			&msg,
-			MAVLINK_TYPE_UINT16_T,
-			0 /* size */,
-			seq /* width */,
-			BOOTLOADER_VERSION /*uint16_t height*/,
-			0 /*uint16_t packets*/,
-			ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/,
-			0 /*uint8_t jpg_quality*/
-		);
+		mavlink_data_handshake(seq);
 
-		length = mavlink_msg_to_send_buffer(buffer, &msg);
-		send_serial_port(buffer, length);
 		getting_messages = 1;
 
 		while(getting_messages) {
@@ -170,10 +134,7 @@ Uint32 MAVLINK_Flash()
 			memset(buffer, 0, sizeof(buffer[0])*BUFFER_LENGTH);
 			if((read_size = read_serial_port(buffer, BUFFER_LENGTH)) == 0) {
 				getting_messages = 0;
-				memset(&msg, 0, sizeof(msg));
-				memset(&status, 0, sizeof(status));
-				memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer[0]));
-				memset(&m_mavlink_status, 0, sizeof(m_mavlink_status[0]));
+				clearBuffers();
 			} else {
 				getting_messages = 1;
 				for(idx1 = 0; idx1 < read_size; idx1++) {
@@ -225,22 +186,8 @@ Uint32 MAVLINK_Flash()
 								}
 							}
 						} else if(inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE) {
-							// send mavlink message to request data stream
-							mavlink_msg_data_transmission_handshake_pack(
-								MAVLINK_SYSTEM_ID,
-								MAV_COMP_ID_GIMBAL,
-								&msg,
-								MAVLINK_TYPE_UINT16_T,
-								0 /* size */,
-								UINT16_MAX /* width */,
-								BOOTLOADER_VERSION /*uint16_t height*/,
-								0 /*uint16_t packets*/,
-								ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/,
-								0 /*uint8_t jpg_quality*/
-							);
 
-							length = mavlink_msg_to_send_buffer(buffer, &msg);
-							send_serial_port(buffer, length);
+							mavlink_data_handshake(UINT16_MAX);
 
 							/* must be done */
 							watchdog_enable();
