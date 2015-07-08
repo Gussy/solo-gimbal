@@ -4,7 +4,6 @@
 #include "hardware/HWSpecific.h"
 #include "can_bootloader.h"
 
-
 // empty setup functions so this code can run  DeviceInit()
 void PieCntlInit(void){}
 void PieVectTableInit(void){}
@@ -56,11 +55,9 @@ Uint32 SelectBootMode()
 
 	  // Enable the beacon LED on the elevation board only
 	  if(GetBoardHWID() == EL) {
-	  	  init_led_periph();
-	  	  init_led_interrupts();
 	  	  init_led();
 
-	  	  LED_RGBA rgba_blank = {0, 0, 0, 0};
+	  	  const LED_RGBA rgba_blank = {0, 0, 0, 0};
 	  	  led_set_mode(LED_MODE_OFF, rgba_blank, 0);
 	   }
 

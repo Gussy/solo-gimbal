@@ -45,7 +45,7 @@ void init_led(void);
 void init_led_periph(void);
 void init_led_interrupts(void);
 
-void led_set_mode(LED_MODE mode, LED_RGBA color, Uint16 duration);
+void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 duration);
 void led_update_state(void);
 
 interrupt void led_epwm5_isr(void);

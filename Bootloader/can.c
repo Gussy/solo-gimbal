@@ -4,7 +4,7 @@
 #include "hardware/HWSpecific.h"
 
 Uint32 words_received;
-LED_RGBA rgba_amber = {255, 160, 0, 0xff};
+const LED_RGBA rgba_amber = {255, 160, 0, 0xff};
 
 void CAN_Init()
 {

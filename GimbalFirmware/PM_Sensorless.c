@@ -357,7 +357,7 @@ void main(void)
 
         // Initialize the beacon LED
         init_led();
-        LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
+        const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
         led_set_mode(LED_MODE_FADE_IN_BLINK_3, rgba_green, 0);
     }
 
