@@ -860,7 +860,7 @@ int mavlink_heartbeat_counter = 0;
 void C3(void) // Read temperature and handle stopping motor on receipt of fault messages
 //-----------------------------------------
 {
-	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset*33/30) * (long)TempSlope*33/30))>>14) + 1)>>1;
+	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset) * (long)TempSlope))>>14) + 1)>>1;
 
 	DcBusVoltage = AdcResult.ADCRESULT14; // DC Bus voltage meas.
 

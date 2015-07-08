@@ -37,7 +37,7 @@ void init_gp_interface()
 
     //if(gccb_eeprom_written == 1) {
     	// Enable the HeroBus port since the eeprom has been written
-    	GP_BP_DET_LOW();
+    	gp_enable_hb_interface();
     //}
 }
 
@@ -351,6 +351,30 @@ void gp_deassert_intr(void)
 	GpioDataRegs.GPASET.bit.GPIO26 = 1;
 }
 
+void gp_enable_hb_interface()
+{
+    // Set BacPac detect low (active low)
+    GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
+}
+
+void gp_disable_hb_interface()
+{
+    // Set BacPac detect high (active low)
+    GpioDataRegs.GPASET.bit.GPIO28 = 1;
+}
+
+void gp_enable_charging()
+{
+    // Set GoPro 5v enable low (active low)
+    GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;
+}
+
+void gp_disable_charging()
+{
+    // Set GoPro 5v enable high (active low)
+    GpioDataRegs.GPASET.bit.GPIO23 = 1;
+}
+
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
 // for proper gopro interface operation
 void gp_interface_state_machine()
@@ -575,7 +599,7 @@ void gp_write_eeprom()
 		return;
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
-	GP_BP_DET_HIGH();
+	gp_disable_hb_interface();
 
 	// Data to write into EEPROM
 	uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
@@ -626,7 +650,7 @@ void gp_write_eeprom()
 	gccb_eeprom_written = 1;
 
 	// Enable the HeroBus port
-	GP_BP_DET_LOW();
+	gp_enable_hb_interface();
 }
 
 void addressed_as_slave_callback(I2CAIntSrc int_src)
