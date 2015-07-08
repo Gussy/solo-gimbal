@@ -67,11 +67,6 @@ typedef enum {
 } GPCmdStatus;
 
 typedef enum {
-    GP_EXPECTING_COMMAND,
-    GP_EXPECTING_RESPONSE
-} GPExpectingDataType;
-
-typedef enum {
     GP_HEARTBEAT_DISCONNECTED = 0,
     GP_HEARTBEAT_INCOMPATIBLE = 1,
     GP_HEARTBEAT_CONNECTED = 2,
@@ -119,7 +114,8 @@ int gp_request_power_off();
 int gp_send_command(const GPCmd* cmd);
 Uint16 gp_ready_for_cmd();
 void gp_write_eeprom();
-void addressed_as_slave_callback(I2CAIntSrc int_src);
+
+void gp_on_slave_address(bool addressed_as_tx);
 
 inline void gp_assert_intr() {
     GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;

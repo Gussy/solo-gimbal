@@ -1,5 +1,6 @@
 #include "f2806x_int8.h"
 #include "gopro/gopro_interface.h"
+#include "gopro_i2c.h"
 #include "PeripheralHeaderIncludes.h"
 
 // Include for GOPRO_COMMAND enum
@@ -7,21 +8,24 @@
 
 #include <ctype.h>
 
-static void gp_timeout(GPCmdResult reason);
+static void gp_timeout();
 static bool gp_cmd_has_param(const GPCmd* c);
+
+static void handle_rx_data();
+static bool collect_i2c_data(Uint8 *buf, Uint8 maxlen, bool *from_camera);
+static void gp_handle_command(Uint8 *cmdbuf);
+static void gp_handle_response();
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
 volatile Uint32 timeout_counter = 0;
-Uint8 request_cmd_buffer[GP_COMMAND_REQUEST_SIZE];
-Uint8 response_buffer[GP_COMMAND_RESPONSE_SIZE];
-Uint8 receive_buffer[GP_COMMAND_RECEIVE_BUFFER_SIZE];
+
+Uint8 txbuf[GP_COMMAND_REQUEST_SIZE];
 GPCmdResponse last_cmd_response = {0};
 
 bool new_response_available = false;
 bool new_heartbeat_available = false;
 
-GPExpectingDataType next_reception_expected = GP_EXPECTING_COMMAND;
 Uint16 heartbeat_counter = 0;
 Uint16 interrogation_timeout = 0;
 GPRequestType last_request_type = GP_REQUEST_NONE;
@@ -30,12 +34,24 @@ GPGetResponse last_get_response;
 GPSetResponse last_set_response;
 GPSetRequest last_set_request;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
+
 Uint8 gccb_version_queried = 0;
 Uint8 gccb_eeprom_written = 0;
 
+typedef struct {
+    volatile GPControlState ctrl_state;
+    bool waiting_for_i2c; // waiting for i2c either tx/rx
+} gopro_t;
+
+// global gopro instance
+static gopro_t gp;
+
 void init_gp_interface()
 {
-    init_i2c(&addressed_as_slave_callback);
+    gp.waiting_for_i2c = false;
+    gp.ctrl_state = GP_CONTROL_STATE_IDLE;
+
+    gopro_i2c_init();
 
     //if(gccb_eeprom_written == 1) {
     	// Enable the HeroBus port since the eeprom has been written
@@ -77,15 +93,15 @@ int gp_send_command(const GPCmd* cmd)
         return -1;
     }
 
-    request_cmd_buffer[1] = cmd->cmd[0];
-    request_cmd_buffer[2] = cmd->cmd[1];
+    txbuf[1] = cmd->cmd[0];
+    txbuf[2] = cmd->cmd[1];
 
     // first byte is len, upper bit clear to indicate command originated from the gimbal (not the GoPro)
     if (gp_cmd_has_param(cmd)) {
-        request_cmd_buffer[0] = 0x3;
-        request_cmd_buffer[3] = cmd->cmd_parm;
+        txbuf[0] = 0x3;
+        txbuf[3] = cmd->cmd_parm;
     } else {
-        request_cmd_buffer[0] = 0x2;
+        txbuf[0] = 0x2;
     }
 
     // Clear the last command data
@@ -351,6 +367,30 @@ GPPowerStatus gp_get_power_status()
 // for proper gopro interface operation
 void gp_interface_state_machine()
 {
+    if (gp.waiting_for_i2c) {
+        if (gopro_i2c_in_progress()) {
+            if (timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+                gp_timeout();
+            }
+        } else {
+            gp.waiting_for_i2c = false;
+
+            if (i2c_get_sdir()) {
+                // transaction was tx
+                if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_COMPLETE_CMD_SEND) {
+                    gp_control_state = GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE;
+                } else {
+                    // sent response, we're all done
+                    gp_control_state = GP_CONTROL_STATE_IDLE;
+                }
+
+            } else {
+                // transaction was rx
+                handle_rx_data();
+            }
+        }
+    }
+
     switch (gp_control_state) {
         case GP_CONTROL_STATE_IDLE:
             break;
@@ -370,6 +410,7 @@ void gp_interface_state_machine()
             }
             break;
 
+#if 0
         case GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND:
             // We wait here until we've been addressed by the GoPro, which means it's ready to read the command from us.
             // This will cause an interrupt that changes the state of the state machine, so the only way out of this state from
@@ -378,7 +419,9 @@ void gp_interface_state_machine()
                 gp_timeout(GP_CMD_SEND_CMD_START_TIMEOUT);
             }
             break;
+#endif
 
+#if 0
         case GP_CONTROL_STATE_WAIT_FOR_COMPLETE_CMD_SEND:
             // Wait for either a stop condition, which means the GoPro has finished reading the command, or timeout if we don't
             // see a stop condition in enough time
@@ -389,7 +432,9 @@ void gp_interface_state_machine()
                 gp_timeout(GP_CMD_SEND_CMD_COMPLETE_TIMEOUT);
             }
             break;
+#endif
 
+#if 0
         case GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE:
             // We wait here until we've been addressed by the GoPro, which means it's about to transmit its response to us.
             // This will cause an interrupt that changes the state of the state machine, so the only way out of this state from
@@ -398,7 +443,9 @@ void gp_interface_state_machine()
                 gp_timeout(GP_CMD_GET_RESPONSE_START_TIMEOUT);
             }
             break;
+#endif
 
+#if 0
         case GP_CONTROL_STATE_WAIT_FOR_GP_DATA_COMPLETE:
             // Wait for the stop condition to be asserted, meaning the GoPro is done transmitting data
             if (i2c_get_scd()) {
@@ -413,65 +460,26 @@ void gp_interface_state_machine()
                 }
             }
             break;
+#endif
 
+#if 0
         case GP_CONTROL_STATE_RETRIEVE_RECEIVED_DATA:
-            if (i2c_get_available_chars() > 0) {
-                Uint8 retrieve_error = FALSE;
-
-                // Get the length of the received data
-                receive_buffer[0] = i2c_get_next_char();
-
-                // If we're expecting a command, we need to mask out the top bit of the length field
-                // (as this is used to signal which direction the command was in, backpack to camera or camera to backpack,
-                // not as part of the message length)
+            if (collect_i2c_data(receive_buffer, sizeof(receive_buffer))) {
+                // Parse the retrieved data differently depending on whether we're expecting a command or a response
                 if (next_reception_expected == GP_EXPECTING_COMMAND) {
-                    receive_buffer[0] &= 0x7F;
-                }
-
-                int i;
-                for (i = 0; i < receive_buffer[0]; i++) {
-                    if ((i + 1) > GP_COMMAND_RECEIVE_BUFFER_SIZE) {
-                        // Indicate the error
-                        last_cmd_response.cmd_result = GP_CMD_RECEIVED_DATA_OVERFLOW;
-                        new_response_available = TRUE;
-                        retrieve_error = TRUE;
-
-                        // Avoid overflowing the receive buffer
-                        break;
-                    } else if (!(i2c_get_available_chars() > 0)) {
-                        // Indicate the error
-                        last_cmd_response.cmd_result = GP_CMD_RECEIVED_DATA_UNDERFLOW;
-                        new_response_available = TRUE;
-                        retrieve_error = TRUE;
-
-                        // Avoid corrupting the receive ringbuffer
-                        break;
-                    } else {
-                        // Retrieve the next byte in the response
-                        receive_buffer[i + 1] = i2c_get_next_char();
-                    }
-                }
-
-                // If we had an error while retrieving the data, abort and go back to idle
-                // Else, continue on to parsing the retrieved data
-                if (retrieve_error) {
-                    gp_control_state = GP_CONTROL_STATE_IDLE;
+                    gp_control_state = GP_CONTROL_STATE_PARSE_RECEIVED_CMD;
                 } else {
-                    // Parse the retrieved data differently depending on whether we're expecting a command or a response
-                    if (next_reception_expected == GP_EXPECTING_COMMAND) {
-                        gp_control_state = GP_CONTROL_STATE_PARSE_RECEIVED_CMD;
-                    } else {
-                        gp_control_state = GP_CONTROL_STATE_PARSE_RECEIVED_RESPONSE;
-                    }
+                    gp_control_state = GP_CONTROL_STATE_PARSE_RECEIVED_RESPONSE;
                 }
             } else {
-                // If there was no data in the receive buffer when we expect there to be, indicate the error
-                last_cmd_response.cmd_result = GP_CMD_RECEIVED_DATA_UNDERFLOW;
+                // error in data rx, return to idle
                 new_response_available = TRUE;
                 gp_control_state = GP_CONTROL_STATE_IDLE;
             }
             break;
+#endif
 
+#if 0
         case GP_CONTROL_STATE_PARSE_RECEIVED_CMD:
             // First make sure the command is one we support.  Per the GoPro spec, we only have to respond to the "vs" command
             // to query the version of the protocol we support.  For any other command from the GoPro, return an error response
@@ -494,7 +502,9 @@ void gp_interface_state_machine()
             gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
             timeout_counter = 0;
             break;
+#endif
 
+#if 0
         case GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE:
             // We wait here until we've been addressed by the GoPro, which means it's about to read a response from us.
             // This will cause an interrupt that changes the state of the state machine, so the only way out of this state from
@@ -503,7 +513,9 @@ void gp_interface_state_machine()
                 gp_timeout(GP_CMD_SEND_RESPONSE_START_TIMEOUT);
             }
             break;
+#endif
 
+#if 0
         case GP_CONTROL_STATE_WAIT_TO_COMPLETE_RESPONSE_SEND:
             // We just have to wait in this state until we see a stop condition on the bus, indicating that the GoPro is
             // done reading our response, or timeout if the GoPro hasn't read our response in a certain amount of time
@@ -513,7 +525,9 @@ void gp_interface_state_machine()
                 gp_timeout(GP_CMD_SEND_RESPONSE_COMPLETE_TIMEOUT);
             }
             break;
+#endif
 
+#if 0
         case GP_CONTROL_STATE_PARSE_RECEIVED_RESPONSE:
             // Load the last command response struct with the values from the actual response
             last_cmd_response.cmd_status = (GPCmdStatus)receive_buffer[1];
@@ -534,6 +548,7 @@ void gp_interface_state_machine()
             // Indicate that there is a new response available
             new_response_available = TRUE;
             break;
+#endif
     }
 
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
@@ -563,6 +578,133 @@ void gp_interface_state_machine()
 		cmd.cmd[1] = 'l';
 		gp_send_command(&cmd);
 	}
+}
+
+void handle_rx_data()
+{
+    /*
+     * Called when an i2c rx transaction has completed.
+     *
+     * Check if the data is formatted correctly and process accordingly.
+     */
+
+    bool from_camera;
+    Uint8 rxbuf[GP_COMMAND_RECEIVE_BUFFER_SIZE];
+
+    if (collect_i2c_data(rxbuf, sizeof(rxbuf), &from_camera)) {
+        // Parse the retrieved data differently depending on whether it's a command or response
+        if (from_camera) {
+            gp_handle_command(rxbuf);
+        } else {
+            gp_handle_response(rxbuf);
+        }
+    } else {
+        // error in data rx, return to idle
+        new_response_available = TRUE;
+        gp_control_state = GP_CONTROL_STATE_IDLE;
+    }
+}
+
+bool collect_i2c_data(Uint8 *buf, Uint8 maxlen, bool *from_camera)
+{
+    /*
+     * Called when an i2c rx transaction has completed successfully,
+     * to determine if the received data is formatted correctly.
+     *
+     * Drain all the data from the i2c ringbuf, and ensure
+     * the advertised len matches what we actually recevied.
+     */
+
+    int len = i2c_get_available_chars();
+    if (len <= 0) {
+        return false;
+    }
+
+    // first byte is the length of the received data,
+    // top bit signals the cmd originator, 1 == camera, 0 == backpack
+    Uint8 b = i2c_get_next_char();
+    *from_camera = b & (1 << 7);
+    buf[0] = b & 0x7f;
+
+    int i;
+    for (i = 1; i < buf[0]; ++i) {
+        buf[i] = i2c_get_next_char();
+    }
+
+    // always drain ringbuf to ensure we're not processing leftovers next time
+    // ... btw, why are we using a ringbuf, rather than a simple buffer per msg?
+    for ( ; i < len; ++i) {
+        i2c_get_next_char();
+    }
+
+    if (len > buf[0] || buf[0] > maxlen) {
+//        overflows++;
+        return false;
+    }
+
+    if (len < buf[0]) {
+//        underflows++;
+        return false;
+    }
+
+    return true;
+}
+
+void gp_handle_command(Uint8 *cmdbuf)
+{
+    /*
+     * A validated command has been received from the camera.
+     *
+     * First make sure the command is one we support.  Per the GoPro spec,
+     * we only have to respond to the "vs" command which queries
+     * the version of the protocol we support.
+     *
+     * For any other command from the GoPro, return an error response
+     */
+
+    if ((cmdbuf[1] == 'v') && (cmdbuf[2] == 's')) {
+        // Preload the response buffer with the command response.  This will be transmitted in the ISR
+        txbuf[0] = 2; // Packet size, 1st byte is status byte, 2nd byte is protocol version
+        txbuf[1] = GP_CMD_STATUS_SUCCESS;
+        txbuf[2] = GP_PROTOCOL_VERSION;
+        gccb_version_queried = 1;
+
+    } else {
+        // Preload the response buffer with an error response, since we don't support the command we
+        // were sent.  This will be transmitted in the ISR
+        txbuf[0] = 1; // Packet size, only status byte
+        txbuf[1] = GP_CMD_STATUS_FAILURE;
+    }
+
+    // Assert the interrupt request line to indicate that we're ready to respond to the GoPro's command
+    gp_assert_intr();
+
+    gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
+    timeout_counter = 0;
+}
+
+void gp_handle_response(Uint8 *respbuf)
+{
+    /*
+     * Process a response to one of our commands.
+     */
+
+    last_cmd_response.cmd_status = (GPCmdStatus)respbuf[1];
+
+    // Special Handling of responses
+    if (last_cmd_response.cmd[0] == 'c' && last_cmd_response.cmd[1] == 'v') {
+        // Take third byte (CAMERA_MODEL) of the "camera model and firmware version" response
+        last_cmd_response.cmd_response = respbuf[3];
+    } else {
+        last_cmd_response.cmd_response = respbuf[2];
+    }
+
+    // The full command transmit has now completed successfully, so we can go back to idle
+    last_cmd_response.cmd_result = GP_CMD_SUCCESSFUL;
+    gp_control_state = GP_CONTROL_STATE_IDLE;
+
+    // Indicate that there is a new response available
+    new_response_available = true;
 }
 
 void gp_write_eeprom()
@@ -625,6 +767,59 @@ void gp_write_eeprom()
 	GP_BP_DET_LOW();
 }
 
+void gp_on_slave_address(bool addressed_as_tx)
+{
+    /*
+     * Called in ISR context when the i2c device detects
+     * that we've been successfully addressed by the camera.
+     *
+     *
+     */
+
+    timeout_counter = 0;
+    gp.waiting_for_i2c = true;
+
+    if (addressed_as_tx) {
+        // send data as appropriate
+        // length is 1st byte in command buffer, add 1 for length field
+
+        gopro_i2c_send(txbuf, txbuf[0] + 1);
+
+        // keep track of whether we're sending a cmd or response.
+        // if sending cmd, need to know whether to wait for a response.
+        if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND) {
+            gp_control_state =  GP_CONTROL_STATE_WAIT_FOR_COMPLETE_CMD_SEND;
+
+        } else {
+            gp_control_state = GP_CONTROL_STATE_WAIT_TO_COMPLETE_RESPONSE_SEND;
+        }
+
+    } else {
+        // addressed as receiver.
+        // in the general case, we wait for the stop condition to indicate a transaction is complete.
+
+        if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND) {
+            // Special case - we have asked the GoPro to read a command from us, but before it has started to read the command,
+            // it issues a command to us first.  Per the spec, we have to give up on our command request and service the GoPro's command
+
+            // Indicate that the command we were trying to send has been preempted by the GoPro
+            last_cmd_response.cmd_result = GP_CMD_PREEMPTED;
+
+            // Indicate that a "new response" is available (what's available is the indication that the command was preempted)
+            if (last_cmd_response.cmd[0] == 'b' && last_cmd_response.cmd[1] == 'l' && gccb_version_queried == 0) {
+                // Drop this dummy response and mark the GCCB as functional
+                gccb_version_queried = 1;
+            } else {
+                new_response_available = TRUE;
+            }
+        }
+
+        // wait for the rx to complete
+        gp_control_state = GP_CONTROL_STATE_WAIT_FOR_GP_DATA_COMPLETE;
+    }
+}
+
+#if 0
 void addressed_as_slave_callback(I2CAIntSrc int_src)
 {
     // Make sure that this is actually the interrupt we're looking for
@@ -719,9 +914,11 @@ void addressed_as_slave_callback(I2CAIntSrc int_src)
         }
     }
 }
+#endif
 
-static void gp_timeout(GPCmdResult reason)
+void gp_timeout()
 {
+    gopro_i2c_on_timeout();
     timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
     gp_deassert_intr(); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
 
