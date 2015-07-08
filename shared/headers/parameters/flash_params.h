@@ -4,6 +4,56 @@
 #include "hardware/HWSpecific.h"
 #include "Flash2806x_API_Library.h"
 
+#define CURRENT_FLASH_PARAM_STRUCT	flash_param_struct_0002
+
+struct flash_param_struct_0002 {
+	Uint16 flash_struct_id;
+	float sys_swver;
+	float assy_time;
+	float ser_num_1;
+	float ser_num_2;
+	float ser_num_3;
+	float broadcast_msgs;
+	float k_rate;
+	float commutation_slope[AXIS_CNT];
+	float commutation_icept[AXIS_CNT];
+	float torque_pid_kp[AXIS_CNT];
+	float torque_pid_ki[AXIS_CNT];
+	float torque_pid_kd[AXIS_CNT];
+	float rate_pid_p[AXIS_CNT];
+	float rate_pid_i[AXIS_CNT];
+	float rate_pid_d[AXIS_CNT];
+	float rate_pid_windup[AXIS_CNT];
+	float offset_joint[AXIS_CNT];
+	float offset_gyro[AXIS_CNT];
+	float offset_accelerometer[AXIS_CNT];
+	float gain_accelerometer[AXIS_CNT];
+	float alignment_accelerometer[AXIS_CNT];
+};
+
+struct flash_param_struct_0001 {
+	Uint16 flash_struct_id;
+	float sys_swver;
+	float assy_time;
+	float ser_num_1;
+	float ser_num_2;
+	float ser_num_3;
+	float broadcast_msgs;
+	float k_rate;
+	float commutation_slope[AXIS_CNT];
+	float commutation_icept[AXIS_CNT];
+	float torque_pid_kp[AXIS_CNT];
+	float torque_pid_ki[AXIS_CNT];
+	float torque_pid_kd[AXIS_CNT];
+	float rate_pid_p[AXIS_CNT];
+	float rate_pid_i[AXIS_CNT];
+	float rate_pid_d[AXIS_CNT];
+	float rate_pid_windup[AXIS_CNT];
+	float offset_joint[AXIS_CNT];
+	float offset_accelerometer[AXIS_CNT];
+	float offset_gyro[AXIS_CNT];
+};
+
 struct flash_param_struct_0000 {
 	Uint16 flash_struct_id;
 	Uint16 board_id;
@@ -39,7 +89,6 @@ struct flash_param_struct_0000 {
 	float balance_step_duration;
 };
 
-extern struct flash_param_struct_0000 flash_params;
-
+extern struct CURRENT_FLASH_PARAM_STRUCT flash_params;
 
 #endif /* FLASH_PARAMS_H_ */

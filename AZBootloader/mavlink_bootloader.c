@@ -190,7 +190,7 @@ Uint32 MAVLINK_Flash()
 							mavlink_data_handshake(UINT16_MAX);
 
 							/* must be done */
-							WatchDogEnable();
+							watchdog_enable();
 
 							// Don't reset immediately, otherwise the MAVLink message above won't be flushed.
 

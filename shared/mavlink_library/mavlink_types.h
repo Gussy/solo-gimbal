@@ -1,12 +1,12 @@
 #ifndef MAVLINK_TYPES_H_
 #define MAVLINK_TYPES_H_
 
-// Visual Studio versions before 2013 don't conform to C99.
-#if (defined _MSC_VER) && (_MSC_VER < 1800)
-#include <stdint.h>
-#else
-#include <inttypes.h>
+// Visual Studio versions before 2010 don't have stdint.h, so we just error out.
+#if (defined _MSC_VER) && (_MSC_VER < 1600)
+#error "The C-MAVLink implementation requires Visual Studio 2010 or greater"
 #endif
+
+#include <stdint.h>
 
 // Macro to define packed structures
 #ifdef __GNUC__
@@ -83,7 +83,7 @@ typedef struct param_union {
 */
 MAVPACKED(
 typedef union {
-    struct {
+    struct __data{
         uint8_t is_double:1;
         uint8_t mavlink_type:7;
         union {
@@ -97,7 +97,7 @@ typedef union {
             float f;
             uint8_t align[7];
         };
-    };
+    } __data_;
     uint8_t data[8];
 }) mavlink_param_union_double_t;
 

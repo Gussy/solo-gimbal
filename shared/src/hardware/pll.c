@@ -57,7 +57,7 @@ void PLLset(Uint16 val)
       // the loop via ServiceDog().
 
 	  // Uncomment to disable the watchdog
-      WatchDogDisable();
+      watchdog_disable();
 
       while(SysCtrlRegs.PLLSTS.bit.PLLLOCKS != 1) {}
 

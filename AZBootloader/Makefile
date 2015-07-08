@@ -16,6 +16,8 @@ include defs.mk
 # Disable implicit rules - we don't rely on them, and this is faster.
 .SUFFIXES:
 
+JTAG_TOOL := XDS500
+#JTAG_TOOL := XDS100v3
 
 ###############################################################################
 # executables
@@ -75,7 +77,7 @@ MAIN_FW := $(PROJ_ROOT)/../GimbalFirmware/PM_Sensorless_F2806x.out
 DATA_HDR := data.h
 
 # JTAG Programmer configuration file
-JTAG_CONFIG	:= $(PROJ_ROOT)/targetConfigs/TMS320F28067.ccxml
+JTAG_CONFIG	:= $(PROJ_ROOT)/targetConfigs/TMS320F28067_$(JTAG_TOOL).ccxml
 
 ###############################################################################
 # Used libraries

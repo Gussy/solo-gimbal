@@ -10,6 +10,7 @@
 #include "gopro/gopro_interface.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "helpers/fault_handling.h"
+#include "hardware/watchdog.h"
 #include "flash/flash.h"
 #include "hardware/watchdog.h"
 
@@ -75,16 +76,9 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         	if (GetBoardHWID() != AZ) {
         		// just making sure we are off
         		power_down_motor();
+
         		// enable watchdog and wait until it goes off
-        		WatchDogEnable();
-
-                EALLOW;
-                // Cause a device reset by writing incorrect values into WDCHK
-                SysCtrlRegs.WDCR = 0x0010;
-                EDIS;
-
-                // This should never be reached.
-                while(1);
+        		watchdog_immediate_reset();
         	}
         	break;
 
@@ -294,7 +288,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 IntOrFloat float_converter;
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
-                    float_converter.float_val = flash_params.AxisCalibrationSlopes[msg.sender_id];
+                    float_converter.float_val = flash_params.commutation_slope[msg.sender_id];
                     cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_SLOPE, float_converter.uint32_val);
                 }
             }
@@ -305,7 +299,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 IntOrFloat float_converter;
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
-                    float_converter.float_val = flash_params.AxisCalibrationIntercepts[msg.sender_id];
+                    float_converter.float_val = flash_params.commutation_icept[msg.sender_id];
                     cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT, float_converter.uint32_val);
                 }
             }
@@ -572,7 +566,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 	if (GetBoardHWID() == AZ) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                		flash_params.AxisCalibrationSlopes[msg.sender_id] = float_converter.float_val;
+                		flash_params.commutation_slope[msg.sender_id] = float_converter.float_val;
                 		//write_flash();
                 	} else {
                         // Only load the parameter once (because we request parameters until we get them, there's a possibility
@@ -590,7 +584,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 	if (GetBoardHWID() == AZ) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                		flash_params.AxisCalibrationIntercepts[msg.sender_id] = float_converter.float_val;
+                		flash_params.commutation_icept[msg.sender_id] = float_converter.float_val;
                 		// intercept comes after slope
                 		write_flash();
                 	} else {

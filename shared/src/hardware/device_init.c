@@ -14,7 +14,7 @@ static void init_gpio();
 
 void DeviceInit()
 {
-	WatchDogDisable();	// Disable the watchdog initially
+	watchdog_disable();	// Disable the watchdog initially
 	DINT;			// Global Disable all Interrupts
 	IER = 0x0000;	// Disable CPU interrupts
 	IFR = 0x0000;	// Clear all CPU interrupt flags
@@ -347,8 +347,8 @@ static void init_gpio(){
 	GpioCtrlRegs.GPAMUX2.bit.GPIO23 = 0;	// 0=GPIO,  1=EQEP1I,  2=MFSXA,  3=SCIRXDB
 	GpioCtrlRegs.GPAPUD.bit.GPIO23 = 1;     // Disable the internal pullup on this pin
 	GpioCtrlRegs.GPADIR.bit.GPIO23 = 1;		// 1=OUTput,  0=INput
-	GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;	// uncomment if --> Set Low initially
-//	GpioDataRegs.GPASET.bit.GPIO23 = 1;		// uncomment if --> Set High initially
+//	GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;	// uncomment if --> Set Low initially
+	GpioDataRegs.GPASET.bit.GPIO23 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
 //  GPIO-24 - PIN FUNCTION = Debug SPI port MOSI
 	GpioCtrlRegs.GPAMUX2.bit.GPIO24 = 3;	// 0=GPIO,  1=ECAP1,  2=EQEP2A,  3=SPISIMOB

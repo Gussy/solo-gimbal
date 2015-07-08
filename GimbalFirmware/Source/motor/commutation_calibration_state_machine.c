@@ -256,8 +256,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 float_converter.float_val = encoder_parms->calibration_intercept;
 		    	cand_tx_response(CAND_ID_AZ,CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT,float_converter.uint32_val);
 		    } else {
-        		flash_params.AxisCalibrationSlopes[AZ] = encoder_parms->calibration_slope;
-        		flash_params.AxisCalibrationIntercepts[AZ] = encoder_parms->calibration_intercept;
+        		flash_params.commutation_slope[AZ] = encoder_parms->calibration_slope;
+        		flash_params.commutation_icept[AZ] = encoder_parms->calibration_intercept;
         		write_flash();
 		    }
 
