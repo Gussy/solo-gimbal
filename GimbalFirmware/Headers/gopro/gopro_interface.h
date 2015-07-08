@@ -129,9 +129,9 @@ inline void gp_deassert_intr(void) {
     GpioDataRegs.GPASET.bit.GPIO26 = 1;
 }
 
-Uint8 gp_get_new_heartbeat_available();
-Uint8 gp_get_new_get_response_available();
-Uint8 gp_get_new_set_response_available();
+bool gp_get_new_heartbeat_available();
+bool gp_get_new_get_response_available();
+bool gp_get_new_set_response_available();
 
 int gp_get_request(Uint8 cmd_id);
 int gp_set_request(GPSetRequest* request);
