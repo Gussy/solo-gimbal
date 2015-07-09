@@ -106,9 +106,9 @@ int gp_send_command(const GPCmd* cmd)
     }
 
     // Clear the last command data
-    last_cmd_response.cmd_response = 0x00;
-    last_cmd_response.cmd_status = GP_CMD_STATUS_UNKNOWN;
-    last_cmd_response.cmd_result = GP_CMD_UNKNOWN;
+    last_cmd_response.value = 0x00;
+    last_cmd_response.status = GP_CMD_STATUS_UNKNOWN;
+    last_cmd_response.result = GP_CMD_UNKNOWN;
 
     // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
     // this command, and this way a caller of gp_get_last_response can know what command the response goes with
@@ -172,8 +172,8 @@ GPHeartbeatStatus gp_heartbeat_status()
 GPGetResponse gp_last_get_response()
 {
 	last_get_response.cmd_id = last_request_cmd_id;
-	if (last_cmd_response.cmd_status == GP_CMD_STATUS_SUCCESS && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
-		last_get_response.value = last_cmd_response.cmd_response;
+    if (last_cmd_response.status == GP_CMD_STATUS_SUCCESS && last_cmd_response.result == GP_CMD_SUCCESSFUL) {
+        last_get_response.value = last_cmd_response.value;
 	} else {
 		last_get_response.value = 0xFF;
 	}
@@ -187,7 +187,7 @@ GPGetResponse gp_last_get_response()
 GPSetResponse gp_last_set_response()
 {
 	last_set_response.cmd_id = last_request_cmd_id;
-	if (last_cmd_response.cmd_status == GP_CMD_STATUS_SUCCESS && last_cmd_response.cmd_result == GP_CMD_SUCCESSFUL) {
+    if (last_cmd_response.status == GP_CMD_STATUS_SUCCESS && last_cmd_response.result == GP_CMD_SUCCESSFUL) {
 		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_SUCCESS;
 	} else {
 		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_FAILURE;
@@ -406,7 +406,7 @@ void gp_interface_state_machine()
             if (gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
                 GP_PWRON_HIGH();
                 gp_control_state = GP_CONTROL_STATE_IDLE;
-                last_cmd_response.cmd_result = GP_CMD_SUCCESSFUL;
+                last_cmd_response.result = GP_CMD_SUCCESSFUL;
                 new_response_available = true;
             }
             break;
@@ -543,18 +543,18 @@ void gp_handle_response(const uint16_t *respbuf)
      * Process a response to one of our commands.
      */
 
-    last_cmd_response.cmd_status = (GPCmdStatus)respbuf[1];
+    last_cmd_response.status = (GPCmdStatus)respbuf[1];
 
     // Special Handling of responses
     if (last_cmd_response.cmd[0] == 'c' && last_cmd_response.cmd[1] == 'v') {
         // Take third byte (CAMERA_MODEL) of the "camera model and firmware version" response
-        last_cmd_response.cmd_response = respbuf[3];
+        last_cmd_response.value = respbuf[3];
     } else {
-        last_cmd_response.cmd_response = respbuf[2];
+        last_cmd_response.value = respbuf[2];
     }
 
     // The full command transmit has now completed successfully, so we can go back to idle
-    last_cmd_response.cmd_result = GP_CMD_SUCCESSFUL;
+    last_cmd_response.result = GP_CMD_SUCCESSFUL;
     gp_control_state = GP_CONTROL_STATE_IDLE;
 
     // Indicate that there is a new response available
@@ -657,7 +657,7 @@ void gp_on_slave_address(bool addressed_as_tx)
             // it issues a command to us first.  Per the spec, we have to give up on our command request and service the GoPro's command
 
             // Indicate that the command we were trying to send has been preempted by the GoPro
-            last_cmd_response.cmd_result = GP_CMD_PREEMPTED;
+            last_cmd_response.result = GP_CMD_PREEMPTED;
 
             // Indicate that a "new response" is available (what's available is the indication that the command was preempted)
             if (last_cmd_response.cmd[0] == 'b' && last_cmd_response.cmd[1] == 'l' && gccb_version_queried == 0) {

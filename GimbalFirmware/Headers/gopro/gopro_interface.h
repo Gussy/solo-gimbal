@@ -86,9 +86,9 @@ typedef struct {
 
 typedef struct {
     char cmd[2];
-    GPCmdStatus cmd_status;
-    Uint8 cmd_response;
-    GPCmdResult cmd_result;
+    GPCmdStatus status; // as reported by the camera
+    Uint8 value;
+    GPCmdResult result; // of the i2c transaction itself
 } GPCmdResponse;
 
 typedef struct {
