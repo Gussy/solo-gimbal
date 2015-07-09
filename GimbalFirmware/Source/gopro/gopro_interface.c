@@ -39,7 +39,6 @@ bool gccb_version_queried = 0;
 bool gccb_eeprom_written = 0;
 
 typedef struct {
-    volatile GPControlState ctrl_state;
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 } gopro_t;
 
@@ -49,7 +48,6 @@ static gopro_t gp;
 void init_gp_interface()
 {
     gp.waiting_for_i2c = false;
-    gp.ctrl_state = GP_CONTROL_STATE_IDLE;
     gp_deassert_intr();
 
     gopro_i2c_init();
