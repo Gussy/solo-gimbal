@@ -336,9 +336,9 @@ class calibrationUI(object):
 
     def updateCalibrationTable(self, params):
         # Axis statuses
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, self.isValid(params['validation']['commutation']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, self.isValid(params['validation']['commutation']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, self.isValid(params['validation']['commutation']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, self.isValid(params['validation']['commutation']['pitch']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, self.isValid(params['validation']['commutation']['roll']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, self.isValid(params['validation']['commutation']['yaw']))
 
         # Static statuses
         self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isValid(params['validation']['joints']))

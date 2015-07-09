@@ -115,7 +115,11 @@ def show(link):
                 'version': validate_version(link, swver=swver),
                 'serial': validate_serial_number(link, serial_number=serial_number),
                 'date': validate_date(link, assembly_time=assembly_time),
-                'commutation': validate_comutation(link, pitch_com=pitch_com, roll_com=roll_com, yaw_com=yaw_com),
+                'commutation': {
+                    'pitch': validate_comutation_axis_value('pitch', pitch_com),
+                    'roll': validate_comutation_axis_value('roll', roll_com),
+                    'yaw': validate_comutation_axis_value('yaw', yaw_com)
+                },
                 'joints': validate_joints(link, joint=joint),
                 'gyros': validate_gyros(link, gyro=gyro),
                 'accels': validate_accelerometers(link, acc=accel_offset)
@@ -136,6 +140,22 @@ def validate_version(link, swver=None):
         return Results.Pass
     else:
         return Results.Fail
+
+def validate_comutation_axis_value(axis, values):
+    if axis == 'pitch':
+        valid = validate_comutation_axis(None, values, EXPECTED_PITCH_ICEPT_MAX, EXPECTED_PITCH_ICEPT_MIN, EXPECTED_PITCH_SLOPE_MAX, EXPECTED_PITCH_SLOPE_MIN)
+    elif axis == 'roll':
+        valid = validate_comutation_axis(None, values, EXPECTED_ROLL_ICEPT_MAX, EXPECTED_ROLL_ICEPT_MIN, EXPECTED_ROLL_SLOPE_MAX, EXPECTED_ROLL_SLOPE_MIN)
+    elif axis == 'yaw':
+        valid = validate_comutation_axis(None, values, EXPECTED_YAW_ICEPT_MAX, EXPECTED_YAW_ICEPT_MIN, EXPECTED_YAW_SLOPE_MAX, EXPECTED_YAW_SLOPE_MIN)
+    else:
+        return Results.Error
+
+    if valid:
+        return Results.Pass
+    else:
+        return Results.Fail
+    
 
 def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
     icept = axis[0]
