@@ -71,7 +71,8 @@ def calibrate_accel(link, progressCallback=None):
 
     def averageProgressCallback(progress):
         averageProgress = currentProgress + (progressStep * float(progress / 100.0))
-        progressCallback(averageProgress, currentMessage, False)
+        if progressCallback:
+            progressCallback(averageProgress, currentMessage, False)
 
     # Get samples
     samples = list()
