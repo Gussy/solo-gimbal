@@ -5,7 +5,7 @@ import numpy as np
 import setup_accelcal
 
 from setup_mavlink import get_current_joint_angles, get_current_delta_angles, get_current_delta_velocity
-from setup_param import set_offsets, message_brodcasting, set_param, commit_to_flash
+from setup_param import set_offsets, message_brodcasting, set_param, commit_to_flash, set_accel_params
 from pymavlink.rotmat import Vector3
 from math import degrees
 
@@ -95,16 +95,8 @@ def calibrate_accel(link, progressCallback=None):
         print('\nCalibration values are ' + str(p))
         print('Offset values are ' + str(level.T * degrees(1)))
     
-    set_param(link, "GMB_OFF_ACC_X", p[0])
-    set_param(link, "GMB_OFF_ACC_Y", p[1])
-    set_param(link, "GMB_OFF_ACC_Z", p[2])
-    set_param(link, "GMB_GN_ACC_X",  p[3])
-    set_param(link, "GMB_GN_ACC_Y",  p[4])
-    set_param(link, "GMB_GN_ACC_Z",  p[5])
-    set_param(link, "GMB_ALN_ACC_X", level[0])
-    set_param(link, "GMB_ALN_ACC_Y", level[1])
-    set_param(link, "GMB_ALN_ACC_Z", level[2])
-    commit_to_flash(link)
+    # Save the parameters to flash
+    set_accel_params(link, p, level)
     
     message_brodcasting(link, False)
     return Vector3(p[0], p[1], p[2])
