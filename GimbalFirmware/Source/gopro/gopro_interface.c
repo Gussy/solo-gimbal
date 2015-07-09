@@ -50,6 +50,7 @@ void init_gp_interface()
 {
     gp.waiting_for_i2c = false;
     gp.ctrl_state = GP_CONTROL_STATE_IDLE;
+    gp_deassert_intr();
 
     gopro_i2c_init();
 
@@ -675,6 +676,8 @@ void gp_on_slave_address(bool addressed_as_tx)
 void gp_timeout()
 {
     gopro_i2c_on_timeout();
+    gp.waiting_for_i2c = false;
+
     timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
     gp_deassert_intr(); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
 
