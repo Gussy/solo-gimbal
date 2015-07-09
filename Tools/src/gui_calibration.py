@@ -69,9 +69,9 @@ class calibrationUI(object):
 
     def showWarningMessageBox(self, message):
         flags = QtGui.QMessageBox.StandardButton.Ok
-        flags |= QtGui.QMessageBox.StandardButton.Discard
+        flags |= QtGui.QMessageBox.StandardButton.Cancel
         result = QtGui.QMessageBox.warning(self.parent, "Warning!", message, flags)
-        if result == 0:
+        if result == QtGui.QMessageBox.StandardButton.Ok:
             return True
         else:
             return False
@@ -202,9 +202,15 @@ class calibrationUI(object):
         self.setCalibrationStatus('')
         
         if isinstance(joints, Vector3):
+            valid = setup_validate.validate_joints(None, joints)
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isValid(valid))
+            self.ui.lblCalibrationJointX.setText('%0.6f' % joints.x)
+            self.ui.lblCalibrationJointY.setText('%0.6f' % joints.y)
+            self.ui.lblCalibrationJointZ.setText('%0.6f' % joints.z)
+            
             allParams = yield AsyncTask(self.getAllParams)
             if allParams != None:
-                self.updateCalibrationTable(allParams)
+                #self.updateCalibrationTable(allParams)
                 self.logParameters(allParams)
         else:
             self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, False)
@@ -221,9 +227,15 @@ class calibrationUI(object):
         self.setCalibrationStatus('')
 
         if isinstance(gyros, Vector3):
+            valid = setup_validate.validate_gyros(None, gyros)
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, self.isValid(valid))
+            self.ui.lblCalibrationGyroX.setText('%0.6f' % gyros.x)
+            self.ui.lblCalibrationGyroY.setText('%0.6f' % gyros.y)
+            self.ui.lblCalibrationGyroZ.setText('%0.6f' % gyros.z)
+            
             allParams = yield AsyncTask(self.getAllParams)
             if allParams != None:
-                self.updateCalibrationTable(allParams)
+                #self.updateCalibrationTable(allParams)
                 self.logParameters(allParams)
         else:
             self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, False)
@@ -239,9 +251,15 @@ class calibrationUI(object):
         self.setCalibrationStatus('')
 
         if isinstance(accel, Vector3):
+            valid = setup_validate.validate_accelerometers(None, accel)
+            self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isValid(valid))
+            self.ui.lblCalibrationAccelX.setText('%0.6f' % accel.x)
+            self.ui.lblCalibrationAccelY.setText('%0.6f' % accel.y)
+            self.ui.lblCalibrationAccelZ.setText('%0.6f' % accel.z)
+            
             allParams = yield AsyncTask(self.getAllParams)
             if allParams != None:
-                self.updateCalibrationTable(allParams)
+                #self.updateCalibrationTable(allParams)
                 self.logParameters(allParams)
         else:
             self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, False)
@@ -274,10 +292,10 @@ class calibrationUI(object):
         if not os.path.isdir('logs'):
             os.makedirs('logs')
 
-        if allParams['serial_number'] != None and allParams['serial_number'] != '':
-            filePath = os.path.join('logs', '%s.json' % allParams['serial_number'])
+        if params['serial_number'] != None and params['serial_number'] != '':
+            filePath = os.path.join('logs', '%s.json' % params['serial_number'])
             with open(filePath, 'w') as f:
-                json.dump(allParams, f)
+                json.dump(params, f)
 
     def isCalibrated(self, params):
         if 'icept' in params.keys():
@@ -350,9 +368,9 @@ class calibrationUI(object):
         self.ui.lblCalibrationGyroZ.setText('%0.6f' % params['gyro']['z'])
 
         # Accel values
-        self.ui.lblCalibrationAccelX.setText('%0.6f' % params['accel']['x'])
-        self.ui.lblCalibrationAccelY.setText('%0.6f' % params['accel']['y'])
-        self.ui.lblCalibrationAccelZ.setText('%0.6f' % params['accel']['z'])
+        self.ui.lblCalibrationAccelX.setText('%0.6f' % params['accel']['offset']['x'])
+        self.ui.lblCalibrationAccelY.setText('%0.6f' % params['accel']['offset']['y'])
+        self.ui.lblCalibrationAccelZ.setText('%0.6f' % params['accel']['offset']['z'])
 
     def resetCalibrationTable(self):
         # Axis statuses
