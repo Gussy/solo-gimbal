@@ -375,18 +375,18 @@ void gp_interface_state_machine()
         } else {
             gp.waiting_for_i2c = false;
 
-            if (i2c_get_sdir()) {
+            if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_GP_DATA_COMPLETE) {
+                // transaction was rx
+                handle_rx_data();
+
+            } else {
                 // transaction was tx
                 if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_COMPLETE_CMD_SEND) {
-                    gp_control_state = GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE;
+                    gp_control_state =  GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE;
                 } else {
                     // sent response, we're all done
                     gp_control_state = GP_CONTROL_STATE_IDLE;
                 }
-
-            } else {
-                // transaction was rx
-                handle_rx_data();
             }
         }
     }
