@@ -12,11 +12,12 @@ static void gopro_i2c_on_addressed();
 void gopro_i2c_init()
 {
     init_i2c(&gopro_i2c_isr);
+    i2c_clr_scd();
 }
 
 bool gopro_i2c_in_progress()
 {
-    if (i2c_get_scd()) {
+    if (!i2c_get_bb() && i2c_get_scd()) {
         return false;
     }
 
@@ -59,11 +60,13 @@ void gopro_i2c_on_addressed()
      * Called from ISR context when we're addressed as an i2c slave by the camera.
      */
 
+    // must capture transaction direction before clearing stop condition
+    bool addressed_as_slave_tx = i2c_get_sdir();
+
     gp_deassert_intr(); // we've been acknowledged, can deassert
     i2c_clr_scd();      // clear previous stop condition so we can be notified on the upcoming one
 
     // notify gp that we've been addressed
-    bool addressed_as_slave_tx = i2c_get_sdir();
     gp_on_slave_address(addressed_as_slave_tx);
 }
 
@@ -76,4 +79,5 @@ void gopro_i2c_on_timeout()
 
     // could cancel transaction here,
     // nothing to do here for now
+    i2c_clr_scd();
 }
