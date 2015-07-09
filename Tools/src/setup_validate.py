@@ -17,7 +17,7 @@ EXPECTED_PITCH_ICEPT_MIN = 0.10
 EXPECTED_PITCH_SLOPE_MAX = 0.14
 EXPECTED_PITCH_SLOPE_MIN = 0.12
 EXPECTED_ROLL_ICEPT_MIN = 0.35
-EXPECTED_ROLL_ICEPT_MAX = 0.51
+EXPECTED_ROLL_ICEPT_MAX = 0.53
 EXPECTED_ROLL_SLOPE_MAX = 0.14
 EXPECTED_ROLL_SLOPE_MIN = 0.11
 EXPECTED_YAW_ICEPT_MAX = 0.54
@@ -118,7 +118,7 @@ def show(link):
                 'commutation': validate_comutation(link, pitch_com=pitch_com, roll_com=roll_com, yaw_com=yaw_com),
                 'joints': validate_joints(link, joint=joint),
                 'gyros': validate_gyros(link, gyro=gyro),
-                'accels': validate_accelerometers(link, acc=acc)
+                'accels': validate_accelerometers(link, acc=accel_offset)
             }
         }
         return params
