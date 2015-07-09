@@ -185,7 +185,7 @@ class connectionUI(object):
             if serialNumber == '' or assemblyTime == 0:
                 text, ok = QtGui.QInputDialog.getText(self.parent, '3DR Gimbal', 'Serial Number:')
                 if ok and text != '' and softwareVersion[0] >= 0 and softwareVersion[1] >= 18:
-                    serialNumber, assemblyTime = yield AsyncTask(self.writeSerialNumber, text)
+                    serialNumber, assemblyTime = yield AsyncTask(self.writeSerialNumber, text.upper())
             # Update the status display
             self.setStatusInfo(
                 softwareVersion=softwareVersion,
