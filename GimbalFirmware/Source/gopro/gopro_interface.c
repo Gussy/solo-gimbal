@@ -449,9 +449,9 @@ void handle_rx_data()
      */
 
     bool from_camera;
-    Uint8 rxbuf[GP_COMMAND_RECEIVE_BUFFER_SIZE];
+    uint16_t rxbuf[GP_COMMAND_RECEIVE_BUFFER_SIZE];
 
-    if (collect_i2c_data(rxbuf, sizeof(rxbuf), &from_camera)) {
+    if (collect_i2c_data(rxbuf, GP_COMMAND_RECEIVE_BUFFER_SIZE, &from_camera)) {
         // Parse the retrieved data differently depending on whether it's a command or response
         if (from_camera) {
             gp_handle_command(rxbuf);
