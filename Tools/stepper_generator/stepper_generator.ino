@@ -1,6 +1,6 @@
 #include "Arduino.h"
 
-#define STEPS 12800
+#define STEPS 3200
 #define PIN_STEP 8
 #define PIN_RELAY1 9
 #define PIN_RELAY2 10
