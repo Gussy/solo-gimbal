@@ -63,7 +63,18 @@ class calibrationUI(object):
     @Slot()
     def handleEraseCalibration(self):
         if self.connection.isConnected():
-            self.runAsyncEraseCalibration()
+            confirm = self.showWarningMessageBox("Do you really want to erase the calibration?")
+            if confirm:
+                self.runAsyncEraseCalibration()
+
+    def showWarningMessageBox(self, message):
+        flags = QtGui.QMessageBox.StandardButton.Ok
+        flags |= QtGui.QMessageBox.StandardButton.Discard
+        result = QtGui.QMessageBox.warning(self.parent, "Warning!", message, flags)
+        if result == 0:
+            return True
+        else:
+            return False
 
     def showInformationMessageBox(self, title, message):
         return QtGui.QMessageBox.information(self.parent, title, message)
@@ -131,24 +142,7 @@ class calibrationUI(object):
         allParams = yield AsyncTask(self.getAllParams)
         if allParams != None:
             self.updateCalibrationTable(allParams)
-        self.setButtonsEnabled(True)
-
-    @coroutine
-    def runAsyncGetCalibration(self):
-        self.setButtonsEnabled(False)
-        allParams = yield AsyncTask(self.getAllParams)
-        if allParams != None:
-            self.updateCalibrationTable(allParams)
-
-            # Save the params to a file
-            if not os.path.isdir('logs'):
-                os.makedirs('logs')
-
-            if allParams['serial_number'] != None and allParams['serial_number'] != '':
-                filePath = os.path.join('logs', '%s.json' % allParams['serial_number'])
-                with open(filePath, 'w') as f:
-                    json.dump(allParams, f)
-
+            self.logParameters(allParams)
         self.setButtonsEnabled(True)
 
     @coroutine
@@ -191,7 +185,9 @@ class calibrationUI(object):
                 self.setCalibrationStatus("Calibration successful!")
                 # Get all the parameters if the calibration was successful
                 allParams = yield AsyncTask(self.getAllParams)
-                self.updateCalibrationTable(allParams)
+                if allParams != None:
+                    self.updateCalibrationTable(allParams)
+                    self.logParameters(allParams)
 
         self.timerStop()
         self.setButtonsEnabled(True)
@@ -206,11 +202,10 @@ class calibrationUI(object):
         self.setCalibrationStatus('')
         
         if isinstance(joints, Vector3):
-            valid = setup_validate.validate_joints(None, joints)
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isValid(valid))
-            self.ui.lblCalibrationJointX.setText('%0.6f' % joints.x)
-            self.ui.lblCalibrationJointY.setText('%0.6f' % joints.y)
-            self.ui.lblCalibrationJointZ.setText('%0.6f' % joints.z)
+            allParams = yield AsyncTask(self.getAllParams)
+            if allParams != None:
+                self.updateCalibrationTable(allParams)
+                self.logParameters(allParams)
         else:
             self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, False)
         
@@ -226,11 +221,10 @@ class calibrationUI(object):
         self.setCalibrationStatus('')
 
         if isinstance(gyros, Vector3):
-            valid = setup_validate.validate_gyros(None, gyros)
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, self.isValid(valid))
-            self.ui.lblCalibrationGyroX.setText('%0.6f' % gyros.x)
-            self.ui.lblCalibrationGyroY.setText('%0.6f' % gyros.y)
-            self.ui.lblCalibrationGyroZ.setText('%0.6f' % gyros.z)
+            allParams = yield AsyncTask(self.getAllParams)
+            if allParams != None:
+                self.updateCalibrationTable(allParams)
+                self.logParameters(allParams)
         else:
             self.setCalibrationStatusLabel(self.ui.lblCalibrationGyroStatus, False)
         self.setButtonsEnabled(True)
@@ -245,11 +239,10 @@ class calibrationUI(object):
         self.setCalibrationStatus('')
 
         if isinstance(accel, Vector3):
-            valid = setup_validate.validate_accelerometers(None, accel)
-            self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isValid(valid))
-            self.ui.lblCalibrationAccelX.setText('%0.6f' % accel.x)
-            self.ui.lblCalibrationAccelY.setText('%0.6f' % accel.y)
-            self.ui.lblCalibrationAccelZ.setText('%0.6f' % accel.z)
+            allParams = yield AsyncTask(self.getAllParams)
+            if allParams != None:
+                self.updateCalibrationTable(allParams)
+                self.logParameters(allParams)
         else:
             self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, False)
         self.setButtonsEnabled(True)
@@ -258,6 +251,10 @@ class calibrationUI(object):
     def runAsyncEraseCalibration(self):
         self.setButtonsEnabled(False)
         result = yield AsyncTask(self.eraseCalibration)
+        allParams = yield AsyncTask(self.getAllParams)
+        if allParams != None:
+            self.updateCalibrationTable(allParams)
+            self.logParameters(allParams)
         self.resetCalibrationTable()
         self.setButtonsEnabled(True)
 
@@ -271,6 +268,16 @@ class calibrationUI(object):
         self.ui.btnRunGyroCalibration.setEnabled(enabled)
         self.ui.btnRunAccelCalibration.setEnabled(enabled)
         self.ui.btnEraseCalibration.setEnabled(enabled)
+
+    def logParameters(self, params):
+        # Save the params to a file
+        if not os.path.isdir('logs'):
+            os.makedirs('logs')
+
+        if allParams['serial_number'] != None and allParams['serial_number'] != '':
+            filePath = os.path.join('logs', '%s.json' % allParams['serial_number'])
+            with open(filePath, 'w') as f:
+                json.dump(allParams, f)
 
     def isCalibrated(self, params):
         if 'icept' in params.keys():
