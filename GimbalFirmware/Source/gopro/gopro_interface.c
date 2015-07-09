@@ -60,7 +60,7 @@ void init_gp_interface()
     //}
 }
 
-Uint16 gp_ready_for_cmd()
+bool gp_ready_for_cmd()
 {
     return (gp_control_state == GP_CONTROL_STATE_IDLE) && !i2c_get_bb();
 }
@@ -88,10 +88,10 @@ bool gp_cmd_has_param(const GPCmd* c)
     return true;
 }
 
-int gp_send_command(const GPCmd* cmd)
+bool gp_send_command(const GPCmd* cmd)
 {
     if (gp_control_state != GP_CONTROL_STATE_IDLE) {
-        return -1;
+        return false;
     }
 
     txbuf[1] = cmd->cmd[0];
@@ -122,7 +122,7 @@ int gp_send_command(const GPCmd* cmd)
     timeout_counter = 0;
     gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
 
-    return 0;
+    return true;
 }
 
 bool gp_new_heartbeat_available()
@@ -196,17 +196,17 @@ GPSetResponse gp_last_set_response()
     return last_set_response;
 }
 
-int gp_request_power_on()
+bool gp_request_power_on()
 {
     if (gp_control_state == GP_CONTROL_STATE_IDLE) {
         gp_control_state = GP_CONTROL_STATE_REQUEST_POWER_ON;
-        return 0;
-    } else {
-        return -1;
+        return true;
     }
+
+    return false;
 }
 
-int gp_request_power_off()
+bool gp_request_power_off()
 {
     if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
         GPCmd cmd;
@@ -214,10 +214,10 @@ int gp_request_power_off()
         cmd.cmd[1] = 'W';
         cmd.cmd_parm = 0x00;
         gp_send_command(&cmd);
-        return 0;
-    } else {
-        return -1;
+        return true;
     }
+
+    return false;
 }
 
 int gp_get_request(Uint8 cmd_id)
