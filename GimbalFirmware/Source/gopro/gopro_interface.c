@@ -35,8 +35,8 @@ GPSetResponse last_set_response;
 GPSetRequest last_set_request;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
-Uint8 gccb_version_queried = 0;
-Uint8 gccb_eeprom_written = 0;
+bool gccb_version_queried = 0;
+bool gccb_eeprom_written = 0;
 
 typedef struct {
     volatile GPControlState ctrl_state;
@@ -165,7 +165,7 @@ GPHeartbeatStatus gp_heartbeat_status()
 	} else if (gp_get_power_status() == GP_POWER_ON && gccb_version_queried == 0) {
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
 	}
-	new_heartbeat_available = FALSE;
+    new_heartbeat_available = false;
     return heartbeat_status;
 }
 
@@ -179,7 +179,7 @@ GPGetResponse gp_last_get_response()
 	}
 
 	// Clear the last command response
-	new_response_available = FALSE;
+    new_response_available = false;
 
     return last_get_response;
 }
@@ -192,7 +192,7 @@ GPSetResponse gp_last_set_response()
 	} else {
 		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_FAILURE;
 	}
-	new_response_available = FALSE;
+    new_response_available = false;
     return last_set_response;
 }
 
@@ -258,7 +258,7 @@ int gp_get_request(Uint8 cmd_id)
 			default:
 				// Unsupported Command ID
 				last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
-				new_response_available = TRUE;
+                new_response_available = true;
 				return -1;
 		}
 
@@ -267,7 +267,7 @@ int gp_get_request(Uint8 cmd_id)
 		return 0;
 	} else {
 		last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
-		new_response_available = TRUE;
+        new_response_available = true;
 		return -1;
 	}
 }
@@ -333,7 +333,7 @@ int gp_set_request(GPSetRequest* request)
 			default:
 				// Unsupported Command ID
 				last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
-				new_response_available = TRUE;
+                new_response_available = true;
 				return -1;
 		}
 
@@ -343,7 +343,7 @@ int gp_set_request(GPSetRequest* request)
 		return 0;
 	} else {
 		last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
-		new_response_available = TRUE;
+        new_response_available = true;
 		return -1;
 	}
 }
@@ -407,14 +407,14 @@ void gp_interface_state_machine()
                 GP_PWRON_HIGH();
                 gp_control_state = GP_CONTROL_STATE_IDLE;
                 last_cmd_response.cmd_result = GP_CMD_SUCCESSFUL;
-				new_response_available = TRUE;
+                new_response_available = true;
             }
             break;
     }
 
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
 	if (++heartbeat_counter >= (GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
-		new_heartbeat_available = TRUE;
+        new_heartbeat_available = true;
 		heartbeat_counter = 0;
 	}
 
@@ -461,7 +461,7 @@ void handle_rx_data()
         }
     } else {
         // error in data rx, return to idle
-        new_response_available = TRUE;
+        new_response_available = true;
         gp_control_state = GP_CONTROL_STATE_IDLE;
     }
 }
@@ -664,7 +664,7 @@ void gp_on_slave_address(bool addressed_as_tx)
                 // Drop this dummy response and mark the GCCB as functional
                 gccb_version_queried = 1;
             } else {
-                new_response_available = TRUE;
+                new_response_available = true;
             }
         }
 
@@ -683,7 +683,7 @@ void gp_timeout()
 
     // Indicate that a "new response" is available (what's available is the indication that we timed out)
     //last_cmd_response.cmd_result = reason;
-    //new_response_available = TRUE;
+    //new_response_available = true;
 
     gp_control_state = GP_CONTROL_STATE_IDLE;
 }
