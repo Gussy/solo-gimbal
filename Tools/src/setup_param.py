@@ -84,23 +84,20 @@ def getAxisCalibrationParam(link, axis_enum):
         return [icept.param_value, slope.param_value]
 
 def get_accel_params(link):
-    offsets = list()
-    offsets[0] = fetch_param(link, "GMB_OFF_ACC_X")
-    offsets[1] = fetch_param(link, "GMB_OFF_ACC_Y")
-    offsets[2] = fetch_param(link, "GMB_OFF_ACC_Z")
-    offset = Vector3(x=offsets[0], y=offsets[1], z=offsets[2])
+    offsets_x = fetch_param(link, "GMB_OFF_ACC_X")
+    offsets_y = fetch_param(link, "GMB_OFF_ACC_Y")
+    offsets_z = fetch_param(link, "GMB_OFF_ACC_Z")
+    offset = Vector3(x=offsets_x.param_value, y=offsets_y.param_value, z=offsets_z.param_value)
 
-    gains = list()
-    gains[0] = fetch_param(link, "GMB_GN_ACC_X")
-    gains[1] = fetch_param(link, "GMB_GN_ACC_Y")
-    gains[2] = fetch_param(link, "GMB_GN_ACC_Z")
-    gain = Vector3(x=gains[0], y=gains[1], z=gains[2])
+    gains_x = fetch_param(link, "GMB_GN_ACC_X")
+    gains_y = fetch_param(link, "GMB_GN_ACC_Y")
+    gains_z = fetch_param(link, "GMB_GN_ACC_Z")
+    gain = Vector3(x=gains_x.param_value, y=gains_y.param_value, z=gains_z.param_value)
 
-    alignments = list()
-    alignments[0] = fetch_param(link, "GMB_ALN_ACC_X")
-    alignments[1] = fetch_param(link, "GMB_ALN_ACC_Y")
-    alignments[2] = fetch_param(link, "GMB_ALN_ACC_Z")
-    alignment = Vector3(x=alignments[0], y=alignments[1], z=alignments[2])
+    alignments_x = fetch_param(link, "GMB_ALN_ACC_X")
+    alignments_y = fetch_param(link, "GMB_ALN_ACC_Y")
+    alignments_z = fetch_param(link, "GMB_ALN_ACC_Z")
+    alignment = Vector3(x=alignments_x.param_value, y=alignments_y.param_value, z=alignments_z.param_value)
 
     return offset, gain, alignment
 
