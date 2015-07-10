@@ -35,6 +35,13 @@ def open_fixture_comm(port=None):
     except serial.serialutil.SerialException:
         return None
 
+def close(port=None):
+    global _port
+    if port:
+        port.close()
+    elif _port:
+        _port.close()
+
 # def signal_handler(signal, frame):
 #     global _port
 #     set_rpm(_port, 0)

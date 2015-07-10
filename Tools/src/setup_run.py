@@ -120,6 +120,7 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
         fixtureWobble.set_rpm(wobble, currentSpeed - speed)
     # To be sure
     fixtureWobble.set_rpm(wobble, 0)
+    fixtureWobble.close(wobble)
 
     return True
 
