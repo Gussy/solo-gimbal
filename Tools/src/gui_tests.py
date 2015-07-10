@@ -125,7 +125,8 @@ class testsUI(object):
             stopTestsCallback=self.stopTestsCallback,
             eventCallback=self.testEventCallback,
             reportCallback=self.reportCallback,
-            timeout=self.getTestTimeout()
+            timeout=self.getTestTimeout(),
+            wobbleport=self.parent.wobblePort
         )
 
     def enableUI(self, enabled):
