@@ -36,7 +36,6 @@ GPSetRequest last_set_request;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
 bool gccb_version_queried = 0;
-bool gccb_eeprom_written = 0;
 
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
@@ -67,10 +66,7 @@ void init_gp_interface()
 
     gopro_i2c_init();
 
-    //if(gccb_eeprom_written == 1) {
-    	// Enable the HeroBus port since the eeprom has been written
-        gp_set_backpack_detect_active();
-    //}
+    gp_set_backpack_detect_active();
 }
 
 bool gp_ready_for_cmd()
@@ -626,9 +622,6 @@ void gp_write_eeprom()
 		// Let the EEPROM write
 		ADC_DELAY_US(5000);
 	}
-
-	// Store the written state of the EEPROM for this power cycle
-	gccb_eeprom_written = 1;
 
     // eeprom must be init'd before the gopro interface,
     // so wait for that to re-enable the backpack detect line.
