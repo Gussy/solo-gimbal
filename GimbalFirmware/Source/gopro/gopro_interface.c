@@ -45,6 +45,21 @@ typedef struct {
 // global gopro instance
 static gopro_t gp;
 
+
+/*
+ * backpack detect line management - lets the gopro know we're connected.
+ * active low.
+ */
+
+static inline void gp_set_backpack_detect_active() {
+    GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
+}
+
+static inline void gp_set_backpack_detect_inactive(void) {
+    GpioDataRegs.GPASET.bit.GPIO28 = 1;
+}
+
+
 void init_gp_interface()
 {
     gp.waiting_for_i2c = false;
@@ -54,7 +69,7 @@ void init_gp_interface()
 
     //if(gccb_eeprom_written == 1) {
     	// Enable the HeroBus port since the eeprom has been written
-    	GP_BP_DET_LOW();
+        gp_set_backpack_detect_active();
     //}
 }
 
@@ -565,7 +580,7 @@ void gp_write_eeprom()
 		return;
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
-	GP_BP_DET_HIGH();
+    gp_set_backpack_detect_inactive();
 
 	// Data to write into EEPROM
 	uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
@@ -616,7 +631,7 @@ void gp_write_eeprom()
 	gccb_eeprom_written = 1;
 
 	// Enable the HeroBus port
-	GP_BP_DET_LOW();
+    gp_set_backpack_detect_active();
 }
 
 void gp_on_slave_address(bool addressed_as_tx)
