@@ -80,7 +80,6 @@ typedef struct {
     int16 virtual_counts;
     int32 virtual_counts_accumulator;
     Uint16 virtual_counts_accumulated;
-    int16 encoder_median_history[ENCODER_MEDIAN_HISTORY_SIZE];
     float mech_theta;
     float corrected_mech_theta;
     float elec_theta;

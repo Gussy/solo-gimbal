@@ -345,8 +345,6 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
     // Reset the encoder accumulator and accumulator sample counter
     encoder_parms->virtual_counts_accumulator = 0;
     encoder_parms->virtual_counts_accumulated = 0;
-    // Reset the median history array
-    memset(&(encoder_parms->encoder_median_history[0]), INT16_MAX, ENCODER_MEDIAN_HISTORY_SIZE * sizeof(int16));
 
     md_parms->iq_ref = ((int16) param_set[CAND_PID_TORQUE].param) / 32767.0;
     *param_set[CAND_PID_TORQUE].sema = FALSE;
