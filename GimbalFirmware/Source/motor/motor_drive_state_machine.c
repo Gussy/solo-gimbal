@@ -330,16 +330,17 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
 static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set)
 {
-    // If we're the EL board, we update our own encoder readings.  Else, we send them over CAN
+
     // We're accumulating encoder readings at 10kHz, and sending them out at 1kHz, so we divide by 10
     // to average the accumulated values
+	int16 encoder_value = (encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated);
+
+    // If we're the EL board, we update our own encoder readings.  Else, we send them over CAN
     if (GetBoardHWID() == EL) {
-        cb_parms->encoder_readings[EL] = encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated;
-        //cb_parms->encoder_readings[EL] = encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2];
+        cb_parms->encoder_readings[EL] = encoder_value;
         cb_parms->encoder_value_received[EL] = TRUE;
     } else {
-        CBSendEncoder(encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated);
-        //CBSendEncoder(encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2]);
+		CBSendEncoder(encoder_value);
     }
     // Reset the encoder accumulator and accumulator sample counter
     encoder_parms->virtual_counts_accumulator = 0;
