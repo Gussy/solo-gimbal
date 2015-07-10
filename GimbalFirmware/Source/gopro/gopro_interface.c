@@ -630,8 +630,9 @@ void gp_write_eeprom()
 	// Store the written state of the EEPROM for this power cycle
 	gccb_eeprom_written = 1;
 
-	// Enable the HeroBus port
-    gp_set_backpack_detect_active();
+    // eeprom must be init'd before the gopro interface,
+    // so wait for that to re-enable the backpack detect line.
+    // otherwise we might miss traffic from the gopro before that gets initialized.
 }
 
 void gp_on_slave_address(bool addressed_as_tx)
