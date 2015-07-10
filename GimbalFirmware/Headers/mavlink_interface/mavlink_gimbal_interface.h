@@ -45,6 +45,7 @@ typedef struct {
 #define G_TO_M_S_S(g) ((g) * 9.80665)
 
 #define ENCODER_FORMAT_TO_RAD(encoder) (M_PI * (float)(encoder) / ENCODER_FULL_SCALE)
+#define RAD_TO_ENCODER_FORMAT(angle) ((int16) (ENCODER_FULL_SCALE * angle / M_PI))
 
 #define GYRO_FORMAT_TO_RAD_S(gyro) DEG_TO_RAD((((float)(gyro) / (float)INT_MAX) * GYRO_FULL_SCALE_DEG_S))
 #define RAD_S_TO_GYRO_FORMAT(rad) (RAD_TO_DEG((float)rad) * (((float)INT_MAX) / GYRO_FULL_SCALE_DEG_S))

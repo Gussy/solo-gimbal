@@ -3,6 +3,8 @@
 #include "PM_Sensorless-Settings.h"
 #include "hardware/device_init.h"
 #include "hardware/encoder.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
+#include "parameters/flash_params.h"
 
 void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)
 {
@@ -38,6 +40,9 @@ void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_pa
     } else if (encoder_parms->virtual_counts >= (ENCODER_COUNTS_PER_REV / 2)) {
         encoder_parms->virtual_counts -= ENCODER_COUNTS_PER_REV;
     }
+
+    // Apply joing angle offsets
+    encoder_parms->virtual_counts -= RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[GetBoardHWID()]);
 
     // Accumulate the virtual counts at the torque loop rate (10kHz), which will then be averaged to be sent out
     // at the rate loop rate (1kHz)
