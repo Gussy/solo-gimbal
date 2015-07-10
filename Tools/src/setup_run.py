@@ -77,7 +77,7 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None):
+def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None, wobbleport=None):
     global stopTestLoop
     def eventCallbackShim(msg, fault=False):
         # Disable motors when the gimbal is in a fault state
@@ -96,10 +96,10 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
             stopTestLoop = stopTestsCallback()
             return stopTestLoop
 
-    wobble = fixtureWobble.init_fixture()
+    wobble = fixtureWobble.init_fixture(wobbleport=wobbleport)
 
     currentSpeed = 0
-    speeds = [120, 180, 220]
+    speeds = [116, 152, 161]
     for speed in speeds:
         currentSpeed = speed
         if stopTestsCallback is None:
@@ -120,6 +120,7 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
         fixtureWobble.set_rpm(wobble, currentSpeed - speed)
     # To be sure
     fixtureWobble.set_rpm(wobble, 0)
+    fixtureWobble.close(wobble)
 
     return True
 
