@@ -27,7 +27,6 @@ bool new_response_available = false;
 bool new_heartbeat_available = false;
 
 Uint16 heartbeat_counter = 0;
-Uint16 interrogation_timeout = 0;
 GPRequestType last_request_type = GP_REQUEST_NONE;
 GOPRO_COMMAND last_request_cmd_id;
 GPGetResponse last_get_response;
@@ -35,7 +34,7 @@ GPSetResponse last_set_response;
 GPSetRequest last_set_request;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
-bool gccb_version_queried = 0;
+bool gccb_version_queried = false;
 
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
@@ -402,9 +401,6 @@ void gp_interface_state_machine()
     }
 
     switch (gp_control_state) {
-        case GP_CONTROL_STATE_IDLE:
-            break;
-
         case GP_CONTROL_STATE_REQUEST_POWER_ON:
             GP_PWRON_LOW();
             gp_power_on_counter = 0;
@@ -433,21 +429,6 @@ void gp_interface_state_machine()
 		gccb_version_queried = 0;
 	}
 	previous_power_status = new_power_status;
-
-	// If >500ms has passed and we haven't been queried for a GCCB version,
-	// the camera may have already done so, or simply doesn't feel like doing so
-	// To test if we can actually send commands, we will ask for the battery level
-	// We also need to drop the response to this, so it doesn't propogate onto MAVLink
-	// This failure mode usually happens when the Gimbal and GoPro stays powered, but the
-	// Gimbal firmware resets (such as in a software update process).
-	// This is done at 1/8th of the heartbeat interval, so it's likely caught before the
-	// first heartbeat goes out in order to prevent glitching the heartbeat status
-	if((++interrogation_timeout > ((GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) / 8)) && gccb_version_queried == 0) {
-		GPCmd cmd;
-		cmd.cmd[0] = 'b';
-		cmd.cmd[1] = 'l';
-		gp_send_command(&cmd);
-	}
 }
 
 void handle_rx_data()
@@ -665,14 +646,8 @@ void gp_on_slave_address(bool addressed_as_tx)
 
             // Indicate that the command we were trying to send has been preempted by the GoPro
             last_cmd_response.result = GP_CMD_PREEMPTED;
-
             // Indicate that a "new response" is available (what's available is the indication that the command was preempted)
-            if (last_cmd_response.cmd[0] == 'b' && last_cmd_response.cmd[1] == 'l' && gccb_version_queried == 0) {
-                // Drop this dummy response and mark the GCCB as functional
-                gccb_version_queried = 1;
-            } else {
-                new_response_available = true;
-            }
+            new_response_available = true;
         }
 
         // wait for the rx to complete
