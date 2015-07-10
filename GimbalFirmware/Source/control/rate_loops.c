@@ -47,7 +47,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
         cb_parms->integrated_raw_accel_readings[ROLL] += raw_accel_readings[ROLL];
 
         // Do gyro kinematics correction
-        do_gyro_correction(&(cb_parms->gyro_readings[0]), &(cb_parms->encoder_readings[0]), &(cb_parms->corrected_gyro_readings[0]));
+        do_gyro_correction(cb_parms->gyro_readings, cb_parms->encoder_readings, cb_parms->corrected_gyro_readings);
 
         // Set up the next rate loop pass to be the az error computation pass
         cb_parms->rate_loop_pass = ERROR_AZ_PASS;
