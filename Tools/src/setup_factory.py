@@ -45,7 +45,7 @@ def set_assembly_date(link, commit=True):
     return timestamp
 
 def set_serial_number(link, serial_str, commit=True):
-    sanitised_serial = str(serial_str)[:12]
+    sanitised_serial = str(serial_str)[:12].upper()
     ser_num_1, ser_num_2, ser_num_3 = string12_to_float3(sanitised_serial)
     setup_param.set_param(link, "GMB_SER_NUM_1", ser_num_1)
     setup_param.set_param(link, "GMB_SER_NUM_2", ser_num_2)

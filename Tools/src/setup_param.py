@@ -82,3 +82,34 @@ def getAxisCalibrationParam(link, axis_enum):
         return None
     else:
         return [icept.param_value, slope.param_value]
+
+def get_accel_params(link):
+    offsets_x = fetch_param(link, "GMB_OFF_ACC_X")
+    offsets_y = fetch_param(link, "GMB_OFF_ACC_Y")
+    offsets_z = fetch_param(link, "GMB_OFF_ACC_Z")
+    offset = Vector3(x=offsets_x.param_value, y=offsets_y.param_value, z=offsets_z.param_value)
+
+    gains_x = fetch_param(link, "GMB_GN_ACC_X")
+    gains_y = fetch_param(link, "GMB_GN_ACC_Y")
+    gains_z = fetch_param(link, "GMB_GN_ACC_Z")
+    gain = Vector3(x=gains_x.param_value, y=gains_y.param_value, z=gains_z.param_value)
+
+    alignments_x = fetch_param(link, "GMB_ALN_ACC_X")
+    alignments_y = fetch_param(link, "GMB_ALN_ACC_Y")
+    alignments_z = fetch_param(link, "GMB_ALN_ACC_Z")
+    alignment = Vector3(x=alignments_x.param_value, y=alignments_y.param_value, z=alignments_z.param_value)
+
+    return offset, gain, alignment
+
+def set_accel_params(link, p, level):
+    parameters = MAVParmDict()
+    parameters.mavset(link.file, "GMB_OFF_ACC_X", p[0], 3)
+    parameters.mavset(link.file, "GMB_OFF_ACC_Y", p[1], 3)
+    parameters.mavset(link.file, "GMB_OFF_ACC_Z", p[2], 3)
+    parameters.mavset(link.file, "GMB_GN_ACC_X", p[3], 3)
+    parameters.mavset(link.file, "GMB_GN_ACC_Y", p[4], 3)
+    parameters.mavset(link.file, "GMB_GN_ACC_Z", p[5], 3)
+    parameters.mavset(link.file, "GMB_ALN_ACC_X", level[0], 3)
+    parameters.mavset(link.file, "GMB_ALN_ACC_Y", level[1], 3)
+    parameters.mavset(link.file, "GMB_ALN_ACC_Z", level[2], 3)
+    commit_to_flash(link)

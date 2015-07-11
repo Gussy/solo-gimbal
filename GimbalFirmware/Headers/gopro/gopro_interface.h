@@ -134,4 +134,9 @@ GPHeartbeatStatus gp_heartbeat_status();
 GPGetResponse gp_last_get_response();
 GPSetResponse gp_last_set_response();
 
+void gp_enable_hb_interface();
+void gp_disable_hb_interface();
+void gp_enable_charging();
+void gp_disable_charging();
+
 #endif /* GOPRO_INTERFACE_H_ */

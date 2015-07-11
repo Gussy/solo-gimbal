@@ -32,3 +32,4 @@ Tools/3DRGimbalFactoryApplication/build-*/
 .vagrant
 *.csv
 
+Tools/src/logs/

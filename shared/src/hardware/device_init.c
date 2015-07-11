@@ -1,8 +1,5 @@
 #include "hardware/device_init.h"
-#include "PM_Sensorless.h"
 #include "hardware/HWSpecific.h"
-#include "hardware/uart.h"
-#include "hardware/i2c.h"
 #include "hardware/led.h"
 #include "hardware/pll.h"
 #include "hardware/watchdog.h"
@@ -15,7 +12,7 @@ static void init_xtal();
 static void init_peripheral_clocks();
 static void init_gpio();
 
-void DeviceInit(void)
+void DeviceInit()
 {
 	watchdog_disable();	// Disable the watchdog initially
 	DINT;			// Global Disable all Interrupts
@@ -34,7 +31,7 @@ void DeviceInit(void)
 
 	// Initialise interrupt controller and Vector Table
 	// to defaults for now. Application ISR mapping done later.
-	PieCntlInit();		
+	PieCntlInit();
 	PieVectTableInit();
 
    EALLOW; // below registers are "protected", allow access.

@@ -44,20 +44,6 @@ typedef struct {
 static gopro_t gp;
 
 
-/*
- * backpack detect line management - lets the gopro know we're connected.
- * active low.
- */
-
-static inline void gp_set_backpack_detect_active() {
-    GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
-}
-
-static inline void gp_set_backpack_detect_inactive(void) {
-    GpioDataRegs.GPASET.bit.GPIO28 = 1;
-}
-
-
 void init_gp_interface()
 {
     gp.waiting_for_i2c = false;
@@ -65,7 +51,7 @@ void init_gp_interface()
 
     gopro_i2c_init();
 
-    gp_set_backpack_detect_active();
+    gp_enable_hb_interface();
 }
 
 bool gp_ready_for_cmd()
@@ -372,6 +358,30 @@ GPPowerStatus gp_get_power_status()
     }
 }
 
+void gp_enable_hb_interface()
+{
+    // Set BacPac detect low (active low)
+    GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
+}
+
+void gp_disable_hb_interface()
+{
+    // Set BacPac detect high (active low)
+    GpioDataRegs.GPASET.bit.GPIO28 = 1;
+}
+
+void gp_enable_charging()
+{
+    // Set GoPro 5v enable low (active low)
+    GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;
+}
+
+void gp_disable_charging()
+{
+    // Set GoPro 5v enable high (active low)
+    GpioDataRegs.GPASET.bit.GPIO23 = 1;
+}
+
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
 // for proper gopro interface operation
 void gp_interface_state_machine()
@@ -557,7 +567,7 @@ void gp_write_eeprom()
 		return;
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
-    gp_set_backpack_detect_inactive();
+	gp_disable_hb_interface();
 
 	// Data to write into EEPROM
 	uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};

@@ -17,7 +17,7 @@ EXPECTED_PITCH_ICEPT_MIN = 0.10
 EXPECTED_PITCH_SLOPE_MAX = 0.14
 EXPECTED_PITCH_SLOPE_MIN = 0.12
 EXPECTED_ROLL_ICEPT_MIN = 0.35
-EXPECTED_ROLL_ICEPT_MAX = 0.51
+EXPECTED_ROLL_ICEPT_MAX = 0.53
 EXPECTED_ROLL_SLOPE_MAX = 0.14
 EXPECTED_ROLL_SLOPE_MIN = 0.11
 EXPECTED_YAW_ICEPT_MAX = 0.54
@@ -45,9 +45,6 @@ EXPECTED_ROLL_D = 0.10
 EXPECTED_YAW_P = 0.80
 EXPECTED_YAW_I = 0.30
 EXPECTED_YAW_D = 7.00
-EXPECTED_OFF_ACC_X = 0.0
-EXPECTED_OFF_ACC_Y = 0.0
-EXPECTED_OFF_ACC_Z = 0.0
 EXPECTED_K_RATE = 10.0
 
 class Results:
@@ -66,50 +63,66 @@ def show(link):
     pitch_com, roll_com, yaw_com = setup_comutation.getAxisCalibrationParams(link)
     joint = setup_param.get_offsets(link, 'JNT')
     gyro = setup_param.get_offsets(link, 'GYRO')
-    acc = setup_param.get_offsets(link, 'ACC')
+    accel_offset, accel_gain, accel_alignment = setup_param.get_accel_params(link)
     k_rate = setup_param.fetch_param(link, "GMB_K_RATE")
 
-    if swver != None and serial_number != None and assembly_time != None and pitch_com != None and roll_com != None and yaw_com != None and joint and gyro and acc and k_rate != None:
+    if swver != None and serial_number != None and assembly_time != None and pitch_com != None and roll_com != None and yaw_com != None and isinstance(joint, Vector3) and isinstance(gyro, Vector3) and isinstance(accel_offset, Vector3) and isinstance(accel_gain, Vector3) and isinstance(accel_alignment, Vector3) and k_rate != None:
         params = {
             'version': swver,
             'serial_number': serial_number,
             'assembly_time': assembly_time,
             'pitch': {
                 'icept': pitch_com[0],
-                'slope': pitch_com[1],
+                'slope': pitch_com[1]
             },
             'roll': {
                 'icept': roll_com[0],
-                'slope': roll_com[1],
+                'slope': roll_com[1]
             },
             'yaw': {
                 'icept': yaw_com[0],
-                'slope': yaw_com[1],
+                'slope': yaw_com[1]
             },
             'joint': {
                 'x': joint.x,
                 'y': joint.y,
-                'z': joint.z,
+                'z': joint.z
             },
             'gyro': {
                 'x': gyro.x,
                 'y': gyro.y,
-                'z': gyro.z,
+                'z': gyro.z
             },
             'accel': {
-                'x': acc.x,
-                'y': acc.y,
-                'z': acc.z,
+                'offset': {
+                    'x': accel_offset.x,
+                    'y': accel_offset.y,
+                    'z': accel_offset.z
+                },
+                'gain': {
+                    'x': accel_gain.x,
+                    'y': accel_gain.y,
+                    'z': accel_gain.z
+                },
+                'alignment': {
+                    'x': accel_alignment.x,
+                    'y': accel_alignment.y,
+                    'z': accel_alignment.z
+                }
             },
             'k_rate': k_rate.param_value,
             'validation': {
                 'version': validate_version(link, swver=swver),
                 'serial': validate_serial_number(link, serial_number=serial_number),
                 'date': validate_date(link, assembly_time=assembly_time),
-                'commutation': validate_comutation(link, pitch_com=pitch_com, roll_com=roll_com, yaw_com=yaw_com),
+                'commutation': {
+                    'pitch': validate_comutation_axis_value('pitch', pitch_com),
+                    'roll': validate_comutation_axis_value('roll', roll_com),
+                    'yaw': validate_comutation_axis_value('yaw', yaw_com)
+                },
                 'joints': validate_joints(link, joint=joint),
                 'gyros': validate_gyros(link, gyro=gyro),
-                'accels': validate_accelerometers(link, acc=acc)
+                'accels': validate_accelerometers(link, acc=accel_offset)
             }
         }
         return params
@@ -127,6 +140,22 @@ def validate_version(link, swver=None):
         return Results.Pass
     else:
         return Results.Fail
+
+def validate_comutation_axis_value(axis, values):
+    if axis == 'pitch':
+        valid = validate_comutation_axis(None, values, EXPECTED_PITCH_ICEPT_MAX, EXPECTED_PITCH_ICEPT_MIN, EXPECTED_PITCH_SLOPE_MAX, EXPECTED_PITCH_SLOPE_MIN)
+    elif axis == 'roll':
+        valid = validate_comutation_axis(None, values, EXPECTED_ROLL_ICEPT_MAX, EXPECTED_ROLL_ICEPT_MIN, EXPECTED_ROLL_SLOPE_MAX, EXPECTED_ROLL_SLOPE_MIN)
+    elif axis == 'yaw':
+        valid = validate_comutation_axis(None, values, EXPECTED_YAW_ICEPT_MAX, EXPECTED_YAW_ICEPT_MIN, EXPECTED_YAW_SLOPE_MAX, EXPECTED_YAW_SLOPE_MIN)
+    else:
+        return Results.Error
+
+    if valid:
+        return Results.Pass
+    else:
+        return Results.Fail
+    
 
 def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
     icept = axis[0]
@@ -263,9 +292,6 @@ def restore_defaults(link):
     parameters.mavset(link.file, "GMB_YAW_P", EXPECTED_YAW_P);
     parameters.mavset(link.file, "GMB_YAW_I", EXPECTED_YAW_I);
     parameters.mavset(link.file, "GMB_YAW_D", EXPECTED_YAW_D);
-    parameters.mavset(link.file, "GMB_OFF_ACC_X", EXPECTED_OFF_ACC_X);
-    parameters.mavset(link.file, "GMB_OFF_ACC_Y", EXPECTED_OFF_ACC_Y);
-    parameters.mavset(link.file, "GMB_OFF_ACC_Z", EXPECTED_OFF_ACC_Z);
     parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);
     parameters.mavset(link.file, "GMB_BROADCAST", EXPECTED_BROADCAST);    
     setup_param.commit_to_flash(link)

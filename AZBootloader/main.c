@@ -1,11 +1,14 @@
 #include "boot/Boot.h"
-#include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
 #include "mavlink_bootloader.h"
 #include "can_bootloader.h"
 #include "checksum.h"
 
+// empty setup functions so this code can run  DeviceInit()
+void init_led_periph(void){}
+void PieCntlInit(void){}
+void PieVectTableInit(void){}
 
 Uint32 SelectBootMode()
 {
