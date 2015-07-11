@@ -11,8 +11,8 @@
 static void gp_timeout();
 static bool gp_cmd_has_param(const GPCmd* c);
 
-static void handle_rx_data();
-static bool collect_i2c_data(uint16_t *buf, uint16_t maxlen, bool *from_camera);
+static void handle_rx_data(uint16_t *buf, uint16_t len);
+static bool gp_h3p_data_is_valid(uint16_t *buf, uint16_t len, bool *from_camera);
 static void gp_handle_command(const uint16_t *cmdbuf);
 static void gp_handle_response(const uint16_t *respbuf);
 
@@ -20,7 +20,12 @@ volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
 volatile Uint32 timeout_counter = 0;
 
-Uint8 txbuf[GP_COMMAND_REQUEST_SIZE];
+#define TX_BUF_SZ  128
+#define RX_BUF_SZ  128
+
+static uint16_t txbuf[TX_BUF_SZ];
+static uint16_t rxbuf[RX_BUF_SZ];
+
 GPCmdResponse last_cmd_response = {0};
 
 bool new_response_available = false;
@@ -398,7 +403,7 @@ void gp_interface_state_machine()
 
             if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_GP_DATA_COMPLETE) {
                 // transaction was rx
-                handle_rx_data();
+                handle_rx_data(rxbuf, i2c_get_rx_len());
 
             } else {
                 // transaction was tx
@@ -451,7 +456,7 @@ void gp_interface_state_machine()
 	previous_power_status = new_power_status;
 }
 
-void handle_rx_data()
+void handle_rx_data(uint16_t *buf, uint16_t len)
 {
     /*
      * Called when an i2c rx transaction has completed.
@@ -460,9 +465,8 @@ void handle_rx_data()
      */
 
     bool from_camera;
-    uint16_t rxbuf[GP_COMMAND_RECEIVE_BUFFER_SIZE];
 
-    if (collect_i2c_data(rxbuf, GP_COMMAND_RECEIVE_BUFFER_SIZE, &from_camera)) {
+    if (gp_h3p_data_is_valid(rxbuf, len, &from_camera)) {
         // Parse the retrieved data differently depending on whether it's a command or response
         if (from_camera) {
             gp_handle_command(rxbuf);
@@ -476,7 +480,7 @@ void handle_rx_data()
     }
 }
 
-bool collect_i2c_data(uint16_t *buf, uint16_t maxlen, bool *from_camera)
+bool gp_h3p_data_is_valid(uint16_t *buf, uint16_t len, bool *from_camera)
 {
     /*
      * Called when an i2c rx transaction has completed successfully,
@@ -486,29 +490,13 @@ bool collect_i2c_data(uint16_t *buf, uint16_t maxlen, bool *from_camera)
      * the advertised len matches what we actually recevied.
      */
 
-    int len = i2c_get_available_chars();
-    if (len <= 0) {
-        return false;
-    }
-
     // first byte is the length of the received data,
     // top bit signals the cmd originator, 1 == camera, 0 == backpack
-    uint16_t b = i2c_get_next_char();
-    *from_camera = b & (1 << 7);
-    buf[0] = b & 0x7f;
+    *from_camera = buf[0] & (1 << 7);
+    buf[0] &= 0x7f;
 
-    if (buf[0] != len - 1 || buf[0] > maxlen) {
-        // under/overflow, drain i2c ringbuf
-        // ... btw, why are we using a ringbuf, rather than a simple buffer per msg?
-        while (i2c_get_available_chars() > 0) {
-            (void)i2c_get_next_char();
-        }
+    if (buf[0] != len - 1) {
         return false;
-    }
-
-    int i;
-    for (i = 0; i < buf[0]; ++i) {
-        buf[i + 1] = i2c_get_next_char();
     }
 
     return true;
@@ -659,6 +647,8 @@ void gp_on_slave_address(bool addressed_as_tx)
     } else {
         // addressed as receiver.
         // in the general case, we wait for the stop condition to indicate a transaction is complete.
+
+        i2c_begin_rx(rxbuf, RX_BUF_SZ);
 
         if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND) {
             // Special case - we have asked the GoPro to read a command from us, but before it has started to read the command,
