@@ -201,6 +201,7 @@ def command_interface():
     parser.add_argument("--wobble", help="Wobble fixture test", action='store_true')
     parser.add_argument("--timeout", help="timeout for action", type=int)
     parser.add_argument("--testloop", help="run a loop of 'run', 'align' and 'wobble' tests", type=str)
+    parser.add_argument("--lifetest", help="tun a life test", action='store_true')
     parser.add_argument("-c", "--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("-f", "--forcecal", help="Force the comutation setup", action='store_true')
     parser.add_argument("-j", "--jointcalibration", help="Calibrate joint angles", action='store_true')
@@ -266,6 +267,10 @@ def command_interface():
             return
         else:
             print("Unknown test: %s" % args.testloop)
+
+    if args.lifetest:
+        setup_run.runLifeTest(link)
+        return
 
     if args.stop:
         setup_run.stop(link)

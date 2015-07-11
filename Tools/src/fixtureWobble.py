@@ -3,6 +3,12 @@ from setup_mavlink import getSerialPorts
 
 MAX_RPM = 230
 
+# Magic RPM values to control relays
+RELAY_7_OFF = 251
+RELAY_7_ON = 252
+RELAY_8_OFF = 253
+RELAY_8_ON = 254
+
 _port = None
 
 def init_fixture(wobbleport=None):
