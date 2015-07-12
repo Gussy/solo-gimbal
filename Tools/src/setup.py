@@ -1,21 +1,28 @@
 #!/usr/bin/python
 
 '''
-     Command-line utility to handle comms to gimbal 
+Command-line utility to handle comms to gimbal 
 '''
-import sys, argparse, time, numpy, json
+import time
+import sys, argparse, time, json
+import setup_factory
+from setup_mavlink import open_comm, wait_for_heartbeat, wait_handshake, reset_into_bootloader
 
 from firmware_helper import load_firmware, append_checksum
 from firmware_loader import load_binary, start_bootloader
 from firmware_loader import Results as loader_results
-import setup_comutation, setup_home
+import setup_comutation, setup_mavlink
 from setup_comutation import Results as calibration_results
-from setup_mavlink import open_comm, wait_for_heartbeat
-import setup_mavlink, setup_param
-import setup_validate
-import setup_run
+import setup_validate, setup_param
 from setup_param import set_offsets
-import setup_factory
+
+# Optional imports
+try:
+    import setup_run
+    import setup_home
+except ImportError:
+    setup_run = None
+    setup_home = None
 
 def loaderProgressCallback(uploaded_kb, total_kb, percentage):
     sys.stdout.write("\rUpload %2.2fkB of %2.2fkB - %d%%     " % (uploaded_kb, total_kb, percentage))
@@ -195,80 +202,64 @@ def command_interface():
     parser.add_argument("-v", "--validate", help="Check gimbal parameters to see if they have valid values", action='store_true')
     parser.add_argument("-d", "--defaults", help="Reset gimbal parameters to default values", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
-    parser.add_argument("--run", help="run a quick test of the gimbal", action='store_true')
-    parser.add_argument("--align", help="move the gimbal to the home position", action='store_true')
-    parser.add_argument("--stop", help="Hold the gimbal at the current position", action='store_true')
-    parser.add_argument("--wobble", help="Wobble fixture test", action='store_true')
-    parser.add_argument("--timeout", help="timeout for action", type=int)
-    parser.add_argument("--testloop", help="run a loop of 'run', 'align' and 'wobble' tests", type=str)
+    parser.add_argument("--eraseapp", help="Erase the application", action='store_true')
     parser.add_argument("-c", "--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("-f", "--forcecal", help="Force the comutation setup", action='store_true')
-    parser.add_argument("-j", "--jointcalibration", help="Calibrate joint angles", action='store_true')
-    parser.add_argument("-g", "--gyrocalibration", help="Calibrate gyros", action='store_true')
-    parser.add_argument("-a", "--accelcalibration", help="Calibrate accelerometers", action='store_true')
-    parser.add_argument("-x", "--staticcal", help="Calibrate all static home values", action='store_true')
     parser.add_argument("-e", "--erase", help="Erase calibration values", action='store_true')
-    parser.add_argument("--date", help="Setup assembly date", action='store_true')
-    parser.add_argument("--serialnumber", help="Setup gimbal serial number", type=int)
-    parser.add_argument("--factoryreset", help="Reset gimbal factory parameters to default", action='store_true')
-    parser.add_argument("--eraseapp", help="Erase the application", action='store_true')
+
+    # Optional commands (not included with sololink tools)
+    if setup_run:
+        parser.add_argument("--run", help="run a quick test of the gimbal", action='store_true')
+        parser.add_argument("--align", help="move the gimbal to the home position", action='store_true')
+        parser.add_argument("--stop", help="Hold the gimbal at the current position", action='store_true')
+        parser.add_argument("--wobble", help="Wobble fixture test", action='store_true')
+        parser.add_argument("--timeout", help="timeout for action", type=int)
+        parser.add_argument("--testloop", help="run a loop of 'run', 'align' and 'wobble' tests", type=str)
+    if setup_home:
+        parser.add_argument("-j", "--jointcalibration", help="Calibrate joint angles", action='store_true')
+        parser.add_argument("-g", "--gyrocalibration", help="Calibrate gyros", action='store_true')
+        parser.add_argument("-a", "--accelcalibration", help="Calibrate accelerometers", action='store_true')
+        parser.add_argument("-x", "--staticcal", help="Calibrate all static home values", action='store_true')
+    if setup_factory:
+        parser.add_argument("--date", help="Setup assembly date", action='store_true')
+        parser.add_argument("--serialnumber", help="Setup gimbal serial number", type=int)
+        parser.add_argument("--factoryreset", help="Reset gimbal factory parameters to default", action='store_true')
+
     args = parser.parse_args()
 
     # Open the serial port
     port, link = open_comm(args.port)
     print("Connecting via port %s" % port)
 
-    if wait_for_heartbeat(link) == None:
+    if wait_for_heartbeat(link, retries=1) == None:
         print("Failed to comunicate to gimbal")
         sys.exit(1)
     else:
-        print("Gimbal connected")
+        print("Mavlink connected")
+
+    # Attempt to read the gimbal software version and then bootloader
+    # If neither attempts are successful, we're connected to a copter without a gimbal
+    ver = setup_factory.read_software_version(link)
+    if ver is None:
+        for _ in range(2):
+            reset_into_bootloader(link)
+            handshake = wait_handshake(link)
+            if handshake:
+                break
+        if handshake is None:
+            print("No gimbal messages received, exiting.")
+            sys.exit(1)
+        elif not args.file:
+            print("Gimbal in bootloader, only firmware loading is available")
+            sys.exit(0)
 
     if args.file:
         handle_file(args, link)
         return
 
-    if args.date:
-        timestamp = setup_factory.set_assembly_date(link)
-        print("Assembly time set to %s" % time.ctime(timestamp))
-        return
-
-    if args.serialnumber is not None:
-        serial = setup_factory.set_serial_number_3dr(link, args.serialnumber)
-        print("Serial number set to %s" % serial)
-        return
-
-    if args.factoryreset:
-        serial = setup_factory.reset(link)
-        print("Facroty parameters cleared")
-        return
-
     if args.eraseapp:
         start_bootloader(link)
         print("Application erased")
-        return
-    
-    if args.run:
-        setup_run.runTest(link, 'run')
-        return
-    
-    if args.align:
-        setup_run.runTest(link, 'align')
-        return
-
-    if args.wobble:
-        setup_run.runTest(link, 'wobble', timeout=args.timeout)
-        return
-
-    if args.testloop:
-        if args.testloop in ['run', 'align', 'wobble']:
-            setup_run.runTestLoop(link, args.testloop, timeout=args.timeout)
-            return
-        else:
-            print("Unknown test: %s" % args.testloop)
-
-    if args.stop:
-        setup_run.stop(link)
         return
     
     if args.calibrate:
@@ -300,30 +291,7 @@ def command_interface():
         setup_validate.restore_defaults(link)
         print('Parameters restored to default values')
         return
-    
-    if args.jointcalibration or args.staticcal:
-        print('Calibrating home position')
-        offsets = setup_home.calibrate_joints(link)
-        if offsets:
-            print('Calibrated home position')
-        else:
-            print('Failed to calibrate home position')
-        if not args.staticcal:
-            return
-    
-    if args.gyrocalibration or args.staticcal:
-        print('Calibrating gyro offsets')
-        offsets = setup_home.calibrate_gyro(link)
-        if offsets:
-            print('Calibrated gyro offsets')
-        else:
-            print('Failed to calibrate gyro offsets')
-        return
-    
-    if args.accelcalibration:
-        setup_home.calibrate_accel(link)
-        return
-    
+        
     if args.reboot:
         if not setup_mavlink.reset_gimbal(link):
             print('Failed to reboot')
@@ -333,31 +301,94 @@ def command_interface():
         eraseCalibration(link)
         return
 
+    if setup_run:
+        if args.run:
+            setup_run.runTest(link, 'run')
+            return
+        
+        if args.align:
+            setup_run.runTest(link, 'align')
+            return
+
+        if args.wobble:
+            setup_run.runTest(link, 'wobble', timeout=args.timeout)
+            return
+
+        if args.testloop:
+            if args.testloop in ['run', 'align', 'wobble']:
+                setup_run.runTestLoop(link, args.testloop, timeout=args.timeout)
+                return
+            else:
+                print("Unknown test: %s" % args.testloop)
+
+        if args.stop:
+            setup_run.stop(link)
+            return
+
+    if setup_home:
+        if args.jointcalibration or args.staticcal:
+            print('Calibrating home position')
+            offsets = setup_home.calibrate_joints(link)
+            if offsets:
+                print('Calibrated home position')
+            else:
+                print('Failed to calibrate home position')
+            if not args.staticcal:
+                return
+        
+        if args.gyrocalibration or args.staticcal:
+            print('Calibrating gyro offsets')
+            offsets = setup_home.calibrate_gyro(link)
+            if offsets:
+                print('Calibrated gyro offsets')
+            else:
+                print('Failed to calibrate gyro offsets')
+            return
+        
+        if args.accelcalibration:
+            setup_home.calibrate_accel(link)
+            return
+
+    if setup_factory:
+        if args.date:
+            timestamp = setup_factory.set_assembly_date(link)
+            print("Assembly time set to %s" % time.ctime(timestamp))
+            return
+
+        if args.serialnumber is not None:
+            serial = setup_factory.set_serial_number_3dr(link, args.serialnumber)
+            print("Serial number set to %s" % serial)
+            return
+
+        if args.factoryreset:
+            serial = setup_factory.reset(link)
+            print("Facroty parameters cleared")
+            return
+
     # Default command is to return the software version number
-    ver = setup_factory.readSWver(link)
-    asm_time = setup_factory.get_assembly_time(link)
-    serial_number = setup_factory.get_serial_number(link)
     if ver != None:
         major, minor, rev = ver[0], ver[1], ver[2]
         print("Software version: v%i.%i.%i" % (major, minor, rev))
+        
+        asm_time = setup_factory.get_assembly_time(link)
+        serial_number = setup_factory.get_serial_number(link)
+        if serial_number != None:
+            if serial_number == '':
+                print("Serial number: not set")
+            else:
+                print("Serial number: " + serial_number)
+        else:
+            print("Serial number: unknown")
+
+        if asm_time != None:
+            if asm_time > 0:
+                print("Assembled time: " + time.ctime(asm_time))
+            else:
+                print("Assembly time: not set")
+        else:
+            print("Assembly time: unknown")
     else:
         print("Software version: unknown")
-
-    if serial_number != None:
-        if serial_number == '':
-            print("Serial number: not set")
-        else:
-            print("Serial number: " + serial_number)
-    else:
-        print("Serial number: unknown")
-
-    if asm_time != None:
-        if asm_time > 0:
-            print("Assembled time: " + time.ctime(asm_time))
-        else:
-            print("Assembly time: not set")
-    else:
-        print("Assembly time: unknown")
 
 if __name__ == '__main__':
     command_interface()
