@@ -89,6 +89,7 @@ def runLifeTest(link, stopTestsCallback=None, eventCallback=None):
             faultCounter += 1
             stopTestLoop = True
             lastFaultTime = time.time()
+            print('Fault: %s' % msg)
 
         # Call the original callback if there was one
         if eventCallback:
@@ -110,21 +111,17 @@ def runLifeTest(link, stopTestsCallback=None, eventCallback=None):
     speed = 116 # ~RPM
     timeout = None # Seconds
     #resetSecondsInerval = 1200 # 20 Minutes
-    resetSecondsInerval = 15 # 15 Seconds
-    resetSecondsWait = 5 # Seconds
+    resetSecondsInerval = 60 # Seconds
+    resetSecondsWait = 8 # Seconds
 
     wobble = fixtureWobble.init_fixture()
 
+    i = 0
     while True:
-        faultCounter = 0
+        i += 1
         stopTestLoop = False
 
-        print 'powering on gimbal'
-        fixtureWobble.set_rpm(wobble, fixtureWobble.RELAY_7_ON)
-        fixtureWobble.set_rpm(wobble, fixtureWobble.RELAY_8_ON)
-
-        time.sleep(resetSecondsWait)
-
+        print('Running test #%i' % i)
         runTest(
             link,
             'wobble',
@@ -138,24 +135,30 @@ def runLifeTest(link, stopTestsCallback=None, eventCallback=None):
         fixtureWobble.set_rpm(wobble, 0)
 
         now = time.time()
-        print 'faultCounter', faultCounter, 'lastFaultTime', lastFaultTime, '(now - lastFaultTime)', (now - lastFaultTime)
+        print('faultCounter', faultCounter, 'lastFaultTime', lastFaultTime, '(now - lastFaultTime)', (now - lastFaultTime))
         if faultCounter >= maxFaults and (now - lastFaultTime) < timeBetweenFaults:
-            print 'stopping life test'
+            print('Stopping life test')
             break
         elif faultCounter >= maxFaults:
-            print 'resetting faultCounter'
+            print('Resetting faultCounter')
             faultCounter = 1
         else:
-            print 'powering off gimbal'
-            fixtureWobble.set_rpm(wobble, fixtureWobble.RELAY_7_OFF)
-            fixtureWobble.set_rpm(wobble, fixtureWobble.RELAY_8_OFF)
+            print('Test iteration finished')
+            print('Powering off gimbal')
+            faultCounter = 0
+            fixtureWobble.power_disable(wobble)
             time.sleep(1)
+
+        print('Powering on gimbal')
+        fixtureWobble.power_enable(wobble)
+        time.sleep(resetSecondsWait)
 
     # Soft stop
     for s in range(speed):
         fixtureWobble.set_rpm(wobble, speed - s)
     # To be sure
     fixtureWobble.set_rpm(wobble, 0)
+    fixtureWobble.power_enable(wobble)
     fixtureWobble.close(wobble)
 
     return True
@@ -171,7 +174,6 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
         if eventCallback:
             eventCallback(msg, fault=fault)
 
-   
     def stopCallbackShim():
         global stopTestLoop
         # Call the original callback if there was one
@@ -283,7 +285,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
                 eventCallback(report.text, fault=True)
             continue
         else:
-            if (time.time() - lastReport) > 0.2 and not commsLost:
+            if (time.time() - lastReport) > 2 and not commsLost:
                 commsLost = True
                 if log:
                     log.writeEvent('gimbal reset')
@@ -393,6 +395,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
 
             if wobble is None:
                 fixtureWobble.set_rpm(_wobble, 0)
+                fixtureWobble.close(_wobble)
             
             
         log.writeEvent('test finished')
