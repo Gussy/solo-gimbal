@@ -257,6 +257,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     lastCycle = time.time()
     lastReport = time.time()
     commsLost = False
+    motorStarted = False
     while timeout is None or (time.time()-start_time) < timeout:
         if stopTestsCallback:
             if stopTestsCallback():
@@ -327,7 +328,9 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
             setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
             #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
 
-            if int(time.time() - start_time) == 2:
+            # Wait for the gimbal t stabilise before starting the fixture motor
+            if not motorStarted and time.time() - start_time > (WOBBLE_TEST_ALIGNMENT_TIME / 2):
+                motorStarted = True
                 fixtureWobble.set_rpm(_wobble, rpm)
                 if rpm:
                     log.writeEvent('setting rpm to %i' % rpm)
