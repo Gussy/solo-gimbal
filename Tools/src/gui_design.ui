@@ -54,7 +54,7 @@
      <enum>QTabWidget::Rounded</enum>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>3</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideNone</enum>
@@ -1144,20 +1144,20 @@ Calibration</string>
         <x>10</x>
         <y>10</y>
         <width>112</width>
-        <height>41</height>
+        <height>31</height>
        </rect>
       </property>
       <property name="text">
-       <string>Test Run</string>
+       <string>Run</string>
       </property>
      </widget>
      <widget class="QPushButton" name="btnTestsAlign">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>60</y>
+        <y>50</y>
         <width>112</width>
-        <height>41</height>
+        <height>31</height>
        </rect>
       </property>
       <property name="text">
@@ -1168,9 +1168,9 @@ Calibration</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>110</y>
+        <y>90</y>
         <width>112</width>
-        <height>41</height>
+        <height>31</height>
        </rect>
       </property>
       <property name="text">
@@ -1184,9 +1184,9 @@ Calibration</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>240</y>
+        <y>250</y>
         <width>112</width>
-        <height>61</height>
+        <height>51</height>
        </rect>
       </property>
       <property name="text">
@@ -1306,7 +1306,7 @@ Calibration</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>180</y>
+        <y>190</y>
         <width>111</width>
         <height>25</height>
        </rect>
@@ -1322,7 +1322,7 @@ Calibration</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>160</y>
+        <y>170</y>
         <width>111</width>
         <height>19</height>
        </rect>
@@ -1335,7 +1335,7 @@ Calibration</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>210</y>
+        <y>220</y>
         <width>111</width>
         <height>19</height>
        </rect>
@@ -1348,6 +1348,19 @@ Calibration</string>
       </property>
       <property name="text">
        <string>0 = no timeout</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="btnTestsLifeTest">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>130</y>
+        <width>112</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Life Test</string>
       </property>
      </widget>
     </widget>

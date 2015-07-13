@@ -27,6 +27,7 @@ class testsUI(object):
         self.ui.btnTestsRun.clicked.connect(self.handleTestsRun)
         self.ui.btnTestsAlign.clicked.connect(self.handleTestsAlign)
         self.ui.btnTestsWobble.clicked.connect(self.handleTestsWobble)
+        self.ui.btnTestsLifeTest.clicked.connect(self.handleTestsLifeTest)
         self.ui.btnTestsStop.clicked.connect(self.handleTestsStop)
 
         self.timer = QTimer()
@@ -48,6 +49,11 @@ class testsUI(object):
             self.runAsyncTestsWobble()
 
     @Slot()
+    def handleTestsLifeTest(self):
+        if self.connection.isConnected():
+            self.runAsyncTestsLifeTest()
+
+    @Slot()
     def handleTestsStop(self):
         if self.connection.isConnected():
             self.stopTests = True
@@ -61,7 +67,7 @@ class testsUI(object):
         self.testStop()
 
     @coroutine
-    def handleTestsWobble(self):
+    def runAsyncTestsWobble(self):
         self.testStart(delay=setup_run.WOBBLE_TEST_ALIGNMENT_TIME)
 
         # self.graph = gui_graph.GraphWindow()
@@ -76,6 +82,14 @@ class testsUI(object):
 
         # self.graph = None
 
+        self.testStop()
+
+    @coroutine
+    def runAsyncTestsLifeTest(self):
+        self.testStart(delay=setup_run.WOBBLE_TEST_ALIGNMENT_TIME)
+        result = yield AsyncTask(self.testsLifeTest)
+        if result != True and isinstance(result, str):
+            self.ui.lblTestsLogfile.setText(result)
         self.testStop()
 
     @coroutine
@@ -129,10 +143,19 @@ class testsUI(object):
             wobbleport=self.parent.wobblePort
         )
 
+    def testsLifeTest(self):
+        return setup_run.runLifeTest(
+            self.connection.getLink(),
+            stopTestsCallback=self.stopTestsCallback,
+            eventCallback=self.testEventCallback,
+            wobbleport=self.parent.wobblePort
+        )
+
     def enableUI(self, enabled):
         self.ui.btnTestsRun.setEnabled(enabled)
         self.ui.btnTestsAlign.setEnabled(enabled)
         self.ui.btnTestsWobble.setEnabled(enabled)
+        self.ui.btnTestsLifeTest.setEnabled(enabled)
         self.ui.btnTestsStop.setEnabled(not enabled)
         self.ui.tabValidate.setEnabled(enabled)
         self.ui.tabFirmware.setEnabled(enabled)
