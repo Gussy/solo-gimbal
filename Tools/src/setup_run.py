@@ -253,9 +253,6 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
             _wobble = fixtureWobble.init_fixture()
         else:
             _wobble = wobble
-        fixtureWobble.set_rpm(_wobble, rpm)
-        if rpm:
-            log.writeEvent('setting rpm to %i' % rpm)
 
     lastCycle = time.time()
     lastReport = time.time()
@@ -329,6 +326,11 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         elif test == 'wobble':
             setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
             #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
+
+            if int(time.time() - start_time) == 2:
+                fixtureWobble.set_rpm(_wobble, rpm)
+                if rpm:
+                    log.writeEvent('setting rpm to %i' % rpm)
 
             if time.time() - start_time > WOBBLE_TEST_ALIGNMENT_TIME:
                 i = i + report.delta_time
