@@ -35,6 +35,8 @@ GPSetRequest last_set_request;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
 bool gccb_version_queried = false;
+uint16_t init_timeout_ms = 0;
+bool init_timed_out = false;
 
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
@@ -155,8 +157,8 @@ GPHeartbeatStatus gp_heartbeat_status()
 		heartbeat_status = GP_HEARTBEAT_CONNECTED;
 	} else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb()) {
 		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
-		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
-	} else if (gp_get_power_status() == GP_POWER_ON && gccb_version_queried == 0) {
+		heartbeat_status = GP_HEARTBEAT_RECORDING;
+	} else if (gp_get_power_status() == GP_POWER_ON && gccb_version_queried == 0 && init_timed_out) {
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
 	}
     new_heartbeat_available = false;
@@ -427,6 +429,12 @@ void gp_interface_state_machine()
             break;
     }
 
+    // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
+    // the heartbeat with an incompatible state while it's gccb version is being queried
+    if(!gccb_version_queried && !init_timed_out && ++init_timeout_ms >= (GP_INIT_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+        init_timed_out = true;
+    }
+
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
 	if (++heartbeat_counter >= (GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
         new_heartbeat_available = true;
@@ -437,6 +445,8 @@ void gp_interface_state_machine()
 	GPPowerStatus new_power_status = gp_get_power_status();
 	if(previous_power_status != new_power_status) {
 		gccb_version_queried = 0;
+		init_timeout_ms = 0;
+		init_timed_out = false;
 	}
 	previous_power_status = new_power_status;
 }
