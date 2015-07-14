@@ -358,8 +358,8 @@ void main(void)
 
         // Initialize the beacon LED
         init_led();
-        const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
-        led_set_mode(LED_MODE_FADE_IN_BLINK_3, rgba_green, 0);
+        //const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
+        //led_set_mode(LED_MODE_FADE_IN_BLINK_3, rgba_green, 0);
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication
@@ -724,79 +724,89 @@ void B3(void) //  SPARE
 
 //--------------------------------- USER ------------------------------------------
 
-#define STATUS_LED_ON() 	{GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;}
-#define STATUS_LED_OFF() 	{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
-
-#define CH1OTWn GpioDataRegs.GPBDAT.bit.GPIO50
-#define CH1Faultn GpioDataRegs.GPADAT.bit.GPIO13
-
-int led_cnt = 0;
-bool led_initial_state_cleared = false;
-bool led_show_error = false;
-const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
+static int led_cnt = 0;
+static uint16_t beacon_startup_counter = 0;
+static const uint16_t beacon_startup_delay_ms = 14;
+static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
+static const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
+static const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
+static const LED_RGBA rgba_blue = {0, 0, 0xff, 0xff};
 
 //----------------------------------------
 void C1(void) // Update Status LEDs
 //----------------------------------------
 {
-	switch (axis_parms.blink_state) {
-	case BLINK_NO_COMM:
-		// fast, 3Hz
-		if( led_cnt%2 ) {
-			STATUS_LED_ON();
-			if(board_hw_id == EL && led_initial_state_cleared)
-			    led_set_mode(LED_MODE_SOLID, rgba_red, 0);
-		} else {
-			STATUS_LED_OFF();
-			if(board_hw_id == EL && led_initial_state_cleared)
-			    led_set_mode(LED_MODE_OFF, rgba_red, 0);
-		}
-		break;
+    // Handle the beacon LED
+    if(beacon_startup_counter < beacon_startup_delay_ms) {
+        beacon_startup_counter++;
+    } else if(board_hw_id == EL && last_axis_state != axis_parms.blink_state) {
+        switch (axis_parms.blink_state) {
+            case BLINK_NO_COMM:
+                led_set_mode(LED_MODE_BLINK_FOREVER, rgba_blue, 0);
+                break;
 
-	case BLINK_INIT:
-	    if(!led_initial_state_cleared)
-	        led_initial_state_cleared = true;
-		// slow, .8Hz, dudy cycle of 20%
-		if( (led_cnt%10) < 2 ) {
-			STATUS_LED_ON();
-		} else {
-			STATUS_LED_OFF();
-		}
-		break;
+            case BLINK_INIT:
+                led_set_mode(LED_MODE_FADE_IN, rgba_green, 0);
+                break;
 
-	case BLINK_READY:
-		// slow, .5Hz , dudy cycle of 90%
-		if( (led_cnt%10) < 9 ) {
-			STATUS_LED_ON();
-		} else {
-			STATUS_LED_OFF();
-		}
-		break;
+            case BLINK_READY:
+                led_set_mode(LED_MODE_BLINK, rgba_green, 4);
+                break;
 
-	case BLINK_RUNNING:
-	    if (board_hw_id == EL && led_show_error) {
-	        led_show_error = false;
-	        led_set_mode(LED_MODE_OFF, rgba_red, 0);
-	    }
+            case BLINK_RUNNING:
+                //led_set_mode(LED_MODE_DISCO, rgba_red, 0);
+                break;
 
-		STATUS_LED_ON();
-		break;
+            case BLINK_ERROR:
+                led_set_mode(LED_MODE_BLINK_FOREVER, rgba_red, 0);
+                break;
+        }
 
-	case BLINK_ERROR:
-	    if (!led_show_error)
-	        led_show_error = true;
-		// fast, 3Hz, pause after 3 cycles
-		if( (led_cnt%2) && (led_cnt%12)<=6 ) {
-			STATUS_LED_ON();
-			if(board_hw_id == EL)
-			    led_set_mode(LED_MODE_SOLID, rgba_red, 0);
-		} else {
-			STATUS_LED_OFF();
-			if(board_hw_id == EL)
-			    led_set_mode(LED_MODE_OFF, rgba_red, 0);
-		}
-		break;
-	}
+        last_axis_state = axis_parms.blink_state;
+    }
+
+    // Handle individual board LED (remove after PVT release)
+    switch (axis_parms.blink_state) {
+        case BLINK_NO_COMM:
+            // fast, 3Hz
+            if(led_cnt % 2) {
+                led_status_on();
+            } else {
+                led_status_off();
+            }
+            break;
+
+        case BLINK_INIT:
+            // slow, .8Hz, dudy cycle of 20%
+            if((led_cnt%10) < 2) {
+                led_status_on();
+            } else {
+                led_status_off();
+            }
+            break;
+
+        case BLINK_READY:
+            // slow, .5Hz , dudy cycle of 90%
+            if((led_cnt % 10) < 9) {
+                led_status_on();
+            } else {
+                led_status_off();
+            }
+            break;
+
+        case BLINK_RUNNING:
+            led_status_on();
+            break;
+
+        case BLINK_ERROR:
+            // fast, 3Hz, pause after 3 cycles
+            if((led_cnt % 2) && (led_cnt % 12) <= 6) {
+                led_status_on();
+            } else {
+                led_status_off();
+            }
+            break;
+    }
 
 	led_cnt++;
 
