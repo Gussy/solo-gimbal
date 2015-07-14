@@ -3,9 +3,11 @@
 import math
 import numpy as np
 import setup_accelcal
+import os
 
 from setup_mavlink import get_current_joint_angles, get_current_delta_angles, get_current_delta_velocity
 from setup_param import set_offsets, message_brodcasting, set_param, commit_to_flash, set_accel_params
+from setup_factory import get_serial_number
 from pymavlink.rotmat import Vector3
 from math import degrees
 
@@ -102,4 +104,10 @@ def calibrate_accel(link, progressCallback=None):
     set_accel_params(link, p, level)
     
     message_brodcasting(link, False)
+
+    if os.environ.get('GMB_ACC_FILE') is not None:
+        f = open(os.environ['GMB_ACC_FILE'], "a")
+        f.write("%s,% .4f,% .4f,% .4f,% .4f,% .4f,% .4f\n" % (get_serial_number(link), p[0], p[1], p[2], p[3], p[4], p[5]))
+        f.close()
+
     return Vector3(p[0], p[1], p[2])
