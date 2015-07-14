@@ -47,7 +47,9 @@ def calibrate_gyro(link, progressCallback=None):
     message_brodcasting(link, False)
     return average
 
-def getAccelSample(link, AVG_COUNT=10, progressCallback=None):
+def getAccelSample(link, AVG_COUNT=50, progressCallback=None):
+    # discard first sample
+    get_current_delta_velocity(link)
     v = getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT, progressCallback=progressCallback)
     v = v * 100 # sample needs to be in units of m/s
     return np.asarray([v.x, v.y, v.z])
