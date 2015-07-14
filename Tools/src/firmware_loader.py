@@ -26,7 +26,7 @@ def decode_bootloader_version(msg):
 
 def start_bootloader(link):
     """Check if target is in booloader, if not reset into bootloader mode"""
-    msg = setup_mavlink.wait_handshake(link.file, timeout=4)
+    msg = setup_mavlink.wait_handshake(link, timeout=4)
     if msg != None:
         return Results.InBoot
     
@@ -34,7 +34,7 @@ def start_bootloader(link):
     while True:
         # Signal the target to reset into bootloader mode
         setup_mavlink.reset_into_bootloader(link)
-        msg = setup_mavlink.wait_handshake(link.file, timeout=1)
+        msg = setup_mavlink.wait_handshake(link)
         timeout_counter += 1
         
         if msg == None:
@@ -67,14 +67,10 @@ def send_block(link, binary, msg):
     setup_mavlink.send_bootloader_data(link, sequence_number, data)
     return end_idx
 
-
-def get_handshake_msg(link, timeout=1):
-    return setup_mavlink.wait_handshake(link.file, timeout)
-
 def upload_data(link, binary):
     global progressHandler, bootloaderVersionHandler
 
-    msg = get_handshake_msg(link)
+    msg = setup_mavlink.wait_handshake(link)
     if msg == None:
         return Results.NoResponse
 
@@ -87,7 +83,7 @@ def upload_data(link, binary):
     end_idx = 0
     retries = 0
     while end_idx < len(binary):
-        msg = get_handshake_msg(link)
+        msg = setup_mavlink.wait_handshake(link)
         if msg == None:
             retries += 1
             continue
@@ -109,7 +105,7 @@ def finish_upload(link):
     """Send an "end of transmission" signal to the target, to cause a target reset""" 
     while True:
         setup_mavlink.reset_into_bootloader(link)
-        msg = setup_mavlink.wait_handshake(link.file, timeout=1)
+        msg = setup_mavlink.wait_handshake(link)
         if msg == None:
             return Results.Timeout
         if msg.width == 0xFFFF:

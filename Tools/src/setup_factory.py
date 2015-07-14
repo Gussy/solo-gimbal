@@ -24,7 +24,7 @@ def string12_to_float3(s):
 def float3_to_string12(f1, f2, f3):
     return struct.unpack('12s',struct.pack('<3f', f1, f2, f3))[0]
 
-def readSWver(link, timeout=1):
+def read_software_version(link, timeout=1):
     msg = setup_param.fetch_param(link, "GMB_SWVER", timeout=timeout)
     if not msg:
         return None

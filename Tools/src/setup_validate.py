@@ -51,7 +51,7 @@ class Results:
     Pass, Fail, Error = 'pass', 'fail', 'error'
 
 def show(link):
-    swver = setup_factory.readSWver(link, timeout=2)
+    swver = setup_factory.read_software_version(link, timeout=2)
     if swver != None:
         major, minor, rev = int(swver[0]), int(swver[1]), int(swver[2])
         if major >= 0 and minor >= 18:
@@ -131,7 +131,7 @@ def show(link):
 
 def validate_version(link, swver=None):
     if not swver:
-        swver = setup_factory.readSWver(link, timeout=2)
+        swver = setup_factory.read_software_version(link, timeout=2)
     if not swver:
         return Results.Error
     ver = LooseVersion("%i.%i.%i" % (swver[0], swver[1], swver[2]))
