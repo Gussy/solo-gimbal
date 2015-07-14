@@ -157,7 +157,7 @@ GPHeartbeatStatus gp_heartbeat_status()
 		heartbeat_status = GP_HEARTBEAT_CONNECTED;
 	} else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && GP_VON) {
 		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
-		heartbeat_status = GP_HEARTBEAT_RECORDING;
+		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
 	} else if (gp_get_power_status() == GP_POWER_ON && gccb_version_queried == 0 && init_timed_out) {
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
 	}
