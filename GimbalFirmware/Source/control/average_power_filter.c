@@ -35,9 +35,3 @@ unsigned char run_average_power_filter(AveragePowerFilterParms* filter_parms, fl
     // Return if an overcurrent was detected
     return (filter_parms->iq_filter > filter_parms->current_limit) ? TRUE : FALSE;
 }
-
-void reset_average_power_filter(AveragePowerFilterParms* filter_parms)
-{
-    filter_parms->iq_filter = 0.0;
-    filter_parms->iq_filter_prev = 0.0;
-}

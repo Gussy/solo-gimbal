@@ -48,7 +48,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         // Scale -1 to +1 current to +/- full scale current, since power filter expects current in amps
         // If the average power has exceeded the preset limit on either phase a or b, error out this axis
         if (run_average_power_filter(power_filter_parms, md_parms->pid_iq.term.Ref * MAX_CURRENT)) {
-            reset_average_power_filter(power_filter_parms);
             AxisFault(CAND_FAULT_OVER_CURRENT, CAND_FAULT_TYPE_RECOVERABLE, cb_parms, md_parms, axis_parms);
         }
 

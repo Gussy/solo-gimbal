@@ -10,6 +10,5 @@ typedef struct {
 
 void init_average_power_filter(AveragePowerFilterParms* filter_parms, int current_sample_freq, int tau, float current_limit);
 unsigned char run_average_power_filter(AveragePowerFilterParms* filter_parms, float iq_current);
-void reset_average_power_filter(AveragePowerFilterParms* filter_parms);
 
 #endif /* AVERAGE_POWER_FILTER_H_ */
