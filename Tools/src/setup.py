@@ -261,7 +261,7 @@ def command_interface():
         start_bootloader(link)
         print("Application erased")
         return
-    
+
     if args.calibrate:
         runCalibration(link)
         return
@@ -320,6 +320,10 @@ def command_interface():
                 return
             else:
                 print("Unknown test: %s" % args.testloop)
+
+        if args.lifetest:
+            setup_run.runLifeTest(link)
+            return
 
         if args.stop:
             setup_run.stop(link)

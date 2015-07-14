@@ -1,7 +1,13 @@
 import sys, signal, serial
 from setup_mavlink import getSerialPorts
 
-MAX_RPM = 230
+MAX_RPM = 250
+
+# Magic RPM values to control relays
+RELAY_7_OFF = 251
+RELAY_7_ON = 252
+RELAY_8_OFF = 253
+RELAY_8_ON = 254
 
 _port = None
 
@@ -15,6 +21,16 @@ def set_rpm(port, rpm):
     elif isinstance(rpm, int) and rpm < MAX_RPM:
         port.write(chr(rpm))
         return True
+
+def power_enable(port):
+    if port:
+        port.write(chr(RELAY_7_ON))
+        port.write(chr(RELAY_8_ON))
+
+def power_disable(port):
+    if port:
+        port.write(chr(RELAY_7_OFF))
+        port.write(chr(RELAY_8_OFF))
 
 def open_fixture_comm(port=None):
     global _port
@@ -46,3 +62,22 @@ def close(port=None):
 #     global _port
 #     set_rpm(_port, 0)
 #     sys.exit(0)
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("power", help="on, off", default=None)
+    args = parser.parse_args()
+
+    wobble = init_fixture()
+
+    if args.power == 'on':
+        power_enable(wobble)
+    elif args.power == 'off':
+        power_disable(wobble)
+    else:
+        print("Command '%s' not supported" % args.power)
+
+    sys.exit(0)

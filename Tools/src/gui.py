@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import sys, argparse
 from PySide import QtCore, QtGui
 from PySide.QtCore import QThread, Slot
