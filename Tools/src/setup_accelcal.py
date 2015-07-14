@@ -76,7 +76,12 @@ def calibrate_accel_6dof(samples):
         (0.9,1.1)
         )
 
-    return minimize(fun=calc_mean_squared_residuals_6dof, jac=calc_jacobian_6dof, x0=(initial_params,), args=(samples,), bounds=bounds).x
+    result = minimize(fun=calc_mean_squared_residuals_6dof, jac=calc_jacobian_6dof, x0=(initial_params,), args=(samples,), bounds=bounds)
+
+    if not result.success:
+        raise ValueError("calibration did not succeed")
+
+    return result.x
 
 def calc_level_euler_rpy(p, s):
     corrected_sample = column(correct_sample(p, s))
