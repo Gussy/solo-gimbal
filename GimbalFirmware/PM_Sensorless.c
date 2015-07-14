@@ -726,7 +726,7 @@ void B3(void) //  SPARE
 
 static int led_cnt = 0;
 static uint16_t beacon_startup_counter = 0;
-static const uint16_t beacon_startup_delay_ms = 14;
+static const uint16_t beacon_startup_delay_cycles = 14;
 static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
 static const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
 static const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
@@ -737,7 +737,7 @@ void C1(void) // Update Status LEDs
 //----------------------------------------
 {
     // Handle the beacon LED
-    if(beacon_startup_counter < beacon_startup_delay_ms) {
+    if(beacon_startup_counter < beacon_startup_delay_cycles) {
         beacon_startup_counter++;
     } else if(board_hw_id == EL && last_axis_state != axis_parms.blink_state) {
         switch (axis_parms.blink_state) {
