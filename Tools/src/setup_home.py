@@ -40,6 +40,7 @@ def calibrate_joints(link, progressCallback=None):
 def calibrate_gyro(link, progressCallback=None):
     message_brodcasting(link, True)
     average = getAverage(link, get_current_delta_angles, progressCallback=progressCallback)
+    average = average * 100 # sample needs to be in units of rad/s
     if average:
         set_offsets(link, 'GYRO', average)
     else:
