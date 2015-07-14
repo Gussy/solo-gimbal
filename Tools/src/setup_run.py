@@ -80,15 +80,14 @@ def niceExit(function):
 
 @niceExit
 def runLifeTest(link, stopTestsCallback=None, eventCallback=None, wobbleport=None):
-    global stopTestLoop, faultCounter, lastReset
+    global stopTestLoop, faultCounter, lastFaultTime
 
     # Disable motors when the gimbal is in a fault state
     def eventCallbackShim(msg, fault=False):
-        global stopTestLoop, faultCounter, lastFaultTime
+        global stopTestLoop, faultCounter
         if fault:
             faultCounter += 1
             stopTestLoop = True
-            lastFaultTime = time.time()
 
         # Call the original callback if there was one
         if eventCallback:
@@ -101,11 +100,16 @@ def runLifeTest(link, stopTestsCallback=None, eventCallback=None, wobbleport=Non
 
         # Call the original callback if there was one
         if stopTestsCallback:
+            # Handle a local stop (fault)
+            if stopTestLoop:
+                return True
+            # Handle a remote stop (from gui)
             stopTestLoop = stopTestsCallback()
             return stopTestLoop
         else:
             return stopTestLoop
 
+    faultCounter = 0
     maxFaults = 2
     timeBetweenFaults = 30
 
@@ -154,12 +158,14 @@ def runLifeTest(link, stopTestsCallback=None, eventCallback=None, wobbleport=Non
             if eventCallback:
                 eventCallback('Resetting faultCounter')
             faultCounter = 1
+            lastFaultTime = time.time()
         else:
-            if eventCallback:
-                eventCallback('Powering off gimbal')
-            faultCounter = 0
-            fixtureWobble.power_disable(wobble)
-            time.sleep(1)
+            lastFaultTime = time.time()
+
+        if eventCallback:
+            eventCallback('Powering off gimbal')
+        fixtureWobble.power_disable(wobble)
+        time.sleep(1)
 
     # To be sure
     fixtureWobble.set_rpm(wobble, 0)
