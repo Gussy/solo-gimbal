@@ -289,12 +289,8 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
         // If we've received a rate command, reset the rate command timeout counter
         mavlink_info->rate_cmd_timeout_counter = 0;
 
-        // The gimbal starts in position control mode, and should switch to rate mode as soon as it receives a rate command from the copter
-        if (cb_parms->control_type == CONTROL_TYPE_POS) {
-        	cb_parms->control_type = CONTROL_TYPE_RATE;
-        }
-
-        // If the gimbal is not enabled, we want to enable it when we receive a rate command (we start out disabled)
+        // If the gimbal is not enabled, we want to enable it when we receive a rate command (we disable the gimbal if
+        // we lose rate commands, and we want to re-enable it when we re-acquire rate commands)
         if (!(mavlink_info->gimbal_active)) {
             // Enable the other two axes
             cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);

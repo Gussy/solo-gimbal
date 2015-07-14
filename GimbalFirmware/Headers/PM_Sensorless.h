@@ -69,8 +69,8 @@ typedef enum {
 } RateLoopPass;
 
 typedef enum {
-	CONTROL_TYPE_RATE,
-	CONTROL_TYPE_POS
+	CONTROL_TYPE_RATE = 0,
+	CONTROL_TYPE_POS = 1
 } ControlType;
 
 typedef struct {
@@ -122,6 +122,8 @@ typedef struct {
     int16 rate_cmd_inject_filtered[AXIS_CNT];
     RateLoopPass rate_loop_pass;
     ControlType control_type;
+    // As a special case, a value of 0 in max allowed torque means unlimited allowed torque
+    int16 max_allowed_torque;
     Uint8 initialized;
     Uint8 enabled;
 } ControlBoardParms;

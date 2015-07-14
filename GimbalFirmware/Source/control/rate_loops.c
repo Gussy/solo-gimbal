@@ -14,7 +14,13 @@ static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
 
 Uint16 telemetry_decimation_count = 0;
 
-#define POS_LOOP_GAIN 1
+#define POS_LOOP_GAIN_1 1
+#define POS_LOOP_GAIN_2 2
+#define POS_LOOP_GAIN_3 4
+#define POS_LOOP_GAIN_4 8
+#define POS_LOOP_GAIN_1_LIMIT 139
+#define POS_LOOP_GAIN_2_LIMIT 278
+#define POS_LOOP_GAIN_3_LIMIT 417
 
 void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 {
@@ -56,41 +62,74 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
         break;
 
         case ERROR_AZ_PASS:
-        	if (cb_parms->control_type == CONTROL_TYPE_POS) {
-        		cb_parms->axis_errors[AZ] = (POS_LOOP_GAIN * CorrectEncoderError(-cb_parms->encoder_readings[AZ])) - cb_parms->corrected_gyro_readings[AZ];
+        	if ((Uint16)cb_parms->control_type == CONTROL_TYPE_POS) {
+        		Uint16 pos_gain = 0;
+        		int16 encoder_error = CorrectEncoderError(-cb_parms->encoder_readings[AZ]);
+        		if ((encoder_error <= -POS_LOOP_GAIN_3_LIMIT) || (encoder_error >= POS_LOOP_GAIN_3_LIMIT)) {
+        			pos_gain = POS_LOOP_GAIN_4;
+        		} else if ((encoder_error <= -POS_LOOP_GAIN_2_LIMIT) || (encoder_error >= POS_LOOP_GAIN_2_LIMIT)) {
+        			pos_gain = POS_LOOP_GAIN_3;
+        		} else if ((encoder_error <= -POS_LOOP_GAIN_1_LIMIT) || (encoder_error >= POS_LOOP_GAIN_1_LIMIT)) {
+        			pos_gain = POS_LOOP_GAIN_2;
+        		} else {
+        			pos_gain = POS_LOOP_GAIN_1;
+        		}
+        		cb_parms->axis_errors[AZ] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[AZ];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
 				cb_parms->rate_cmd_inject_filtered[AZ] = cb_parms->rate_cmd_inject_filtered[AZ]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[AZ] - cb_parms->rate_cmd_inject_filtered[AZ]);
 				cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject_filtered[AZ] - cb_parms->corrected_gyro_readings[AZ];
-				// Set up the next rate loop pass to be the el error computation pass
         	}
 
+        	// Set up the next rate loop pass to be the el error computation pass
         	cb_parms->rate_loop_pass = ERROR_EL_PASS;
             break;
 
         case ERROR_EL_PASS:
-        	if (cb_parms->control_type == CONTROL_TYPE_POS) {
-        		cb_parms->axis_errors[EL] = (POS_LOOP_GAIN * CorrectEncoderError(-cb_parms->encoder_readings[EL])) - cb_parms->corrected_gyro_readings[EL];
+        	if ((Uint16)cb_parms->control_type == CONTROL_TYPE_POS) {
+        		Uint16 pos_gain = 0;
+				int16 encoder_error = CorrectEncoderError(-cb_parms->encoder_readings[EL]);
+				if ((encoder_error <= -POS_LOOP_GAIN_3_LIMIT) || (encoder_error >= POS_LOOP_GAIN_3_LIMIT)) {
+					pos_gain = POS_LOOP_GAIN_4;
+				} else if ((encoder_error <= -POS_LOOP_GAIN_2_LIMIT) || (encoder_error >= POS_LOOP_GAIN_2_LIMIT)) {
+					pos_gain = POS_LOOP_GAIN_3;
+				} else if ((encoder_error <= -POS_LOOP_GAIN_1_LIMIT) || (encoder_error >= POS_LOOP_GAIN_1_LIMIT)) {
+					pos_gain = POS_LOOP_GAIN_2;
+				} else {
+					pos_gain = POS_LOOP_GAIN_1;
+				}
+				cb_parms->axis_errors[EL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[EL];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
 				cb_parms->rate_cmd_inject_filtered[EL] = cb_parms->rate_cmd_inject_filtered[EL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[EL] - cb_parms->rate_cmd_inject_filtered[EL]);
 				cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject_filtered[EL] - cb_parms->corrected_gyro_readings[EL];
-				// Set up the next rate loop pass to be the roll error computation pass
         	}
 
+			// Set up the next rate loop pass to be the roll error computation pass
         	cb_parms->rate_loop_pass = ERROR_ROLL_PASS;
             break;
 
         case ERROR_ROLL_PASS:
-        	if (cb_parms->control_type == CONTROL_TYPE_POS) {
-        		cb_parms->axis_errors[ROLL] = (POS_LOOP_GAIN * CorrectEncoderError(-cb_parms->encoder_readings[ROLL])) - cb_parms->corrected_gyro_readings[ROLL];
+        	if ((Uint16)cb_parms->control_type == CONTROL_TYPE_POS) {
+        		Uint16 pos_gain = 0;
+				int16 encoder_error = CorrectEncoderError(-cb_parms->encoder_readings[ROLL]);
+				if ((encoder_error <= -POS_LOOP_GAIN_3_LIMIT) || (encoder_error >= POS_LOOP_GAIN_3_LIMIT)) {
+					pos_gain = POS_LOOP_GAIN_4;
+				} else if ((encoder_error <= -POS_LOOP_GAIN_2_LIMIT) || (encoder_error >= POS_LOOP_GAIN_2_LIMIT)) {
+					pos_gain = POS_LOOP_GAIN_3;
+				} else if ((encoder_error <= -POS_LOOP_GAIN_1_LIMIT) || (encoder_error >= POS_LOOP_GAIN_1_LIMIT)) {
+					pos_gain = POS_LOOP_GAIN_2;
+				} else {
+					pos_gain = POS_LOOP_GAIN_1;
+				}
+				cb_parms->axis_errors[ROLL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[ROLL];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
 				cb_parms->rate_cmd_inject_filtered[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[ROLL] - cb_parms->rate_cmd_inject_filtered[ROLL]);
 				cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
-				// Set up the next rate loop pass to be the torque command output pass
         	}
 
+			// Set up the next rate loop pass to be the torque command output pass
 			cb_parms->rate_loop_pass = TORQUE_OUT_PASS;
             break;
 
@@ -106,6 +145,27 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
                 cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->axis_errors[AZ], 1.0, 1.0, 1.0) * TorqueSignMap[AZ];
                 cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL], 1.0, 1.0, 1.0) * TorqueSignMap[EL];
                 cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
+            }
+
+            // Saturate torque command against configured limits if necessary
+            if (cb_parms->max_allowed_torque != 0) {
+            	if (cb_parms->motor_torques[AZ] < -cb_parms->max_allowed_torque) {
+            		cb_parms->motor_torques[AZ] = -cb_parms->max_allowed_torque;
+            	} else if (cb_parms->motor_torques[AZ] > cb_parms->max_allowed_torque) {
+            		cb_parms->motor_torques[AZ] = cb_parms->max_allowed_torque;
+            	}
+
+            	if (cb_parms->motor_torques[EL] < -cb_parms->max_allowed_torque) {
+					cb_parms->motor_torques[EL] = -cb_parms->max_allowed_torque;
+				} else if (cb_parms->motor_torques[EL] > cb_parms->max_allowed_torque) {
+					cb_parms->motor_torques[EL] = cb_parms->max_allowed_torque;
+				}
+
+            	if (cb_parms->motor_torques[ROLL] < -cb_parms->max_allowed_torque) {
+					cb_parms->motor_torques[ROLL] = -cb_parms->max_allowed_torque;
+				} else if (cb_parms->motor_torques[ROLL] > cb_parms->max_allowed_torque) {
+					cb_parms->motor_torques[ROLL] = cb_parms->max_allowed_torque;
+				}
             }
 
             // Send out motor torques
