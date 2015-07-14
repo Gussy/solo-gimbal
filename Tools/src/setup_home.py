@@ -48,6 +48,8 @@ def calibrate_gyro(link, progressCallback=None):
     return average
 
 def getAccelSample(link, AVG_COUNT=50, progressCallback=None):
+    if progressCallback:
+        progressCallback(0)
     # discard first sample
     get_current_delta_velocity(link)
     v = getAverage(link, get_current_delta_velocity, sample_count=AVG_COUNT, progressCallback=progressCallback)
