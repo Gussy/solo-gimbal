@@ -49,8 +49,12 @@ The bootloaders must be installed via JTAG, usually using the XDS510 JTAG Emulat
 
 ### Beacon LED (Camera Carriage Board)
 
-* Blinking white on Bootloader
-* Glows green on power up for a couple of seconds
+* Blinking orange on bootloader
+* Dim green once CAN bootload is complete
+* Fades to bright green on initialisation
+* Blinks three times when initialisation is complete
+* Blinks red when a fault has occurred
+* Blinks blue when CAN comms is lost
 
 ## Misc
 

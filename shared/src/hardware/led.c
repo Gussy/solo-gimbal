@@ -99,12 +99,15 @@ void init_led()
 	// moving, the min and max allowed values and a pointer to the correct ePWM registers
 	epwm5_info.EPwm_CMPA_Direction = LED_EPWM_CMP_UP;
 	epwm5_info.EPwm_CMPB_Direction = LED_EPWM_CMP_UP;
-	epwm5_info.EPwmTimerIntCount = 0;					// Zero the interrupt counter
+	epwm5_info.EPwmTimerIntCountA = 0;
+	epwm5_info.EPwmTimerIntCountB = 0;
 	epwm5_info.EPwmRegHandle = &EPwm5Regs;				// Set the pointer to the ePWM module
 	epwm5_info.EPwmMaxCMPA = LED_EPWM_MAX_CMP;			// Setup min/max CMPA/CMPB values
 	epwm5_info.EPwmMinCMPA = LED_EPWM_MIN_CMP;
 	epwm5_info.EPwmMaxCMPB = LED_EPWM_MAX_CMP;
 	epwm5_info.EPwmMinCMPB = LED_EPWM_MIN_CMP;
+	epwm5_info.a_bias = 64;
+	epwm5_info.b_bias = 128;
 
 	// Setup TBCLK
 	EPwm6Regs.TBCTL.bit.CTRMODE = TB_COUNT_UP;			// Count up
@@ -134,14 +137,20 @@ void init_led()
 	// Information used to keep track of the direction the CMPA/CMPB values are
 	// moving, the min and max allowed values and a pointer to the correct ePWM registers
 	epwm6_info.EPwm_CMPA_Direction = LED_EPWM_CMP_UP;
-	epwm6_info.EPwmTimerIntCount = 0;					// Zero the interrupt counter
+	epwm6_info.EPwmTimerIntCountA = 0;
+	epwm6_info.EPwmTimerIntCountB = 0;
 	epwm6_info.EPwmRegHandle = &EPwm6Regs;				// Set the pointer to the ePWM module
 	epwm6_info.EPwmMaxCMPA = LED_EPWM_MAX_CMP;			// Setup min/max CMPA/CMPB values
 	epwm6_info.EPwmMinCMPA = LED_EPWM_MIN_CMP;
+	epwm6_info.a_bias = 256;
+	epwm6_info.b_bias = 0;
 
 	EALLOW;
 	SysCtrlRegs.PCLKCR0.bit.TBCLKSYNC = 1;
 	EDIS;
+
+	// Initialise LED to dim green
+	set_rgba(0, 0xff, 0, 0x01);
 }
 
 void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 duration)
@@ -182,6 +191,7 @@ void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 durati
 
 		// Cycle through RGB colours. Useful for testing.
 		case LED_MODE_DISCO:
+		    set_rgba(0, 0xff, 0, 0xff);
 			update_function = &update_compare_disco;
 			enable_epwm_interrupts();
 			break;
@@ -283,8 +293,8 @@ static void update_compare_fade_in(LED_EPWM_INFO *epwm_info)
 static void update_compare_disco(LED_EPWM_INFO *epwm_info)
 {
 	// Every 256th interrupt, change the CMPA/CMPB values
-	if(epwm_info->EPwmTimerIntCount == 0xFF) {
-		epwm_info->EPwmTimerIntCount = 0;
+	if(++epwm_info->EPwmTimerIntCountA == epwm_info->a_bias) {
+		epwm_info->EPwmTimerIntCountA = 0;
 
 		// If we were increasing CMPA, check to see if we reached the max value.  If not, increase CMPA
 		// else, change directions and decrease CMPA
@@ -308,32 +318,35 @@ static void update_compare_disco(LED_EPWM_INFO *epwm_info)
 				epwm_info->EPwmRegHandle->CMPA.half.CMPA--;
 			}
 		}
+    }
 
-		// If we were increasing CMPB, check to see if
-		// we reached the max value.  If not, increase CMPB
-		// else, change directions and decrease CMPB
-		if(epwm_info->EPwm_CMPB_Direction == LED_EPWM_CMP_UP) {
-			if(epwm_info->EPwmRegHandle->CMPB < epwm_info->EPwmMaxCMPB) {
-				epwm_info->EPwmRegHandle->CMPB++;
-			} else {
-				epwm_info->EPwm_CMPB_Direction = LED_EPWM_CMP_DOWN;
-				epwm_info->EPwmRegHandle->CMPB--;
-			}
-		}
+    // Every 256th interrupt, change the CMPA/CMPB values
+    if(++epwm_info->EPwmTimerIntCountB == epwm_info->b_bias) {
+        epwm_info->EPwmTimerIntCountB = 0;
 
-		// If we were decreasing CMPB, check to see if
-		// we reached the min value.  If not, decrease CMPB
-		// else, change directions and increase CMPB
-		else {
-			if(epwm_info->EPwmRegHandle->CMPB == epwm_info->EPwmMinCMPB) {
-				epwm_info->EPwm_CMPB_Direction = LED_EPWM_CMP_UP;
-				epwm_info->EPwmRegHandle->CMPB++;
-			} else {
-				epwm_info->EPwmRegHandle->CMPB--;
-			}
-		}
-	} else {
-		epwm_info->EPwmTimerIntCount++;
+	    // If we were increasing CMPB, check to see if
+        // we reached the max value.  If not, increase CMPB
+        // else, change directions and decrease CMPB
+        if(epwm_info->EPwm_CMPB_Direction == LED_EPWM_CMP_UP) {
+            if(epwm_info->EPwmRegHandle->CMPB < epwm_info->EPwmMaxCMPB) {
+                epwm_info->EPwmRegHandle->CMPB++;
+            } else {
+                epwm_info->EPwm_CMPB_Direction = LED_EPWM_CMP_DOWN;
+                epwm_info->EPwmRegHandle->CMPB--;
+            }
+        }
+
+        // If we were decreasing CMPB, check to see if
+        // we reached the min value.  If not, decrease CMPB
+        // else, change directions and increase CMPB
+        else {
+            if(epwm_info->EPwmRegHandle->CMPB == epwm_info->EPwmMinCMPB) {
+                epwm_info->EPwm_CMPB_Direction = LED_EPWM_CMP_UP;
+                epwm_info->EPwmRegHandle->CMPB++;
+            } else {
+                epwm_info->EPwmRegHandle->CMPB--;
+            }
+        }
 	}
 
 	return;
