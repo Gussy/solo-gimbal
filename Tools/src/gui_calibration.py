@@ -77,7 +77,10 @@ class calibrationUI(object):
             return False
 
     def showInformationMessageBox(self, title, message):
-        return QtGui.QMessageBox.information(self.parent, title, message)
+        if 'error' in message.lower():
+            return QtGui.QMessageBox.critical(self.parent, title, message)
+        else:
+            return QtGui.QMessageBox.information(self.parent, title, message)
 
     def getCalibrationAttempted(self):
         return self.calibrationAttempted
@@ -126,7 +129,15 @@ class calibrationUI(object):
             self.progress = progress
             self.status = message
             return self.continueAccelCal
-        return setup_home.calibrate_accel(self.connection.getLink(), accelProgressCallback)
+        result = None, None, None
+        try:
+            result = setup_home.calibrate_accel(self.connection.getLink(), accelProgressCallback)
+        except ValueError:
+            # Trigger a message box to show on the next timer update
+            self.waitingForContinue = True
+            self.status = "Error: Samples too close together"
+        finally:
+            return result
 
     @gui_utils.waitCursor
     def eraseCalibration(self):
