@@ -6,6 +6,7 @@
 #include "hardware/HWSpecific.h"
 #include "mavlink_interface/gimbal_mavlink.h"
 #include "hardware/device_init.h"
+#include "hardware/led.h"
 
 #include <string.h>
 
@@ -117,4 +118,26 @@ void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status)
     params[1] = GetBoardHWID();
 
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_CALIBRATION_REQUIRED_STATUS, params, 2);
+}
+
+void CANUpdateBeaconState(LED_MODE mode, LED_RGBA color, Uint8 duration)
+{
+	Uint8 params[6];
+	params[0] = mode;
+	params[1] = color.red;
+	params[2] = color.green;
+	params[3] = color.blue;
+	params[4] = color.alpha;
+	params[5] = duration;
+
+	cand_tx_extended_param(CAND_ID_EL, CAND_EPID_BEACON_CONTROL, params, 6);
+}
+
+void CANUpdateMaxTorque(int16 new_max_torque)
+{
+	Uint8 params[2];
+	params[0] = ((((Uint16)new_max_torque) >> 8) & 0x00FF);
+	params[1] = (((Uint16)new_max_torque) & 0x00FF);
+
+	cand_tx_extended_param(CAND_ID_EL, CAND_EPID_MAX_TORQUE, params, 2);
 }

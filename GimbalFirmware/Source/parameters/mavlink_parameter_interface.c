@@ -4,14 +4,19 @@
 #include "can/cand.h"
 #include "PM_Sensorless.h"
 #include "flash/flash.h"
+#include "hardware/led.h"
+#include "can/cb.h"
 
 #include <string.h>
+#include <math.h>
 
 GimbalMavlinkParameter gimbal_params[MAVLINK_GIMBAL_PARAM_MAX];
 
 extern unsigned char gimbal_sysid;
 
 float commit_to_flash_status = 0.0;
+float pos_hold = CONTROL_TYPE_POS;
+float max_torque = LOW_TORQUE_MODE_MAX;
 
 void init_default_mavlink_params()
 {
@@ -177,6 +182,18 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].float_data_ptr = &commit_to_flash_status;
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].access_type = GIMBAL_PARAM_READ_WRITE;
 
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].param_id, "GMB_POS_HOLD", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].can_parameter_id = CAND_PID_INVALID;
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].param_type = MAV_PARAM_TYPE_REAL32;
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].float_data_ptr = &pos_hold;
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].access_type = GIMBAL_PARAM_READ_WRITE;
+
+	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].param_id, "GMB_MAX_TORQUE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].can_parameter_id = CAND_PID_INVALID;
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].param_type = MAV_PARAM_TYPE_REAL32;
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].float_data_ptr = &max_torque;
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].access_type = GIMBAL_PARAM_READ_WRITE;
+
     //----- Parameters for external calibration
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].param_id, "GMB_OFF_JNT_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].can_parameter_id = CAND_PID_INVALID;
@@ -302,12 +319,49 @@ void handle_param_set(mavlink_message_t* received_msg)
 
         // First, make sure we're not trying to update a read-only parameter
         if (param->access_type == GIMBAL_PARAM_READ_WRITE) {
-            // Special case the commit to flash param
             if (param_found == MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH) {
+            	// Special case the commit to flash param since we need to check for a specific value
                 if (decoded_msg.param_value == 69.0) {
                     commit_to_flash_status = (float)write_flash();
                     send_gimbal_param(param_found);
                 }
+            } else if (param_found == MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD) {
+            	// Special case the position hold flag param since we need to validate it against the valid settings
+            	// and need to send it to the EL board over CAN
+            	if ((decoded_msg.param_value == CONTROL_TYPE_POS) || (decoded_msg.param_value == CONTROL_TYPE_RATE)) {
+            		*(param->float_data_ptr) = decoded_msg.param_value;
+            		if (*(param->float_data_ptr) == CONTROL_TYPE_POS) {
+            			// If we switch to position mode, we want to hold position no matter if we're receiving rate commands or not,
+            			// so mark the gimbal as inactive for the purposes of mavlink control here
+            			SetMavlinkGimbalDisabled();
+            			// Also enable the axes here, just in case they were disabled when we entered position hold mode
+            			// Enable the other axes
+            			cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
+						// Enable ourselves
+            			EnableAZAxis();
+            			cand_tx_command(CAND_ID_EL, CAND_CMD_POS_MODE);
+            		} else if (*(param->float_data_ptr) == CONTROL_TYPE_RATE) {
+            			// In rate mode, we want to disable the gimbal if we lose rate commands from the copter, so we mark
+            			// the gimbal as active for the purposes of mavlink control here
+            			SetMavlinkGimbalEnabled();
+            			cand_tx_command(CAND_ID_EL, CAND_CMD_RATE_MODE);
+            		}
+
+            		send_gimbal_param(param_found);
+            	}
+            } else if (param_found == MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE) {
+            	// Special case max allowed torque, since we need to bounds limit it and need to send it to the EL
+            	// board over CAN
+            	if (decoded_msg.param_value > 32767.0) {
+            		*(param->float_data_ptr) = 32767.0;
+            	} else if (decoded_msg.param_value < 0) {
+            		*(param->float_data_ptr) = 0.0;
+            	} else {
+            		*(param->float_data_ptr) = floor(decoded_msg.param_value);
+            	}
+
+            	CANUpdateMaxTorque((int16)(*(param->float_data_ptr)));
+            	send_gimbal_param(param_found);
             } else {
                 // First, make sure the type of the param being sent matches the type of the param being updated
                 if (param->param_type == decoded_msg.param_type) {

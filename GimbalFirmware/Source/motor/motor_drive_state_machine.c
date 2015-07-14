@@ -219,11 +219,13 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             cb_parms->axes_homed[GetBoardHWID()] = TRUE;
             if (GetBoardHWID() == EL) {
                 // If we're the EL board, we need to wait for the other axes to indicate that they've finished homing before
-                // we enable the rate loops.  Otherwise, we move to the disabled state and wait for a command to set us to actively running
+                // we enable the rate loops.  Otherwise, we move to the running state (we start in position hold mode), and
+            	// wait for an external command to move to rate control mode
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
             } else {
                 md_parms->md_initialized = TRUE;
-                md_parms->motor_drive_state = STATE_DISABLED;
+                axis_parms->enable_flag = TRUE;
+                md_parms->motor_drive_state = STATE_RUNNING;
             }
             break;
 
@@ -247,11 +249,13 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                     (cb_parms->encoder_value_received[EL] == TRUE) &&
                     (cb_parms->encoder_value_received[ROLL] == TRUE)) {
 
-                // Now we're ready to move to the disabled state
-                // We wait for a command to move to the running state
+                // Now we're ready to move to the running state
+            	// We start in position hold mode and don't move to rate
+            	// control until externally commanded to
                 cb_parms->enabled = TRUE;
                 md_parms->md_initialized = TRUE;
-                md_parms->motor_drive_state = STATE_DISABLED;
+                axis_parms->enable_flag = TRUE;
+                md_parms->motor_drive_state = STATE_RUNNING;
             } else {
                 // Send a zero torque command to the other axes to generate an encoder response
                 // (we update our own encoder value in a different place)

@@ -21,7 +21,7 @@ static void handle_reset_gimbal();
 static void handle_request_axis_calibration(MotorDriveParms* md_parms);
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
-static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms);
 void send_cmd_long_ack(uint16_t cmd_id, uint8_t result);
 
 mavlink_system_t mavlink_system;
@@ -127,7 +127,7 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 				break;
 
 			case MAVLINK_MSG_ID_GIMBAL_CONTROL:
-			    handle_gimbal_control(&received_msg, mavlink_info);
+			    handle_gimbal_control(&received_msg, mavlink_info, cb_parms);
 			    break;
 
 
@@ -269,7 +269,7 @@ static void handle_gopro_set_request(mavlink_message_t* received_msg)
     }
 }
 
-static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info)
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms)
 {
     mavlink_gimbal_control_t decoded_msg;
     mavlink_msg_gimbal_control_decode(received_msg, &decoded_msg);
@@ -289,7 +289,8 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
         // If we've received a rate command, reset the rate command timeout counter
         mavlink_info->rate_cmd_timeout_counter = 0;
 
-        // If the gimbal is not enabled, we want to enable it when we receive a rate command (we start out disabled)
+        // If the gimbal is not enabled, we want to enable it when we receive a rate command (we disable the gimbal if
+        // we lose rate commands, and we want to re-enable it when we re-acquire rate commands)
         if (!(mavlink_info->gimbal_active)) {
             // Enable the other two axes
             cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);

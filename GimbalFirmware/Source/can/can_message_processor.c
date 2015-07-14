@@ -13,11 +13,17 @@
 #include "hardware/watchdog.h"
 #include "flash/flash.h"
 #include "hardware/watchdog.h"
+#include "hardware/led.h"
 
 #include <string.h>
 #include <stdio.h>
 
-void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, EncoderParms* encoder_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info)
+void Process_CAN_Messages(AxisParms* axis_parms,
+		MotorDriveParms* md_parms,
+		ControlBoardParms* cb_parms,
+		EncoderParms* encoder_parms,
+		ParamSet* param_set,
+		LoadAxisParmsStateInfo* load_ap_state_info)
 {
     static int fault_cnt = 0;
     static int cmd_cnt = 0;
@@ -85,6 +91,14 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         case CAND_CMD_CALIBRATE_AXES:
             md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
             break;
+
+        case CAND_CMD_POS_MODE:
+        	cb_parms->control_type = CONTROL_TYPE_POS;
+        	break;
+
+        case CAND_CMD_RATE_MODE:
+        	cb_parms->control_type = CONTROL_TYPE_RATE;
+        	break;
 
         default:
             AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
@@ -206,6 +220,29 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                             cb_parms->calibration_status[axis] = calibration_required_status;
                         }
                         break;
+
+                    case CAND_EPID_BEACON_CONTROL:
+                    	// Only makes sense to do this on elevation (since that's where the beacon is)
+                    	// Protect against errant messages to the wrong axis
+                    	if (GetBoardHWID() == EL) {
+							if (msg.extended_param_length == 6) {
+								LED_MODE mode = (LED_MODE)(msg.extended_param[0]);
+								LED_RGBA color;
+								color.red = msg.extended_param[1];
+								color.green = msg.extended_param[2];
+								color.blue = msg.extended_param[3];
+								color.alpha = msg.extended_param[4];
+								Uint8 duration = msg.extended_param[5];
+								led_set_mode(mode, color, duration);
+							}
+                    	}
+                    	break;
+
+                    case CAND_EPID_MAX_TORQUE:
+                    	if (msg.extended_param_length == 2) {
+                    		int16 max_torque = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
+                    		cb_parms->max_allowed_torque = max_torque;
+                    	}
                 }
             } else {
                 // Not an extended parameter, parse normally
