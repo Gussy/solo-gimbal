@@ -16,7 +16,7 @@ extern unsigned char gimbal_sysid;
 
 float commit_to_flash_status = 0.0;
 float pos_hold = CONTROL_TYPE_POS;
-float max_torque = 0.0;
+float max_torque = LOW_TORQUE_MODE_MAX;
 
 void init_default_mavlink_params()
 {
@@ -331,8 +331,19 @@ void handle_param_set(mavlink_message_t* received_msg)
             	if ((decoded_msg.param_value == CONTROL_TYPE_POS) || (decoded_msg.param_value == CONTROL_TYPE_RATE)) {
             		*(param->float_data_ptr) = decoded_msg.param_value;
             		if (*(param->float_data_ptr) == CONTROL_TYPE_POS) {
+            			// If we switch to position mode, we want to hold position no matter if we're receiving rate commands or not,
+            			// so mark the gimbal as inactive for the purposes of mavlink control here
+            			SetMavlinkGimbalDisabled();
+            			// Also enable the axes here, just in case they were disabled when we entered position hold mode
+            			// Enable the other axes
+            			cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
+						// Enable ourselves
+            			EnableAZAxis();
             			cand_tx_command(CAND_ID_EL, CAND_CMD_POS_MODE);
             		} else if (*(param->float_data_ptr) == CONTROL_TYPE_RATE) {
+            			// In rate mode, we want to disable the gimbal if we lose rate commands from the copter, so we mark
+            			// the gimbal as active for the purposes of mavlink control here
+            			SetMavlinkGimbalEnabled();
             			cand_tx_command(CAND_ID_EL, CAND_CMD_RATE_MODE);
             		}
 

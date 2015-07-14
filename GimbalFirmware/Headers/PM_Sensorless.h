@@ -44,6 +44,8 @@ Next, Include project specific include files.
 #include "hardware/HWSpecific.h"
 #include "ardupilotmega/mavlink.h"
 
+#define LOW_TORQUE_MODE_MAX (6000.0)
+
 typedef enum {
     BLINK_NO_COMM,
     BLINK_INIT,
@@ -158,6 +160,8 @@ int16 CorrectEncoderError(int16 raw_error);
 void power_down_motor(void);
 void EnableAZAxis(void);
 void RelaxAZAxis(void);
+void SetMavlinkGimbalEnabled(void);
+void SetMavlinkGimbalDisabled(void);
 
 extern Uint32 global_timestamp_counter;
 

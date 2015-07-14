@@ -4,7 +4,13 @@
 #include "PM_Sensorless.h"
 #include "motor/motor_drive_state_machine.h"
 #include "parameters/load_axis_parms_state_machine.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
 
-void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, EncoderParms* encoder_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info);
+void Process_CAN_Messages(AxisParms* axis_parms,
+		MotorDriveParms* md_parms,
+		ControlBoardParms* cb_parms,
+		EncoderParms* encoder_parms,
+		ParamSet* param_set,
+		LoadAxisParmsStateInfo* load_ap_state_info);
 
 #endif /* CAN_MESSAGE_PROCESSOR_H_ */

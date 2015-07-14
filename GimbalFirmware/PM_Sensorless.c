@@ -154,7 +154,7 @@ ControlBoardParms control_board_parms = {
     .rate_cmd_inject_filtered = {0, 0, 0},
     .rate_loop_pass = READ_GYRO_PASS,
 	.control_type = CONTROL_TYPE_POS,
-	.max_allowed_torque = 0,
+	.max_allowed_torque = LOW_TORQUE_MODE_MAX,
     .initialized = FALSE,
     .enabled = FALSE,
 };
@@ -982,4 +982,14 @@ void RelaxAZAxis(void)
     if (motor_drive_parms.md_initialized) {
         motor_drive_parms.motor_drive_state = STATE_DISABLED;
     }
+}
+
+void SetMavlinkGimbalEnabled(void)
+{
+	mavlink_gimbal_info.gimbal_active = TRUE;
+}
+
+void SetMavlinkGimbalDisabled(void)
+{
+	mavlink_gimbal_info.gimbal_active = FALSE;
 }

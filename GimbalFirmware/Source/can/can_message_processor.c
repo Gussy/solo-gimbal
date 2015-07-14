@@ -18,7 +18,12 @@
 #include <string.h>
 #include <stdio.h>
 
-void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, EncoderParms* encoder_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info)
+void Process_CAN_Messages(AxisParms* axis_parms,
+		MotorDriveParms* md_parms,
+		ControlBoardParms* cb_parms,
+		EncoderParms* encoder_parms,
+		ParamSet* param_set,
+		LoadAxisParmsStateInfo* load_ap_state_info)
 {
     static int fault_cnt = 0;
     static int cmd_cnt = 0;
