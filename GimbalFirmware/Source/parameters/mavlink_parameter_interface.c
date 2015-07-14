@@ -194,6 +194,12 @@ void init_default_mavlink_params()
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].float_data_ptr = &max_torque;
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].access_type = GIMBAL_PARAM_READ_WRITE;
 
+	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].param_id, "GMB_GP_CHARGE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].can_parameter_id = CAND_PID_INVALID;
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].param_type = MAV_PARAM_TYPE_REAL32;
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].float_data_ptr = &(flash_params.gopro_charging_enabled);
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].access_type = GIMBAL_PARAM_READ_WRITE;
+
     //----- Parameters for external calibration
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].param_id, "GMB_OFF_JNT_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].can_parameter_id = CAND_PID_INVALID;
@@ -362,6 +368,19 @@ void handle_param_set(mavlink_message_t* received_msg)
 
             	CANUpdateMaxTorque((int16)(*(param->float_data_ptr)));
             	send_gimbal_param(param_found);
+            } else if (param_found == MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE) {
+            	// Special case gopro charge control, since we need to validate it
+            	// and need to send CAN commands to EL board
+            	if ((decoded_msg.param_value == 1.0) || (decoded_msg.param_value == 0.0)) {
+            		*(param->float_data_ptr) = decoded_msg.param_value;
+            		if (*(param->float_data_ptr) == 0) {
+            			cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_DISABLE);
+            		} else {
+            			cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_ENABLE);
+            		}
+
+            		send_gimbal_param(param_found);
+            	}
             } else {
                 // First, make sure the type of the param being sent matches the type of the param being updated
                 if (param->param_type == decoded_msg.param_type) {
