@@ -12,6 +12,7 @@
 #define GP_STATE_MACHINE_PERIOD_MS 3
 #define GP_PWRON_TIME_MS 120 // Spec says 100ms, but I'm making it a little longer here just in case, and so it's an even multiple of our state machine poll period
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
+#define GP_INIT_TIMEOUT_MS 3000
 #define GP_PROTOCOL_VERSION 0x00
 #define GP_MAVLINK_HEARTBEAT_INTERVAL 1000
 #define GP_I2C_EEPROM_NUMBYTES 16
@@ -65,11 +66,6 @@ typedef enum {
 } GPCmdStatus;
 
 typedef enum {
-    GP_EXPECTING_COMMAND,
-    GP_EXPECTING_RESPONSE
-} GPExpectingDataType;
-
-typedef enum {
     GP_HEARTBEAT_DISCONNECTED = 0,
     GP_HEARTBEAT_INCOMPATIBLE = 1,
     GP_HEARTBEAT_CONNECTED = 2,
@@ -89,9 +85,9 @@ typedef struct {
 
 typedef struct {
     char cmd[2];
-    GPCmdStatus cmd_status;
-    Uint8 cmd_response;
-    GPCmdResult cmd_result;
+    GPCmdStatus status; // as reported by the camera
+    Uint8 value;
+    GPCmdResult result; // of the i2c transaction itself
 } GPCmdResponse;
 
 typedef struct {
@@ -112,26 +108,32 @@ typedef struct {
 void init_gp_interface();
 void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
-int gp_request_power_on();
-int gp_request_power_off();
-int gp_send_command(const GPCmd* cmd);
-Uint16 gp_ready_for_cmd();
+bool gp_request_power_on();
+bool gp_request_power_off();
+bool gp_send_command(const GPCmd* cmd);
+bool gp_ready_for_cmd();
 void gp_write_eeprom();
-void addressed_as_slave_callback(I2CAIntSrc int_src);
 
-void gp_assert_intr(void);
-void gp_deassert_intr(void);
+void gp_on_slave_address(bool addressed_as_tx);
 
-Uint8 gp_get_new_heartbeat_available();
-Uint8 gp_get_new_get_response_available();
-Uint8 gp_get_new_set_response_available();
+inline void gp_assert_intr() {
+    GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;
+}
+
+inline void gp_deassert_intr(void) {
+    GpioDataRegs.GPASET.bit.GPIO26 = 1;
+}
+
+bool gp_new_heartbeat_available();
+bool gp_new_get_response_available();
+bool gp_new_set_response_available();
 
 int gp_get_request(Uint8 cmd_id);
 int gp_set_request(GPSetRequest* request);
 
-GPHeartbeatStatus gp_get_heartbeat_status();
-GPGetResponse gp_get_last_get_response();
-GPSetResponse gp_get_last_set_response();
+GPHeartbeatStatus gp_heartbeat_status();
+GPGetResponse gp_last_get_response();
+GPSetResponse gp_last_set_response();
 
 void gp_enable_hb_interface();
 void gp_disable_hb_interface();

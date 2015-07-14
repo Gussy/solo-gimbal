@@ -822,15 +822,15 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 
 	// If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
 	if (board_hw_id == EL) {
-		if (gp_get_new_heartbeat_available()) {
+		if (gp_new_heartbeat_available()) {
 			// If there is a heartbeat status, get it and send out over CAN.
-			GPHeartbeatStatus status = gp_get_heartbeat_status();
+            GPHeartbeatStatus status = gp_heartbeat_status();
 			cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)status);
 		}
 
-        if (gp_get_new_get_response_available()) {
+        if (gp_new_get_response_available()) {
             // If there are, get them and package them up to be sent out over CAN.
-            GPGetResponse response = gp_get_last_get_response();
+            GPGetResponse response = gp_last_get_response();
             Uint32 response_buffer = 0;
             response_buffer |= ((((Uint32)response.cmd_id) << 8) & 0x0000FF00);
             response_buffer |= ((((Uint32)response.value) << 0) & 0x00FF00FF);
@@ -838,9 +838,9 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
             cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_GET_RESPONSE, response_buffer);
         }
 
-        if (gp_get_new_set_response_available()) {
+        if (gp_new_set_response_available()) {
             // If there are, get them and package them up to be sent out over CAN.
-            GPSetResponse response = gp_get_last_set_response();
+            GPSetResponse response = gp_last_set_response();
             Uint32 response_buffer = 0;
             response_buffer |= ((((Uint32)response.cmd_id) << 8) & 0x0000FF00);
             response_buffer |= ((((Uint32)response.result) << 0) & 0x000000FF);
