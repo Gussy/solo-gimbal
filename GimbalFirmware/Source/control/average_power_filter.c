@@ -11,15 +11,13 @@ void init_average_power_filter(AveragePowerFilterParms* filter_parms, int curren
 
     filter_parms->current_limit = current_limit;
 
-    filter_parms->iq_over = FALSE;
-
     // Calculate alpha parameter
     float sample_period = 1.0 / (float)current_sample_freq;
     filter_parms->alpha = sample_period / ((float)tau + sample_period);
 
 }
 
-void run_average_power_filter(AveragePowerFilterParms* filter_parms, float iq_request)
+unsigned char run_average_power_filter(AveragePowerFilterParms* filter_parms, float iq_request)
 {
     // Alpha input equation by CW per 5/1/15 email
     float alpha_input = 0.0;
@@ -34,18 +32,12 @@ void run_average_power_filter(AveragePowerFilterParms* filter_parms, float iq_re
     filter_parms->iq_filter = (filter_parms->alpha * alpha_input) + ((1.0 - filter_parms->alpha) * filter_parms->iq_filter_prev);
     filter_parms->iq_filter_prev = filter_parms->iq_filter;
 
-    // Update current over flags
-    filter_parms->iq_over = (filter_parms->iq_filter > filter_parms->current_limit) ? TRUE : FALSE;
-}
-
-unsigned char check_average_power_over_limit(AveragePowerFilterParms* filter_parms)
-{
-    return filter_parms->iq_over;
+    // Return if an overcurrent was detected
+    return (filter_parms->iq_filter > filter_parms->current_limit) ? TRUE : FALSE;
 }
 
 void reset_average_power_filter(AveragePowerFilterParms* filter_parms)
 {
     filter_parms->iq_filter = 0.0;
     filter_parms->iq_filter_prev = 0.0;
-    filter_parms->iq_over = FALSE;
 }
