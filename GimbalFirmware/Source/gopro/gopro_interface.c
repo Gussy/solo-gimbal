@@ -1,6 +1,7 @@
 #include "f2806x_int8.h"
 #include "gopro/gopro_interface.h"
 #include "gopro_i2c.h"
+#include "gopro_hero4.h"
 #include "PeripheralHeaderIncludes.h"
 
 // Include for GOPRO_COMMAND enum
@@ -43,8 +44,13 @@ bool gccb_version_queried = false;
 uint16_t init_timeout_ms = 0;
 bool init_timed_out = false;
 
+
+
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
+
+    gp_h4_t h4;
+
 } gopro_t;
 
 // global gopro instance
@@ -463,6 +469,34 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
      *
      * Check if the data is formatted correctly and process accordingly.
      */
+
+    // XXX: need better detection of h3+ vs h4 packets
+    //      just favoring h4 for now
+    if (gp_h4_rx_data_is_valid(buf, len)) {
+
+        // XXX: avoid all this copying
+
+        gp_h4_pkt_t pkt;
+        gp_h4_pkt_t rsp;
+
+        int i;
+        for (i = 0; i < GP_COMMAND_RECEIVE_BUFFER_SIZE; ++i) {
+            pkt.bytes[i] = buf[i];
+        }
+
+        if (gp_h4_handle_rx(&gp.h4, &pkt, &rsp)) {
+
+            for (i = 0; i < rsp.rsp.len + 1; ++i) {
+                txbuf[i] = rsp.bytes[i];
+            }
+
+            gp_assert_intr();
+
+            gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
+            timeout_counter = 0;
+        }
+        return;
+    }
 
     bool from_camera;
 
