@@ -14,6 +14,8 @@ static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
 
 Uint16 telemetry_decimation_count = 0;
 
+#define POS_LOOP_GAIN 1
+
 void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 {
     static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
@@ -54,27 +56,42 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
         break;
 
         case ERROR_AZ_PASS:
-        	// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
-        	cb_parms->rate_cmd_inject_filtered[AZ] = cb_parms->rate_cmd_inject_filtered[AZ]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[AZ] - cb_parms->rate_cmd_inject_filtered[AZ]);
-            cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject_filtered[AZ] - cb_parms->corrected_gyro_readings[AZ];
-            // Set up the next rate loop pass to be the el error computation pass
-            cb_parms->rate_loop_pass = ERROR_EL_PASS;
+        	if (cb_parms->control_type == CONTROL_TYPE_POS) {
+        		cb_parms->axis_errors[AZ] = (POS_LOOP_GAIN * CorrectEncoderError(-cb_parms->encoder_readings[AZ])) - cb_parms->corrected_gyro_readings[AZ];
+        	} else {
+        		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
+				cb_parms->rate_cmd_inject_filtered[AZ] = cb_parms->rate_cmd_inject_filtered[AZ]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[AZ] - cb_parms->rate_cmd_inject_filtered[AZ]);
+				cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject_filtered[AZ] - cb_parms->corrected_gyro_readings[AZ];
+				// Set up the next rate loop pass to be the el error computation pass
+        	}
+
+        	cb_parms->rate_loop_pass = ERROR_EL_PASS;
             break;
 
         case ERROR_EL_PASS:
-        	// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
-        	cb_parms->rate_cmd_inject_filtered[EL] = cb_parms->rate_cmd_inject_filtered[EL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[EL] - cb_parms->rate_cmd_inject_filtered[EL]);
-            cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject_filtered[EL] - cb_parms->corrected_gyro_readings[EL];
-            // Set up the next rate loop pass to be the roll error computation pass
-            cb_parms->rate_loop_pass = ERROR_ROLL_PASS;
+        	if (cb_parms->control_type == CONTROL_TYPE_POS) {
+        		cb_parms->axis_errors[EL] = (POS_LOOP_GAIN * CorrectEncoderError(-cb_parms->encoder_readings[EL])) - cb_parms->corrected_gyro_readings[EL];
+        	} else {
+        		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
+				cb_parms->rate_cmd_inject_filtered[EL] = cb_parms->rate_cmd_inject_filtered[EL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[EL] - cb_parms->rate_cmd_inject_filtered[EL]);
+				cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject_filtered[EL] - cb_parms->corrected_gyro_readings[EL];
+				// Set up the next rate loop pass to be the roll error computation pass
+        	}
+
+        	cb_parms->rate_loop_pass = ERROR_ROLL_PASS;
             break;
 
         case ERROR_ROLL_PASS:
-        	// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
-        	cb_parms->rate_cmd_inject_filtered[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[ROLL] - cb_parms->rate_cmd_inject_filtered[ROLL]);
-            cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
-            // Set up the next rate loop pass to be the torque command output pass
-            cb_parms->rate_loop_pass = TORQUE_OUT_PASS;
+        	if (cb_parms->control_type == CONTROL_TYPE_POS) {
+        		cb_parms->axis_errors[ROLL] = (POS_LOOP_GAIN * CorrectEncoderError(-cb_parms->encoder_readings[ROLL])) - cb_parms->corrected_gyro_readings[ROLL];
+        	} else {
+        		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
+				cb_parms->rate_cmd_inject_filtered[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[ROLL] - cb_parms->rate_cmd_inject_filtered[ROLL]);
+				cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
+				// Set up the next rate loop pass to be the torque command output pass
+        	}
+
+			cb_parms->rate_loop_pass = TORQUE_OUT_PASS;
             break;
 
         case TORQUE_OUT_PASS:

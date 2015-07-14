@@ -153,6 +153,7 @@ ControlBoardParms control_board_parms = {
     .rate_cmd_inject = {0, 0, 0},
     .rate_cmd_inject_filtered = {0, 0, 0},
     .rate_loop_pass = READ_GYRO_PASS,
+	.control_type = CONTROL_TYPE_POS,
     .initialized = FALSE,
     .enabled = FALSE,
 };

@@ -233,7 +233,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
             } else {
                 md_parms->md_initialized = TRUE;
-                md_parms->motor_drive_state = STATE_DISABLED;
+                axis_parms->enable_flag = TRUE;
+                md_parms->motor_drive_state = STATE_RUNNING;
             }
             break;
 
@@ -261,7 +262,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 // We wait for a command to move to the running state
                 cb_parms->enabled = TRUE;
                 md_parms->md_initialized = TRUE;
-                md_parms->motor_drive_state = STATE_DISABLED;
+                axis_parms->enable_flag = TRUE;
+                md_parms->motor_drive_state = STATE_RUNNING;
             } else {
                 // Send a zero torque command to the other axes to generate an encoder response
                 // (we update our own encoder value in a different place)
