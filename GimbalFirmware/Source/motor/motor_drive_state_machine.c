@@ -305,7 +305,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             if (md_parms->fault_revive_counter++ > (((Uint32)ISR_FREQUENCY) * ((Uint32)FAULT_REVIVE_TIME_MS))) {
                 md_parms->fault_revive_counter = 0;
-                reset_average_power_filter(pf_parms);
                 md_parms->motor_drive_state = STATE_RUNNING;
             }
             break;
