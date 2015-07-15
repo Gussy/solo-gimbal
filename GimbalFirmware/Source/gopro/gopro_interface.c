@@ -498,18 +498,23 @@ void gp_handle_command(const uint16_t *cmdbuf)
      * For any other command from the GoPro, return an error response
      */
 
+#if 1
+    // TODO: check if this is still needed after re-org
     switch (gp.model) {
         case GP_MODEL_HERO3P:
             gp_h3p_handle_command(cmdbuf, txbuf, &gccb_version_queried);
             break;
         case GP_MODEL_HERO4:
-            gp_h4_handle_command(cmdbuf, txbuf);
+            //gp_h4_handle_command(cmdbuf, txbuf); // TODO: should never reach this point in the first place
             break;
         case GP_MODEL_UNKNOWN:
             return;
         default:
             return;
     }
+#else
+    gp_h3p_handle_command(cmdbuf, txbuf, &gccb_version_queried);
+#endif
 
     // Assert the interrupt request line to indicate that we're ready to respond to the GoPro's command
     gp_assert_intr();
@@ -526,18 +531,23 @@ void gp_handle_response(const uint16_t *respbuf)
 
     last_cmd_response.status = (GPCmdStatus)respbuf[1];
 
+#if 1
+    // TODO: check if this is still needed after re-org
     switch (gp.model) {
         case GP_MODEL_HERO3P:
             gp_h3p_handle_response(respbuf, &last_cmd_response);
             break;
         case GP_MODEL_HERO4:
-            gp_h4_handle_response(respbuf, &last_cmd_response);
+            // gp_h4_handle_response(respbuf, &last_cmd_response); // TODO: should never reach this point in the first place
             break;
         case GP_MODEL_UNKNOWN:
             return;
         default:
             return;
     }
+#else
+    gp_h3p_handle_response(respbuf, &last_cmd_response);
+#endif
 
     // The full command transmit has now completed successfully, so we can go back to idle
     last_cmd_response.result = GP_CMD_SUCCESSFUL;
