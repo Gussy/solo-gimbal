@@ -7,13 +7,13 @@
 // Include for GOPRO_COMMAND enum
 #include "mavlink_interface/mavlink_gimbal_interface.h" // TODO: get rid of this after replacing GOPRO_COMMAND
 
-bool gp_h3p_request_power_off()
+bool gp_h3p_request_power_off(GPCmdResponse *last_cmd_response)
 {
     GPCmd cmd;
     cmd.cmd[0] = 'P';
     cmd.cmd[1] = 'W';
     cmd.cmd_parm = 0x00;
-    gp_send_command(&cmd);
+    gp_h3p_send_command(&cmd, last_cmd_response);
     return true;
 }
 
@@ -41,9 +41,7 @@ bool gp_h3p_cmd_has_param(const GPCmd* c)
 }
 
 // TODO: return type int change to bool? to match other functions
-int gp_h3p_get_request(Uint8 cmd_id,
-                       bool *new_response_available,
-                       GOPRO_COMMAND *last_request_cmd_id) // TODO: name is a bit awkward, think about refactoring (gp_h3p_handle_get_request?), same with set request
+int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GOPRO_COMMAND *last_request_cmd_id, GPCmdResponse *last_cmd_response) // TODO: name is a bit awkward, think about refactoring (gp_h3p_handle_get_request?), same with set request
 {
     GPCmd cmd;
 
@@ -76,19 +74,18 @@ int gp_h3p_get_request(Uint8 cmd_id,
     }
 
     *last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
-    gp_send_command(&cmd);
+    gp_h3p_send_command(&cmd, last_cmd_response);
     return 0;
 }
 
-int gp_h3p_set_request(GPSetRequest* request,
-                       bool *new_response_available, GPSetRequest* last_set_request, GOPRO_COMMAND *last_request_cmd_id)
+int gp_h3p_set_request(GPSetRequest* request, bool *new_response_available, GPSetRequest* last_set_request, GOPRO_COMMAND *last_request_cmd_id, GPCmdResponse *last_cmd_response)
 {
     GPCmd cmd;
 
     switch(request->cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                gp_request_power_off();
+                gp_h3p_request_power_off(last_cmd_response);
             } else {
                 gp_request_power_on();
             }
@@ -135,7 +132,7 @@ int gp_h3p_set_request(GPSetRequest* request,
 
     *last_set_request = *request;
     *last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
-    gp_send_command(&cmd);
+    gp_h3p_send_command(&cmd, last_cmd_response);
     return 0;
 }
 
@@ -190,6 +187,50 @@ bool gp_h3p_rx_data_is_valid(uint16_t *buf, uint16_t len, bool *from_camera)
     if (buf[0] != len - 1) {
         return false;
     }
+
+    return true;
+}
+
+bool gp_h3p_send_command(const GPCmd* cmd, GPCmdResponse *last_cmd_response)
+{
+    gp_h3p_pkt_t p;
+    gp_h3p_cmd_t *c = &p.cmd;
+
+    c->cmd1 = cmd->cmd[0];
+    c->cmd2 = cmd->cmd[1];
+
+    // first byte is len, upper bit clear to indicate command originated from the gimbal (not the GoPro)
+    if (gp_h3p_cmd_has_param(cmd)) {
+        c->len = 0x3;
+        c->payload[0] = cmd->cmd_parm;
+    } else {
+        c->len = 0x2;
+    }
+
+#if 1
+    // TODO: phase out this section
+
+    // Clear the last command data
+    last_cmd_response->value = 0x00;
+    last_cmd_response->status = GP_CMD_STATUS_UNKNOWN;
+    last_cmd_response->result = GP_CMD_UNKNOWN;
+
+    // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
+    // this command, and this way a caller of gp_get_last_response can know what command the response goes with
+    last_cmd_response->cmd[0] = cmd->cmd[0];
+    last_cmd_response->cmd[1] = cmd->cmd[1];
+#endif
+
+    gp_send_cmd(p.bytes, p.cmd.len + 1);
+
+#if 0
+    // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
+    gp_assert_intr();
+
+    // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
+    timeout_counter = 0;
+    gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
+#endif
 
     return true;
 }
