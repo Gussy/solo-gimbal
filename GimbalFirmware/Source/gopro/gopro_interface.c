@@ -67,6 +67,7 @@ static gopro_t gp;
 void init_gp_interface()
 {
     gp.waiting_for_i2c = false;
+    gp.model = GP_MODEL_UNKNOWN;
     gp_deassert_intr();
 
     gp_h4_init(&gp.h4);
@@ -476,6 +477,7 @@ void gp_interface_state_machine()
 		gccb_version_queried = 0;
 		init_timeout_ms = 0;
 		init_timed_out = false;
+        gp.model = GP_MODEL_UNKNOWN;
 	}
 	previous_power_status = new_power_status;
 }
@@ -491,6 +493,8 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
     // XXX: need better detection of h3+ vs h4 packets
     //      just favoring h4 for now
     if (gp_h4_rx_data_is_valid(buf, len)) {
+
+        gp.model = GP_MODEL_HERO4; // TODO: reset gp.model when we are disconnected to GP_MODEL_UNKNOWN
 
         // XXX: avoid all this copying
 
@@ -519,6 +523,9 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
     bool from_camera;
 
     if (gp_h3p_rx_data_is_valid(rxbuf, len, &from_camera)) {
+
+        gp.model = GP_MODEL_HERO3P;
+
         // Parse the retrieved data differently depending on whether it's a command or response
         if (from_camera) {
             gp_handle_command(buf);
