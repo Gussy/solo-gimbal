@@ -78,6 +78,17 @@ typedef enum {
 	GP_REQUEST_SET
 } GPRequestType;
 
+// XXX: what should this actually be?
+#define GP_MAX_RESP_LEN     32
+
+typedef struct {
+    GPRequestType reqtype;      // what kind of operation is this a response to
+    uint16_t mav_cmd;           // which msg was set/gotten (see GOPRO_COMMAND)
+    uint16_t status;            // was this set/get operation successful (see ...)
+    uint16_t payload[GP_MAX_RESP_LEN];
+    uint16_t len;
+} gp_response_t;
+
 typedef struct {
     char cmd[2];
     Uint8 cmd_parm;
@@ -116,6 +127,10 @@ bool gp_ready_for_cmd();
 void gp_write_eeprom();
 
 void gp_on_slave_address(bool addressed_as_tx);
+
+void gp_set_response(const uint16_t *resp_bytes, uint16_t len, GPRequestType reqtype, GPCmdStatus status);
+bool gp_response_available();
+bool gp_get_response(gp_response_t **rsp);
 
 inline void gp_assert_intr() {
     GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;

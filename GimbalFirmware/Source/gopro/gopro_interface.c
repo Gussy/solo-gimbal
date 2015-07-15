@@ -49,6 +49,9 @@ bool init_timed_out = false;
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 
+    bool response_pending;
+    gp_response_t response;
+
     gp_h4_t h4;
 
 } gopro_t;
@@ -166,9 +169,50 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
     return true;
 }
 
+void gp_set_response(const uint16_t *resp_bytes, uint16_t len, GPRequestType reqtype, GPCmdStatus status)
+{
+    /*
+     * Called from a gopro protocol handler to indicate
+     * that there is data available to be passed back up
+     * through the CAN interface.
+     */
+
+    uint16_t i;
+    for (i = 0; i < len; ++i) {
+        gp.response.payload[i] = resp_bytes[i];
+    }
+
+    gp.response.reqtype = reqtype;
+    gp.response.status = status;
+    gp.response.len = len;
+    gp.response_pending = true;
+}
+
 bool gp_new_heartbeat_available()
 {
     return new_heartbeat_available;
+}
+
+bool gp_response_available()
+{
+    return gp.response_pending;
+}
+
+bool gp_get_response(gp_response_t ** rsp)
+{
+    /*
+     * Retrieve the currently pending response.
+     * Returns false if there is not a new response available.
+     */
+
+    if (!gp.response_pending) {
+        return false;
+    }
+
+    *rsp = &gp.response;
+
+    gp.response_pending = false;
+    return true;
 }
 
 bool gp_new_get_response_available()
