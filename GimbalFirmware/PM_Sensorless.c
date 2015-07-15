@@ -358,13 +358,6 @@ void main(void)
         // Initialize the HeroBus interface
         init_gp_interface();
 
-        // Turn HeroBus charging on or off based on setting in flash
-        if (flash_params.gopro_charging_enabled == 0.0) {
-        	gp_disable_charging();
-        } else {
-        	gp_enable_charging();
-        }
-
         // Initialize the beacon LED
         init_led();
         //const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
