@@ -288,23 +288,25 @@ int gp_get_request(Uint8 cmd_id)
      * via gp_get_last_get_response()
      */
 
-	last_request_type = GP_REQUEST_GET;
-	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
+    last_request_type = GP_REQUEST_GET;
+    last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
+
+    if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
         switch (gp.model) {
-            case GP_MODEL_HERO3P:
-                return gp_h3p_get_request(cmd_id, &new_response_available, &last_request_cmd_id, &last_cmd_response);
-            case GP_MODEL_HERO4:
-                return gp_h4_get_request(&gp.h4, cmd_id, &last_request_cmd_id, &new_response_available);
-            case GP_MODEL_UNKNOWN:
-                return -1;
-            default:
-                return -1;
+        case GP_MODEL_HERO3P:
+            return gp_h3p_get_request(cmd_id, &new_response_available, &last_cmd_response);
+
+        case GP_MODEL_HERO4:
+            return gp_h4_get_request(&gp.h4, cmd_id, &new_response_available);
+
+        default:
+            return -1;
         }
-	} else {
-		last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
+    } else {
+
         new_response_available = true;
-		return -1;
-	}
+        return -1;
+    }
 }
 
 int gp_set_request(GPSetRequest* request)
@@ -318,21 +320,21 @@ int gp_set_request(GPSetRequest* request)
      */
 
 	last_request_type = GP_REQUEST_SET;
+    last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
 	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
         switch (gp.model) {
             case GP_MODEL_HERO3P:
-                return gp_h3p_set_request(request, &new_response_available, &last_set_request, &last_request_cmd_id, &last_cmd_response);
+                return gp_h3p_set_request(request, &new_response_available, &last_set_request, &last_cmd_response);
             case GP_MODEL_HERO4:
-                return gp_h4_set_request(&gp.h4, request, &last_request_cmd_id, &new_response_available, &last_set_request);
+                return gp_h4_set_request(&gp.h4, request, &new_response_available, &last_set_request);
             case GP_MODEL_UNKNOWN:
                 return -1;
             default:
                 return -1;
         }
 	} else {
-		last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
         new_response_available = true;
 		return -1;
 	}

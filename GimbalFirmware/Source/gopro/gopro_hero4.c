@@ -244,7 +244,7 @@ bool gp_h4_request_power_off(gp_h4_t *h4)
     return true;
 }
 
-int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, GOPRO_COMMAND *last_request_cmd_id, bool *new_response_available) // TODO: name is a bit awkward, think about refactoring (gp_h4_handle_get_request?), same with set request
+int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, bool *new_response_available) // TODO: name is a bit awkward, think about refactoring (gp_h4_handle_get_request?), same with set request
 {
     uint16_t api_group = 0;
     uint16_t api_id = 0;
@@ -281,18 +281,16 @@ int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, GOPRO_COMMAND *last_request_cmd
 
         default:
             // Unsupported Command ID
-            *last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
             *new_response_available = true;
             return -1;
     }
 
-    *last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
     gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
     //gp_send_command(&cmd);
     return 0;
 }
 
-int gp_h4_set_request(gp_h4_t *h4, GPSetRequest* request, GOPRO_COMMAND *last_request_cmd_id, bool *new_response_available, GPSetRequest *last_set_request) // TODO: see TODO above
+int gp_h4_set_request(gp_h4_t *h4, GPSetRequest* request, bool *new_response_available, GPSetRequest *last_set_request) // TODO: see TODO above
 {
     uint16_t api_group = 0;
     uint16_t api_id = 0;
@@ -352,13 +350,11 @@ int gp_h4_set_request(gp_h4_t *h4, GPSetRequest* request, GOPRO_COMMAND *last_re
 
         default:
             // Unsupported Command ID
-            *last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
             *new_response_available = true;
             return -1;
     }
 
     *last_set_request = *request;
-    *last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
     gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
     //gp_send_command(&cmd);
 

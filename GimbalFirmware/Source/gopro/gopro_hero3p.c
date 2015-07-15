@@ -51,7 +51,7 @@ static bool gp_h3p_cmd_has_param(const GPCmd* c)
 }
 
 // TODO: return type int change to bool? to match other functions
-int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GOPRO_COMMAND *last_request_cmd_id, GPCmdResponse *last_cmd_response) // TODO: name is a bit awkward, think about refactoring (gp_h3p_handle_get_request?), same with set request
+int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GPCmdResponse *last_cmd_response) // TODO: name is a bit awkward, think about refactoring (gp_h3p_handle_get_request?), same with set request
 {
     GPCmd cmd;
 
@@ -78,21 +78,19 @@ int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GOPRO_COMMAND
 
         default:
             // Unsupported Command ID
-            *last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
             *new_response_available = true;
             return -1;
     }
 
-    *last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
     gp_h3p_send_command(&cmd, last_cmd_response);
     return 0;
 }
 
-int gp_h3p_set_request(GPSetRequest* request, bool *new_response_available, GPSetRequest* last_set_request, GOPRO_COMMAND *last_request_cmd_id, GPCmdResponse *last_cmd_response)
+int gp_h3p_set_request(GPSetRequest* request, bool *new_response_available, GPSetRequest* last_set_request, GPCmdResponse *last_cmd_response)
 {
     GPCmd cmd;
 
-    switch(request->cmd_id) {
+    switch (request->cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
                 gp_h3p_request_power_off(last_cmd_response);
@@ -135,13 +133,11 @@ int gp_h3p_set_request(GPSetRequest* request, bool *new_response_available, GPSe
 
         default:
             // Unsupported Command ID
-            *last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
             *new_response_available = true;
             return -1;
     }
 
     *last_set_request = *request;
-    *last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
     gp_h3p_send_command(&cmd, last_cmd_response);
     return 0;
 }
