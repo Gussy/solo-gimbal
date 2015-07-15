@@ -14,6 +14,7 @@
 
 #define GP_INIT_TIMEOUT_MS 3000
 
+static void gp_reset();
 static void gp_timeout();
 
 static void gp_detect_camera_model(uint16_t *buf, uint16_t len);
@@ -55,6 +56,14 @@ static gopro_t gp;
 
 void init_gp_interface()
 {
+    gp_reset();
+    gopro_i2c_init();
+
+    gp_enable_hb_interface();
+}
+
+void gp_reset()
+{
     gp.waiting_for_i2c = false;
     gp.model = GP_MODEL_UNKNOWN;
     gp.init_timeout_ms = 0;
@@ -63,10 +72,6 @@ void init_gp_interface()
 
     gp_h3p_init(&gp.h3p);
     gp_h4_init(&gp.h4);
-
-    gopro_i2c_init();
-
-    gp_enable_hb_interface();
 }
 
 static bool init_timed_out()
@@ -395,10 +400,7 @@ void gp_interface_state_machine()
 	// Detect a change in power status to reset some flags when a GoPro is re-connected during operation
 	GPPowerStatus new_power_status = gp_get_power_status();
     if (previous_power_status != new_power_status) {
-        gp_h3p_init(&gp.h3p);
-        gp_h4_init(&gp.h4);
-        gp.init_timeout_ms = 0;
-        gp.model = GP_MODEL_UNKNOWN;
+        gp_reset();
 	}
 	previous_power_status = new_power_status;
 }
