@@ -81,6 +81,7 @@ void gp_write_eeprom();
 
 void gp_on_slave_address(bool addressed_as_tx);
 
+uint16_t gp_transaction_cmd();
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
 bool gp_transaction_result_available();
 bool gp_get_completed_transaction(gp_transaction_t **rsp);

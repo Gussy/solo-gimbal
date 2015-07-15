@@ -142,6 +142,16 @@ bool gp_new_heartbeat_available()
     return new_heartbeat_available;
 }
 
+uint16_t gp_transaction_cmd()
+{
+    /*
+     * Get the current transaction command,
+     * can be handy for interpreting the corresponding response.
+     */
+
+    return gp.txn.mav_cmd;
+}
+
 bool gp_transaction_result_available()
 {
     return gp.txn_result_pending;
