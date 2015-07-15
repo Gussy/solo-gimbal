@@ -100,6 +100,14 @@ void Process_CAN_Messages(AxisParms* axis_parms,
         	cb_parms->control_type = CONTROL_TYPE_RATE;
         	break;
 
+        case CAND_CMD_GP_CHARGE_DISABLE:
+        	gp_disable_charging();
+        	break;
+
+        case CAND_CMD_GP_CHARGE_ENABLE:
+        	gp_enable_charging();
+        	break;
+
         default:
             AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
             break;

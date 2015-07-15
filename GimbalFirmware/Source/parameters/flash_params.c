@@ -7,14 +7,13 @@
 
 struct CURRENT_FLASH_PARAM_STRUCT flash_params =
 {
-        .flash_struct_id = 0x0002,
+        .flash_struct_id = 0x0004,
         .sys_swver = 0.0,                                   // Software version number, loaded from compiled in version information at boot time
         .assy_time = 0.0,                                   // Unix timestamp (seconds since Jan 01 1970 UTC)
         .ser_num_1 = 0.0,                                   // Serial number part 1 (part code, design, language/country)
         .ser_num_2 = 0.0,                                   // Serial number part 2 (option, year, month)
         .ser_num_3 = 0.0,                                   // Serial number part 3 (incrementing serial number per month)
 
-        .broadcast_msgs = 0.0,
         .k_rate = 0.0,
 
         //  {EL, AZ, ROLL}
@@ -37,5 +36,7 @@ struct CURRENT_FLASH_PARAM_STRUCT flash_params =
         .offset_gyro = { 0.0, 0.0, 0.0 },
         .offset_accelerometer = { 0.0, 0.0, 0.0 },
         .gain_accelerometer = { 0.0, 0.0, 0.0 },
-        .alignment_accelerometer = { 0.0, 0.0, 0.0 }
+        .alignment_accelerometer = { 0.0, 0.0, 0.0 },
+
+        .gopro_charging_enabled = 0
 };

@@ -223,6 +223,15 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             	// wait for an external command to move to rate control mode
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
             } else {
+            	if (GetBoardHWID() == AZ) {
+					// Turn HeroBus charging on or off based on setting in flash
+					if (flash_params.gopro_charging_enabled == 0.0) {
+						cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_DISABLE);
+					} else {
+						cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_ENABLE);
+					}
+            	}
+
                 md_parms->md_initialized = TRUE;
                 axis_parms->enable_flag = TRUE;
                 md_parms->motor_drive_state = STATE_RUNNING;
