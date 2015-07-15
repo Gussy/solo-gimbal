@@ -56,7 +56,10 @@ typedef struct {
     Uint16 init_param_recvd_flags_1;
     Uint16 init_param_recvd_flags_2;
     Uint16 axis_parms_load_complete;
+    Uint16 axis_parms_checksum_verified;
     Uint16 current_load_offset;
+    Uint16 current_request_load_offset;
+    Uint16 total_words_to_load;
 } LoadAxisParmsStateInfo;
 
 void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info);

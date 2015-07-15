@@ -247,32 +247,52 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     case CAND_EPID_PARAMS_LOAD:
                     	if (GetBoardHWID() == AZ) {
                     		// This means the parameter was a request, so load up the necessary data and broadcast it to the other two boards
-                    		Uint8 start_offset = msg.extended_param[0];
+                    		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF);
                     		Uint16 params_size = sizeof(flash_params);
                     		Uint8 words_to_send = MIN(2, params_size - start_offset);
                     		Uint8 params[7];
-                    		params[0] = start_offset;
-                    		params[1] = words_to_send;
+                    		params[0] = msg.extended_param[0];
+                    		params[1] = msg.extended_param[1];
+                    		params[2] = words_to_send;
                     		int i;
                     		// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
                     		for (i = 0; i < words_to_send; i++) {
-                    			params[(2 * i) + 2] = ((((Uint16*)(&flash_params))[start_offset + i]) >> 8) & 0x00FF;
-                    			params[(2 * i) + 3] = ((((Uint16*)(&flash_params))[start_offset + i]) & 0x00FF);
+                    			params[(2 * i) + 3] = ((((Uint16*)(&flash_params))[start_offset + i]) >> 8) & 0x00FF;
+                    			params[(2 * i) + 4] = ((((Uint16*)(&flash_params))[start_offset + i]) & 0x00FF);
                     		}
                     		cand_tx_extended_param(CAND_ID_ALL_AXES, CAND_EPID_PARAMS_LOAD, params, (words_to_send * 2) + 2);
                     	} else {
                     		// This means the parameter was a response
                     		// First make sure this isn't data we've already received, and if not, load it into our copy of the flash params struct
-                    		Uint8 start_offset = msg.extended_param[0];
-                    		Uint8 words_received = msg.extended_param[1];
+                    		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
+                    		Uint8 words_received = msg.extended_param[2];
                     		if (load_ap_state_info->current_load_offset == start_offset) {
                     			// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
                     			int i;
                     			for (i = 0; i < words_received; i++) {
-                    				Uint16 received_word = ((((Uint16)msg.extended_param[(2 * i) + 2]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[(2 * i) + 3]) & 0x00FF)
+                    				Uint16 received_word = ((((Uint16)msg.extended_param[(2 * i) + 3]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[(2 * i) + 4]) & 0x00FF);
                     				((Uint16*)(&flash_params))[start_offset + i] = received_word;
                     			}
                     			load_ap_state_info->current_load_offset += words_received;
+                    		}
+                    	}
+                    	break;
+
+                    case CAND_EPID_PARAMS_CHECKSUM:
+                    	if (GetBoardHWID() == AZ) {
+                    		// This means the parameter was a request, so compute the checksum of the flash params struct and broadcast it
+                    		Uint16 checksum = compute_flash_params_checksum();
+                    		Uint8 params[2];
+                    		params[0] = ((checksum >> 8) & 0x00FF);
+                    		params[1] = (checksum & 0x00FF);
+                    		cand_tx_extended_param(CAND_ID_ALL_AXES, CAND_EPID_PARAMS_CHECKSUM, params, 2);
+                    	} else {
+                    		// This means the parameter was a response, so extract the checksum reply,
+                    		// compare it against our own checksum of the flash params, and set the result appropriately
+                    		Uint16 received_checksum = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
+                    		Uint16 calculated_checksum = compute_flash_params_checksum();
+                    		if (received_checksum == calculated_checksum) {
+                    			load_ap_state_info->axis_parms_checksum_verified = TRUE;
                     		}
                     	}
                     	break;
