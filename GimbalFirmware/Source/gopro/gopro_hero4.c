@@ -226,32 +226,147 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
     return true;
 }
 
-bool gp_h4_request_power_off()
+#if 1
+// TODO: maybe use this one in gp_h4_request_power_off
+typedef enum{
+    GP_H4_POWER_OFF_NORMAL,
+    GP_H4_POWER_OFF_FORCED
+} GPH4Power;
+#endif
+
+bool gp_h4_request_power_off(gp_h4_t *h4)
 {
-    // TODO
+    uint16_t api_group = 8;
+    uint16_t api_id = 2;
+    uint16_t b[1] = {GP_H4_POWER_OFF_NORMAL}; // 0x00 - Normal, 0x01 - Forced
+    uint16_t len = 1;
+    gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
     return true;
 }
 
-bool gp_h4_cmd_has_param(const GPCmd* c)
+int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, GOPRO_COMMAND *last_request_cmd_id, bool *new_response_available) // TODO: name is a bit awkward, think about refactoring (gp_h4_handle_get_request?), same with set request
 {
-    // TODO
+    uint16_t api_group = 0;
+    uint16_t api_id = 0;
+    uint16_t b[1] = {0}; // should always be null when treating get_requests, alt: b[GP_H4_YY_CMD_MAX_PAYLOAD]
+    uint16_t len = 0;
 
-    return true;
+    switch(cmd_id) {
+        case GOPRO_COMMAND_SHUTTER:
+            // not supported
+            return -1;
+            //break; // TODO: helpful but check code style
+
+        case GOPRO_COMMAND_CAPTURE_MODE:
+            api_group = 1;
+            api_id    = 0;
+            break;
+
+        case GOPRO_COMMAND_MODEL:
+            // not supported
+            return -1;
+            //break; // TODO: helpful but check code style
+
+        case GOPRO_COMMAND_BATTERY:
+            api_group = 8;
+            api_id    = 0;
+            break;
+
+        case GOPRO_COMMAND_RESOLUTION:
+        case GOPRO_COMMAND_FRAME_RATE:
+        case GOPRO_COMMAND_FIELD_OF_VIEW:
+            api_group = 2;
+            api_id    = 2;
+            break;
+
+        default:
+            // Unsupported Command ID
+            *last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
+            *new_response_available = true;
+            return -1;
+    }
+
+    *last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
+    gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
+    //gp_send_command(&cmd);
+    return 0;
 }
 
-int gp_h4_get_request(Uint8 cmd_id, GOPRO_COMMAND *last_request_cmd_id) // TODO: name is a bit awkward, think about refactoring (gp_h4_handle_get_request?), same with set request
+int gp_h4_set_request(gp_h4_t *h4, GPSetRequest* request, GOPRO_COMMAND *last_request_cmd_id, bool *new_response_available, GPSetRequest *last_set_request) // TODO: see TODO above
 {
-    // TODO
+    uint16_t api_group = 0;
+    uint16_t api_id = 0;
+    uint16_t b[GP_H4_YY_CMD_MAX_PAYLOAD];
+    uint16_t len = 0;
+
+    switch(request->cmd_id) {
+        case GOPRO_COMMAND_POWER:
+            if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
+                api_group = 8;  // TODO: alternatively use gp_h4_request_power_off() and pass in power-off type
+                api_id = 2;
+                b[0] = request->value;
+                len = 1;
+            } else {
+                // do nothing, can't request power on
+            }
+            break;
+
+        case GOPRO_COMMAND_CAPTURE_MODE:
+            api_group = 1;
+            api_id = 1;
+            b[0] = request->value;
+            len = 1;
+            break;
+
+        case GOPRO_COMMAND_SHUTTER:
+            // Start video recording
+            api_group = 2;
+            api_id = 0x1b;
+            b[0] = request->value;
+            len = 1;
+            break;
+
+        case GOPRO_COMMAND_RESOLUTION: // TODO: how do we know the other values? new MAVLink message type might be needed here
+            b[0] = request->value;  // resolution
+            b[1] = 0;               // fps
+            b[2] = 0;               // fov
+        case GOPRO_COMMAND_FIELD_OF_VIEW:
+            b[0] = 0;
+            b[1] = request->value;
+            b[2] = 0;
+        case GOPRO_COMMAND_FRAME_RATE:
+            b[0] = 0;
+            b[1] = 0;
+            b[2] = request->value;
+
+            /* TODO set to default while we figure this out */
+            // TODO: current defaults: 1080p (enum:9) @ 30 FPS (enum:8), wide (enum:0)
+            b[0] = 9;
+            b[1] = 8;
+            b[2] = 0;
+
+            len = 3;
+            api_group = 2;
+            api_id = 3;
+            break;
+
+        default:
+            // Unsupported Command ID
+            *last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
+            *new_response_available = true;
+            return -1;
+    }
+
+    *last_set_request = *request;
+    *last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
+    gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
+    //gp_send_command(&cmd);
 
     return 0;
 }
 
-int gp_h4_set_request(GPSetRequest* request, GOPRO_COMMAND *last_request_cmd_id) // TODO: see TODO above
-{
-    // TODO
-    return 0;
-}
-
+#if 0
+// TODO: unused, delete
 bool gp_h4_handle_command(const uint16_t *cmdbuf, uint16_t *txbuf)
 {
     // TODO
@@ -263,3 +378,4 @@ bool gp_h4_handle_response(const uint16_t *respbuf, GPCmdResponse *last_cmd_resp
     // TODO
     return true;
 }
+#endif

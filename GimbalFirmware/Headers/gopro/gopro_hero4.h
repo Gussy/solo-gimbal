@@ -42,6 +42,8 @@ typedef struct {
     uint16_t payload[GP_H4_MAX_PACKET - 5];
 } gp_h4_rsp_t;
 
+#define GP_H4_YY_CMD_HEADER_SIZE 10
+#define GP_H4_YY_CMD_MAX_PAYLOAD (GP_H4_MAX_PACKET - GP_H4_YY_CMD_HEADER_SIZE) // TODO: necessary? maybe combine with GP_H4_MAX_PAYLOAD somehow?
 typedef struct {
     uint16_t len;       // size of this packet (not including 'len')
     uint16_t l1;        // first letter of 2-letter cmd
@@ -53,9 +55,11 @@ typedef struct {
     uint16_t api_id;
     uint16_t datalen1;
     uint16_t datalen2;
-    uint16_t payload[GP_H4_MAX_PACKET - 10];
+    uint16_t payload[GP_H4_YY_CMD_MAX_PAYLOAD];
 } gp_h4_yy_cmd_t;
 
+#define GP_H4_YY_RSP_HEADER_SIZE 11
+#define GP_H4_YY_RSP_MAX_PAYLOAD (GP_H4_MAX_PACKET - GP_H4_YY_RSP_HEADER_SIZE) // TODO: necessary? maybe combine with GP_H4_MAX_PAYLOAD somehow?
 typedef struct {
     uint16_t len;       // size of this packet (not including 'len')
     uint16_t ack;       // NACK will occur if format of packet is unrecognized
@@ -68,7 +72,7 @@ typedef struct {
     uint16_t err_code;  // zero == success, non-zero == error
     uint16_t datalen1;
     uint16_t datalen2;
-    uint16_t payload[GP_H4_MAX_PACKET - 11];
+    uint16_t payload[GP_H4_YY_RSP_MAX_PAYLOAD];
 } gp_h4_yy_rsp_t;
 
 typedef union {
@@ -88,10 +92,12 @@ bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len);
 bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
 
 bool gp_h4_request_power_off();
-bool gp_h4_cmd_has_param(const GPCmd* c);
-int gp_h4_get_request(Uint8 cmd_id, GOPRO_COMMAND *last_request_cmd_id);
-int gp_h4_set_request(GPSetRequest* request, GOPRO_COMMAND *last_request_cmd_id);
+int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, GOPRO_COMMAND *last_request_cmd_id, bool *new_response_available);
+int gp_h4_set_request(gp_h4_t *h4, GPSetRequest* request, GOPRO_COMMAND *last_request_cmd_id, bool *new_response_available, GPSetRequest *last_set_request);
+#if 0
+// TODO: unused, delete
 bool gp_h4_handle_command(const uint16_t *cmdbuf, uint16_t *txbuf);
 bool gp_h4_handle_response(const uint16_t *respbuf, GPCmdResponse *last_cmd_response);
+#endif
 
 #endif // _GOPRO_HERO4_H
