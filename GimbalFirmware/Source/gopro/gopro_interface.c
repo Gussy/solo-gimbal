@@ -316,7 +316,7 @@ int gp_get_request(Uint8 cmd_id)
         }
     } else {
 
-        new_response_available = true;
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
         return -1;
     }
 }
@@ -350,7 +350,7 @@ int gp_set_request(GPSetRequest* request)
                 return -1;
         }
 	} else {
-        new_response_available = true;
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
 		return -1;
 	}
 }
@@ -434,8 +434,8 @@ void gp_interface_state_machine()
             if (gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
                 GP_PWRON_HIGH();
                 gp_control_state = GP_CONTROL_STATE_IDLE;
-                last_cmd_response.result = GP_CMD_SUCCESSFUL;
-                new_response_available = true;
+
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_SUCCESS);
             }
             break;
     }
@@ -516,7 +516,7 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
 
     } else {
         // error in data rx, return to idle
-        new_response_available = true;
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
         gp_control_state = GP_CONTROL_STATE_IDLE;
     }
 }
@@ -617,9 +617,9 @@ void gp_on_slave_address(bool addressed_as_tx)
             // it issues a command to us first.  Per the spec, we have to give up on our command request and service the GoPro's command
 
             // Indicate that the command we were trying to send has been preempted by the GoPro
-            last_cmd_response.result = GP_CMD_PREEMPTED;
             // Indicate that a "new response" is available (what's available is the indication that the command was preempted)
-            new_response_available = true;
+            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+//            last_cmd_response.result = GP_CMD_PREEMPTED;
         }
 
         // wait for the rx to complete
