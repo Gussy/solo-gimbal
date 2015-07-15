@@ -86,7 +86,7 @@ int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GPCmdResponse
     return 0;
 }
 
-int gp_h3p_set_request(GPSetRequest* request, bool *new_response_available, GPSetRequest* last_set_request, GPCmdResponse *last_cmd_response)
+int gp_h3p_set_request(const GPSetRequest* request, bool *new_response_available, GPCmdResponse *last_cmd_response)
 {
     GPCmd cmd;
 
@@ -137,7 +137,6 @@ int gp_h3p_set_request(GPSetRequest* request, bool *new_response_available, GPSe
             return -1;
     }
 
-    *last_set_request = *request;
     gp_h3p_send_command(&cmd, last_cmd_response);
     return 0;
 }

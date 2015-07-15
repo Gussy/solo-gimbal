@@ -290,7 +290,7 @@ int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, bool *new_response_available) /
     return 0;
 }
 
-int gp_h4_set_request(gp_h4_t *h4, GPSetRequest* request, bool *new_response_available, GPSetRequest *last_set_request) // TODO: see TODO above
+int gp_h4_set_request(gp_h4_t *h4, const GPSetRequest* request, bool *new_response_available) // TODO: see TODO above
 {
     uint16_t api_group = 0;
     uint16_t api_id = 0;
@@ -354,10 +354,7 @@ int gp_h4_set_request(gp_h4_t *h4, GPSetRequest* request, bool *new_response_ava
             return -1;
     }
 
-    *last_set_request = *request;
     gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
-    //gp_send_command(&cmd);
-
     return 0;
 }
 

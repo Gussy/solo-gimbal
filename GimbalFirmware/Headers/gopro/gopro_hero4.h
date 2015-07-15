@@ -93,7 +93,7 @@ bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
 
 bool gp_h4_request_power_off(gp_h4_t *h4);
 int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, bool *new_response_available);
-int gp_h4_set_request(gp_h4_t *h4, GPSetRequest* request, bool *new_response_available, GPSetRequest *last_set_request);
+int gp_h4_set_request(gp_h4_t *h4, const GPSetRequest* request, bool *new_response_available);
 #if 0
 // TODO: unused, delete
 bool gp_h4_handle_command(const uint16_t *cmdbuf, uint16_t *txbuf);

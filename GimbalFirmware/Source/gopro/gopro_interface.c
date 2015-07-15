@@ -40,9 +40,7 @@ GPRequestType last_request_type = GP_REQUEST_NONE;
 GOPRO_COMMAND last_request_cmd_id;
 GPGetResponse last_get_response;
 GPSetResponse last_set_response;
-GPSetRequest last_set_request;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
-
 
 
 typedef struct {
@@ -326,9 +324,9 @@ int gp_set_request(GPSetRequest* request)
 	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
         switch (gp.model) {
             case GP_MODEL_HERO3P:
-                return gp_h3p_set_request(request, &new_response_available, &last_set_request, &last_cmd_response);
+                return gp_h3p_set_request(request, &new_response_available, &last_cmd_response);
             case GP_MODEL_HERO4:
-                return gp_h4_set_request(&gp.h4, request, &new_response_available, &last_set_request);
+                return gp_h4_set_request(&gp.h4, request, &new_response_available);
             case GP_MODEL_UNKNOWN:
                 return -1;
             default:
