@@ -73,9 +73,39 @@ bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp)
     return false;
 }
 
+static void yy_set_cmd_len(gp_h4_yy_cmd_t *c, uint16_t len)
+{
+    /*
+     * 'len' specifies payload length,
+     * but c->len must be total packet size minus 1.
+     *
+     * somewhat insane, but the gopro datasheet says,
+     * "For example, Byte 10 with value '1' and Byte 11 with value '2'
+     * would indicate that there are 12 byte of response data bytes"
+     */
+
+    c->len = len + 9;
+    c->datalen1 = len / 10;
+    c->datalen2 = len % 10;
+}
+
+static uint16_t yy_rsp_len(const gp_h4_yy_rsp_t *r)
+{
+    /*
+     * See datalen handling notes above.
+     */
+
+    return (r->datalen1 * 10) + r->datalen2;
+}
+
 static bool is_zz(const gp_h4_pkt_t* c)
 {
     return c->cmd.l1 == 'Z' && c->cmd.l2 == 'Z';
+}
+
+static bool is_yy(const gp_h4_pkt_t* c)
+{
+    return c->cmd.l1 == 'Y' && c->cmd.l2 == 'Y';
 }
 
 void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t* c, gp_h4_pkt_t *rsp)
