@@ -257,16 +257,16 @@ class calibrationUI(object):
         self.setButtonsEnabled(False)
         
         self.timerStart()
-        accel = yield AsyncTask(self.accelCalibration)
+        offsets, gains, alignment = yield AsyncTask(self.accelCalibration)
         self.timerStop()
         self.setCalibrationStatus('')
 
-        if isinstance(accel, Vector3):
-            valid = setup_validate.validate_accelerometers(None, accel)
+        if isinstance(offsets, Vector3) and isinstance(gains, Vector3) and isinstance(alignment, Vector3):
+            valid = setup_validate.validate_accelerometers(None, offset=offsets, gain=gains, alignment=alignment)
             self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isValid(valid))
-            self.ui.lblCalibrationAccelX.setText('%0.6f' % accel.x)
-            self.ui.lblCalibrationAccelY.setText('%0.6f' % accel.y)
-            self.ui.lblCalibrationAccelZ.setText('%0.6f' % accel.z)
+            self.ui.lblCalibrationAccelX.setText('%0.6f' % offsets.x)
+            self.ui.lblCalibrationAccelY.setText('%0.6f' % offsets.y)
+            self.ui.lblCalibrationAccelZ.setText('%0.6f' % offsets.z)
             
             allParams = yield AsyncTask(self.getAllParams)
             if allParams != None:

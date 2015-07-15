@@ -5,6 +5,7 @@ from distutils.version import LooseVersion
 from pymavlink.mavparm import MAVParmDict
 from pymavlink.rotmat import Vector3
 import setup_mavlink
+import math
 
 EXPECTED_VERSION = '0.19.0'
 EXPECTED_BROADCAST = 0
@@ -32,8 +33,24 @@ EXPECTED_JOINT_Y_MIN = -0.07
 EXPECTED_JOINT_Z_MAX = 0.18
 EXPECTED_JOINT_Z_MIN = -0.18
 
+EXPECTED_ACC_GAIN_MIN = 0.95
+EXPECTED_ACC_GAIN_MAX = 1.05
+
+EXPECTED_ACC_ALIGN_X_MIN = math.radians(-5)
+EXPECTED_ACC_ALIGN_X_MAX = math.radians(5)
+EXPECTED_ACC_ALIGN_Y_MIN = math.radians(-5)
+EXPECTED_ACC_ALIGN_Y_MAX = math.radians(5)
+EXPECTED_ACC_ALIGN_Z_MIN = math.radians(-5)
+EXPECTED_ACC_ALIGN_Z_MAX = math.radians(5)
+
+EXPECTED_ACC_OFFSET_X_MIN = -2.0
+EXPECTED_ACC_OFFSET_X_MAX = 2.0
+EXPECTED_ACC_OFFSET_Y_MIN = -2.0
+EXPECTED_ACC_OFFSET_Y_MAX = 2.0
+EXPECTED_ACC_OFFSET_Z_MIN = -2.0
+EXPECTED_ACC_OFFSET_Z_MAX = 2.0
+
 EXPECTED_GYRO = 5E-04
-EXPECTED_OFF_ACC = 2.5
 
 GAIN_TOLERANCE = 1e-6
 EXPECTED_PITCH_P = 3.00
@@ -122,7 +139,7 @@ def show(link):
                 },
                 'joints': validate_joints(link, joint=joint),
                 'gyros': validate_gyros(link, gyro=gyro),
-                'accels': validate_accelerometers(link, acc=accel_offset)
+                'accels': validate_accelerometers(link, gain=accel_gain, offset=accel_offset, alignment=accel_alignment)
             }
         }
         return params
@@ -206,15 +223,21 @@ def validate_gyros(link, gyro=None):
     else:
         return Results.Fail
 
-def validate_accelerometers(link, acc=None):
+def validate_accelerometers(link, offset=None, gain=None, alignment=None):
     "Since there is no accelerometer cal yet, just check if the values are zeroed"
-    if not isinstance(acc, Vector3):
-        acc = setup_param.get_offsets(link, 'ACC')
-    if not isinstance(acc, Vector3):
+    if not isinstance(offset, Vector3) or not isinstance(gain, Vector3) or not isinstance(alignment, Vector3):
+        offset, gain, alignment = setup_param.get_accel_params(link)
+    if not isinstance(offset, Vector3) or not isinstance(gain, Vector3) or not isinstance(alignment, Vector3):
         return Results.Error
-    if ((acc.x <= EXPECTED_OFF_ACC) and (acc.x >= -EXPECTED_OFF_ACC) and (acc.x != 0) and
-        (acc.y <= EXPECTED_OFF_ACC) and (acc.y >= -EXPECTED_OFF_ACC) and (acc.y != 0) and
-        (acc.z <= EXPECTED_OFF_ACC) and (acc.z >= -EXPECTED_OFF_ACC) and (acc.z != 0)):
+    if ((offset.x >= EXPECTED_ACC_OFFSET_X_MIN) and (offset.x <= EXPECTED_ACC_OFFSET_X_MAX) and
+        (offset.y >= EXPECTED_ACC_OFFSET_Y_MIN) and (offset.y <= EXPECTED_ACC_OFFSET_Y_MAX) and
+        (offset.z >= EXPECTED_ACC_OFFSET_Z_MIN) and (offset.z <= EXPECTED_ACC_OFFSET_Z_MAX) and
+        (alignment.x >= EXPECTED_ACC_ALIGN_X_MIN) and (alignment.x <= EXPECTED_ACC_ALIGN_X_MAX) and
+        (alignment.y >= EXPECTED_ACC_ALIGN_Y_MIN) and (alignment.y <= EXPECTED_ACC_ALIGN_Y_MAX) and
+        (alignment.z >= EXPECTED_ACC_ALIGN_Z_MIN) and (alignment.z <= EXPECTED_ACC_ALIGN_Z_MAX) and
+        (gain.x >= EXPECTED_ACC_GAIN_MIN) and (gain.x <= EXPECTED_ACC_GAIN_MAX) and
+        (gain.y >= EXPECTED_ACC_GAIN_MIN) and (gain.y <= EXPECTED_ACC_GAIN_MAX) and
+        (gain.z >= EXPECTED_ACC_GAIN_MIN) and (gain.z <= EXPECTED_ACC_GAIN_MAX)):
         return Results.Pass
     else:
         return Results.Fail

@@ -110,4 +110,7 @@ def calibrate_accel(link, progressCallback=None):
         f.write("%s,% .4f,% .4f,% .4f,% .4f,% .4f,% .4f\n" % (get_serial_number(link), p[0], p[1], p[2], p[3], p[4], p[5]))
         f.close()
 
-    return Vector3(p[0], p[1], p[2])
+    offsets = Vector3(p[0], p[1], p[2])
+    gains = Vector3(p[3], p[4], p[5])
+    alignment = Vector3(float(level[0]), float(level[1]), float(level[2]))
+    return offsets, gains, alignment
