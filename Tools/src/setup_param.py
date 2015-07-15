@@ -113,3 +113,11 @@ def set_accel_params(link, p, level):
     parameters.mavset(link.file, "GMB_ALN_ACC_Y", level[1], 3)
     parameters.mavset(link.file, "GMB_ALN_ACC_Z", level[2], 3)
     commit_to_flash(link)
+
+def pos_hold_enable(link):
+    parameters = MAVParmDict()
+    parameters.mavset(link.file, "GMB_POS_HOLD", 1, 3)
+
+def pos_hold_disable(link):
+    parameters = MAVParmDict()
+    parameters.mavset(link.file, "GMB_POS_HOLD", 0, 3)

@@ -216,6 +216,8 @@ def command_interface():
         parser.add_argument("--timeout", help="timeout for action", type=int)
         parser.add_argument("--testloop", help="run a loop of 'run', 'align' and 'wobble' tests", type=str)
         parser.add_argument("--lifetest", help="run the gimbal life test", action='store_true')
+        parser.add_argument("--limp", help="disable position hold mode", action='store_true')
+        parser.add_argument("--nolimp", help="enable position hold mode", action='store_true')
     if setup_home:
         parser.add_argument("-j", "--jointcalibration", help="Calibrate joint angles", action='store_true')
         parser.add_argument("-g", "--gyrocalibration", help="Calibrate gyros", action='store_true')
@@ -328,6 +330,14 @@ def command_interface():
 
         if args.stop:
             setup_run.stop(link)
+            return
+
+        if args.limp:
+            setup_param.pos_hold_disable(link)
+            return
+
+        if args.nolimp:
+            setup_param.pos_hold_enable(link)
             return
 
     if setup_home:
