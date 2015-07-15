@@ -53,8 +53,8 @@ typedef struct {
 
 typedef struct {
     uint16_t len;       // size of this packet (not including 'len')
-    uint16_t l1;        // first letter of 2-letter cmd
-    uint16_t l2;        // second letter of 2-letter cmd
+    uint16_t ack;       // NACK will occur if format of packet is unrecognized
+    uint16_t reserved;  // keep as 0
     uint16_t tid;       // transaction id (keep as 0)
     uint16_t tcb;       // Transaction Control Block bit mask (see GP_H4_TCB_VALS)
     uint16_t chan_id;   // used as a session id for all subsequent YY requests
