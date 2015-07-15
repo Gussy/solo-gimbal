@@ -118,7 +118,7 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
     return true;
 }
 
-void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPRequestType reqtype, GPCmdStatus status)
+void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status)
 {
     /*
      * Called from a gopro protocol handler to indicate
@@ -131,7 +131,6 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPReque
         gp.txn.payload[i] = resp_bytes[i];
     }
 
-    gp.txn.reqtype = reqtype;
     gp.txn.status = status;
     gp.txn.len = len;
 
@@ -290,6 +289,9 @@ int gp_get_request(Uint8 cmd_id)
     last_request_type = GP_REQUEST_GET;
     last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
 
+    gp.txn.reqtype = GP_REQUEST_GET;
+    gp.txn.mav_cmd = (GOPRO_COMMAND)cmd_id;
+
     if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
         switch (gp.model) {
         case GP_MODEL_HERO3P:
@@ -320,6 +322,9 @@ int gp_set_request(GPSetRequest* request)
 
 	last_request_type = GP_REQUEST_SET;
     last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
+
+    gp.txn.reqtype = GP_REQUEST_SET;
+    gp.txn.mav_cmd = (GOPRO_COMMAND)request->cmd_id;
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
 	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
