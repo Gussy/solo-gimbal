@@ -95,15 +95,11 @@ inline void gp_deassert_intr(void) {
 }
 
 bool gp_new_heartbeat_available();
-bool gp_new_get_response_available();
-bool gp_new_set_response_available();
 
 int gp_get_request(Uint8 cmd_id);
 int gp_set_request(GPSetRequest* request);
 
 GPHeartbeatStatus gp_heartbeat_status();
-GPGetResponse gp_last_get_response();
-GPSetResponse gp_last_set_response();
 
 void gp_enable_hb_interface();
 void gp_disable_hb_interface();

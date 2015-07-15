@@ -28,16 +28,9 @@ volatile Uint32 timeout_counter = 0;
 static uint16_t txbuf[TX_BUF_SZ];
 static uint16_t rxbuf[RX_BUF_SZ];
 
-GPCmdResponse last_cmd_response = {0};
-
-bool new_response_available = false;
 bool new_heartbeat_available = false;
 
 Uint16 heartbeat_counter = 0;
-GPRequestType last_request_type = GP_REQUEST_NONE;
-GOPRO_COMMAND last_request_cmd_id;
-GPGetResponse last_get_response;
-GPSetResponse last_set_response;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
 
@@ -175,24 +168,6 @@ bool gp_get_completed_transaction(gp_transaction_t ** rsp)
     return true;
 }
 
-bool gp_new_get_response_available()
-{
-    if (last_request_type == GP_REQUEST_GET) {
-        return new_response_available;
-    }
-
-    return false;
-}
-
-bool gp_new_set_response_available()
-{
-    if (last_request_type == GP_REQUEST_SET) {
-        return new_response_available;
-    }
-
-    return false;
-}
-
 bool gp_handshake_complete()
 {
     switch (gp.model) {
@@ -230,33 +205,6 @@ GPHeartbeatStatus gp_heartbeat_status()
 	}
     new_heartbeat_available = false;
     return heartbeat_status;
-}
-
-GPGetResponse gp_last_get_response()
-{
-	last_get_response.cmd_id = last_request_cmd_id;
-    if (last_cmd_response.status == GP_CMD_STATUS_SUCCESS && last_cmd_response.result == GP_CMD_SUCCESSFUL) {
-        last_get_response.value = last_cmd_response.value;
-	} else {
-		last_get_response.value = 0xFF;
-	}
-
-	// Clear the last command response
-    new_response_available = false;
-
-    return last_get_response;
-}
-
-GPSetResponse gp_last_set_response()
-{
-	last_set_response.cmd_id = last_request_cmd_id;
-    if (last_cmd_response.status == GP_CMD_STATUS_SUCCESS && last_cmd_response.result == GP_CMD_SUCCESSFUL) {
-		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_SUCCESS;
-	} else {
-		last_set_response.result = GOPRO_SET_RESPONSE_RESULT_FAILURE;
-	}
-    new_response_available = false;
-    return last_set_response;
 }
 
 bool gp_request_power_on()
@@ -297,9 +245,6 @@ int gp_get_request(Uint8 cmd_id)
      * via gp_get_last_get_response()
      */
 
-    last_request_type = GP_REQUEST_GET;
-    last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
-
     gp.txn.reqtype = GP_REQUEST_GET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)cmd_id;
 
@@ -330,9 +275,6 @@ int gp_set_request(GPSetRequest* request)
      * and assume that the CAN layer will pick up the response
      * via gp_get_last_set_response()
      */
-
-	last_request_type = GP_REQUEST_SET;
-    last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
 
     gp.txn.reqtype = GP_REQUEST_SET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)request->cmd_id;
