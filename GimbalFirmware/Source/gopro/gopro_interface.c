@@ -46,8 +46,8 @@ GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 
-    bool response_pending;
-    gp_response_t response;
+    bool txn_result_pending;
+    gp_transaction_t txn;
 
     uint16_t init_timeout_ms;
     GPModel model;
@@ -118,7 +118,7 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
     return true;
 }
 
-void gp_set_response(const uint16_t *resp_bytes, uint16_t len, GPRequestType reqtype, GPCmdStatus status)
+void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPRequestType reqtype, GPCmdStatus status)
 {
     /*
      * Called from a gopro protocol handler to indicate
@@ -128,13 +128,14 @@ void gp_set_response(const uint16_t *resp_bytes, uint16_t len, GPRequestType req
 
     uint16_t i;
     for (i = 0; i < len; ++i) {
-        gp.response.payload[i] = resp_bytes[i];
+        gp.txn.payload[i] = resp_bytes[i];
     }
 
-    gp.response.reqtype = reqtype;
-    gp.response.status = status;
-    gp.response.len = len;
-    gp.response_pending = true;
+    gp.txn.reqtype = reqtype;
+    gp.txn.status = status;
+    gp.txn.len = len;
+
+    gp.txn_result_pending = true;
 }
 
 bool gp_new_heartbeat_available()
@@ -142,25 +143,25 @@ bool gp_new_heartbeat_available()
     return new_heartbeat_available;
 }
 
-bool gp_response_available()
+bool gp_transaction_result_available()
 {
-    return gp.response_pending;
+    return gp.txn_result_pending;
 }
 
-bool gp_get_response(gp_response_t ** rsp)
+bool gp_get_completed_transaction(gp_transaction_t ** rsp)
 {
     /*
      * Retrieve the currently pending response.
      * Returns false if there is not a new response available.
      */
 
-    if (!gp.response_pending) {
+    if (!gp.txn_result_pending) {
         return false;
     }
 
-    *rsp = &gp.response;
+    *rsp = &gp.txn;
 
-    gp.response_pending = false;
+    gp.txn_result_pending = false;
     return true;
 }
 

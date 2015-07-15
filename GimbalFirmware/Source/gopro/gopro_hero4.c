@@ -181,7 +181,7 @@ void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
 
     // SET requests always have 0 len, GET requests always have non-zero len
     GPRequestType rt = (len == 0) ? GP_REQUEST_SET : GP_REQUEST_GET;
-    gp_set_response(rsp->payload, len, rt, GP_CMD_STATUS_SUCCESS);
+    gp_set_transaction_result(rsp->payload, len, rt, GP_CMD_STATUS_SUCCESS);
 }
 
 bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
@@ -278,7 +278,7 @@ int gp_h4_forward_get_request(gp_h4_t *h4, Uint8 cmd_id)
         case GOPRO_COMMAND_SHUTTER:
         default:
             // Unsupported Command ID
-            gp_set_response(NULL, 0, GP_REQUEST_GET, GP_CMD_STATUS_FAILURE);
+            gp_set_transaction_result(NULL, 0, GP_REQUEST_GET, GP_CMD_STATUS_FAILURE);
             return -1;
     }
 
@@ -351,7 +351,7 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
 
         default:
             // Unsupported Command ID
-            gp_set_response(NULL, 0, GP_REQUEST_SET, GP_CMD_STATUS_FAILURE);
+            gp_set_transaction_result(NULL, 0, GP_REQUEST_SET, GP_CMD_STATUS_FAILURE);
             return -1;
     }
 

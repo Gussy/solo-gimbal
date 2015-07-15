@@ -60,13 +60,14 @@ typedef enum{
 // XXX: what should this actually be?
 #define GP_MAX_RESP_LEN     32
 
+// represents a command/response transaction
 typedef struct {
-    GPRequestType reqtype;      // what kind of operation is this a response to
+    GPRequestType reqtype;      // what kind of transaction is this
     uint16_t mav_cmd;           // which msg was set/gotten (see GOPRO_COMMAND)
     uint16_t status;            // was this set/get operation successful (see ...)
-    uint16_t payload[GP_MAX_RESP_LEN];
-    uint16_t len;
-} gp_response_t;
+    uint16_t payload[GP_MAX_RESP_LEN];  // response payload
+    uint16_t len;                       // response payload len
+} gp_transaction_t;
 
 void init_gp_interface();
 void gp_interface_state_machine();
@@ -80,9 +81,9 @@ void gp_write_eeprom();
 
 void gp_on_slave_address(bool addressed_as_tx);
 
-void gp_set_response(const uint16_t *resp_bytes, uint16_t len, GPRequestType reqtype, GPCmdStatus status);
-bool gp_response_available();
-bool gp_get_response(gp_response_t **rsp);
+void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPRequestType reqtype, GPCmdStatus status);
+bool gp_transaction_result_available();
+bool gp_get_completed_transaction(gp_transaction_t **rsp);
 
 inline void gp_assert_intr() {
     GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;
