@@ -427,54 +427,59 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
      * Check if the data is formatted correctly and process accordingly.
      */
 
-    // XXX: need better detection of h3+ vs h4 packets
-    //      just favoring h4 for now
-    if (gp_h4_rx_data_is_valid(buf, len)) {
+    if (gp.model == GP_MODEL_UNKNOWN) {
+        gp_detect_camera_model(buf, len);
+    }
 
-        gp.model = GP_MODEL_HERO4; // TODO: reset gp.model when we are disconnected to GP_MODEL_UNKNOWN
+    if (gp.model == GP_MODEL_HERO4) {
+        if (gp_h4_rx_data_is_valid(buf, len)) {
 
-        // XXX: avoid all this copying
+            // XXX: avoid all this copying
 
-        gp_h4_pkt_t pkt;
-        gp_h4_pkt_t rsp;
+            gp_h4_pkt_t pkt;
+            gp_h4_pkt_t rsp;
 
-        int i;
-        for (i = 0; i < GP_COMMAND_RECEIVE_BUFFER_SIZE; ++i) {
-            pkt.bytes[i] = buf[i];
-        }
-
-        if (gp_h4_handle_rx(&gp.h4, &pkt, &rsp)) {
-
-            for (i = 0; i < rsp.rsp.len + 1; ++i) {
-                txbuf[i] = rsp.bytes[i];
+            int i;
+            for (i = 0; i < GP_COMMAND_RECEIVE_BUFFER_SIZE; ++i) {
+                pkt.bytes[i] = buf[i];
             }
 
-            gp_assert_intr();
+            if (gp_h4_handle_rx(&gp.h4, &pkt, &rsp)) {
 
-            gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
-            timeout_counter = 0;
+                for (i = 0; i < rsp.rsp.len + 1; ++i) {
+                    txbuf[i] = rsp.bytes[i];
+                }
+
+                gp_assert_intr();
+
+                gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
+                timeout_counter = 0;
+            }
         }
         return;
     }
 
-    bool from_camera;
-    if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
+    if (gp.model == GP_MODEL_HERO3P) {
+        bool from_camera;
+        if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
 
-        gp.model = GP_MODEL_HERO3P;
+            gp.model = GP_MODEL_HERO3P;
 
-        if (gp_h3p_handle_rx(&gp.h3p, buf, len, from_camera, txbuf)) {
+            if (gp_h3p_handle_rx(&gp.h3p, buf, len, from_camera, txbuf)) {
 
-            gp_assert_intr();
+                gp_assert_intr();
 
-            gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
-            timeout_counter = 0;
+                gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
+                timeout_counter = 0;
+            }
+
         }
-
-    } else {
-        // error in data rx, return to idle
-        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-        gp_control_state = GP_CONTROL_STATE_IDLE;
+        return;
     }
+
+    // error in data rx, return to idle
+    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+    gp_control_state = GP_CONTROL_STATE_IDLE;
 }
 
 void gp_write_eeprom()
