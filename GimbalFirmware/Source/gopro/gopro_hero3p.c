@@ -7,6 +7,9 @@
 // Include for GOPRO_COMMAND enum
 #include "mavlink_interface/mavlink_gimbal_interface.h" // TODO: get rid of this after replacing GOPRO_COMMAND
 
+static bool gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf);
+static void gp_h3p_handle_response(const uint16_t *respbuf);
+
 void gp_h3p_init(gp_h3p_t *h3p)
 {
     h3p->gccb_version_queried = false;
@@ -17,13 +20,13 @@ bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
     return h3p->gccb_version_queried;
 }
 
-bool gp_h3p_request_power_off(GPCmdResponse *last_cmd_response)
+bool gp_h3p_request_power_off()
 {
     GPCmd cmd;
     cmd.cmd[0] = 'P';
     cmd.cmd[1] = 'W';
     cmd.cmd_parm = 0x00;
-    gp_h3p_send_command(&cmd, last_cmd_response);
+    gp_h3p_send_command(&cmd);
     return true;
 }
 
@@ -51,7 +54,7 @@ static bool gp_h3p_cmd_has_param(const GPCmd* c)
 }
 
 // TODO: return type int change to bool? to match other functions
-int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GPCmdResponse *last_cmd_response) // TODO: name is a bit awkward, think about refactoring (gp_h3p_handle_get_request?), same with set request
+int gp_h3p_get_request(Uint8 cmd_id) // TODO: name is a bit awkward, think about refactoring (gp_h3p_handle_get_request?), same with set request
 {
     GPCmd cmd;
 
@@ -78,22 +81,22 @@ int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GPCmdResponse
 
         default:
             // Unsupported Command ID
-            *new_response_available = true;
+            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
             return -1;
     }
 
-    gp_h3p_send_command(&cmd, last_cmd_response);
+    gp_h3p_send_command(&cmd);
     return 0;
 }
 
-int gp_h3p_set_request(const GPSetRequest* request, bool *new_response_available, GPCmdResponse *last_cmd_response)
+int gp_h3p_set_request(const GPSetRequest* request)
 {
     GPCmd cmd;
 
     switch (request->cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                gp_h3p_request_power_off(last_cmd_response);
+                gp_h3p_request_power_off();
             } else {
                 gp_request_power_on();
             }
@@ -133,16 +136,46 @@ int gp_h3p_set_request(const GPSetRequest* request, bool *new_response_available
 
         default:
             // Unsupported Command ID
-            *new_response_available = true;
+            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
             return -1;
     }
 
-    gp_h3p_send_command(&cmd, last_cmd_response);
+    gp_h3p_send_command(&cmd);
     return 0;
+}
+
+bool gp_h3p_handle_rx(gp_h3p_t *h3p, const uint16_t *buf, uint16_t len, bool from_camera, uint16_t *txbuf)
+{
+    /*
+     * Handle incoming i2c data from the camera.
+     *
+     * Return true if we generated a response that
+     * should be written back to the camera.
+     */
+
+    if (from_camera) {
+        if (gp_h3p_handle_command(h3p, buf, txbuf)) {
+            return true;
+        }
+    } else {
+        gp_h3p_handle_response(buf);
+    }
+
+    return false;
 }
 
 bool gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf)
 {
+    /*
+     * A validated command has been received from the camera.
+     *
+     * First make sure the command is one we support.  Per the GoPro spec,
+     * we only have to respond to the "vs" command which queries
+     * the version of the protocol we support.
+     *
+     * For any other command from the GoPro, return an error response
+     */
+
     if ((cmdbuf[1] == 'v') && (cmdbuf[2] == 's')) {
         // Preload the response buffer with the command response.  This will be transmitted in the ISR
         txbuf[0] = 2; // Packet size, 1st byte is status byte, 2nd byte is protocol version
@@ -150,26 +183,30 @@ bool gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbu
         txbuf[2] = GP_PROTOCOL_VERSION;
         h3p->gccb_version_queried = true;
         return true;
-
-    } else {
-        // Preload the response buffer with an error response, since we don't support the command we
-        // were sent.  This will be transmitted in the ISR
-        txbuf[0] = 1; // Packet size, only status byte
-        txbuf[1] = GP_CMD_STATUS_FAILURE;
-        return false;
     }
+
+    // Preload the response buffer with an error response, since we don't support the command we
+    // were sent.  This will be transmitted in the ISR
+    txbuf[0] = 1; // Packet size, only status byte
+    txbuf[1] = GP_CMD_STATUS_FAILURE;
+    return false;
 }
 
-bool gp_h3p_handle_response(const uint16_t *respbuf, GPCmdResponse *last_cmd_response)
+void gp_h3p_handle_response(const uint16_t *respbuf)
 {
+    /*
+     * Process a response to one of our commands.
+     */
+
+    GPCmdStatus status = (GPCmdStatus)respbuf[1];
+
     // Special Handling of responses
-    if (last_cmd_response->cmd[0] == 'c' && last_cmd_response->cmd[1] == 'v') {
+    if (gp_transaction_cmd() == GOPRO_COMMAND_MODEL) {
         // Take third byte (CAMERA_MODEL) of the "camera model and firmware version" response
-        last_cmd_response->value = respbuf[3];
-        return true;
+        gp_set_transaction_result(&respbuf[3], 1, status);
+
     } else {
-        last_cmd_response->value = respbuf[2];
-        return false;
+        gp_set_transaction_result(&respbuf[2], 1, status);
     }
 }
 
@@ -196,7 +233,7 @@ bool gp_h3p_rx_data_is_valid(uint16_t *buf, uint16_t len, bool *from_camera)
     return true;
 }
 
-bool gp_h3p_send_command(const GPCmd* cmd, GPCmdResponse *last_cmd_response)
+bool gp_h3p_send_command(const GPCmd* cmd)
 {
     gp_h3p_pkt_t p;
     gp_h3p_cmd_t *c = &p.cmd;
@@ -212,30 +249,6 @@ bool gp_h3p_send_command(const GPCmd* cmd, GPCmdResponse *last_cmd_response)
         c->len = 0x2;
     }
 
-#if 1
-    // TODO: phase out this section
-
-    // Clear the last command data
-    last_cmd_response->value = 0x00;
-    last_cmd_response->status = GP_CMD_STATUS_UNKNOWN;
-    last_cmd_response->result = GP_CMD_UNKNOWN;
-
-    // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
-    // this command, and this way a caller of gp_get_last_response can know what command the response goes with
-    last_cmd_response->cmd[0] = cmd->cmd[0];
-    last_cmd_response->cmd[1] = cmd->cmd[1];
-#endif
-
     gp_send_cmd(p.bytes, p.cmd.len + 1);
-
-#if 0
-    // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
-    gp_assert_intr();
-
-    // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
-    timeout_counter = 0;
-    gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
-#endif
-
     return true;
 }

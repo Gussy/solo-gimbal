@@ -17,8 +17,6 @@
 static void gp_timeout();
 
 static void handle_rx_data(uint16_t *buf, uint16_t len);
-static void gp_handle_command(const uint16_t *cmdbuf);
-static void gp_handle_response(const uint16_t *respbuf);
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
@@ -96,7 +94,7 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
 {
     /*
      * Called by protocol modules (h4, h3p, etc)
-     * to send a command.
+     * to send a command to the camera.
      */
 
     if (gp_control_state != GP_CONTROL_STATE_IDLE) {
@@ -273,7 +271,7 @@ bool gp_request_power_off()
     if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
         switch (gp.model) {
             case GP_MODEL_HERO3P:
-                return gp_h3p_request_power_off(&last_cmd_response);
+                return gp_h3p_request_power_off();
             case GP_MODEL_HERO4:
                 return gp_h4_request_power_off(&gp.h4);
             case GP_MODEL_UNKNOWN:
@@ -305,7 +303,7 @@ int gp_get_request(Uint8 cmd_id)
     if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
         switch (gp.model) {
         case GP_MODEL_HERO3P:
-            return gp_h3p_get_request(cmd_id, &new_response_available, &last_cmd_response);
+            return gp_h3p_get_request(cmd_id);
 
         case GP_MODEL_HERO4:
             return gp_h4_forward_get_request(&gp.h4, cmd_id);
@@ -340,7 +338,7 @@ int gp_set_request(GPSetRequest* request)
 	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
         switch (gp.model) {
             case GP_MODEL_HERO3P:
-                return gp_h3p_set_request(request, &new_response_available, &last_cmd_response);
+                return gp_h3p_set_request(request);
             case GP_MODEL_HERO4:
                 return gp_h4_forward_set_request(&gp.h4, request);
             case GP_MODEL_UNKNOWN:
@@ -501,93 +499,23 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
     }
 
     bool from_camera;
-
-    if (gp_h3p_rx_data_is_valid(rxbuf, len, &from_camera)) {
+    if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
 
         gp.model = GP_MODEL_HERO3P;
 
-        // Parse the retrieved data differently depending on whether it's a command or response
-        if (from_camera) {
-            gp_handle_command(buf);
-        } else {
-            gp_handle_response(buf);
+        if (gp_h3p_handle_rx(&gp.h3p, buf, len, from_camera, txbuf)) {
+
+            gp_assert_intr();
+
+            gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
+            timeout_counter = 0;
         }
+
     } else {
         // error in data rx, return to idle
         new_response_available = true;
         gp_control_state = GP_CONTROL_STATE_IDLE;
     }
-}
-
-void gp_handle_command(const uint16_t *cmdbuf)
-{
-    /*
-     * A validated command has been received from the camera.
-     *
-     * First make sure the command is one we support.  Per the GoPro spec,
-     * we only have to respond to the "vs" command which queries
-     * the version of the protocol we support.
-     *
-     * For any other command from the GoPro, return an error response
-     */
-
-#if 1
-    // TODO: check if this is still needed after re-org
-    switch (gp.model) {
-        case GP_MODEL_HERO3P:
-            gp_h3p_handle_command(&gp.h3p, cmdbuf, txbuf);
-            break;
-        case GP_MODEL_HERO4:
-            //gp_h4_handle_command(cmdbuf, txbuf); // TODO: should never reach this point in the first place
-            break;
-        case GP_MODEL_UNKNOWN:
-            return;
-        default:
-            return;
-    }
-#else
-    gp_h3p_handle_command(cmdbuf, txbuf, &gccb_version_queried);
-#endif
-
-    // Assert the interrupt request line to indicate that we're ready to respond to the GoPro's command
-    gp_assert_intr();
-
-    gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
-    timeout_counter = 0;
-}
-
-void gp_handle_response(const uint16_t *respbuf)
-{
-    /*
-     * Process a response to one of our commands.
-     */
-
-    last_cmd_response.status = (GPCmdStatus)respbuf[1];
-
-#if 1
-    // TODO: check if this is still needed after re-org
-    switch (gp.model) {
-        case GP_MODEL_HERO3P:
-            gp_h3p_handle_response(respbuf, &last_cmd_response);
-            break;
-        case GP_MODEL_HERO4:
-            // gp_h4_handle_response(respbuf, &last_cmd_response); // TODO: should never reach this point in the first place
-            break;
-        case GP_MODEL_UNKNOWN:
-            return;
-        default:
-            return;
-    }
-#else
-    gp_h3p_handle_response(respbuf, &last_cmd_response);
-#endif
-
-    // The full command transmit has now completed successfully, so we can go back to idle
-    last_cmd_response.result = GP_CMD_SUCCESSFUL;
-    gp_control_state = GP_CONTROL_STATE_IDLE;
-
-    // Indicate that there is a new response available
-    new_response_available = true;
 }
 
 void gp_write_eeprom()

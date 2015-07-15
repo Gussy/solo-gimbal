@@ -45,12 +45,14 @@ typedef union {
 
 void gp_h3p_init(gp_h3p_t *h3p);
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p);
-bool gp_h3p_request_power_off(GPCmdResponse *last_cmd_response);
-int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GPCmdResponse *last_cmd_response);
-int gp_h3p_set_request(const GPSetRequest* request, bool *new_response_available, GPCmdResponse *last_cmd_response);
-bool gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf);
-bool gp_h3p_handle_response(const uint16_t *respbuf, GPCmdResponse *last_cmd_response);
+bool gp_h3p_request_power_off();
+
+int gp_h3p_get_request(Uint8 cmd_id);
+int gp_h3p_set_request(const GPSetRequest* request);
+
+bool gp_h3p_handle_rx(gp_h3p_t *h3p, const uint16_t *buf, uint16_t len, bool from_camera, uint16_t *txbuf);
+
 bool gp_h3p_rx_data_is_valid(uint16_t *buf, uint16_t len, bool *from_camera);
-bool gp_h3p_send_command(const GPCmd* cmd, GPCmdResponse *last_cmd_response);
+bool gp_h3p_send_command(const GPCmd* cmd);
 
 #endif // _GOPRO_HERO3P_H
