@@ -129,7 +129,10 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdSt
         gp.txn.payload[i] = resp_bytes[i];
     }
 
-    gp.txn.status = status;
+    // XXX: probably want to:
+    //      - unify the values of GPCmdStatus and GOPRO_SET_RESPONSE_RESULT, currently they're opposites
+    //      - make GOPRO_SET_RESPONSE_RESULT more general (GOPRO_RESPONSE_RESULT or similar)
+    gp.txn.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_SET_RESPONSE_RESULT_SUCCESS : GOPRO_SET_RESPONSE_RESULT_FAILURE;
     gp.txn.len = len;
 
     gp.txn_result_pending = true;
