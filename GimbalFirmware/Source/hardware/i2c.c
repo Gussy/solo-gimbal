@@ -91,7 +91,7 @@ void i2c_clr_scd()
     I2caRegs.I2CSTR.bit.SCD = 1;
 }
 
-void i2c_send_data(Uint8* data, int length)
+void i2c_send_data(const Uint8* data, int length)
 {
     int i;
 

@@ -39,17 +39,17 @@ def open_comm(port=None, baudrate=230400):
     link.target_compid = TARGET_COMPONENT_ID
     return (port, link)
 
-def wait_for_heartbeat(link):
-    for i in range(5):
+def wait_for_heartbeat(link, retries=5):
+    for i in range(retries):
         link.heartbeat_send(0, 0, 0, 0, 0)
         if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1):
             return True
     return False
 
-def wait_handshake(m, timeout=1):
+def wait_handshake(link, timeout=1, retries=1):
     '''wait for a handshake so we know the target system IDs'''
-    for retries in range(timeout):
-        msg = m.recv_match(type='DATA_TRANSMISSION_HANDSHAKE', blocking=True, timeout=1)
+    for retries in range(retries):
+        msg = link.file.recv_match(type='DATA_TRANSMISSION_HANDSHAKE', blocking=True, timeout=timeout)
         if msg != None:
             if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
                 return msg
@@ -87,7 +87,7 @@ def get_gimbal_report(link, timeout=2):
     msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=timeout)
     return msg_gimbal
 
-def send_gimbal_control(link,rate):
+def send_gimbal_control(link, rate):
     link.gimbal_control_send(link.target_sysid, link.target_compid,rate.x,rate.y,rate.z)
        
 def reset_gimbal(link):
@@ -139,5 +139,9 @@ def requestCalibration(link):
     return link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42503, 0, 0, 0, 0, 0, 0, 0, 0)
 
 def get_all(link, timeout=1):
-    return link.file.recv_match(blocking=True, timeout=timeout)
+    msg = link.file.recv_match(blocking=True, timeout=timeout)
+    if msg != None:
+        if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
+            return msg
+    return None
 

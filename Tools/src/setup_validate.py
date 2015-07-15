@@ -5,6 +5,7 @@ from distutils.version import LooseVersion
 from pymavlink.mavparm import MAVParmDict
 from pymavlink.rotmat import Vector3
 import setup_mavlink
+import math
 
 EXPECTED_VERSION = '0.19.0'
 EXPECTED_BROADCAST = 0
@@ -32,8 +33,24 @@ EXPECTED_JOINT_Y_MIN = -0.07
 EXPECTED_JOINT_Z_MAX = 0.18
 EXPECTED_JOINT_Z_MIN = -0.18
 
+EXPECTED_ACC_GAIN_MIN = 0.95
+EXPECTED_ACC_GAIN_MAX = 1.05
+
+EXPECTED_ACC_ALIGN_X_MIN = math.radians(-5)
+EXPECTED_ACC_ALIGN_X_MAX = math.radians(5)
+EXPECTED_ACC_ALIGN_Y_MIN = math.radians(-5)
+EXPECTED_ACC_ALIGN_Y_MAX = math.radians(5)
+EXPECTED_ACC_ALIGN_Z_MIN = math.radians(-5)
+EXPECTED_ACC_ALIGN_Z_MAX = math.radians(5)
+
+EXPECTED_ACC_OFFSET_X_MIN = -2.0
+EXPECTED_ACC_OFFSET_X_MAX = 2.0
+EXPECTED_ACC_OFFSET_Y_MIN = -2.0
+EXPECTED_ACC_OFFSET_Y_MAX = 2.0
+EXPECTED_ACC_OFFSET_Z_MIN = -2.0
+EXPECTED_ACC_OFFSET_Z_MAX = 2.0
+
 EXPECTED_GYRO = 5E-04
-EXPECTED_OFF_ACC = 2.5
 
 GAIN_TOLERANCE = 1e-6
 EXPECTED_PITCH_P = 3.00
@@ -51,7 +68,7 @@ class Results:
     Pass, Fail, Error = 'pass', 'fail', 'error'
 
 def show(link):
-    swver = setup_factory.readSWver(link, timeout=2)
+    swver = setup_factory.read_software_version(link, timeout=2)
     if swver != None:
         major, minor, rev = int(swver[0]), int(swver[1]), int(swver[2])
         if major >= 0 and minor >= 18:
@@ -115,10 +132,14 @@ def show(link):
                 'version': validate_version(link, swver=swver),
                 'serial': validate_serial_number(link, serial_number=serial_number),
                 'date': validate_date(link, assembly_time=assembly_time),
-                'commutation': validate_comutation(link, pitch_com=pitch_com, roll_com=roll_com, yaw_com=yaw_com),
+                'commutation': {
+                    'pitch': validate_comutation_axis_value('pitch', pitch_com),
+                    'roll': validate_comutation_axis_value('roll', roll_com),
+                    'yaw': validate_comutation_axis_value('yaw', yaw_com)
+                },
                 'joints': validate_joints(link, joint=joint),
                 'gyros': validate_gyros(link, gyro=gyro),
-                'accels': validate_accelerometers(link, acc=accel_offset)
+                'accels': validate_accelerometers(link, gain=accel_gain, offset=accel_offset, alignment=accel_alignment)
             }
         }
         return params
@@ -127,7 +148,7 @@ def show(link):
 
 def validate_version(link, swver=None):
     if not swver:
-        swver = setup_factory.readSWver(link, timeout=2)
+        swver = setup_factory.read_software_version(link, timeout=2)
     if not swver:
         return Results.Error
     ver = LooseVersion("%i.%i.%i" % (swver[0], swver[1], swver[2]))
@@ -136,6 +157,22 @@ def validate_version(link, swver=None):
         return Results.Pass
     else:
         return Results.Fail
+
+def validate_comutation_axis_value(axis, values):
+    if axis == 'pitch':
+        valid = validate_comutation_axis(None, values, EXPECTED_PITCH_ICEPT_MAX, EXPECTED_PITCH_ICEPT_MIN, EXPECTED_PITCH_SLOPE_MAX, EXPECTED_PITCH_SLOPE_MIN)
+    elif axis == 'roll':
+        valid = validate_comutation_axis(None, values, EXPECTED_ROLL_ICEPT_MAX, EXPECTED_ROLL_ICEPT_MIN, EXPECTED_ROLL_SLOPE_MAX, EXPECTED_ROLL_SLOPE_MIN)
+    elif axis == 'yaw':
+        valid = validate_comutation_axis(None, values, EXPECTED_YAW_ICEPT_MAX, EXPECTED_YAW_ICEPT_MIN, EXPECTED_YAW_SLOPE_MAX, EXPECTED_YAW_SLOPE_MIN)
+    else:
+        return Results.Error
+
+    if valid:
+        return Results.Pass
+    else:
+        return Results.Fail
+    
 
 def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
     icept = axis[0]
@@ -186,15 +223,21 @@ def validate_gyros(link, gyro=None):
     else:
         return Results.Fail
 
-def validate_accelerometers(link, acc=None):
+def validate_accelerometers(link, offset=None, gain=None, alignment=None):
     "Since there is no accelerometer cal yet, just check if the values are zeroed"
-    if not isinstance(acc, Vector3):
-        acc = setup_param.get_offsets(link, 'ACC')
-    if not isinstance(acc, Vector3):
+    if not isinstance(offset, Vector3) or not isinstance(gain, Vector3) or not isinstance(alignment, Vector3):
+        offset, gain, alignment = setup_param.get_accel_params(link)
+    if not isinstance(offset, Vector3) or not isinstance(gain, Vector3) or not isinstance(alignment, Vector3):
         return Results.Error
-    if ((acc.x <= EXPECTED_OFF_ACC) and (acc.x >= -EXPECTED_OFF_ACC) and (acc.x != 0) and
-        (acc.y <= EXPECTED_OFF_ACC) and (acc.y >= -EXPECTED_OFF_ACC) and (acc.y != 0) and
-        (acc.z <= EXPECTED_OFF_ACC) and (acc.z >= -EXPECTED_OFF_ACC) and (acc.z != 0)):
+    if ((offset.x >= EXPECTED_ACC_OFFSET_X_MIN) and (offset.x <= EXPECTED_ACC_OFFSET_X_MAX) and
+        (offset.y >= EXPECTED_ACC_OFFSET_Y_MIN) and (offset.y <= EXPECTED_ACC_OFFSET_Y_MAX) and
+        (offset.z >= EXPECTED_ACC_OFFSET_Z_MIN) and (offset.z <= EXPECTED_ACC_OFFSET_Z_MAX) and
+        (alignment.x >= EXPECTED_ACC_ALIGN_X_MIN) and (alignment.x <= EXPECTED_ACC_ALIGN_X_MAX) and
+        (alignment.y >= EXPECTED_ACC_ALIGN_Y_MIN) and (alignment.y <= EXPECTED_ACC_ALIGN_Y_MAX) and
+        (alignment.z >= EXPECTED_ACC_ALIGN_Z_MIN) and (alignment.z <= EXPECTED_ACC_ALIGN_Z_MAX) and
+        (gain.x >= EXPECTED_ACC_GAIN_MIN) and (gain.x <= EXPECTED_ACC_GAIN_MAX) and
+        (gain.y >= EXPECTED_ACC_GAIN_MIN) and (gain.y <= EXPECTED_ACC_GAIN_MAX) and
+        (gain.z >= EXPECTED_ACC_GAIN_MIN) and (gain.z <= EXPECTED_ACC_GAIN_MAX)):
         return Results.Pass
     else:
         return Results.Fail

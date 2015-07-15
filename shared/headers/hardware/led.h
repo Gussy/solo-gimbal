@@ -26,11 +26,14 @@ typedef struct {
 	volatile struct EPWM_REGS *EPwmRegHandle;
 	Uint16 EPwm_CMPA_Direction;
 	Uint16 EPwm_CMPB_Direction;
-	Uint16 EPwmTimerIntCount;
+	Uint16 EPwmTimerIntCountA;
+	Uint16 EPwmTimerIntCountB;
 	Uint16 EPwmMaxCMPA;
 	Uint16 EPwmMinCMPA;
 	Uint16 EPwmMaxCMPB;
 	Uint16 EPwmMinCMPB;
+	Uint8 a_bias;
+	Uint8 b_bias;
 } LED_EPWM_INFO;
 
 typedef struct {
@@ -47,6 +50,14 @@ void init_led_interrupts(void);
 
 void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 duration);
 void led_update_state(void);
+
+inline void led_status_on(void) {
+    GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
+}
+
+inline void led_status_off(void) {
+    GpioDataRegs.GPASET.bit.GPIO7 = 1;
+}
 
 interrupt void led_epwm5_isr(void);
 interrupt void led_epwm6_isr(void);

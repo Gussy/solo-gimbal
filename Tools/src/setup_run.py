@@ -15,6 +15,8 @@ WOBBLE_TEST_ALIGNMENT_TIME = 5
 RMS_WOBBLE_TEST_THRESHOLD = 0.005
 
 stopTestLoop = False
+faultCounter = 0
+lastFaultTime = time.time()
 
 class Log:
     def __init__(self, link, tag=''):
@@ -77,10 +79,105 @@ def niceExit(function):
     return wrapper
 
 @niceExit
-def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None):
+def runLifeTest(link, stopTestsCallback=None, eventCallback=None, wobbleport=None):
+    global stopTestLoop, faultCounter, lastFaultTime
+
+    # Disable motors when the gimbal is in a fault state
+    def eventCallbackShim(msg, fault=False):
+        global stopTestLoop, faultCounter
+        if fault:
+            faultCounter += 1
+            stopTestLoop = True
+
+        # Call the original callback if there was one
+        if eventCallback:
+            eventCallback(msg, fault=fault)
+        elif fault:
+            print('Fault: %s' % msg)
+
+    def stopCallbackShim():
+        global stopTestLoop
+
+        # Call the original callback if there was one
+        if stopTestsCallback:
+            # Handle a local stop (fault)
+            if stopTestLoop:
+                return True
+            # Handle a remote stop (from gui)
+            stopTestLoop = stopTestsCallback()
+            return stopTestLoop
+        else:
+            return stopTestLoop
+
+    faultCounter = 0
+    maxFaults = 2
+    timeBetweenFaults = 30
+
+    speed = 116 # ~RPM
+    timeout = None # Seconds
+    #resetSecondsInerval = 1200 # 20 Minutes
+    resetSecondsInerval = 60 # Seconds
+    resetSecondsWait = 8 # Seconds
+
+    wobble = fixtureWobble.init_fixture(wobbleport=wobbleport)
+
+    i = 0
+    while True:
+        i += 1
+        stopTestLoop = False
+
+        if stopTestsCallback:
+            if stopTestsCallback():
+                break
+
+        if eventCallback:
+            eventCallback('Powering on gimbal')
+        fixtureWobble.power_enable(wobble)
+        time.sleep(resetSecondsWait)
+
+        if eventCallback:
+            eventCallback('Running test #%i' % i)
+        runTest(
+            link,
+            'wobble',
+            stopTestsCallback=stopCallbackShim,
+            eventCallback=eventCallbackShim,
+            timeout=resetSecondsInerval,
+            rpm=speed,
+            wobble=wobble
+        )
+
+        fixtureWobble.set_rpm(wobble, 0)
+
+        now = time.time()
+        if faultCounter >= maxFaults and (now - lastFaultTime) < timeBetweenFaults:
+            if eventCallback:
+                eventCallback('Stopping life test')
+            break
+        elif faultCounter >= maxFaults:
+            if eventCallback:
+                eventCallback('Resetting faultCounter')
+            faultCounter = 1
+            lastFaultTime = time.time()
+        else:
+            lastFaultTime = time.time()
+
+        if eventCallback:
+            eventCallback('Powering off gimbal')
+        fixtureWobble.power_disable(wobble)
+        time.sleep(1)
+
+    # To be sure
+    fixtureWobble.set_rpm(wobble, 0)
+    fixtureWobble.power_enable(wobble)
+    fixtureWobble.close(wobble)
+
+    return True
+
+@niceExit
+def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None, wobbleport=None):
     global stopTestLoop
     def eventCallbackShim(msg, fault=False):
-        # Disable motors when the gimbal is in a fault state
         if fault:
             pass
 
@@ -88,7 +185,6 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
         if eventCallback:
             eventCallback(msg, fault=fault)
 
-   
     def stopCallbackShim():
         global stopTestLoop
         # Call the original callback if there was one
@@ -96,10 +192,10 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
             stopTestLoop = stopTestsCallback()
             return stopTestLoop
 
-    wobble = fixtureWobble.init_fixture()
+    wobble = fixtureWobble.init_fixture(wobbleport=wobbleport)
 
     currentSpeed = 0
-    speeds = [120, 180, 220]
+    speeds = [116, 152, 161]
     for speed in speeds:
         currentSpeed = speed
         if stopTestsCallback is None:
@@ -120,6 +216,7 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
         fixtureWobble.set_rpm(wobble, currentSpeed - speed)
     # To be sure
     fixtureWobble.set_rpm(wobble, 0)
+    fixtureWobble.close(wobble)
 
     return True
 
@@ -167,13 +264,11 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
             _wobble = fixtureWobble.init_fixture()
         else:
             _wobble = wobble
-        fixtureWobble.set_rpm(_wobble, rpm)
-        if rpm:
-            log.writeEvent('setting rpm to %i' % rpm)
 
     lastCycle = time.time()
     lastReport = time.time()
     commsLost = False
+    motorStarted = False
     while timeout is None or (time.time()-start_time) < timeout:
         if stopTestsCallback:
             if stopTestsCallback():
@@ -199,7 +294,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
                 eventCallback(report.text, fault=True)
             continue
         else:
-            if (time.time() - lastReport) > 0.2 and not commsLost:
+            if (time.time() - lastReport) > 2 and not commsLost:
                 commsLost = True
                 if log:
                     log.writeEvent('gimbal reset')
@@ -243,6 +338,13 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         elif test == 'wobble':
             setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
             #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
+
+            # Wait for the gimbal t stabilise before starting the fixture motor
+            if not motorStarted and time.time() - start_time > (WOBBLE_TEST_ALIGNMENT_TIME / 2):
+                motorStarted = True
+                fixtureWobble.set_rpm(_wobble, rpm)
+                if rpm:
+                    log.writeEvent('setting rpm to %i' % rpm)
 
             if time.time() - start_time > WOBBLE_TEST_ALIGNMENT_TIME:
                 i = i + report.delta_time
@@ -300,7 +402,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
                 result = 'PASSED'
             else:
                 result = 'FAILED'
-            message = '%s wobble test - rms value of %f rad/s(threshold of %f rad/s)' % (result, rms.length(), RMS_WOBBLE_TEST_THRESHOLD)
+            message = '%s wobble test - rms %.3f rad/s' % (result, rms.length())
 
             if eventCallback:
                 eventCallback(message)
@@ -309,6 +411,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
 
             if wobble is None:
                 fixtureWobble.set_rpm(_wobble, 0)
+                fixtureWobble.close(_wobble)
             
             
         log.writeEvent('test finished')

@@ -77,7 +77,10 @@ class calibrationUI(object):
             return False
 
     def showInformationMessageBox(self, title, message):
-        return QtGui.QMessageBox.information(self.parent, title, message)
+        if 'error' in message.lower():
+            return QtGui.QMessageBox.critical(self.parent, title, message)
+        else:
+            return QtGui.QMessageBox.information(self.parent, title, message)
 
     def getCalibrationAttempted(self):
         return self.calibrationAttempted
@@ -126,7 +129,15 @@ class calibrationUI(object):
             self.progress = progress
             self.status = message
             return self.continueAccelCal
-        return setup_home.calibrate_accel(self.connection.getLink(), accelProgressCallback)
+        result = None, None, None
+        try:
+            result = setup_home.calibrate_accel(self.connection.getLink(), accelProgressCallback)
+        except ValueError:
+            # Trigger a message box to show on the next timer update
+            self.waitingForContinue = True
+            self.status = "Error: Samples too close together"
+        finally:
+            return result
 
     @gui_utils.waitCursor
     def eraseCalibration(self):
@@ -246,16 +257,16 @@ class calibrationUI(object):
         self.setButtonsEnabled(False)
         
         self.timerStart()
-        accel = yield AsyncTask(self.accelCalibration)
+        offsets, gains, alignment = yield AsyncTask(self.accelCalibration)
         self.timerStop()
         self.setCalibrationStatus('')
 
-        if isinstance(accel, Vector3):
-            valid = setup_validate.validate_accelerometers(None, accel)
+        if isinstance(offsets, Vector3) and isinstance(gains, Vector3) and isinstance(alignment, Vector3):
+            valid = setup_validate.validate_accelerometers(None, offset=offsets, gain=gains, alignment=alignment)
             self.setCalibrationStatusLabel(self.ui.lblCalibrationAccelStatus, self.isValid(valid))
-            self.ui.lblCalibrationAccelX.setText('%0.6f' % accel.x)
-            self.ui.lblCalibrationAccelY.setText('%0.6f' % accel.y)
-            self.ui.lblCalibrationAccelZ.setText('%0.6f' % accel.z)
+            self.ui.lblCalibrationAccelX.setText('%0.6f' % offsets.x)
+            self.ui.lblCalibrationAccelY.setText('%0.6f' % offsets.y)
+            self.ui.lblCalibrationAccelZ.setText('%0.6f' % offsets.z)
             
             allParams = yield AsyncTask(self.getAllParams)
             if allParams != None:
@@ -336,9 +347,9 @@ class calibrationUI(object):
 
     def updateCalibrationTable(self, params):
         # Axis statuses
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, self.isValid(params['validation']['commutation']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, self.isValid(params['validation']['commutation']))
-        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, self.isValid(params['validation']['commutation']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, self.isValid(params['validation']['commutation']['pitch']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, self.isValid(params['validation']['commutation']['roll']))
+        self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, self.isValid(params['validation']['commutation']['yaw']))
 
         # Static statuses
         self.setCalibrationStatusLabel(self.ui.lblCalibrationJointStatus, self.isValid(params['validation']['joints']))

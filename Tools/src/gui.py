@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import sys, argparse
 from PySide import QtCore, QtGui
 from PySide.QtCore import QThread, Slot
@@ -14,6 +16,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         # Public
         self.autoUpdate = False
         self.autoMotorCal = False
+        self.wobblePort = None
 
         # Disable the tabwidget
         self.ui.tabWidget.setEnabled(False)
@@ -52,6 +55,7 @@ if __name__ == '__main__':
     parser.add_argument("--autoconnect", help="Automatically connect to the gimbal", action='store_true')
     parser.add_argument("--autoupdate", help="Automatically bootload firmware onto the gimbal", action='store_true')
     parser.add_argument("--automotorcal", help="Automatically run motor commutation the gimbal", action='store_true')
+    parser.add_argument("--wobbleport", nargs='?', help="Serial port of the connected wobble fixture", type=str)
     args = parser.parse_args()
 
     app = QtGui.QApplication(sys.argv)
@@ -69,5 +73,8 @@ if __name__ == '__main__':
 
     if args.autoconnect:
         gui.autoConnect()
+
+    if args.wobbleport:
+        gui.wobblePort = args.wobbleport
 
     sys.exit(app.exec_())
