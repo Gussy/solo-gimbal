@@ -237,7 +237,8 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     # For wobble test
     if test == 'wobble':
         pointing_gain = 2
-        gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
+        gyro_offsets_raw = setup_param.get_offsets(link, 'GYRO', timeout=4)
+        gyro_offsets = gyro_offsets_raw / 100 # gyro offsets in rad/s
         error_integral = Vector3()
         if rpm:
             tag = '_%irpm' % rpm
