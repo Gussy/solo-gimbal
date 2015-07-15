@@ -20,6 +20,23 @@ bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
     return h3p->gccb_version_queried;
 }
 
+bool gp_h3p_recognize_packet(uint16_t *buf, uint16_t len)
+{
+    /*
+     * Called when we don't yet know what kind of camera we're talking to.
+     *
+     * We only expect to see a version command in this state,
+     * so just check for that.
+     */
+
+    bool dontcare;
+    if (gp_h3p_rx_data_is_valid(buf, len, &dontcare)) {
+        return buf[1] == 'v' && buf[2] == 's';
+    }
+
+    return false;
+}
+
 bool gp_h3p_request_power_off()
 {
     GPCmd cmd;

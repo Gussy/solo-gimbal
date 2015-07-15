@@ -51,6 +51,18 @@ bool gp_h4_handshake_complete(const gp_h4_t *h4)
     return h4->handshake_step == GP_H4_HANDSHAKE_CHANNEL_OPEN;
 }
 
+bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len)
+{
+    /*
+     * Called when we don't yet know what kind of camera we're talking to.
+     *
+     * We only expect to see handshake packets in this state,
+     * so make sure it's long enough and is a ZZ packet.
+     */
+
+    return gp_h4_rx_data_is_valid(buf, len) && len >= 6 && buf[1] == 'Z' && buf[2] == 'Z';
+}
+
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len)
 {
     /*
