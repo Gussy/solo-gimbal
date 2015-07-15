@@ -186,6 +186,7 @@ AveragePowerFilterParms power_filter_parms = {
     .iq_filter_prev = 0.0,        // Iq filter previous
     .alpha = 0.0,        // Alpha factor
     .current_limit = 0.0,        // Current limit
+    .iq_over = FALSE,      // Iq over current
 };
 
 MotorDriveParms motor_drive_parms = {
@@ -746,11 +747,11 @@ void C1(void) // Update Status LEDs
                 break;
 
             case BLINK_READY:
-                led_set_mode(LED_MODE_BLINK, rgba_green, 4);
+                //led_set_mode(LED_MODE_DISCO, rgba_red, 0);
                 break;
 
             case BLINK_RUNNING:
-                //led_set_mode(LED_MODE_DISCO, rgba_red, 0);
+                led_set_mode(LED_MODE_BLINK, rgba_green, 4);
                 break;
 
             case BLINK_ERROR:

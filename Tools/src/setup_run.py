@@ -4,7 +4,7 @@ import os, sys, time, threading
 from math import sin, cos, radians
 import math
 from pymavlink.rotmat import Matrix3, Vector3
-import setup_mavlink, setup_param, setup_factory, gui_graph
+import setup_mavlink, setup_param, setup_factory, gui_graph, setup_validate
 import fixtureWobble
 
 #import visual.graph
@@ -222,6 +222,7 @@ def runTestLoop(link, test, stopTestsCallback=None, eventCallback=None, reportCa
 
 @niceExit
 def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallback=None, timeout=None, rpm=None, wobble=None):
+    global stopTestLoop
     i = 0
     target = Vector3()
     log = None
@@ -237,7 +238,19 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     # For wobble test
     if test == 'wobble':
         pointing_gain = 2
-        gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
+        gyro_offsets_raw = setup_param.get_offsets(link, 'GYRO', timeout=4)
+        # Detect old gyro offsets
+        if (gyro_offsets_raw.x < setup_validate.EXPECTED_GYRO / 100 and
+            gyro_offsets_raw.y < setup_validate.EXPECTED_GYRO / 100 and
+            gyro_offsets_raw.z < setup_validate.EXPECTED_GYRO / 100):
+            msg = "Old gyro calibration detected, re-calibration required"
+            if eventCallback:
+                eventCallback(msg, fault=True)
+            else:
+                print(msg)
+            stopTestLoop = True
+            return
+        gyro_offsets = gyro_offsets_raw / 100 # gyro offsets in rad/s
         error_integral = Vector3()
         if rpm:
             tag = '_%irpm' % rpm
@@ -264,6 +277,9 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
             _wobble = fixtureWobble.init_fixture()
         else:
             _wobble = wobble
+
+    # Disable position hold mode
+    setup_param.pos_hold_disable(link)
 
     lastCycle = time.time()
     lastReport = time.time()
@@ -390,6 +406,9 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         current_angle = Vector3(*Tvg.to_euler312())
         lastCycle = time.time()
 
+    # Re-enable position hold mode
+    setup_param.pos_hold_enable(link)
+
     if log:
         if test == 'wobble':
             test_duration = int(time.time()-start_time - WOBBLE_TEST_ALIGNMENT_TIME)
@@ -417,7 +436,6 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         log.writeEvent('test finished')
         return str(int(log.logTimestamp))
 
-    
     return True
 
 @niceExit    
