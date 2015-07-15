@@ -836,6 +836,8 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
             response_buffer |= ((((Uint32)txn->mav_cmd) << 8) & 0x0000FF00);
 
             if (txn->reqtype == GP_REQUEST_GET) {
+                // XXX: only returning first byte for now.
+                //      want to be able to return larger chunks in the future
                 response_buffer |= ((((Uint32)txn->payload[0]) << 0) & 0x000000FF);
                 can_id = CAND_PID_GOPRO_GET_RESPONSE;
 
