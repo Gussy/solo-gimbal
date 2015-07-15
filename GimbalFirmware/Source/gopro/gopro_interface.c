@@ -62,6 +62,8 @@ void init_gp_interface()
     gp.waiting_for_i2c = false;
     gp_deassert_intr();
 
+    gp_h4_init(&gp.h4);
+
     gopro_i2c_init();
 
     gp_enable_hb_interface();

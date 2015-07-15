@@ -31,6 +31,8 @@ void gp_h4_init(gp_h4_t *h4)
     for (i = 0; i < GP_H4_PROTO_NUM_BYTES; ++i) {
         h4->camera_proto_version[i] = 0xff;
     }
+
+    h4->channel_id = 0; // defaults to 0
 }
 
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len)
