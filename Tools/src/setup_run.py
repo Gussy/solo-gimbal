@@ -265,6 +265,9 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         else:
             _wobble = wobble
 
+    # Disable position hold mode
+    setup_param.pos_hold_disable(link)
+
     lastCycle = time.time()
     lastReport = time.time()
     commsLost = False
@@ -390,6 +393,9 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         current_angle = Vector3(*Tvg.to_euler312())
         lastCycle = time.time()
 
+    # Re-enable position hold mode
+    setup_param.pos_hold_enable(link)
+
     if log:
         if test == 'wobble':
             test_duration = int(time.time()-start_time - WOBBLE_TEST_ALIGNMENT_TIME)
@@ -417,7 +423,6 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         log.writeEvent('test finished')
         return str(int(log.logTimestamp))
 
-    
     return True
 
 @niceExit    
