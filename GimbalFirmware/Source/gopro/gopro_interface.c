@@ -12,7 +12,6 @@
 #include <ctype.h>
 
 static void gp_timeout();
-static bool gp_cmd_has_param(const GPCmd* c);
 
 static void handle_rx_data(uint16_t *buf, uint16_t len);
 static void gp_handle_command(const uint16_t *cmdbuf);
@@ -82,28 +81,6 @@ bool gp_ready_for_cmd()
     return (gp_control_state == GP_CONTROL_STATE_IDLE) && !i2c_get_bb();
 }
 
-bool gp_cmd_has_param(const GPCmd* c)
-{
-    /*
-     * For the most part, commands have a parameter, queries never do.
-     * Commands are 2 uppercase characters, queries are 2 lowercase characters
-     */
-
-    if (islower(c->cmd[0])) {
-        return false;
-    }
-
-    // Need to special case 'DL', 'DA', and 'FO' commands, since they don't have parameters
-    if ((c->cmd[0] == 'F') && (c->cmd[1] == 'O')) {
-        return false;
-    }
-
-    if (c->cmd[0] == 'D' && (c->cmd[1] == 'L' || c->cmd[1] == 'A')) {
-        return false;
-    }
-
-    return true;
-}
 
 bool gp_send_command(const GPCmd* cmd)
 {
