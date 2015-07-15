@@ -3,9 +3,9 @@
 
 #include <string.h>
 
-enum GP_H4_ZZ_ACK_VALS {
-    ZZ_ACK  = 0,
-    ZZ_NACK = 1,
+enum GP_H4_ACK_VALS {
+    H4_ACK  = 0,
+    H4_NACK = 1,
 };
 
 enum GP_H4_TCB_VALS {
@@ -131,7 +131,7 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
     }
 
     r->len = c->len;
-    r->ack = ZZ_ACK;
+    r->ack = H4_ACK;
     r->reserved = 0;
     r->tid = 0;
     // all ZZ responses indicate that they are the final (and only) frame
