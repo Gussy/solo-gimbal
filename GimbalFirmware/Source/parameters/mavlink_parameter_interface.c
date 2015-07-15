@@ -14,9 +14,11 @@ GimbalMavlinkParameter gimbal_params[MAVLINK_GIMBAL_PARAM_MAX];
 
 extern unsigned char gimbal_sysid;
 
+// Volatile parameters (these aren't saved in the flash params struct)
 float commit_to_flash_status = 0.0;
 float pos_hold = CONTROL_TYPE_POS;
 float max_torque = LOW_TORQUE_MODE_MAX;
+float broadcast_msgs = 0.0;
 
 void init_default_mavlink_params()
 {
@@ -300,7 +302,7 @@ void init_default_mavlink_params()
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].param_id, "GMB_BROADCAST", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].can_parameter_id = CAND_PID_INVALID;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].float_data_ptr = &(flash_params.broadcast_msgs);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].float_data_ptr = &broadcast_msgs;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].access_type = GIMBAL_PARAM_READ_WRITE;
 }
 
@@ -463,4 +465,9 @@ void send_gimbal_param(int param_num)
 
     mavlink_msg_param_value_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &param_msg, param->param_id, param_val, param->param_type, MAVLINK_GIMBAL_PARAM_MAX, param_num);
     send_mavlink_message(&param_msg);
+}
+
+float get_broadcast_msgs_state()
+{
+	return broadcast_msgs;
 }

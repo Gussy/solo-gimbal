@@ -79,5 +79,6 @@ void init_default_mavlink_params();
 void handle_param_set(mavlink_message_t* received_msg);
 void handle_param_read(mavlink_message_t* received_msg);
 void send_gimbal_param(int param_num);
+float get_broadcast_msgs_state();
 
 #endif /* MAVLINK_PARAMETER_INTERFACE_H_ */
