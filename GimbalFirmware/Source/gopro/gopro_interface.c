@@ -252,7 +252,7 @@ bool gp_request_power_off()
     if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
         switch (gp.model) {
             case GP_MODEL_HERO3P:
-                return gp_h3p_request_power_off();
+                return gp_h3p_request_power_off(&last_cmd_response);
             case GP_MODEL_HERO4:
                 return gp_h4_request_power_off(&gp.h4);
             case GP_MODEL_UNKNOWN:

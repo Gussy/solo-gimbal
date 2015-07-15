@@ -45,7 +45,7 @@ typedef union {
 
 void gp_h3p_init(gp_h3p_t *h3p);
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p);
-bool gp_h3p_request_power_off();
+bool gp_h3p_request_power_off(GPCmdResponse *last_cmd_response);
 int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GOPRO_COMMAND *last_request_cmd_id, GPCmdResponse *last_cmd_response);
 int gp_h3p_set_request(GPSetRequest* request, bool *new_response_available, GPSetRequest* last_set_request, GOPRO_COMMAND *last_request_cmd_id, GPCmdResponse *last_cmd_response);
 bool gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf);

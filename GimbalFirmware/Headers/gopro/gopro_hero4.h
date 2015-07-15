@@ -91,7 +91,7 @@ void gp_h4_init(gp_h4_t *h4);
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len);
 bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
 
-bool gp_h4_request_power_off();
+bool gp_h4_request_power_off(gp_h4_t *h4);
 int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, GOPRO_COMMAND *last_request_cmd_id, bool *new_response_available);
 int gp_h4_set_request(gp_h4_t *h4, GPSetRequest* request, GOPRO_COMMAND *last_request_cmd_id, bool *new_response_available, GPSetRequest *last_set_request);
 #if 0
