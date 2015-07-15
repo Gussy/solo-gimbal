@@ -16,6 +16,7 @@
 
 static void gp_timeout();
 
+static void gp_detect_camera_model(uint16_t *buf, uint16_t len);
 static void handle_rx_data(uint16_t *buf, uint16_t len);
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
@@ -400,6 +401,22 @@ void gp_interface_state_machine()
         gp.model = GP_MODEL_UNKNOWN;
 	}
 	previous_power_status = new_power_status;
+}
+
+void gp_detect_camera_model(uint16_t *buf, uint16_t len)
+{
+    /*
+     * Called when we've received an i2c packet but we don't yet
+     * know which kind of camera we're talking to.
+     *
+     * Check if any of our protocol handlers recognize it
+     */
+
+    if (gp_h4_recognize_packet(buf, len)) {
+        gp.model = GP_MODEL_HERO4;
+    } else if (gp_h3p_recognize_packet(buf, len)) {
+        gp.model = GP_MODEL_HERO3P;
+    }
 }
 
 void handle_rx_data(uint16_t *buf, uint16_t len)
