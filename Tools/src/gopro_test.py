@@ -127,9 +127,9 @@ class MAVLinkConn(object):
             if msg.get_type() == "GOPRO_HEARTBEAT":
                 print("[display_gopro_msgs] %s: %s" % (msg.get_type(), mavlink.enums['GOPRO_HEARTBEAT_STATUS'][msg.status].name))
             elif msg.get_type() == "GOPRO_GET_RESPONSE":
-                print("[display_gopro_msgs] %s: '%s' = %u" % (msg.get_type(), self.gopro_cmds[cmd].name, msg.value))
+                print("[display_gopro_msgs] %s: '%s' = %u" % (msg.get_type(), self.gopro_cmds[msg.cmd_id].name, msg.value))
             elif msg.get_type() == "GOPRO_SET_RESPONSE":
-                print("[display_gopro_msgs] %s: '%s' = %u" % (msg.get_type(), self.gopro_cmds[cmd].name, msg.result))
+                print("[display_gopro_msgs] %s: '%s' = %u" % (msg.get_type(), self.gopro_cmds[msg.cmd_id].name, msg.result))
             elif msg.get_type().startswith("GOPRO"):
                 print("[display_gopro_msgs] %s:" % (msg.get_type()), msg)
 
