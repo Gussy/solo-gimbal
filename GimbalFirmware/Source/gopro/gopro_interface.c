@@ -40,7 +40,6 @@ GPSetResponse last_set_response;
 GPSetRequest last_set_request;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
-bool gccb_version_queried = false;
 uint16_t init_timeout_ms = 0;
 bool init_timed_out = false;
 
@@ -49,10 +48,10 @@ bool init_timed_out = false;
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 
-	bool response_pending;
+    bool response_pending;
     gp_response_t response;
 
-	GPModel model;
+    GPModel model;
 
     gp_h3p_t h3p;
     gp_h4_t h4;
@@ -69,6 +68,7 @@ void init_gp_interface()
     gp.model = GP_MODEL_UNKNOWN;
     gp_deassert_intr();
 
+    gp_h3p_init(&gp.h3p);
     gp_h4_init(&gp.h4);
 
     gopro_i2c_init();
@@ -171,16 +171,20 @@ bool gp_new_set_response_available()
     return false;
 }
 
-bool gp_handshake_complete() {
+bool gp_handshake_complete()
+{
     switch (gp.model) {
-        case GP_MODEL_HERO3P:
-            return gccb_version_queried;
-        case GP_MODEL_HERO4:
-            return true; // TODO: still need to do this
-        case GP_MODEL_UNKNOWN:
-            return false;
-        default:
-            return false;
+    case GP_MODEL_HERO3P:
+        return gp_h3p_handshake_complete(&gp.h3p);
+
+    case GP_MODEL_HERO4:
+        return true; // TODO: still need to do this
+
+    case GP_MODEL_UNKNOWN:
+        return false;
+
+    default:
+        return false;
     }
 }
 
@@ -408,7 +412,7 @@ void gp_interface_state_machine()
 
     // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
     // the heartbeat with an incompatible state while it's gccb version is being queried
-    if(!gccb_version_queried && !init_timed_out && ++init_timeout_ms >= (GP_INIT_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+    if(!gp_handshake_complete() && !init_timed_out && ++init_timeout_ms >= (GP_INIT_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
         init_timed_out = true;
     }
 
@@ -421,7 +425,8 @@ void gp_interface_state_machine()
 	// Detect a change in power status to reset some flags when a GoPro is re-connected during operation
 	GPPowerStatus new_power_status = gp_get_power_status();
 	if(previous_power_status != new_power_status) {
-		gccb_version_queried = 0;
+        gp_h3p_init(&gp.h3p);
+        gp_h4_init(&gp.h4);
 		init_timeout_ms = 0;
 		init_timed_out = false;
         gp.model = GP_MODEL_UNKNOWN;
@@ -502,7 +507,7 @@ void gp_handle_command(const uint16_t *cmdbuf)
     // TODO: check if this is still needed after re-org
     switch (gp.model) {
         case GP_MODEL_HERO3P:
-            gp_h3p_handle_command(cmdbuf, txbuf, &gccb_version_queried);
+            gp_h3p_handle_command(&gp.h3p, cmdbuf, txbuf);
             break;
         case GP_MODEL_HERO4:
             //gp_h4_handle_command(cmdbuf, txbuf); // TODO: should never reach this point in the first place

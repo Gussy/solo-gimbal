@@ -7,6 +7,16 @@
 // Include for GOPRO_COMMAND enum
 #include "mavlink_interface/mavlink_gimbal_interface.h" // TODO: get rid of this after replacing GOPRO_COMMAND
 
+void gp_h3p_init(gp_h3p_t *h3p)
+{
+    h3p->gccb_version_queried = false;
+}
+
+bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
+{
+    return h3p->gccb_version_queried;
+}
+
 bool gp_h3p_request_power_off(GPCmdResponse *last_cmd_response)
 {
     GPCmd cmd;
@@ -17,7 +27,7 @@ bool gp_h3p_request_power_off(GPCmdResponse *last_cmd_response)
     return true;
 }
 
-bool gp_h3p_cmd_has_param(const GPCmd* c)
+static bool gp_h3p_cmd_has_param(const GPCmd* c)
 {
     /*
      * For the most part, commands have a parameter, queries never do.
@@ -45,7 +55,7 @@ int gp_h3p_get_request(Uint8 cmd_id, bool *new_response_available, GOPRO_COMMAND
 {
     GPCmd cmd;
 
-    switch(cmd_id) {
+    switch (cmd_id) {
         case GOPRO_COMMAND_SHUTTER:
             cmd.cmd[0] = 's';
             cmd.cmd[1] = 'h';
@@ -136,14 +146,14 @@ int gp_h3p_set_request(GPSetRequest* request, bool *new_response_available, GPSe
     return 0;
 }
 
-bool gp_h3p_handle_command(const uint16_t *cmdbuf, uint16_t *txbuf, bool *gccb_version_queried)
+bool gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf)
 {
     if ((cmdbuf[1] == 'v') && (cmdbuf[2] == 's')) {
         // Preload the response buffer with the command response.  This will be transmitted in the ISR
         txbuf[0] = 2; // Packet size, 1st byte is status byte, 2nd byte is protocol version
         txbuf[1] = GP_CMD_STATUS_SUCCESS;
         txbuf[2] = GP_PROTOCOL_VERSION;
-        *gccb_version_queried = 1;
+        h3p->gccb_version_queried = true;
         return true;
 
     } else {
