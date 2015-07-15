@@ -244,28 +244,23 @@ bool gp_h4_request_power_off(gp_h4_t *h4)
     return true;
 }
 
-int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, bool *new_response_available) // TODO: name is a bit awkward, think about refactoring (gp_h4_handle_get_request?), same with set request
+int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id) // TODO: name is a bit awkward, think about refactoring (gp_h4_handle_get_request?), same with set request
 {
+    /*
+     * A GET request has been received via the CAN interface,
+     * forward it to the camera.
+     */
+
     uint16_t api_group = 0;
     uint16_t api_id = 0;
     uint16_t b[1] = {0}; // should always be null when treating get_requests, alt: b[GP_H4_YY_CMD_MAX_PAYLOAD]
     uint16_t len = 0;
 
-    switch(cmd_id) {
-        case GOPRO_COMMAND_SHUTTER:
-            // not supported
-            return -1;
-            //break; // TODO: helpful but check code style
-
+    switch (cmd_id) {
         case GOPRO_COMMAND_CAPTURE_MODE:
             api_group = 1;
             api_id    = 0;
             break;
-
-        case GOPRO_COMMAND_MODEL:
-            // not supported
-            return -1;
-            //break; // TODO: helpful but check code style
 
         case GOPRO_COMMAND_BATTERY:
             api_group = 8;
@@ -279,25 +274,31 @@ int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id, bool *new_response_available) /
             api_id    = 2;
             break;
 
+        case GOPRO_COMMAND_MODEL:
+        case GOPRO_COMMAND_SHUTTER:
         default:
             // Unsupported Command ID
-            *new_response_available = true;
+            gp_set_response(NULL, 0, GP_REQUEST_GET, GP_CMD_STATUS_FAILURE);
             return -1;
     }
 
     gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
-    //gp_send_command(&cmd);
     return 0;
 }
 
-int gp_h4_set_request(gp_h4_t *h4, const GPSetRequest* request, bool *new_response_available) // TODO: see TODO above
+int gp_h4_set_request(gp_h4_t *h4, const GPSetRequest* request) // TODO: see TODO above
 {
+    /*
+     * A SET request has been received via the CAN interface,
+     * forward it to the camera.
+     */
+
     uint16_t api_group = 0;
     uint16_t api_id = 0;
     uint16_t b[GP_H4_YY_CMD_MAX_PAYLOAD];
     uint16_t len = 0;
 
-    switch(request->cmd_id) {
+    switch (request->cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
                 api_group = 8;  // TODO: alternatively use gp_h4_request_power_off() and pass in power-off type
@@ -350,25 +351,10 @@ int gp_h4_set_request(gp_h4_t *h4, const GPSetRequest* request, bool *new_respon
 
         default:
             // Unsupported Command ID
-            *new_response_available = true;
+            gp_set_response(NULL, 0, GP_REQUEST_SET, GP_CMD_STATUS_FAILURE);
             return -1;
     }
 
     gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
     return 0;
 }
-
-#if 0
-// TODO: unused, delete
-bool gp_h4_handle_command(const uint16_t *cmdbuf, uint16_t *txbuf)
-{
-    // TODO
-    return true;
-}
-
-bool gp_h4_handle_response(const uint16_t *respbuf, GPCmdResponse *last_cmd_response)
-{
-    // TODO
-    return true;
-}
-#endif
