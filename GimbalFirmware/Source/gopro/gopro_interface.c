@@ -11,6 +11,9 @@
 
 #include <ctype.h>
 
+
+#define GP_INIT_TIMEOUT_MS 3000
+
 static void gp_timeout();
 
 static void handle_rx_data(uint16_t *buf, uint16_t len);
@@ -40,9 +43,6 @@ GPSetResponse last_set_response;
 GPSetRequest last_set_request;
 GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
-uint16_t init_timeout_ms = 0;
-bool init_timed_out = false;
-
 
 
 typedef struct {
@@ -51,6 +51,7 @@ typedef struct {
     bool response_pending;
     gp_response_t response;
 
+    uint16_t init_timeout_ms;
     GPModel model;
 
     gp_h3p_t h3p;
@@ -66,6 +67,8 @@ void init_gp_interface()
 {
     gp.waiting_for_i2c = false;
     gp.model = GP_MODEL_UNKNOWN;
+    gp.init_timeout_ms = 0;
+
     gp_deassert_intr();
 
     gp_h3p_init(&gp.h3p);
@@ -74,6 +77,16 @@ void init_gp_interface()
     gopro_i2c_init();
 
     gp_enable_hb_interface();
+}
+
+static bool init_timed_out()
+{
+    /*
+     * init timeout ensures we wait long enough after a possible
+     * camera connection before we declare it either `connected` or `incompatible`.
+     */
+
+    return gp.init_timeout_ms >= (GP_INIT_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS);
 }
 
 bool gp_ready_for_cmd()
@@ -203,7 +216,7 @@ GPHeartbeatStatus gp_heartbeat_status()
 	} else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && GP_VON) {
 		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
-    } else if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out) {
+    } else if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
 	}
     new_heartbeat_available = false;
@@ -412,8 +425,8 @@ void gp_interface_state_machine()
 
     // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
     // the heartbeat with an incompatible state while it's gccb version is being queried
-    if(!gp_handshake_complete() && !init_timed_out && ++init_timeout_ms >= (GP_INIT_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
-        init_timed_out = true;
+    if(!gp_handshake_complete() && !init_timed_out()) {
+        gp.init_timeout_ms++;
     }
 
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
@@ -424,11 +437,10 @@ void gp_interface_state_machine()
 
 	// Detect a change in power status to reset some flags when a GoPro is re-connected during operation
 	GPPowerStatus new_power_status = gp_get_power_status();
-	if(previous_power_status != new_power_status) {
+    if (previous_power_status != new_power_status) {
         gp_h3p_init(&gp.h3p);
         gp_h4_init(&gp.h4);
-		init_timeout_ms = 0;
-		init_timed_out = false;
+        gp.init_timeout_ms = 0;
         gp.model = GP_MODEL_UNKNOWN;
 	}
 	previous_power_status = new_power_status;
