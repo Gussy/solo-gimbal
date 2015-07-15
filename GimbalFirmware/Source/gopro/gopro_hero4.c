@@ -24,6 +24,12 @@ enum GP_ZZ_FMT {
     ZZ_PROTO_VERSION    = 4,    // fmt: MM, mm, rr (3 bytes)
 };
 
+enum GP_H4_HANDSHAKE_STEPS {
+    GP_H4_HANDSHAKE_NONE,
+    GP_H4_HANDSHAKE_READY,              // have received `ZZ ready` cmd from camera
+    GP_H4_HANDSHAKE_HB_PROTO_VERSION,   // have receive `ZZ HeroBus Protocol Version` from camera
+    GP_H4_HANDSHAKE_CHANNEL_OPEN,       // have opened the comms channel with the camera
+};
 
 static void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t *c, gp_h4_pkt_t *rsp);
 static void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
@@ -37,6 +43,12 @@ void gp_h4_init(gp_h4_t *h4)
     }
 
     h4->channel_id = 0; // defaults to 0
+    h4->handshake_step = GP_H4_HANDSHAKE_NONE;
+}
+
+bool gp_h4_handshake_complete(const gp_h4_t *h4)
+{
+    return h4->handshake_step == GP_H4_HANDSHAKE_CHANNEL_OPEN;
 }
 
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len)
@@ -175,6 +187,7 @@ void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
     if (rsp->api_group == 0 && rsp->api_id == 1 && len == 1) {
         // 'Get Channel ID/Open Channel' is api 0/1
         h4->channel_id = rsp->payload[0];
+        h4->handshake_step = GP_H4_HANDSHAKE_CHANNEL_OPEN;
         return;
     }
 
@@ -191,9 +204,12 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
     unsigned i;
 
     switch (c->payload[0]) {
-    case ZZ_I2C_BUS_SPEED:
     case ZZ_RDY:
-        // nothing special to do in these cases
+        h4->handshake_step = GP_H4_HANDSHAKE_READY;
+        break;
+
+    case ZZ_I2C_BUS_SPEED:
+        // nothing special to do
         break;
 
     case ZZ_FW_VERSION:
@@ -206,6 +222,7 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
         for (i = 0; i < GP_H4_PROTO_NUM_BYTES; ++i) {
             h4->camera_proto_version[i] = c->payload[i+1];
         }
+        h4->handshake_step = GP_H4_HANDSHAKE_HB_PROTO_VERSION;
         break;
 
     default:

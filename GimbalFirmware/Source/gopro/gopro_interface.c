@@ -175,10 +175,7 @@ bool gp_handshake_complete()
         return gp_h3p_handshake_complete(&gp.h3p);
 
     case GP_MODEL_HERO4:
-        return true; // TODO: still need to do this
-
-    case GP_MODEL_UNKNOWN:
-        return false;
+        return gp_h4_handshake_complete(&gp.h4);
 
     default:
         return false;

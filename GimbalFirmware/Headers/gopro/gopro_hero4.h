@@ -18,6 +18,7 @@ typedef struct {
     uint16_t camera_proto_version[GP_H4_PROTO_NUM_BYTES];   // ZZ_REQ_SEND_PROTO_VERSION
     uint16_t camera_fw_version[16];                         // non-null-terminated string
     uint16_t channel_id;
+    uint16_t handshake_step;
 } gp_h4_t;
 
 // hero 4 packet formats
@@ -87,6 +88,7 @@ typedef union {
 } gp_h4_pkt_t;
 
 void gp_h4_init(gp_h4_t *h4);
+bool gp_h4_handshake_complete(const gp_h4_t *h4);
 
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len);
 bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
