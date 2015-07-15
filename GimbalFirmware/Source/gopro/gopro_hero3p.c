@@ -7,7 +7,7 @@
 // Include for GOPRO_COMMAND enum
 #include "mavlink_interface/mavlink_gimbal_interface.h" // TODO: get rid of this after replacing GOPRO_COMMAND
 
-static bool gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf);
+static void gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf);
 static void gp_h3p_handle_response(const uint16_t *respbuf);
 
 void gp_h3p_init(gp_h3p_t *h3p)
@@ -154,17 +154,15 @@ bool gp_h3p_handle_rx(gp_h3p_t *h3p, const uint16_t *buf, uint16_t len, bool fro
      */
 
     if (from_camera) {
-        if (gp_h3p_handle_command(h3p, buf, txbuf)) {
-            return true;
-        }
-    } else {
-        gp_h3p_handle_response(buf);
+        gp_h3p_handle_command(h3p, buf, txbuf);
+        return true;
     }
 
+    gp_h3p_handle_response(buf);
     return false;
 }
 
-bool gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf)
+void gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf)
 {
     /*
      * A validated command has been received from the camera.
@@ -182,14 +180,12 @@ bool gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbu
         txbuf[1] = GP_CMD_STATUS_SUCCESS;
         txbuf[2] = GP_PROTOCOL_VERSION;
         h3p->gccb_version_queried = true;
-        return true;
     }
 
     // Preload the response buffer with an error response, since we don't support the command we
     // were sent.  This will be transmitted in the ISR
     txbuf[0] = 1; // Packet size, only status byte
     txbuf[1] = GP_CMD_STATUS_FAILURE;
-    return false;
 }
 
 void gp_h3p_handle_response(const uint16_t *respbuf)
