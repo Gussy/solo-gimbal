@@ -1,5 +1,11 @@
 language: c
 sudo: required
+
+# try to clone enough revisions to see the last tag
+# so `git describe` can generate a version string
+git:
+  depth: 500
+
 before_script:
   - "./Tools/scripts/setupPrereqs.sh"
   - . ~/.profile
