@@ -2,6 +2,7 @@
 #define GOPRO_INTERFACE_H_
 
 #include "hardware/i2c.h"
+#include "gopro/gopro_hero_common.h"
 #include "PM_Sensorless-Settings.h"
 
 #include <stdbool.h>
@@ -45,6 +46,21 @@ typedef enum {
 } GPPowerStatus;
 
 typedef enum {
+    GP_HEARTBEAT_DISCONNECTED = 0,
+    GP_HEARTBEAT_INCOMPATIBLE = 1,
+    GP_HEARTBEAT_CONNECTED = 2,
+    GP_HEARTBEAT_RECORDING = 3
+} GPHeartbeatStatus;
+
+typedef enum{
+    GP_MODEL_HERO3P,
+    GP_MODEL_HERO4,
+    GP_MODEL_UNKNOWN
+} GPModel;
+
+#if 0
+// included in gopro_hero_common.h
+typedef enum {
     GP_CMD_UNKNOWN,
     GP_CMD_SUCCESSFUL,
     GP_CMD_SEND_CMD_START_TIMEOUT,
@@ -62,20 +78,15 @@ typedef enum {
 typedef enum {
     GP_CMD_STATUS_SUCCESS = 0,
     GP_CMD_STATUS_FAILURE = 1,
-	GP_CMD_STATUS_UNKNOWN = 2
+    GP_CMD_STATUS_UNKNOWN = 2
 } GPCmdStatus;
 
-typedef enum {
-    GP_HEARTBEAT_DISCONNECTED = 0,
-    GP_HEARTBEAT_INCOMPATIBLE = 1,
-    GP_HEARTBEAT_CONNECTED = 2,
-    GP_HEARTBEAT_RECORDING = 3
-} GPHeartbeatStatus;
+
 
 typedef enum {
-	GP_REQUEST_NONE,
-	GP_REQUEST_GET,
-	GP_REQUEST_SET
+    GP_REQUEST_NONE,
+    GP_REQUEST_GET,
+    GP_REQUEST_SET
 } GPRequestType;
 
 typedef struct {
@@ -104,6 +115,8 @@ typedef struct {
     Uint8 cmd_id;
     Uint8 result;
 } GPSetResponse;
+#endif
+
 
 void init_gp_interface();
 void gp_interface_state_machine();

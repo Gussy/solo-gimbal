@@ -1,6 +1,8 @@
 #include "f2806x_int8.h"
-#include "gopro/gopro_interface.h"
+#include "gopro_interface.h"
 #include "gopro_i2c.h"
+#include "gopro_hero_common.h"
+#include "gopro_hero3p.h"
 #include "gopro_hero4.h"
 #include "PeripheralHeaderIncludes.h"
 
@@ -13,7 +15,6 @@ static void gp_timeout();
 static bool gp_cmd_has_param(const GPCmd* c);
 
 static void handle_rx_data(uint16_t *buf, uint16_t len);
-static bool gp_h3p_data_is_valid(uint16_t *buf, uint16_t len, bool *from_camera);
 static void gp_handle_command(const uint16_t *cmdbuf);
 static void gp_handle_response(const uint16_t *respbuf);
 
@@ -48,7 +49,9 @@ bool init_timed_out = false;
 
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
+    GPModel model;
 
+    gp_h3p_t h3p;
     gp_h4_t h4;
 
 } gopro_t;
@@ -216,12 +219,16 @@ bool gp_request_power_on()
 bool gp_request_power_off()
 {
     if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
-        GPCmd cmd;
-        cmd.cmd[0] = 'P';
-        cmd.cmd[1] = 'W';
-        cmd.cmd_parm = 0x00;
-        gp_send_command(&cmd);
-        return true;
+        switch (gp.model) {
+            case GP_MODEL_HERO3P:
+                return gp_h3p_request_power_off();
+            case GP_MODEL_HERO4:
+                return gp_h4_request_power_off();
+            case GP_MODEL_UNKNOWN:
+                return false;
+            default:
+                return false;
+        }
     }
 
     return false;
@@ -239,39 +246,16 @@ int gp_get_request(Uint8 cmd_id)
 
 	last_request_type = GP_REQUEST_GET;
 	if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
-		GPCmd cmd;
-
-		switch(cmd_id) {
-			case GOPRO_COMMAND_SHUTTER:
-				cmd.cmd[0] = 's';
-				cmd.cmd[1] = 'h';
-			break;
-
-			case GOPRO_COMMAND_CAPTURE_MODE:
-				cmd.cmd[0] = 'c';
-				cmd.cmd[1] = 'm';
-			break;
-
-			case GOPRO_COMMAND_MODEL:
-				cmd.cmd[0] = 'c';
-				cmd.cmd[1] = 'v';
-			break;
-
-			case GOPRO_COMMAND_BATTERY:
-				cmd.cmd[0] = 'b';
-				cmd.cmd[1] = 'l';
-            break;
-
-			default:
-				// Unsupported Command ID
-				last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
-                new_response_available = true;
-				return -1;
-		}
-
-		last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
-		gp_send_command(&cmd);
-		return 0;
+        switch (gp.model) {
+            case GP_MODEL_HERO3P:
+                return gp_h3p_get_request(cmd_id, &new_response_available, &last_request_cmd_id);
+            case GP_MODEL_HERO4:
+                return gp_h4_get_request(cmd_id, &last_request_cmd_id);
+            case GP_MODEL_UNKNOWN:
+                return -1;
+            default:
+                return -1;
+        }
 	} else {
 		last_request_cmd_id = (GOPRO_COMMAND)cmd_id;
         new_response_available = true;
@@ -293,61 +277,16 @@ int gp_set_request(GPSetRequest* request)
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
 	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
-		GPCmd cmd;
-
-		switch(request->cmd_id) {
-			case GOPRO_COMMAND_POWER:
-				if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-					cmd.cmd[0] = 'P';
-					cmd.cmd[1] = 'W';
-					cmd.cmd_parm = 0x00;
-					gp_send_command(&cmd);
-				} else {
-					gp_request_power_on();
-				}
-				break;
-
-			case GOPRO_COMMAND_CAPTURE_MODE:
-				cmd.cmd[0] = 'C';
-				cmd.cmd[1] = 'M';
-				cmd.cmd_parm = request->value;
-				break;
-
-			case GOPRO_COMMAND_SHUTTER:
-				cmd.cmd[0] = 'S';
-				cmd.cmd[1] = 'H';
-				cmd.cmd_parm = request->value;
-                break;
-
-            case GOPRO_COMMAND_RESOLUTION:
-                cmd.cmd[0] = 'V';
-                cmd.cmd[1] = 'V';
-                cmd.cmd_parm = request->value;
-                break;
-
-            case GOPRO_COMMAND_FRAME_RATE:
-                cmd.cmd[0] = 'F';
-                cmd.cmd[1] = 'S';
-                cmd.cmd_parm = request->value;
-                break;
-
-            case GOPRO_COMMAND_FIELD_OF_VIEW:
-                cmd.cmd[0] = 'F';
-                cmd.cmd[1] = 'V';
-                cmd.cmd_parm = request->value;
-                break;
-
-			default:
-				// Unsupported Command ID
-				last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
-                new_response_available = true;
-				return -1;
-		}
-
-		last_set_request = *request;
-		last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
-		gp_send_command(&cmd);
-		return 0;
+        switch (gp.model) {
+            case GP_MODEL_HERO3P:
+                return gp_h3p_set_request(request, &new_response_available, &last_set_request, &last_request_cmd_id);
+            case GP_MODEL_HERO4:
+                return gp_h4_set_request(request, &last_request_cmd_id);
+            case GP_MODEL_UNKNOWN:
+                return -1;
+            default:
+                return -1;
+        }
 	} else {
 		last_request_cmd_id = (GOPRO_COMMAND)request->cmd_id;
         new_response_available = true;
@@ -500,7 +439,7 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
 
     bool from_camera;
 
-    if (gp_h3p_data_is_valid(rxbuf, len, &from_camera)) {
+    if (gp_h3p_rx_data_is_valid(rxbuf, len, &from_camera)) {
         // Parse the retrieved data differently depending on whether it's a command or response
         if (from_camera) {
             gp_handle_command(rxbuf);
@@ -512,28 +451,6 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
         new_response_available = true;
         gp_control_state = GP_CONTROL_STATE_IDLE;
     }
-}
-
-bool gp_h3p_data_is_valid(uint16_t *buf, uint16_t len, bool *from_camera)
-{
-    /*
-     * Called when an i2c rx transaction has completed successfully,
-     * to determine if the received data is formatted correctly.
-     *
-     * Drain all the data from the i2c ringbuf, and ensure
-     * the advertised len matches what we actually recevied.
-     */
-
-    // first byte is the length of the received data,
-    // top bit signals the cmd originator, 1 == camera, 0 == backpack
-    *from_camera = buf[0] & (1 << 7);
-    buf[0] &= 0x7f;
-
-    if (buf[0] != len - 1) {
-        return false;
-    }
-
-    return true;
 }
 
 void gp_handle_command(const uint16_t *cmdbuf)
@@ -548,18 +465,17 @@ void gp_handle_command(const uint16_t *cmdbuf)
      * For any other command from the GoPro, return an error response
      */
 
-    if ((cmdbuf[1] == 'v') && (cmdbuf[2] == 's')) {
-        // Preload the response buffer with the command response.  This will be transmitted in the ISR
-        txbuf[0] = 2; // Packet size, 1st byte is status byte, 2nd byte is protocol version
-        txbuf[1] = GP_CMD_STATUS_SUCCESS;
-        txbuf[2] = GP_PROTOCOL_VERSION;
-        gccb_version_queried = 1;
-
-    } else {
-        // Preload the response buffer with an error response, since we don't support the command we
-        // were sent.  This will be transmitted in the ISR
-        txbuf[0] = 1; // Packet size, only status byte
-        txbuf[1] = GP_CMD_STATUS_FAILURE;
+    switch (gp.model) {
+        case GP_MODEL_HERO3P:
+            gp_h3p_handle_command(cmdbuf, txbuf, &gccb_version_queried);
+            break;
+        case GP_MODEL_HERO4:
+            gp_h4_handle_command(cmdbuf, txbuf);
+            break;
+        case GP_MODEL_UNKNOWN:
+            return;
+        default:
+            return;
     }
 
     // Assert the interrupt request line to indicate that we're ready to respond to the GoPro's command
@@ -577,12 +493,17 @@ void gp_handle_response(const uint16_t *respbuf)
 
     last_cmd_response.status = (GPCmdStatus)respbuf[1];
 
-    // Special Handling of responses
-    if (last_cmd_response.cmd[0] == 'c' && last_cmd_response.cmd[1] == 'v') {
-        // Take third byte (CAMERA_MODEL) of the "camera model and firmware version" response
-        last_cmd_response.value = respbuf[3];
-    } else {
-        last_cmd_response.value = respbuf[2];
+    switch (gp.model) {
+        case GP_MODEL_HERO3P:
+            gp_h3p_handle_response(respbuf, &last_cmd_response);
+            break;
+        case GP_MODEL_HERO4:
+            gp_h4_handle_response(respbuf, &last_cmd_response);
+            break;
+        case GP_MODEL_UNKNOWN:
+            return;
+        default:
+            return;
     }
 
     // The full command transmit has now completed successfully, so we can go back to idle
