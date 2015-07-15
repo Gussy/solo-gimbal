@@ -106,6 +106,8 @@ void gp_h4_send_yy_cmd(gp_h4_t *h4, uint16_t api_group, uint16_t api_id, const u
 {
     /*
      * assemble a YY cmd for transmission.
+     *
+     * 'len' specifies payload length.
      */
 
     gp_h4_pkt_t p;
