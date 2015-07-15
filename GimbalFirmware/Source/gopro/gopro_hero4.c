@@ -244,7 +244,7 @@ bool gp_h4_request_power_off(gp_h4_t *h4)
     return true;
 }
 
-int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id) // TODO: name is a bit awkward, think about refactoring (gp_h4_handle_get_request?), same with set request
+int gp_h4_forward_get_request(gp_h4_t *h4, Uint8 cmd_id)
 {
     /*
      * A GET request has been received via the CAN interface,
@@ -286,7 +286,7 @@ int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id) // TODO: name is a bit awkward,
     return 0;
 }
 
-int gp_h4_set_request(gp_h4_t *h4, const GPSetRequest* request) // TODO: see TODO above
+int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
 {
     /*
      * A SET request has been received via the CAN interface,

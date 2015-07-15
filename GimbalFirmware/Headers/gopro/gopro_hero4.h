@@ -92,7 +92,8 @@ bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len);
 bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
 
 bool gp_h4_request_power_off(gp_h4_t *h4);
-int gp_h4_get_request(gp_h4_t *h4, Uint8 cmd_id);
-int gp_h4_set_request(gp_h4_t *h4, const GPSetRequest* request);
+
+int gp_h4_forward_get_request(gp_h4_t *h4, Uint8 cmd_id);
+int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request);
 
 #endif // _GOPRO_HERO4_H

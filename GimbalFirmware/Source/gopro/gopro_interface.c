@@ -295,7 +295,7 @@ int gp_get_request(Uint8 cmd_id)
             return gp_h3p_get_request(cmd_id, &new_response_available, &last_cmd_response);
 
         case GP_MODEL_HERO4:
-            return gp_h4_get_request(&gp.h4, cmd_id);
+            return gp_h4_forward_get_request(&gp.h4, cmd_id);
 
         default:
             return -1;
@@ -326,7 +326,7 @@ int gp_set_request(GPSetRequest* request)
             case GP_MODEL_HERO3P:
                 return gp_h3p_set_request(request, &new_response_available, &last_cmd_response);
             case GP_MODEL_HERO4:
-                return gp_h4_set_request(&gp.h4, request);
+                return gp_h4_forward_set_request(&gp.h4, request);
             case GP_MODEL_UNKNOWN:
                 return -1;
             default:
