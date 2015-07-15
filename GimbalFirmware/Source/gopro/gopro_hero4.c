@@ -1,5 +1,6 @@
 #include "gopro_hero4.h"
 #include "hardware/i2c.h"
+#include "gopro_interface.h"
 
 #include <string.h>
 
@@ -96,6 +97,32 @@ static uint16_t yy_rsp_len(const gp_h4_yy_rsp_t *r)
      */
 
     return (r->datalen1 * 10) + r->datalen2;
+}
+
+void gp_h4_send_yy_cmd(gp_h4_t *h4, uint16_t api_group, uint16_t api_id, const uint16_t *b, uint16_t len)
+{
+    /*
+     * assemble a YY cmd for transmission.
+     */
+
+    gp_h4_pkt_t p;
+    gp_h4_yy_cmd_t *c = &p.yy_cmd;
+
+    yy_set_cmd_len(c, len);
+    c->l1 = 'Y';
+    c->l2 = 'Y';
+    c->chan_id = h4->channel_id;
+    c->tid = 0;
+    c->tcb = TCB_CMD_SINGLE_PKT;
+    c->api_group = api_group;
+    c->api_id = api_id;
+
+    int i;
+    for (i = 0; i < len; ++i) {
+        c->payload[i] = b[i];
+    }
+
+    gp_send_cmd(p.bytes, p.cmd.len + 1);
 }
 
 static bool is_zz(const gp_h4_pkt_t* c)
