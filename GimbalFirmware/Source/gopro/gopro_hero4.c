@@ -153,7 +153,30 @@ void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t* c, gp_h4_pkt_t *rsp)
 
 void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
 {
-    // XXX: implement me
+    if (!is_yy(p)) {
+        // XXX: report unexpected response?
+        return;
+    }
+
+    const gp_h4_yy_rsp_t * rsp = &p->yy_rsp;
+
+    if (rsp->tcb != TCB_RSP_FINAL_FRAME || rsp->ack != H4_ACK) {
+        // XXX: report failure
+        return;
+    }
+
+    uint16_t len = yy_rsp_len(rsp);
+
+    // handle any packets that shouldn't be forwarded via mavlink
+    if (rsp->api_group == 0 && rsp->api_id == 1 && len == 1) {
+        // 'Get Channel ID/Open Channel' is api 0/1
+        h4->channel_id = rsp->payload[0];
+        return;
+    }
+
+    // SET requests always have 0 len, GET requests always have non-zero len
+    GPRequestType rt = (len == 0) ? GP_REQUEST_SET : GP_REQUEST_GET;
+    gp_set_response(rsp->payload, len, rt, GP_CMD_STATUS_SUCCESS);
 }
 
 bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
