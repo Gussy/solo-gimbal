@@ -238,21 +238,35 @@ bool gp_new_set_response_available()
     return false;
 }
 
+bool gp_handshake_complete() {
+    switch (gp.model) {
+        case GP_MODEL_HERO3P:
+            return gccb_version_queried;
+        case GP_MODEL_HERO4:
+            return true; // TODO: still need to do this
+        case GP_MODEL_UNKNOWN:
+            return false;
+        default:
+            return false;
+    }
+}
+
 GPHeartbeatStatus gp_heartbeat_status()
 {
 	GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
+
 	/*if (gp_get_power_status() == GP_POWER_ON
 			&& gp_ready_for_cmd()
 			&& last_request_type == GP_REQUEST_SET
 			&& last_set_request.cmd_id == GOPRO_COMMAND_SHUTTER
 			&& last_set_request.value == 1) {
 			heartbeat_status = GP_HEARTBEAT_RECORDING;
-	} else */if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gccb_version_queried == 1) {
+    } else */if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
 		heartbeat_status = GP_HEARTBEAT_CONNECTED;
 	} else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && GP_VON) {
 		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
-	} else if (gp_get_power_status() == GP_POWER_ON && gccb_version_queried == 0 && init_timed_out) {
+    } else if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out) {
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
 	}
     new_heartbeat_available = false;
