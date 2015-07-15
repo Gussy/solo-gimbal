@@ -578,12 +578,12 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
 
     bool from_camera;
 
-    if (gp_h3p_data_is_valid(rxbuf, len, &from_camera)) {
+    if (gp_h3p_data_is_valid(buf, len, &from_camera)) {
         // Parse the retrieved data differently depending on whether it's a command or response
         if (from_camera) {
-            gp_handle_command(rxbuf);
+            gp_handle_command(buf);
         } else {
-            gp_handle_response(rxbuf);
+            gp_handle_response(buf);
         }
     } else {
         // error in data rx, return to idle
