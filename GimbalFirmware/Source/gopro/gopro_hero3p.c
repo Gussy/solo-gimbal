@@ -54,7 +54,7 @@ static bool gp_h3p_cmd_has_param(const GPCmd* c)
 }
 
 // TODO: return type int change to bool? to match other functions
-int gp_h3p_get_request(Uint8 cmd_id) // TODO: name is a bit awkward, think about refactoring (gp_h3p_handle_get_request?), same with set request
+int gp_h3p_forward_get_request(Uint8 cmd_id)
 {
     GPCmd cmd;
 
@@ -89,7 +89,7 @@ int gp_h3p_get_request(Uint8 cmd_id) // TODO: name is a bit awkward, think about
     return 0;
 }
 
-int gp_h3p_set_request(const GPSetRequest* request)
+int gp_h3p_forward_set_request(const GPSetRequest* request)
 {
     GPCmd cmd;
 

@@ -47,8 +47,8 @@ void gp_h3p_init(gp_h3p_t *h3p);
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p);
 bool gp_h3p_request_power_off();
 
-int gp_h3p_get_request(Uint8 cmd_id);
-int gp_h3p_set_request(const GPSetRequest* request);
+int gp_h3p_forward_get_request(Uint8 cmd_id);
+int gp_h3p_forward_set_request(const GPSetRequest* request);
 
 bool gp_h3p_handle_rx(gp_h3p_t *h3p, const uint16_t *buf, uint16_t len, bool from_camera, uint16_t *txbuf);
 
