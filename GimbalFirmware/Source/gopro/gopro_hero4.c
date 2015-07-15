@@ -34,6 +34,7 @@ enum GP_H4_HANDSHAKE_STEPS {
 static void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t *c, gp_h4_pkt_t *rsp);
 static void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
 static bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r);
+static void gp_h4_send_yy_cmd(gp_h4_t *h4, uint16_t api_group, uint16_t api_id, const uint16_t *b, uint16_t len);
 
 void gp_h4_init(gp_h4_t *h4)
 {
@@ -49,6 +50,25 @@ void gp_h4_init(gp_h4_t *h4)
 bool gp_h4_handshake_complete(const gp_h4_t *h4)
 {
     return h4->handshake_step == GP_H4_HANDSHAKE_CHANNEL_OPEN;
+}
+
+void gp_h4_finish_handshake(gp_h4_t *h4)
+{
+    /*
+     * Called when:
+     * - we know the camera model is hero4
+     * - a response write has just completed
+     *
+     * The first 2 steps in the handshake sequence are initiated
+     * by the camera, but after we've responded to those we must
+     * send the 'Get Channel ID/Open Channel' to retrieve a channel
+     * ID that can be used in all subsequent communication.
+     */
+
+    if (h4->handshake_step == GP_H4_HANDSHAKE_HB_PROTO_VERSION) {
+        // 'Get Channel ID/Open Channel' is api 0/1
+        gp_h4_send_yy_cmd(h4, 0, 1, NULL, 0);
+    }
 }
 
 bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len)

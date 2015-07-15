@@ -363,6 +363,11 @@ void gp_interface_state_machine()
                 } else {
                     // sent response, we're all done
                     gp_control_state = GP_CONTROL_STATE_IDLE;
+
+                    // special case, must kick off final step of handshake sequence on hero4
+                    if (gp.model == GP_MODEL_HERO4 && !gp_handshake_complete()) {
+                        gp_h4_finish_handshake(&gp.h4);
+                    }
                 }
             }
         }
