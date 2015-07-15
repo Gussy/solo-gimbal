@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "gopro_hero_common.h"
+
+// Include for GOPRO_COMMAND enum
+#include "mavlink_interface/mavlink_gimbal_interface.h" // TODO: remove this after update to new response format
 
 #define GP_H4_MAX_PACKET        256
 #define GP_H4_MAX_PAYLOAD       (GP_H4_MAX_PACKET - 5)
@@ -82,5 +86,12 @@ void gp_h4_init(gp_h4_t *h4);
 
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len);
 bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
+
+bool gp_h4_request_power_off();
+bool gp_h4_cmd_has_param(const GPCmd* c);
+int gp_h4_get_request(Uint8 cmd_id, GOPRO_COMMAND *last_request_cmd_id);
+int gp_h4_set_request(GPSetRequest* request, GOPRO_COMMAND *last_request_cmd_id);
+bool gp_h4_handle_command(const uint16_t *cmdbuf, uint16_t *txbuf);
+bool gp_h4_handle_response(const uint16_t *respbuf, GPCmdResponse *last_cmd_response);
 
 #endif // _GOPRO_HERO4_H

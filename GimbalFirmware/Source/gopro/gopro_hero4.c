@@ -4,6 +4,9 @@
 
 #include <string.h>
 
+// Include for GOPRO_COMMAND enum
+#include "mavlink_interface/mavlink_gimbal_interface.h"
+
 enum GP_H4_ACK_VALS {
     H4_ACK  = 0,
     H4_NACK = 1,
@@ -218,5 +221,43 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
     r->tcb = TCB_RSP_FINAL_FRAME;
     memcpy(r->payload, c->payload, (c->len - GP_H4_HDR_LEN) * sizeof(uint16_t));
 
+    return true;
+}
+
+bool gp_h4_request_power_off()
+{
+    // TODO
+    return true;
+}
+
+bool gp_h4_cmd_has_param(const GPCmd* c)
+{
+    // TODO
+
+    return true;
+}
+
+int gp_h4_get_request(Uint8 cmd_id, GOPRO_COMMAND *last_request_cmd_id) // TODO: name is a bit awkward, think about refactoring (gp_h4_handle_get_request?), same with set request
+{
+    // TODO
+
+    return 0;
+}
+
+int gp_h4_set_request(GPSetRequest* request, GOPRO_COMMAND *last_request_cmd_id) // TODO: see TODO above
+{
+    // TODO
+    return 0;
+}
+
+bool gp_h4_handle_command(const uint16_t *cmdbuf, uint16_t *txbuf)
+{
+    // TODO
+    return true;
+}
+
+bool gp_h4_handle_response(const uint16_t *respbuf, GPCmdResponse *last_cmd_response)
+{
+    // TODO
     return true;
 }
