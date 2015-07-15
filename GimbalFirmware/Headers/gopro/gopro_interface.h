@@ -111,6 +111,7 @@ GPPowerStatus gp_get_power_status();
 bool gp_request_power_on();
 bool gp_request_power_off();
 bool gp_send_command(const GPCmd* cmd);
+bool gp_send_cmd(const uint16_t* cmd, uint16_t len);
 bool gp_ready_for_cmd();
 void gp_write_eeprom();
 

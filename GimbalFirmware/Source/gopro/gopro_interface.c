@@ -99,6 +99,12 @@ bool gp_cmd_has_param(const GPCmd* c)
 
 bool gp_send_command(const GPCmd* cmd)
 {
+    /*
+     * XXX: phase this out
+     *      transition hero3+ specific portions to h3p module
+     *      and then use gp_send_cmd() below
+     */
+
     if (gp_control_state != GP_CONTROL_STATE_IDLE) {
         return false;
     }
@@ -123,6 +129,32 @@ bool gp_send_command(const GPCmd* cmd)
     // this command, and this way a caller of gp_get_last_response can know what command the response goes with
     last_cmd_response.cmd[0] = cmd->cmd[0];
     last_cmd_response.cmd[1] = cmd->cmd[1];
+
+    // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
+    gp_assert_intr();
+
+    // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
+    timeout_counter = 0;
+    gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
+
+    return true;
+}
+
+bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
+{
+    /*
+     * Called by protocol modules (h4, h3p, etc)
+     * to send a command.
+     */
+
+    if (gp_control_state != GP_CONTROL_STATE_IDLE) {
+        return false;
+    }
+
+    int i;
+    for (i = 0; i < len; ++i) {
+        txbuf[i] = cmd[i];
+    }
 
     // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
     gp_assert_intr();
