@@ -44,7 +44,8 @@ Next, Include project specific include files.
 #include "hardware/HWSpecific.h"
 #include "ardupilotmega/mavlink.h"
 
-#define LOW_TORQUE_MODE_MAX (6000.0)
+// Units are 11915/Amp (+/-32767 counts full scale over +/-2.75A full scale)
+#define LOW_TORQUE_MODE_MAX (5000.0)
 
 typedef enum {
     BLINK_NO_COMM,
