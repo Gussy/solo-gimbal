@@ -81,50 +81,6 @@ bool gp_ready_for_cmd()
     return (gp_control_state == GP_CONTROL_STATE_IDLE) && !i2c_get_bb();
 }
 
-
-bool gp_send_command(const GPCmd* cmd)
-{
-    /*
-     * XXX: phase this out
-     *      transition hero3+ specific portions to h3p module
-     *      and then use gp_send_cmd() below
-     */
-
-    if (gp_control_state != GP_CONTROL_STATE_IDLE) {
-        return false;
-    }
-
-    txbuf[1] = cmd->cmd[0];
-    txbuf[2] = cmd->cmd[1];
-
-    // first byte is len, upper bit clear to indicate command originated from the gimbal (not the GoPro)
-    if (gp_cmd_has_param(cmd)) {
-        txbuf[0] = 0x3;
-        txbuf[3] = cmd->cmd_parm;
-    } else {
-        txbuf[0] = 0x2;
-    }
-
-    // Clear the last command data
-    last_cmd_response.value = 0x00;
-    last_cmd_response.status = GP_CMD_STATUS_UNKNOWN;
-    last_cmd_response.result = GP_CMD_UNKNOWN;
-
-    // Also load the command name bytes of the last response struct with the command name bytes for this command.  The next response should be a response to
-    // this command, and this way a caller of gp_get_last_response can know what command the response goes with
-    last_cmd_response.cmd[0] = cmd->cmd[0];
-    last_cmd_response.cmd[1] = cmd->cmd[1];
-
-    // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
-    gp_assert_intr();
-
-    // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
-    timeout_counter = 0;
-    gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
-
-    return true;
-}
-
 bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
 {
     /*
