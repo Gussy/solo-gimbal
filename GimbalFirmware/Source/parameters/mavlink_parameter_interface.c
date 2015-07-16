@@ -18,7 +18,7 @@ extern unsigned char gimbal_sysid;
 float commit_to_flash_status = 0.0;
 float pos_hold = CONTROL_TYPE_POS;
 float max_torque = LOW_TORQUE_MODE_MAX;
-float broadcast_msgs = 0.0;
+float sysid = 0.0;
 
 void init_default_mavlink_params()
 {
@@ -299,11 +299,11 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].float_data_ptr = &(flash_params.k_rate);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].access_type = GIMBAL_PARAM_READ_WRITE;
 
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].param_id, "GMB_BROADCAST", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].can_parameter_id = CAND_PID_INVALID;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].float_data_ptr = &broadcast_msgs;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_BROADCAST].access_type = GIMBAL_PARAM_READ_WRITE;
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].param_id, "GMB_SYSID", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].float_data_ptr = &sysid;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].access_type = GIMBAL_PARAM_READ_WRITE;
 }
 
 void handle_param_set(mavlink_message_t* received_msg)
@@ -383,6 +383,21 @@ void handle_param_set(mavlink_message_t* received_msg)
 
             		send_gimbal_param(param_found);
             	}
+            } else if (param_found == MAVLINK_GIMBAL_PARAM_GMB_SYSID) {
+            	// Special case sysid configuration, since it has to be range limited to an unsigned byte,
+				// and floored to an integer
+				Uint8 new_sysid = 0;
+				if (decoded_msg.param_value < 0.0) {
+					new_sysid = 0;
+				} else if (decoded_msg.param_value > 255.0) {
+					new_sysid = 255;
+				} else {
+					new_sysid = floor(decoded_msg.param_value);
+				}
+				*(param->float_data_ptr) = new_sysid;
+				update_mavlink_sysid(new_sysid);
+				send_gimbal_param(param_found);
+
             } else {
                 // First, make sure the type of the param being sent matches the type of the param being updated
                 if (param->param_type == decoded_msg.param_type) {
@@ -465,9 +480,4 @@ void send_gimbal_param(int param_num)
 
     mavlink_msg_param_value_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &param_msg, param->param_id, param_val, param->param_type, MAVLINK_GIMBAL_PARAM_MAX, param_num);
     send_mavlink_message(&param_msg);
-}
-
-float get_broadcast_msgs_state()
-{
-	return broadcast_msgs;
 }

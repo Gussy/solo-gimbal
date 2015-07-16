@@ -46,7 +46,7 @@ typedef enum {
     MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Y,
     MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Z,
     MAVLINK_GIMBAL_PARAM_GMB_K_RATE,
-    MAVLINK_GIMBAL_PARAM_GMB_BROADCAST,
+    MAVLINK_GIMBAL_PARAM_GMB_SYSID,
 	MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD,
 	MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE,
 	MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE,
@@ -79,6 +79,5 @@ void init_default_mavlink_params();
 void handle_param_set(mavlink_message_t* received_msg);
 void handle_param_read(mavlink_message_t* received_msg);
 void send_gimbal_param(int param_num);
-float get_broadcast_msgs_state();
 
 #endif /* MAVLINK_PARAMETER_INTERFACE_H_ */
