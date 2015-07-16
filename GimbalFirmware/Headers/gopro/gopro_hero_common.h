@@ -31,7 +31,6 @@ typedef enum {
     GP_REQUEST_SET
 } GPRequestType;
 
-
 typedef struct {
     Uint8 cmd_id;
     Uint8 value;
@@ -58,5 +57,12 @@ typedef struct {
     Uint8 value;
     GPCmdResult result; // of the i2c transaction itself
 } GPCmdResponse;
+
+
+// TODO: the use of this struct might change based on pending changes to how information is passed through MAVLink
+typedef enum {
+    GP_STOP_RECORDING,
+    GP_START_RECORDING,
+} GPRecording;
 
 #endif

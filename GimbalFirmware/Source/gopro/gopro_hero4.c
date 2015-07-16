@@ -356,9 +356,22 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
         case GOPRO_COMMAND_SHUTTER:
             // Start video recording
             api_group = 2;
-            api_id = 0x1b;
-            b[0] = request->value;
-            len = 1;
+            //api_id = 0x1b;
+
+            // TODO: this logic might change based on pending changes to how information is passed through MAVLink
+            // TODO: need to take into account the mode that the camera is in, the following logic should only work if the camera is in video-mode
+            switch (request->value) {
+            case GP_START_RECORDING:
+                api_id = 0x1b;
+                break;
+            case GP_STOP_RECORDING:
+                api_id = 0x1c;
+                break;
+            default:
+                // unknown argument value
+                return -1;
+            }
+            len = 0;
             break;
 
         case GOPRO_COMMAND_RESOLUTION: // TODO: how do we know the other values? new MAVLink message type might be needed here
