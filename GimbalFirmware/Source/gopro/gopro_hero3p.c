@@ -20,7 +20,7 @@ bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
     return h3p->gccb_version_queried;
 }
 
-bool gp_h3p_recognize_packet(uint16_t *buf, uint16_t len)
+bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len)
 {
     /*
      * Called when we don't yet know what kind of camera we're talking to.
@@ -161,7 +161,7 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
     return 0;
 }
 
-bool gp_h3p_handle_rx(gp_h3p_t *h3p, const uint16_t *buf, uint16_t len, bool from_camera, uint16_t *txbuf)
+bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, uint16_t len, bool from_camera, uint16_t *txbuf)
 {
     /*
      * Handle incoming i2c data from the camera.
@@ -169,6 +169,8 @@ bool gp_h3p_handle_rx(gp_h3p_t *h3p, const uint16_t *buf, uint16_t len, bool fro
      * Return true if we generated a response that
      * should be written back to the camera.
      */
+
+    gp_h3p_sanitize_buf_len(buf);
 
     if (from_camera) {
         gp_h3p_handle_command(h3p, buf, txbuf);
@@ -225,7 +227,7 @@ void gp_h3p_handle_response(const uint16_t *respbuf)
 }
 
 
-bool gp_h3p_rx_data_is_valid(uint16_t *buf, uint16_t len, bool *from_camera)
+bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camera)
 {
     /*
      * Called when an i2c rx transaction has completed successfully,
@@ -238,9 +240,9 @@ bool gp_h3p_rx_data_is_valid(uint16_t *buf, uint16_t len, bool *from_camera)
     // first byte is the length of the received data,
     // top bit signals the cmd originator, 1 == camera, 0 == backpack
     *from_camera = buf[0] & (1 << 7);
-    buf[0] &= 0x7f;
+    uint16_t buf_len = buf[0] & 0x7f;
 
-    if (buf[0] != len - 1) {
+    if (buf_len != len - 1) {
         return false;
     }
 
@@ -266,3 +268,8 @@ bool gp_h3p_send_command(const GPCmd* cmd)
     gp_send_cmd(p.bytes, p.cmd.len + 1);
     return true;
 }
+
+void gp_h3p_sanitize_buf_len(uint16_t *buf) { // TODO: inline?
+    buf[0] &= 0x7f;     // remove most significant bit representing sender id (camera or BacPac)
+}
+

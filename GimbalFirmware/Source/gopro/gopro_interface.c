@@ -17,7 +17,7 @@
 static void gp_reset();
 static void gp_timeout();
 
-static void gp_detect_camera_model(uint16_t *buf, uint16_t len);
+static void gp_detect_camera_model(const uint16_t *buf, uint16_t len);
 static void handle_rx_data(uint16_t *buf, uint16_t len);
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
@@ -410,7 +410,7 @@ void gp_interface_state_machine()
 	previous_power_status = new_power_status;
 }
 
-void gp_detect_camera_model(uint16_t *buf, uint16_t len)
+void gp_detect_camera_model(const uint16_t *buf, uint16_t len)
 {
     /*
      * Called when we've received an i2c packet but we don't yet
