@@ -227,6 +227,7 @@ def command_interface():
         parser.add_argument("--date", help="Setup assembly date", action='store_true')
         parser.add_argument("--serialnumber", help="Setup gimbal serial number", type=int)
         parser.add_argument("--factoryreset", help="Reset gimbal factory parameters to default", action='store_true')
+        parser.add_argument("--fullreset", help="Clear all gimbal parameters and program memory", action='store_true')
 
     args = parser.parse_args()
 
@@ -377,7 +378,12 @@ def command_interface():
 
         if args.factoryreset:
             serial = setup_factory.reset(link)
-            print("Facroty parameters cleared")
+            print("Factory parameters cleared")
+            return
+
+        if args.fullreset:
+            setup_factory.full_reset(link)
+            print("Full reset command sent")
             return
 
     # Default command is to return the software version number
