@@ -90,6 +90,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_LOAD_OWN_INIT_PARAMS:
+            axis_parms->blink_state = BLINK_NO_CAL;
             // This state is only run on the AZ board to load commutation calibration parameters and torque loop PID gains
             // The rate loop PID gains are only needed on the EL board, so these are loaded over CAN
             md_parms->pid_id.param.Kp = flash_params.torque_pid_kp[AZ];
@@ -113,6 +114,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_REQUEST_AXIS_INIT_PARAMS:
+            axis_parms->blink_state = BLINK_NO_CAL;
             // Run the load init parms state machine to sequence through requesting the axis parms
             LoadAxisParmsStateMachine(load_ap_state_info);
 
