@@ -197,6 +197,7 @@ void gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbu
         txbuf[1] = GP_CMD_STATUS_SUCCESS;
         txbuf[2] = GP_PROTOCOL_VERSION;
         h3p->gccb_version_queried = true;
+        return;
     }
 
     // Preload the response buffer with an error response, since we don't support the command we
