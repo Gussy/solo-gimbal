@@ -438,6 +438,10 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
         gp_detect_camera_model(buf, len);
     }
 
+    // base case, we have received a response and we're back to idle,
+    // handlers can override if they have a response to send
+    gp_control_state = GP_CONTROL_STATE_IDLE;
+
     if (gp.model == GP_MODEL_HERO4) {
         if (gp_h4_rx_data_is_valid(buf, len)) {
 
