@@ -200,7 +200,7 @@ void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
     const gp_h4_yy_rsp_t * rsp = &p->yy_rsp;
     uint16_t len = yy_rsp_len(rsp);
 
-    if (rsp->tcb != TCB_RSP_FINAL_FRAME || rsp->ack != H4_ACK) {
+    if (rsp->tcb != TCB_RSP_FINAL_FRAME || rsp->ack != H4_ACK || rsp->err_code) {
         gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_FAILURE);
         return;
     }
