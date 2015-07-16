@@ -13,8 +13,10 @@
 #include "hardware/watchdog.h"
 #include "flash/flash.h"
 #include "version_git.h"
-#include <stdio.h>
 #include "hardware/watchdog.h"
+#include "hardware/encoder.h"
+
+#include <stdio.h>
 
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
@@ -166,9 +168,10 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 
 void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder)
 {
-    latest_encoder_telemetry[AZ] = ENCODER_FORMAT_TO_RAD(az_encoder);
-    latest_encoder_telemetry[EL] = ENCODER_FORMAT_TO_RAD(el_encoder);
-    latest_encoder_telemetry[ROLL] = ENCODER_FORMAT_TO_RAD(rl_encoder);
+	// Undo joint angle offset cal here (copter applies its own joint offset angle correction, don't want to do it twice)
+    latest_encoder_telemetry[AZ] = ENCODER_FORMAT_TO_RAD(az_encoder + getAxisJointOffset(AZ));
+    latest_encoder_telemetry[EL] = ENCODER_FORMAT_TO_RAD(el_encoder + getAxisJointOffset(EL));
+    latest_encoder_telemetry[ROLL] = ENCODER_FORMAT_TO_RAD(rl_encoder + getAxisJointOffset(ROLL));
 
     telem_received |= ENCODER_TELEM_RECEIVED;
 

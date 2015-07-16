@@ -8,4 +8,9 @@ int erase_param_flash(void);
 int write_flash(void);
 int init_flash(void);
 
+/**
+ * Compute the 16-bit checksum of the flash parameters struct, return the checksum
+ */
+Uint16 compute_flash_params_checksum();
+
 #endif /* FLASH_H_ */

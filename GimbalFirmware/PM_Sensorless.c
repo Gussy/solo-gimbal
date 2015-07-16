@@ -113,7 +113,6 @@ EncoderParms encoder_parms = {
     .virtual_counts = 0,
     .virtual_counts_accumulator = 0,
     .virtual_counts_accumulated = 0,
-    .encoder_median_history = {0},
     .mech_theta = 0.0,
     .corrected_mech_theta = 0.0,
     .elec_theta = 0.0,
@@ -160,12 +159,12 @@ ControlBoardParms control_board_parms = {
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
-    .current_param_to_load = 0,
-    .total_params_to_load = 0,
+	.current_load_offset = 0,
+	.current_request_load_offset = 0,
+	.total_words_to_load = 0,
     .request_retry_counter = REQUEST_RETRY_PERIOD,
-    .init_param_recvd_flags_1 = 0x0000,
-    .init_param_recvd_flags_2 = 0x0000,
-    .axis_parms_load_complete = FALSE,
+	.axis_parms_checksum_verified = FALSE,
+    .axis_parms_load_complete = FALSE
 };
 
 MavlinkGimbalInfo mavlink_gimbal_info = {
@@ -376,10 +375,6 @@ void main(void)
     // Tau = 840 seconds per CW's calculations on 5/1/15
     // Current limit = 0.2 Amps^2 per CW's calculations on 5/1/15
     init_average_power_filter(&power_filter_parms, (ISR_FREQUENCY * 1000), 840, 0.2);
-
-    // Initialize the encoder median history array with the 16-bit integer max value, so that the median
-    // accumulation algorithm will work
-    memset(&(encoder_parms.encoder_median_history[0]), INT16_MAX, ENCODER_MEDIAN_HISTORY_SIZE * sizeof(int16));
 
     // Initialize the RAMPGEN module
     motor_drive_parms.rg1.StepAngleMax = _IQ(BASE_FREQ*T);

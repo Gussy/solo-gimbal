@@ -3,6 +3,8 @@
 #include "PM_Sensorless-Settings.h"
 #include "hardware/device_init.h"
 #include "hardware/encoder.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
+#include "parameters/flash_params.h"
 
 void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)
 {
@@ -39,39 +41,13 @@ void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_pa
         encoder_parms->virtual_counts -= ENCODER_COUNTS_PER_REV;
     }
 
+    // Apply joing angle offsets
+    encoder_parms->virtual_counts -= getAxisJointOffset((GimbalAxis)GetBoardHWID());
+
     // Accumulate the virtual counts at the torque loop rate (10kHz), which will then be averaged to be sent out
     // at the rate loop rate (1kHz)
     encoder_parms->virtual_counts_accumulator += encoder_parms->virtual_counts;
     encoder_parms->virtual_counts_accumulated++;
-
-    /*
-    // Run a median filter on the encoder values.
-    int i;
-    int j;
-    for (i = 0; i < ENCODER_MEDIAN_HISTORY_SIZE; i++) {
-        // Iterate over the median history until we find a value that's larger than the current value we're trying to insert
-        // When we find a larger value in the median history, that's the position the new value should be put into to keep the
-        // median history sorted from smallest to largest.  Then, we need to shift the entire median history past the insertion index
-        // left by one to keep the array sorted.  We only keep half of the expected median history, because there's no point storing the
-        // upper half of the list because the median can't be there
-        if (encoder_parms->virtual_counts < encoder_parms->encoder_median_history[i]) {
-            int16 old_value = 0;
-            int16 new_value = encoder_parms->virtual_counts;
-            for (j = i; j < ENCODER_MEDIAN_HISTORY_SIZE; j++) {
-                old_value = encoder_parms->encoder_median_history[j];
-                encoder_parms->encoder_median_history[j] = new_value;
-                new_value = old_value;
-            }
-
-            // Once we've inserted the new value and shifted the list, we can break out of the outer loop
-            break;
-        }
-    }
-
-    // Keep track of how many virtual encoder values we've accumulated since the last request for virtual encoder values,
-    // so we can pick the right index in the median history array
-    encoder_parms->virtual_counts_accumulated++;
-    */
 
     // We've received our own encoder value, so indicate as such
     if (!cb_parms->encoder_value_received[EL]) {
@@ -79,6 +55,19 @@ void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_pa
     }
 }
 
+int16 getAxisJointOffset(GimbalAxis axis)
+{
+	switch (axis) {
+	case ROLL:
+		return RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[X_AXIS]);
+	case EL:
+		return RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[Y_AXIS]);
+	case AZ:
+		return RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[Z_AXIS]);
+	default:
+		return 0;
+	}
+}
 
 /**
  * Is axis near from top mech hardstop

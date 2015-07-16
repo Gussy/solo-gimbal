@@ -121,6 +121,41 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // If we've completed requesting and receiving the params from AZ,
             // we can continue with our init sequence
             if (load_ap_state_info->axis_parms_load_complete) {
+            	// Copy the parameters we need from our local copy of the flash params struct
+            	// into the runtime locations they need to be at
+            	GimbalAxis my_axis = (GimbalAxis)GetBoardHWID();
+            	md_parms->pid_id.param.Kp = flash_params.torque_pid_kp[my_axis];
+				md_parms->pid_id.param.Ki = flash_params.torque_pid_ki[my_axis];
+				md_parms->pid_id.param.Kd = flash_params.torque_pid_kd[my_axis];
+
+				md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp[my_axis];
+				md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[my_axis];
+				md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[my_axis];
+
+				AxisCalibrationSlopes[my_axis] = flash_params.commutation_slope[my_axis];
+				AxisCalibrationIntercepts[my_axis] = flash_params.commutation_icept[my_axis];
+
+				// If this is the elevation axis, we also need to load rate loop PID gains
+				if (my_axis == EL) {
+					rate_pid_loop_float[AZ].gainP = flash_params.rate_pid_p[AZ];
+					rate_pid_loop_float[AZ].gainI = flash_params.rate_pid_i[AZ];
+					rate_pid_loop_float[AZ].gainD = flash_params.rate_pid_d[AZ];
+					rate_pid_loop_float[AZ].integralMax = flash_params.rate_pid_windup[AZ];
+					rate_pid_loop_float[AZ].integralMin = -flash_params.rate_pid_windup[AZ];
+
+					rate_pid_loop_float[EL].gainP = flash_params.rate_pid_p[EL];
+					rate_pid_loop_float[EL].gainI = flash_params.rate_pid_i[EL];
+					rate_pid_loop_float[EL].gainD = flash_params.rate_pid_d[EL];
+					rate_pid_loop_float[EL].integralMax = flash_params.rate_pid_windup[EL];
+					rate_pid_loop_float[EL].integralMin = -flash_params.rate_pid_windup[EL];
+
+					rate_pid_loop_float[ROLL].gainP = flash_params.rate_pid_p[ROLL];
+					rate_pid_loop_float[ROLL].gainI = flash_params.rate_pid_i[ROLL];
+					rate_pid_loop_float[ROLL].gainD = flash_params.rate_pid_d[ROLL];
+					rate_pid_loop_float[ROLL].integralMax = flash_params.rate_pid_windup[ROLL];
+					rate_pid_loop_float[ROLL].integralMin = -flash_params.rate_pid_windup[ROLL];
+				}
+
                 axis_parms->all_init_params_recvd = TRUE;
                 md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
             }
@@ -335,22 +370,21 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
 static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set)
 {
-    // If we're the EL board, we update our own encoder readings.  Else, we send them over CAN
+
     // We're accumulating encoder readings at 10kHz, and sending them out at 1kHz, so we divide by 10
     // to average the accumulated values
+	int16 encoder_value = (encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated);
+
+    // If we're the EL board, we update our own encoder readings.  Else, we send them over CAN
     if (GetBoardHWID() == EL) {
-        cb_parms->encoder_readings[EL] = encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated;
-        //cb_parms->encoder_readings[EL] = encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2];
+        cb_parms->encoder_readings[EL] = encoder_value;
         cb_parms->encoder_value_received[EL] = TRUE;
     } else {
-        CBSendEncoder(encoder_parms->virtual_counts_accumulator / encoder_parms->virtual_counts_accumulated);
-        //CBSendEncoder(encoder_parms->encoder_median_history[encoder_parms->virtual_counts_accumulated / 2]);
+		CBSendEncoder(encoder_value);
     }
     // Reset the encoder accumulator and accumulator sample counter
     encoder_parms->virtual_counts_accumulator = 0;
     encoder_parms->virtual_counts_accumulated = 0;
-    // Reset the median history array
-    memset(&(encoder_parms->encoder_median_history[0]), INT16_MAX, ENCODER_MEDIAN_HISTORY_SIZE * sizeof(int16));
 
     md_parms->iq_ref = ((int16) param_set[CAND_PID_TORQUE].param) / 32767.0;
     *param_set[CAND_PID_TORQUE].sema = FALSE;
