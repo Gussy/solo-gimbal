@@ -286,6 +286,11 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     			}
                     			load_ap_state_info->current_load_offset += words_received;
                     		}
+
+                    		// If we have received all of the params, preload the request_retry_counter to ask for the checksum immediately on the next cycle
+                    		if (load_ap_state_info->current_load_offset == sizeof(flash_params)) {
+                    		    load_ap_state_info->request_retry_counter = REQUEST_RETRY_PERIOD;
+                    		}
                     	}
                     	break;
 
