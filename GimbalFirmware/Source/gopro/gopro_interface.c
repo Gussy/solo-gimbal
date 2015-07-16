@@ -470,8 +470,6 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
         bool from_camera;
         if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
 
-            gp.model = GP_MODEL_HERO3P;
-
             if (gp_h3p_handle_rx(&gp.h3p, buf, len, from_camera, txbuf)) {
 
                 gp_assert_intr();
