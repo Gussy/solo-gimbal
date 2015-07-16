@@ -2,7 +2,7 @@ import time, datetime
 from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
 import setup_run
-import gui_utils, gui_graph
+import gui_utils
 
 class testsUI(object):
     def __init__(self, parent):
