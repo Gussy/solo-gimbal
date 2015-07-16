@@ -4,6 +4,7 @@
 #include "parameters/flash_params.h"
 #include "hardware/device_init.h"
 #include "hardware/led.h"
+#include "can/cb.h"
 #include "PM_Sensorless-Settings.h"
 
 LoadParamEntry params_to_load[TOTAL_LOADABLE_PARAMS];
@@ -48,7 +49,7 @@ void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info)
 void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 {
 	if (load_parms_state_info->current_load_offset < load_parms_state_info->total_words_to_load) {
-		if (load_parms_state_info->current_load_offset == load_parms_state_info->current_request_load_offset) {
+		if (load_parms_state_info->current_load_offset != load_parms_state_info->current_request_load_offset) {
 			// We've received the last batch of param data that we requested, so request the next batch
 			load_parms_state_info->current_request_load_offset += MIN(2, load_parms_state_info->total_words_to_load - load_parms_state_info->current_load_offset);
 
@@ -57,12 +58,12 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 		} else {
 			// We haven't received the batch of param data we've asked for yet.  Ask again at a periodic rate
 			if (load_parms_state_info->request_retry_counter++ >= REQUEST_RETRY_PERIOD) {
-
 				// Send request
-				Uint8 params[2];
+				Uint8 params[3];
 				params[0] = (load_parms_state_info->current_request_load_offset >> 8) & 0x00FF;
 				params[1] = (load_parms_state_info->current_request_load_offset & 0x00FF);
-				cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_PARAMS_LOAD, params, 2);
+				params[2] = GetBoardHWID();
+				cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_PARAMS_LOAD, params, 3);
 
 				load_parms_state_info->request_retry_counter = 0;
 			}
@@ -70,14 +71,16 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 	} else if (!load_parms_state_info->axis_parms_checksum_verified) {
 		// Keep periodically requesting the checksum until we get it
 		if (load_parms_state_info->request_retry_counter++ >= REQUEST_RETRY_PERIOD) {
-			cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_PARAMS_CHECKSUM, NULL, 0);
+			Uint8 param = GetBoardHWID();
+			cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_PARAMS_CHECKSUM, &param, 1);
 			load_parms_state_info->request_retry_counter = 0;
 		}
 	} else {
-		if (GetBoardHWID() == EL) {
-			LED_RGBA green = {0, 255, 0, 255};
-			led_set_mode(LED_MODE_BLINK_FOREVER, green, 0);
-		}
+		Uint8 params[3];
+		params[0] = GetBoardHWID();
+		params[1] = 0x12;
+		params[2] = 0x34;
+		cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ARBITRARY_DEBUG, params, 3);
 		load_parms_state_info->axis_parms_load_complete = TRUE;
 	}
 
