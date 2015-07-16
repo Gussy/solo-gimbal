@@ -58,12 +58,6 @@ typedef enum {
 } BlinkState;
 
 typedef enum {
-    BEACON_RED,
-    BEACON_GREEN,
-    BEACON_BLUE
-} BeaconState;
-
-typedef enum {
     READ_GYRO_PASS,
     READ_ACCEL_PASS,
     KINEMATICS_PASS,
