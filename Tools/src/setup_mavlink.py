@@ -107,14 +107,6 @@ def reset_into_bootloader(link):
 def send_bootloader_data(link, sequence_number, data):
     return link.encapsulated_data_send(sequence_number, data)
 
-def getCalibrationState(link):
-    while(True):
-        msg_status = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=5)
-        if msg_status is None:
-            return None
-        if msg_status.command == 42504:
-            return [msg_status.param2, msg_status.param3, msg_status.param1]
-
 def getCalibrationProgress(link):
     while(True):
         msg_progress = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=1)
@@ -131,9 +123,6 @@ def getCalibrationProgress(link):
 
 def receive_home_offset_result(link):
     return link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
-
-def start_home_calibration(link):    
-    return link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42500, 0, 0, 0, 0, 0, 0, 0, 0)
 
 def requestCalibration(link):
     return link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42503, 0, 0, 0, 0, 0, 0, 0, 0)
