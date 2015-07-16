@@ -57,6 +57,4 @@ bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, uint16_t len, bool from_came
 bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camera);
 bool gp_h3p_send_command(const GPCmd* cmd);
 
-void gp_h3p_sanitize_buf_len(uint16_t *buf);
-
 #endif // _GOPRO_HERO3P_H

@@ -9,6 +9,7 @@
 
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf);
 static void gp_h3p_handle_response(const uint16_t *respbuf);
+static void gp_h3p_sanitize_buf_len(uint16_t *buf);
 
 void gp_h3p_init(gp_h3p_t *h3p)
 {
