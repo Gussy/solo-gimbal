@@ -196,12 +196,14 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     {
                         //NOTE: Using this for whatever debug info I'm looking for at the moment,
                         //so this parsing will change whenver I change whatever data I'm sending
+                    	/*
                         char debug_msg[50];
                         int16 error = (((Uint16)msg.extended_param[0] << 8) & 0xFF00) | ((Uint16)msg.extended_param[1] & 0x00FF);
                         int16 min = (((Uint16)msg.extended_param[2] << 8) & 0xFF00) | ((Uint16)msg.extended_param[3] & 0x00FF);
                         int16 encoder = (((Uint16)msg.extended_param[4] << 8) & 0xFF00) | ((Uint16)msg.extended_param[5] & 0x00FF);
                         snprintf(debug_msg, 50, "Error: %d, Limit: %d, Enc: %d", error, min, encoder);
                         send_mavlink_statustext(debug_msg, MAV_SEVERITY_DEBUG);
+                        */
                     }
                     break;
 
@@ -256,6 +258,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     	if (GetBoardHWID() == AZ) {
                     		// This means the parameter was a request, so load up the necessary data and broadcast it to the other two boards
                     		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF);
+                    		CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[2];
                     		Uint16 params_size = sizeof(flash_params);
                     		Uint8 words_to_send = MIN(2, params_size - start_offset);
                     		Uint8 params[7];
@@ -268,7 +271,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     			params[(2 * i) + 3] = ((((Uint16*)(&flash_params))[start_offset + i]) >> 8) & 0x00FF;
                     			params[(2 * i) + 4] = ((((Uint16*)(&flash_params))[start_offset + i]) & 0x00FF);
                     		}
-                    		cand_tx_extended_param(CAND_ID_ALL_AXES, CAND_EPID_PARAMS_LOAD, params, (words_to_send * 2) + 2);
+                    		cand_tx_extended_param(sender_id, CAND_EPID_PARAMS_LOAD, params, (words_to_send * 2) + 3);
                     	} else {
                     		// This means the parameter was a response
                     		// First make sure this isn't data we've already received, and if not, load it into our copy of the flash params struct
@@ -289,11 +292,12 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     case CAND_EPID_PARAMS_CHECKSUM:
                     	if (GetBoardHWID() == AZ) {
                     		// This means the parameter was a request, so compute the checksum of the flash params struct and broadcast it
+                    		CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[0];
                     		Uint16 checksum = compute_flash_params_checksum();
                     		Uint8 params[2];
                     		params[0] = ((checksum >> 8) & 0x00FF);
                     		params[1] = (checksum & 0x00FF);
-                    		cand_tx_extended_param(CAND_ID_ALL_AXES, CAND_EPID_PARAMS_CHECKSUM, params, 2);
+                    		cand_tx_extended_param(sender_id, CAND_EPID_PARAMS_CHECKSUM, params, 2);
                     	} else {
                     		// This means the parameter was a response, so extract the checksum reply,
                     		// compare it against our own checksum of the flash params, and set the result appropriately
