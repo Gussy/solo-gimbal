@@ -179,11 +179,6 @@ static bool is_zz(const gp_h4_pkt_t* c)
     return c->cmd.l1 == 'Z' && c->cmd.l2 == 'Z';
 }
 
-static bool is_yy(const gp_h4_pkt_t* c)
-{
-    return c->cmd.l1 == 'Y' && c->cmd.l2 == 'Y';
-}
-
 void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t* c, gp_h4_pkt_t *rsp)
 {
     /*
@@ -202,11 +197,6 @@ void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t* c, gp_h4_pkt_t *rsp)
 
 void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
 {
-    if (!is_yy(p)) {
-        // XXX: report unexpected response?
-        return;
-    }
-
     const gp_h4_yy_rsp_t * rsp = &p->yy_rsp;
     uint16_t len = yy_rsp_len(rsp);
 
