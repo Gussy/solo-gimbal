@@ -21,8 +21,13 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 			// We've received the last batch of param data that we requested, so request the next batch
 			load_parms_state_info->current_request_load_offset += MIN(2, load_parms_state_info->total_words_to_load - load_parms_state_info->current_load_offset);
 
-			// Preload the request retry counter so we immediately ask for the next batch of param data
-			load_parms_state_info->request_retry_counter = REQUEST_RETRY_PERIOD;
+			// Immediately ask for the next batch of param data
+            Uint8 params[3];
+            params[0] = (load_parms_state_info->current_request_load_offset >> 8) & 0x00FF;
+            params[1] = (load_parms_state_info->current_request_load_offset & 0x00FF);
+            params[2] = GetBoardHWID();
+            cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_PARAMS_LOAD, params, 3);
+            load_parms_state_info->request_retry_counter = 0;
 		} else {
 			// We haven't received the batch of param data we've asked for yet.  Ask again at a periodic rate
 			if (load_parms_state_info->request_retry_counter++ >= REQUEST_RETRY_PERIOD) {
