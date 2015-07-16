@@ -4,7 +4,7 @@ import os, sys, time, threading
 from math import sin, cos, radians
 import math
 from pymavlink.rotmat import Matrix3, Vector3
-import setup_mavlink, setup_param, setup_factory, gui_graph, setup_validate
+import setup_mavlink, setup_param, setup_factory, setup_validate
 import fixtureWobble
 
 #import visual.graph
