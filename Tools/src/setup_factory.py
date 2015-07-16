@@ -106,3 +106,6 @@ def reset(link):
     parameters.mavset(link.file, "GMB_SER_NUM_1", 0.0, 3)
     parameters.mavset(link.file, "GMB_ASM_TIME", 0.0, 3)
     setup_param.commit_to_flash(link)
+
+def full_reset(link):
+    return link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42505, 0.0, 42.0, 49.0, 12.0, 26.0, 64.0, 85.0, 42.0)

@@ -11,6 +11,7 @@
 #include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
 #include "hardware/watchdog.h"
+#include "flash/flash.h"
 #include "version_git.h"
 #include <stdio.h>
 #include "hardware/watchdog.h"
@@ -18,6 +19,7 @@
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal();
+static void handle_full_reset_gimbal(void);
 static void handle_request_axis_calibration(MotorDriveParms* md_parms);
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
@@ -73,7 +75,6 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 		// reset other axis
 		cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RESET);
 		// erase our flash
-		extern int erase_our_flash();
 		if (erase_our_flash() < 0) {
 			// something went wrong... but what do I do?
 		}
@@ -139,6 +140,17 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			    case 42503:
 			    	handle_request_axis_calibration(md_parms);
 			    	break;
+			    case 42505:
+			        // Check all the params have the right keys
+			        if(mavlink_msg_command_long_get_param1(&received_msg) == 42.0 &&
+			                mavlink_msg_command_long_get_param2(&received_msg) == 49.0 &&
+			                mavlink_msg_command_long_get_param3(&received_msg) == 12.0 &&
+			                mavlink_msg_command_long_get_param4(&received_msg) == 26.0 &&
+			                mavlink_msg_command_long_get_param5(&received_msg) == 64.0 &&
+			                mavlink_msg_command_long_get_param6(&received_msg) == 85.0 &&
+			                mavlink_msg_command_long_get_param7(&received_msg) == 42.0) {
+			            handle_full_reset_gimbal();
+			        }
 			    default:
 					break;
 			    }
@@ -314,6 +326,22 @@ static void handle_reset_gimbal()
 
         // reset this axis
         watchdog_reset();
+}
+
+static void handle_full_reset_gimbal(void)
+{
+    // stop this axis
+    power_down_motor();
+
+    // reset other axis
+    cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
+
+    // erase program and param flash
+    erase_our_flash();
+    erase_param_flash();
+
+    // reset now
+    watchdog_immediate_reset();
 }
 
 static void handle_request_axis_calibration(MotorDriveParms* md_parms)
