@@ -66,18 +66,6 @@
                 <param index="6">Empty</param>
                 <param index="7">Empty</param>
             </entry>
-
-
-            <entry value="42500" name="MAV_CMD_GIMBAL_SET_HOME_OFFSETS">
-                <description>Instructs the gimbal to set its current position as its new home position</description>
-                <param index="1">Number of samples to use for average</param>
-                <param index="2">Empty</param>
-                <param index="3">Empty</param>
-                <param index="4">Empty</param>
-                <param index="5">Empty</param>
-                <param index="6">Empty</param>
-                <param index="7">Empty</param>
-            </entry>
             
             <entry value="42501" name="MAV_CMD_GIMBAL_RESET">
                 <description>Causes the gimbal to reset and boot as if it was just powered on</description>
@@ -90,7 +78,7 @@
                 <param index="7">Empty</param>
             </entry>
             
-            <entry value="42502" name="MAV_CMD_GIMBAL_REPORT_AXIS_CALIBRATION_STATUS">
+            <entry value="42502" name="MAV_CMD_GIMBAL_AXIS_CALIBRATION_STATUS">
                 <description> Reports progress and success or failure of gimbal axis calibration procedure</description>
                 <param index="1">Gimbal axis we're reporting calibration progress for</param>
                 <param index="2">Current calibration progress for this axis, 0x64=100%</param>
@@ -99,6 +87,28 @@
                 <param index="5">Empty</param>
                 <param index="6">Empty</param>
                 <param index="7">Empty</param>
+            </entry>
+
+            <entry value="42503" name="MAV_CMD_GIMBAL_REQUEST_AXIS_CALIBRATION">
+                <description>  Starts commutation calibration on the gimbal </description>
+                <param index="1">Empty</param>
+                <param index="2">Empty</param>
+                <param index="3">Empty</param>
+                <param index="4">Empty</param>
+                <param index="5">Empty</param>
+                <param index="6">Empty</param>
+                <param index="7">Empty</param>
+            </entry>
+
+            <entry value="42505" name="MAV_CMD_GIMBAL_FULL_RESET">
+                <description>  Erases gimbal application and parameters </description>
+                <param index="1">Magic number</param>
+                <param index="2">Magic number</param>
+                <param index="3">Magic number</param>
+                <param index="4">Magic number</param>
+                <param index="5">Magic number</param>
+                <param index="6">Magic number</param>
+                <param index="7">Magic number</param>
             </entry>
           </enum>
 	  
