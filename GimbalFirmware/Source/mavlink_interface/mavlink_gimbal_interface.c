@@ -75,7 +75,6 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 		// reset other axis
 		cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RESET);
 		// erase our flash
-		erase_our_flash();
 		if (erase_our_flash() < 0) {
 			// something went wrong... but what do I do?
 		}
