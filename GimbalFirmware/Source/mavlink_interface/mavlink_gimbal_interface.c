@@ -10,16 +10,20 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
+#include "hardware/watchdog.h"
+#include "flash/flash.h"
 #include "version_git.h"
 #include <stdio.h>
+#include "hardware/watchdog.h"
 
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal();
+static void handle_full_reset_gimbal(void);
 static void handle_request_axis_calibration(MotorDriveParms* md_parms);
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
-static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms);
 void send_cmd_long_ack(uint16_t cmd_id, uint8_t result);
 
 mavlink_system_t mavlink_system;
@@ -71,21 +75,12 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 		// reset other axis
 		cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RESET);
 		// erase our flash
-		extern int erase_our_flash();
 		if (erase_our_flash() < 0) {
 			// something went wrong... but what do I do?
 		}
-		// reset
-		extern void WDogEnable(void);
-		WDogEnable();
-		
-		EALLOW;
-		// Cause a device reset by writing incorrect values into WDCHK
-		SysCtrlRegs.WDCR = 0x0010;
-		EDIS;
 
-		// This should never be reached.
-		while(1);
+		// reset now
+		watchdog_immediate_reset();
 	}
 }
 
@@ -133,7 +128,7 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 				break;
 
 			case MAVLINK_MSG_ID_GIMBAL_CONTROL:
-			    handle_gimbal_control(&received_msg, mavlink_info);
+			    handle_gimbal_control(&received_msg, mavlink_info, cb_parms);
 			    break;
 
 
@@ -145,6 +140,17 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			    case 42503:
 			    	handle_request_axis_calibration(md_parms);
 			    	break;
+			    case 42505:
+			        // Check all the params have the right keys
+			        if(mavlink_msg_command_long_get_param1(&received_msg) == 42.0 &&
+			                mavlink_msg_command_long_get_param2(&received_msg) == 49.0 &&
+			                mavlink_msg_command_long_get_param3(&received_msg) == 12.0 &&
+			                mavlink_msg_command_long_get_param4(&received_msg) == 26.0 &&
+			                mavlink_msg_command_long_get_param5(&received_msg) == 64.0 &&
+			                mavlink_msg_command_long_get_param6(&received_msg) == 85.0 &&
+			                mavlink_msg_command_long_get_param7(&received_msg) == 42.0) {
+			            handle_full_reset_gimbal();
+			        }
 			    default:
 					break;
 			    }
@@ -275,7 +281,7 @@ static void handle_gopro_set_request(mavlink_message_t* received_msg)
     }
 }
 
-static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info)
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms)
 {
     mavlink_gimbal_control_t decoded_msg;
     mavlink_msg_gimbal_control_decode(received_msg, &decoded_msg);
@@ -295,7 +301,8 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
         // If we've received a rate command, reset the rate command timeout counter
         mavlink_info->rate_cmd_timeout_counter = 0;
 
-        // If the gimbal is not enabled, we want to enable it when we receive a rate command (we start out disabled)
+        // If the gimbal is not enabled, we want to enable it when we receive a rate command (we disable the gimbal if
+        // we lose rate commands, and we want to re-enable it when we re-acquire rate commands)
         if (!(mavlink_info->gimbal_active)) {
             // Enable the other two axes
             cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_ENABLE);
@@ -317,11 +324,24 @@ static void handle_reset_gimbal()
         // reset other axes
         cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
 
-        // reset this axes
-        extern void WDogEnable(void);
-        WDogEnable();
-        while(1)
-        {}
+        // reset this axis
+        watchdog_reset();
+}
+
+static void handle_full_reset_gimbal(void)
+{
+    // stop this axis
+    power_down_motor();
+
+    // reset other axis
+    cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
+
+    // erase program and param flash
+    erase_our_flash();
+    erase_param_flash();
+
+    // reset now
+    watchdog_immediate_reset();
 }
 
 static void handle_request_axis_calibration(MotorDriveParms* md_parms)
@@ -350,7 +370,7 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
 void send_mavlink_gimbal_feedback() {
 	static mavlink_message_t feedback_msg;
 
-	uint8_t target_id = (flash_params.broadcast_msgs)?MAV_COMP_ID_ALL:gimbal_sysid;
+	uint8_t target_id = get_broadcast_msgs_state()?MAV_COMP_ID_ALL:gimbal_sysid;
 
 	// Copter mapping is X roll, Y el, Z az
 	mavlink_msg_gimbal_report_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL,

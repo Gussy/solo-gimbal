@@ -215,8 +215,12 @@ SECTIONS
    .ebss            : > RAMM0,     PAGE = 0
    .econst          : > FLASHA,    PAGE = 0
    .esysmem         : > RAMM0,     PAGE = 0
-   //.dlcode          : > FLASHBCDEFG, PAGE = 0, TYPE = NOLOAD
+
+#ifdef PACKAGE_APPLICATION
    .dlcode          : > FLASHBCDEFG, PAGE = 0
+#else
+   .dlcode          : > FLASHBCDEFG, PAGE = 0, TYPE = NOLOAD
+#endif
 
    IQmath           : > FLASHA,   PAGE = 0
    IQmathTables     : > IQTABLES,  PAGE = 0, TYPE = NOLOAD

@@ -26,16 +26,14 @@
 #include "hardware/encoder.h"
 #include "hardware/led.h"
 #include "flash/flash.h"
+#include "flash/flash_init.h"
+#include "hardware/interrupts.h"
 
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-// Prototype statements for functions found within this file.
-void DeviceInit();
-void MemCopy();
-void InitFlash();
+#include <stdbool.h>
 
 #define getTempSlope() (*(int (*)(void))0x3D7E82)();
 #define getTempOffset() (*(int (*)(void))0x3D7E85)();
@@ -111,118 +109,114 @@ Uint32 GyroDataOverflowCount = 0;
 Uint16 IndexTimeOut = 0;
 
 EncoderParms encoder_parms = {
-    0,              // Raw theta
-    0,              // Virtual counts
-    0,              // Virtual counts offset
-    0,              // Virtual counts accumulator
-    0,              // Virtual counts accumulated
-    0,              // Home offset calibration accumulator
-    0,              // Home offset calibration samples accumulated
-    {0},            // Encoder median history
-    0.0,            // Mechanical theta
-    0.0,            // Corrected mechanical theta
-    0.0,            // Electrical theta
-    0.0,            // Calibration mechanical theta Y0
-    0.0,            // Calibration mechanical theta Y1
-    0.0,            // Calibration slope
-    0.0,            // Calibration intercept
+    .raw_theta = 0,
+    .virtual_counts = 0,
+    .virtual_counts_accumulator = 0,
+    .virtual_counts_accumulated = 0,
+    .encoder_median_history = {0},
+    .mech_theta = 0.0,
+    .corrected_mech_theta = 0.0,
+    .elec_theta = 0.0,
+    .calibration_slope = 0.0,
+    .calibration_intercept = 0.0
 };
 
 AxisParms axis_parms = {
-    BLINK_NO_COMM,          // Blink state
-    FALSE,                  // Enable flag
-    FALSE,                  // Run motor flag
-    FALSE,                  // BIT Heartbeat enable
-    0,                      // BIT Heartbeat decimate
-    FALSE,                  // All init params received
-    {FALSE, FALSE, FALSE},  // Other axis heartbeats received
-    {FALSE, FALSE, FALSE},  // Other axis init params received
-    0                       // Other axis init retry counter
+    .blink_state = BLINK_NO_COMM,
+    .enable_flag = FALSE,
+    .run_motor = FALSE,
+    .BIT_heartbeat_enable = FALSE,
+    .BIT_heartbeat_decimate = 0,
+    .all_init_params_recvd = FALSE,
+    .other_axis_hb_recvd = {FALSE, FALSE, FALSE},
+    .other_axis_init_params_recvd = {FALSE, FALSE, FALSE},
+    .other_axis_enable_retry_counter = 0
 };
 
 ControlBoardParms control_board_parms = {
-    {0, 0, 0},                                              // Gyro readings
-    {0, 0, 0},                                              // Corrected gyro readings
-    {0, 0, 0},                                              // Integrated raw gyro readings
-    {0, 0, 0},                                              // Integrated raw accelerometer readings
-    {0, 0, 0},                                              // Encoder readings
-    {0, 0, 0},                                              // Motor torques
-    {0, 0, 0},                                              // Axis errors
-    {CAND_FAULT_NONE, CAND_FAULT_NONE, CAND_FAULT_NONE},    // Last axis faults
-    {FALSE, FALSE, FALSE},									// Encoder values received
-    {FALSE, FALSE, FALSE},                                  // Axes homed
-    {                                                       // Needs calibration
+    .gyro_readings = {0, 0, 0},
+    .corrected_gyro_readings = {0, 0, 0},
+    .integrated_raw_gyro_readings = {0, 0, 0},
+    .integrated_raw_accel_readings = {0, 0, 0},
+    .encoder_readings = {0, 0, 0},
+    .motor_torques = {0, 0, 0},
+    .axis_errors = {0, 0, 0},
+    .last_axis_fault = {CAND_FAULT_NONE, CAND_FAULT_NONE, CAND_FAULT_NONE},
+    .encoder_value_received = {FALSE, FALSE, FALSE},
+    .axes_homed = {FALSE, FALSE, FALSE},
+    .calibration_status = {
         GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN,
         GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN,
         GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN
     },
-    {0, 0, 0},                                              // Tuning rate inject
-    {0, 0, 0},                                              // Rate command inject
-    READ_GYRO_PASS,                                         // Rate loop pass
-    FALSE,                                                  // Initialized
-    FALSE,                                                  // Enabled
+    .tuning_rate_inject = {0, 0, 0},
+    .rate_cmd_inject = {0, 0, 0},
+    .rate_cmd_inject_filtered = {0, 0, 0},
+    .rate_loop_pass = READ_GYRO_PASS,
+	.control_type = CONTROL_TYPE_POS,
+	.max_allowed_torque = LOW_TORQUE_MODE_MAX,
+    .initialized = FALSE,
+    .enabled = FALSE,
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
-    0,                                          // Current param to load
-    0,                                          // Total params to load (initialized in init function)
-    REQUEST_RETRY_PERIOD,                       // Request retry counter
-    0x0000,                                     // Init param received flags 1
-    0x0000,                                     // Init param received flags 2
-    FALSE,                                      // Axis parms load complete
+    .current_param_to_load = 0,
+    .total_params_to_load = 0,
+    .request_retry_counter = REQUEST_RETRY_PERIOD,
+    .init_param_recvd_flags_1 = 0x0000,
+    .init_param_recvd_flags_2 = 0x0000,
+    .axis_parms_load_complete = FALSE,
 };
 
 MavlinkGimbalInfo mavlink_gimbal_info = {
-    MAV_STATE_UNINIT,                   // System status for heartbeat message
-    MAV_MODE_GIMBAL_UNINITIALIZED,      // Custom mode for heartbeat message
-    MAVLINK_STATE_PARSE_INPUT,          // MAVLink state machine current state
-    0,                                  // Rate command timeout counter
-    FALSE                               // Gimbal enabled
+    .mav_state = MAV_STATE_UNINIT,
+    .mav_mode = MAV_MODE_GIMBAL_UNINITIALIZED,
+    .mavlink_processing_state = MAVLINK_STATE_PARSE_INPUT,
+    .rate_cmd_timeout_counter = 0,
+    .gimbal_active = FALSE
 };
 
 DebugData debug_data = {
-    0,      // Debug 1
-    0,      // Debug 2
-    0       // Debug 3
+    .debug_1 = 0,
+    .debug_2 = 0,
+    .debug_3 = 0
 };
 
 AveragePowerFilterParms power_filter_parms = {
-    0.0,        // Iq filter output
-    0.0,        // Iq filter previous
-    0.0,        // Alpha factor
-    0.0,        // Current limit
-    FALSE,      // Iq over current
+    .iq_filter = 0.0,        // Iq filter output
+    .iq_filter_prev = 0.0,        // Iq filter previous
+    .alpha = 0.0,        // Alpha factor
+    .current_limit = 0.0,        // Current limit
+    .iq_over = FALSE,      // Iq over current
 };
 
-
 MotorDriveParms motor_drive_parms = {
-    STATE_INIT,                     // Motor drive state
-    PARK_DEFAULTS,                  // Park transform parameters
-    CLARKE_DEFAULTS,                // Clarke transform parameters
-    IPARK_DEFAULTS,                 // Inverse Park transform parameters
-    // ID PID controller parameters
-    {
+    .motor_drive_state = STATE_INIT,
+    .park_xform_parms = PARK_DEFAULTS,
+    .clarke_xform_parms = CLARKE_DEFAULTS,
+    .ipark_xform_parms = IPARK_DEFAULTS,
+    .pid_id = {
         PID_TERM_DEFAULTS,
         PID_PARAM_DEFAULTS,
         PID_DATA_DEFAULTS,
     },
     // IQ PID controller parameters
-    {
+    .pid_iq = {
         PID_TERM_DEFAULTS,
         PID_PARAM_DEFAULTS,
         PID_DATA_DEFAULTS
     },
-    SVGENDQ_DEFAULTS,               // Space vector generator parameters
-    PWMGEN_DEFAULTS,                // PWM generator parameters
-    RAMPGEN_DEFAULTS,               // Ramp generator 1 parameters
-    _IQ15(0.5),                     // Cal offset A. Current calibration offset done on power up as part of system init sequence, so set to midscale for uncalibrated at init.
-    _IQ15(0.5),                     // Cal offset B. Same as above
-    _IQ15(T/(T+TC_CAL)),            // Phase current offset calibration filter gain
-    _IQ(0.0),                       // Iq setpoint
-    0,                              // Current calibration timer
-    0,                              // Pre-init timer
-    0,                              // Fault revive counter
-    FALSE                           // Motor drive initialized
+    .svgen_parms = SVGENDQ_DEFAULTS,
+    .pwm_gen_parms = PWMGEN_DEFAULTS,
+    .rg1 = RAMPGEN_DEFAULTS,
+    .cal_offset_A = _IQ15(0.5),
+    .cal_offset_B = _IQ15(0.5),
+    .cal_filt_gain = _IQ15(T/(T+TC_CAL)),
+    .iq_ref = _IQ(0.0),
+    .current_cal_timer = 0,
+    .pre_init_timer = 0,
+    .fault_revive_counter = 0,
+    .md_initialized = FALSE
 };
 
 Uint8 unused = FALSE;
@@ -290,23 +284,12 @@ Uint32 can_init_fault_message_resend_counter = 0;
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
-
-	// initialize flash
     board_hw_id = GetBoardHWID();
 
     // Program the EEPROM on every boot
     if(board_hw_id == EL) {
     	gp_write_eeprom();
     }
-
-    if (board_hw_id == AZ) {
-		int i;
-		init_flash();
-		for ( i = 0; i < 3; i++) {
-			AxisCalibrationSlopes[i] = flash_params.AxisCalibrationSlopes[i];
-			AxisCalibrationIntercepts[i] = flash_params.AxisCalibrationIntercepts[i];
-		}
-	}
 
 	// Initialize CAN peripheral, and CAND backend
 	ECanInit();
@@ -320,6 +303,16 @@ void main(void)
 	        }
 	    }
 	}
+
+	// Initialize flash (must be after CAN, in case the migration fails and resets all axes)
+	if (board_hw_id == AZ) {
+        int i;
+        init_flash();
+        for ( i = 0; i < AXIS_CNT; i++) {
+            AxisCalibrationSlopes[i] = flash_params.commutation_slope[i];
+            AxisCalibrationIntercepts[i] = flash_params.commutation_icept[i];
+        }
+    }
 
 	init_param_set();
 
@@ -367,8 +360,8 @@ void main(void)
 
         // Initialize the beacon LED
         init_led();
-        LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
-        led_set_mode(LED_MODE_FADE_IN_BLINK_3, rgba_green, 0);
+        //const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
+        //led_set_mode(LED_MODE_FADE_IN_BLINK_3, rgba_green, 0);
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication
@@ -421,7 +414,9 @@ void main(void)
         version_number |= (((Uint32)atoi(GitVersionRevision) << 8) & 0x0000FF00);
         version_number |= ((Uint32)atoi(GitCommit) & 0x0000007F);
         version_number |= strstr(GitVersionString, "dirty") ? (0x1 << 7) : 0x00;
-        flash_params.sys_swver = version_number;
+        IntOrFloat float_converter;
+        float_converter.uint32_val = version_number;
+        flash_params.sys_swver = float_converter.float_val;
 
 	    axis_parms.enable_flag = TRUE;
 	}
@@ -731,59 +726,93 @@ void B3(void) //  SPARE
 
 //--------------------------------- USER ------------------------------------------
 
-#define STATUS_LED_ON() 	{GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;}
-#define STATUS_LED_OFF() 	{GpioDataRegs.GPASET.bit.GPIO7 = 1;}
-
-#define CH1OTWn GpioDataRegs.GPBDAT.bit.GPIO50
-#define CH1Faultn GpioDataRegs.GPADAT.bit.GPIO13
-
-int led_cnt = 0;
+static int led_cnt = 0;
+static uint16_t beacon_startup_counter = 0;
+static const uint16_t beacon_startup_delay_cycles = 14;
+static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
+static const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
+static const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
+static const LED_RGBA rgba_blue = {0, 0, 0xff, 0xff};
 
 //----------------------------------------
 void C1(void) // Update Status LEDs
 //----------------------------------------
 {
-	switch (axis_parms.blink_state) {
-	case BLINK_NO_COMM:
-		// fast, 3Hz
-		if( led_cnt%2 ) {
-			STATUS_LED_ON();
-		} else {
-			STATUS_LED_OFF();
-		}
-		break;
+    // Handle the beacon LED
+    if(beacon_startup_counter < beacon_startup_delay_cycles) {
+        beacon_startup_counter++;
+    } else if(board_hw_id == EL && last_axis_state != axis_parms.blink_state) {
+        switch (axis_parms.blink_state) {
+            case BLINK_NO_COMM:
+                led_set_mode(LED_MODE_BLINK_FOREVER, rgba_blue, 0);
+                break;
 
-	case BLINK_INIT:
-		// slow, .8Hz, dudy cycle of 20%
-		if( (led_cnt%10) < 2 ) {
-			STATUS_LED_ON();
-		} else {
-			STATUS_LED_OFF();
-		}
-		break;
+            case BLINK_NO_CAL:
+                led_set_mode(LED_MODE_SOLID, rgba_red, 0);
+            break;
 
-	case BLINK_READY:
-		// slow, .5Hz , dudy cycle of 90%
-		if( (led_cnt%10) < 9 ) {
-			STATUS_LED_ON();
-		} else {
-			STATUS_LED_OFF();
-		}
-		break;
+            case BLINK_INIT:
+                led_set_mode(LED_MODE_FADE_IN, rgba_green, 0);
+                break;
 
-	case BLINK_RUNNING:
-		STATUS_LED_ON();
-		break;
+            case BLINK_READY:
+                //led_set_mode(LED_MODE_DISCO, rgba_red, 0);
+                break;
 
-	case BLINK_ERROR:
-		// fast, 3Hz, pause after 3 cycles
-		if( (led_cnt%2) && (led_cnt%12)<=6 ) {
-			STATUS_LED_ON();
-		} else {
-			STATUS_LED_OFF();
-		}
-		break;
-	}
+            case BLINK_RUNNING:
+                led_set_mode(LED_MODE_BLINK, rgba_green, 4);
+                break;
+
+            case BLINK_ERROR:
+                led_set_mode(LED_MODE_BLINK_FOREVER, rgba_red, 0);
+                break;
+        }
+
+        last_axis_state = axis_parms.blink_state;
+    }
+
+    // Handle individual board LED (remove after PVT release)
+    switch (axis_parms.blink_state) {
+        case BLINK_NO_COMM:
+            // fast, 3Hz
+            if(led_cnt % 2) {
+                led_status_on();
+            } else {
+                led_status_off();
+            }
+            break;
+
+        case BLINK_INIT:
+            // slow, .8Hz, dudy cycle of 20%
+            if((led_cnt%10) < 2) {
+                led_status_on();
+            } else {
+                led_status_off();
+            }
+            break;
+
+        case BLINK_READY:
+            // slow, .5Hz , dudy cycle of 90%
+            if((led_cnt % 10) < 9) {
+                led_status_on();
+            } else {
+                led_status_off();
+            }
+            break;
+
+        case BLINK_RUNNING:
+            led_status_on();
+            break;
+
+        case BLINK_ERROR:
+            // fast, 3Hz, pause after 3 cycles
+            if((led_cnt % 2) && (led_cnt % 12) <= 6) {
+                led_status_on();
+            } else {
+                led_status_off();
+            }
+            break;
+    }
 
 	led_cnt++;
 
@@ -809,15 +838,15 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 
 	// If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
 	if (board_hw_id == EL) {
-		if (gp_get_new_heartbeat_available()) {
+		if (gp_new_heartbeat_available()) {
 			// If there is a heartbeat status, get it and send out over CAN.
-			GPHeartbeatStatus status = gp_get_heartbeat_status();
+            GPHeartbeatStatus status = gp_heartbeat_status();
 			cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)status);
 		}
 
-        if (gp_get_new_get_response_available()) {
+        if (gp_new_get_response_available()) {
             // If there are, get them and package them up to be sent out over CAN.
-            GPGetResponse response = gp_get_last_get_response();
+            GPGetResponse response = gp_last_get_response();
             Uint32 response_buffer = 0;
             response_buffer |= ((((Uint32)response.cmd_id) << 8) & 0x0000FF00);
             response_buffer |= ((((Uint32)response.value) << 0) & 0x00FF00FF);
@@ -825,9 +854,9 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
             cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_GET_RESPONSE, response_buffer);
         }
 
-        if (gp_get_new_set_response_available()) {
+        if (gp_new_set_response_available()) {
             // If there are, get them and package them up to be sent out over CAN.
-            GPSetResponse response = gp_get_last_set_response();
+            GPSetResponse response = gp_last_set_response();
             Uint32 response_buffer = 0;
             response_buffer |= ((((Uint32)response.cmd_id) << 8) & 0x0000FF00);
             response_buffer |= ((((Uint32)response.result) << 0) & 0x000000FF);
@@ -847,7 +876,7 @@ int mavlink_heartbeat_counter = 0;
 void C3(void) // Read temperature and handle stopping motor on receipt of fault messages
 //-----------------------------------------
 {
-	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset*33/30) * (long)TempSlope*33/30))>>14) + 1)>>1;
+	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset) * (long)TempSlope))>>14) + 1)>>1;
 
 	DcBusVoltage = AdcResult.ADCRESULT14; // DC Bus voltage meas.
 
@@ -967,4 +996,14 @@ void RelaxAZAxis(void)
     if (motor_drive_parms.md_initialized) {
         motor_drive_parms.motor_drive_state = STATE_DISABLED;
     }
+}
+
+void SetMavlinkGimbalEnabled(void)
+{
+	mavlink_gimbal_info.gimbal_active = TRUE;
+}
+
+void SetMavlinkGimbalDisabled(void)
+{
+	mavlink_gimbal_info.gimbal_active = FALSE;
 }

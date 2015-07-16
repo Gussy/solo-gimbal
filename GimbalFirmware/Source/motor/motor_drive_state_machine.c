@@ -36,7 +36,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 {
     switch (md_parms->motor_drive_state) {
         case STATE_INIT:
-            axis_parms->blink_state = BLINK_INIT;
             md_parms->current_cal_timer = 0;
 
             // Clear axis home flags
@@ -71,7 +70,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_WAIT_FOR_AXIS_HEARTBEATS:
-            axis_parms->blink_state = BLINK_INIT;
             // Wait to receive a heartbeat from all of the axes before continuing on with initialization.  If we haven't heard
             // from all of the axes after a certain amount of time, re-send the init to all axes
             if (axis_parms->other_axis_hb_recvd[EL] && axis_parms->other_axis_hb_recvd[AZ] && axis_parms->other_axis_hb_recvd[ROLL]) {
@@ -92,7 +90,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_LOAD_OWN_INIT_PARAMS:
-            axis_parms->blink_state = BLINK_INIT;
+            axis_parms->blink_state = BLINK_NO_CAL;
             // This state is only run on the AZ board to load commutation calibration parameters and torque loop PID gains
             // The rate loop PID gains are only needed on the EL board, so these are loaded over CAN
             md_parms->pid_id.param.Kp = flash_params.torque_pid_kp[AZ];
@@ -103,8 +101,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[AZ];
             md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[AZ];
 
-            AxisCalibrationSlopes[AZ] = flash_params.AxisCalibrationSlopes[AZ];
-            AxisCalibrationIntercepts[AZ] = flash_params.AxisCalibrationIntercepts[AZ];
+            AxisCalibrationSlopes[AZ] = flash_params.commutation_slope[AZ];
+            AxisCalibrationIntercepts[AZ] = flash_params.commutation_icept[AZ];
 
             // After we've loaded our own init parameters, make a note of it, so we can continue later when we're waiting for
             // all axes to have received their init parameters
@@ -116,7 +114,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_REQUEST_AXIS_INIT_PARAMS:
-            axis_parms->blink_state = BLINK_INIT;
+            axis_parms->blink_state = BLINK_NO_CAL;
             // Run the load init parms state machine to sequence through requesting the axis parms
             LoadAxisParmsStateMachine(load_ap_state_info);
 
@@ -129,7 +127,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED:
-            axis_parms->blink_state = BLINK_INIT;
             // Wait for all of the axes to have received their init parameters.  These flags are updated in response to a bit set in the periodic BIT
             // messages that all axes send
             if (axis_parms->other_axis_init_params_recvd[EL] && axis_parms->other_axis_init_params_recvd[AZ] && axis_parms->other_axis_init_params_recvd[ROLL]) {
@@ -139,7 +136,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_CALIBRATING_CURRENT_MEASUREMENTS:
-            axis_parms->blink_state = BLINK_INIT;
             //  LPF to average the calibration offsets.  Run this for a few seconds at boot to calibrate the phase current measurements
             md_parms->cal_offset_A = _IQ15mpy(md_parms->cal_filt_gain, _IQtoIQ15(md_parms->clarke_xform_parms.As)) + md_parms->cal_offset_A;
             md_parms->cal_offset_B = _IQ15mpy(md_parms->cal_filt_gain, _IQtoIQ15(md_parms->clarke_xform_parms.Bs)) + md_parms->cal_offset_B;
@@ -159,7 +155,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_CHECK_AXIS_CALIBRATION:
-            axis_parms->blink_state = BLINK_INIT;
             if (AxisCalibrationSlopes[GetBoardHWID()] == 0.0) {
                 // If our commutation calibration slope is 0, then our axis needs calibrating
                 if (GetBoardHWID() == AZ) {
@@ -182,7 +177,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_WAIT_FOR_AXIS_CALIBRATION_STATUS:
-            axis_parms->blink_state = BLINK_INIT;
             // Wait for all of the axes to report their calibration status
             if ((cb_parms->calibration_status[AZ] != GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) &&
                 (cb_parms->calibration_status[EL] != GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) &&
@@ -202,7 +196,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND:
-            axis_parms->blink_state = BLINK_INIT;
             // If we're the AZ board, send a periodic mavlink message indicating which axes need to be calibrated,
             // otherwise, do nothing and stay in this state until we receive a command to calibrate
             if (GetBoardHWID() == AZ) {
@@ -211,7 +204,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_TAKE_COMMUTATION_CALIBRATION_DATA:
-            axis_parms->blink_state = BLINK_INIT;
         	if (((GetBoardHWID() == AZ)&&((cb_parms->axes_homed[ROLL]))&&((cb_parms->axes_homed[EL])))||
         		((GetBoardHWID() == ROLL)&&((cb_parms->axes_homed[EL])))||
         		((GetBoardHWID() == EL))) {
@@ -229,11 +221,22 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             cb_parms->axes_homed[GetBoardHWID()] = TRUE;
             if (GetBoardHWID() == EL) {
                 // If we're the EL board, we need to wait for the other axes to indicate that they've finished homing before
-                // we enable the rate loops.  Otherwise, we move to the disabled state and wait for a command to set us to actively running
+                // we enable the rate loops.  Otherwise, we move to the running state (we start in position hold mode), and
+            	// wait for an external command to move to rate control mode
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
             } else {
+            	if (GetBoardHWID() == AZ) {
+					// Turn HeroBus charging on or off based on setting in flash
+					if (flash_params.gopro_charging_enabled == 0.0) {
+						cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_DISABLE);
+					} else {
+						cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_ENABLE);
+					}
+            	}
+
                 md_parms->md_initialized = TRUE;
-                md_parms->motor_drive_state = STATE_DISABLED;
+                axis_parms->enable_flag = TRUE;
+                md_parms->motor_drive_state = STATE_RUNNING;
             }
             break;
 
@@ -257,11 +260,13 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                     (cb_parms->encoder_value_received[EL] == TRUE) &&
                     (cb_parms->encoder_value_received[ROLL] == TRUE)) {
 
-                // Now we're ready to move to the disabled state
-                // We wait for a command to move to the running state
+                // Now we're ready to move to the running state
+            	// We start in position hold mode and don't move to rate
+            	// control until externally commanded to
                 cb_parms->enabled = TRUE;
                 md_parms->md_initialized = TRUE;
-                md_parms->motor_drive_state = STATE_DISABLED;
+                axis_parms->enable_flag = TRUE;
+                md_parms->motor_drive_state = STATE_RUNNING;
             } else {
                 // Send a zero torque command to the other axes to generate an encoder response
                 // (we update our own encoder value in a different place)

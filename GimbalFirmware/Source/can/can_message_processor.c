@@ -10,21 +10,20 @@
 #include "gopro/gopro_interface.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "helpers/fault_handling.h"
+#include "hardware/watchdog.h"
 #include "flash/flash.h"
+#include "hardware/watchdog.h"
+#include "hardware/led.h"
 
 #include <string.h>
 #include <stdio.h>
 
-void WDogEnable(void)
-{
-    EALLOW;
-    SysCtrlRegs.WDCR = 0x0028;               // Enable watchdog module
-    SysCtrlRegs.WDKEY = 0x55;                // Clear the WD counter
-    SysCtrlRegs.WDKEY = 0xAA;
-    EDIS;
-}
-
-void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, ControlBoardParms* cb_parms, EncoderParms* encoder_parms, ParamSet* param_set, LoadAxisParmsStateInfo* load_ap_state_info)
+void Process_CAN_Messages(AxisParms* axis_parms,
+		MotorDriveParms* md_parms,
+		ControlBoardParms* cb_parms,
+		EncoderParms* encoder_parms,
+		ParamSet* param_set,
+		LoadAxisParmsStateInfo* load_ap_state_info)
 {
     static int fault_cnt = 0;
     static int cmd_cnt = 0;
@@ -83,22 +82,31 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
         	if (GetBoardHWID() != AZ) {
         		// just making sure we are off
         		power_down_motor();
+
         		// enable watchdog and wait until it goes off
-        		WDogEnable();
-
-                EALLOW;
-                // Cause a device reset by writing incorrect values into WDCHK
-                SysCtrlRegs.WDCR = 0x0010;
-                EDIS;
-
-                // This should never be reached.
-                while(1);
+        		watchdog_immediate_reset();
         	}
         	break;
 
         case CAND_CMD_CALIBRATE_AXES:
             md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
             break;
+
+        case CAND_CMD_POS_MODE:
+        	cb_parms->control_type = CONTROL_TYPE_POS;
+        	break;
+
+        case CAND_CMD_RATE_MODE:
+        	cb_parms->control_type = CONTROL_TYPE_RATE;
+        	break;
+
+        case CAND_CMD_GP_CHARGE_DISABLE:
+        	gp_disable_charging();
+        	break;
+
+        case CAND_CMD_GP_CHARGE_ENABLE:
+        	gp_enable_charging();
+        	break;
 
         default:
             AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
@@ -220,6 +228,29 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                             cb_parms->calibration_status[axis] = calibration_required_status;
                         }
                         break;
+
+                    case CAND_EPID_BEACON_CONTROL:
+                    	// Only makes sense to do this on elevation (since that's where the beacon is)
+                    	// Protect against errant messages to the wrong axis
+                    	if (GetBoardHWID() == EL) {
+							if (msg.extended_param_length == 6) {
+								LED_MODE mode = (LED_MODE)(msg.extended_param[0]);
+								LED_RGBA color;
+								color.red = msg.extended_param[1];
+								color.green = msg.extended_param[2];
+								color.blue = msg.extended_param[3];
+								color.alpha = msg.extended_param[4];
+								Uint8 duration = msg.extended_param[5];
+								led_set_mode(mode, color, duration);
+							}
+                    	}
+                    	break;
+
+                    case CAND_EPID_MAX_TORQUE:
+                    	if (msg.extended_param_length == 2) {
+                    		int16 max_torque = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
+                    		cb_parms->max_allowed_torque = max_torque;
+                    	}
                 }
             } else {
                 // Not an extended parameter, parse normally
@@ -302,7 +333,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 IntOrFloat float_converter;
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
-                    float_converter.float_val = flash_params.AxisCalibrationSlopes[msg.sender_id];
+                    float_converter.float_val = flash_params.commutation_slope[msg.sender_id];
                     cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_SLOPE, float_converter.uint32_val);
                 }
             }
@@ -313,7 +344,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 IntOrFloat float_converter;
                 // Flash paramters only live on the AZ board, so only AZ should be responding to requests for parameters
                 if (GetBoardHWID() == AZ) {
-                    float_converter.float_val = flash_params.AxisCalibrationIntercepts[msg.sender_id];
+                    float_converter.float_val = flash_params.commutation_icept[msg.sender_id];
                     cand_tx_response(msg.sender_id, CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT, float_converter.uint32_val);
                 }
             }
@@ -580,7 +611,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 	if (GetBoardHWID() == AZ) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                		flash_params.AxisCalibrationSlopes[msg.sender_id] = float_converter.float_val;
+                		flash_params.commutation_slope[msg.sender_id] = float_converter.float_val;
                 		//write_flash();
                 	} else {
                         // Only load the parameter once (because we request parameters until we get them, there's a possibility
@@ -598,7 +629,7 @@ void Process_CAN_Messages(AxisParms* axis_parms, MotorDriveParms* md_parms, Cont
                 	if (GetBoardHWID() == AZ) {
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                		flash_params.AxisCalibrationIntercepts[msg.sender_id] = float_converter.float_val;
+                		flash_params.commutation_icept[msg.sender_id] = float_converter.float_val;
                 		// intercept comes after slope
                 		write_flash();
                 	} else {

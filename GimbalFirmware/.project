@@ -82,6 +82,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>controlSUITE</name>
+			<type>2</type>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/controlSUITE</locationURI>
+		</link>
+		<link>
 			<name>shared</name>
 			<type>2</type>
 			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/shared</locationURI>
@@ -89,16 +94,16 @@
 	</linkedResources>
 	<filteredResources>
 		<filter>
-			<id>1434432682173</id>
+			<id>1435372086494</id>
 			<name></name>
-			<type>6</type>
+			<type>22</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
 				<arguments>1.0-name-matches-false-true-.*\.(o|pp|hex|out)</arguments>
 			</matcher>
 		</filter>
 		<filter>
-			<id>1434432682179</id>
+			<id>1435372086499</id>
 			<name></name>
 			<type>6</type>
 			<matcher>

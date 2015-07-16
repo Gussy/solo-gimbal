@@ -44,8 +44,12 @@ Next, Include project specific include files.
 #include "hardware/HWSpecific.h"
 #include "ardupilotmega/mavlink.h"
 
+// Units are 11915/Amp (+/-32767 counts full scale over +/-2.75A full scale)
+#define LOW_TORQUE_MODE_MAX (5000.0)
+
 typedef enum {
     BLINK_NO_COMM,
+    BLINK_NO_CAL,
     BLINK_INIT,
     BLINK_READY,
 	BLINK_RUNNING,
@@ -67,6 +71,11 @@ typedef enum {
     ERROR_ROLL_PASS,
     TORQUE_OUT_PASS
 } RateLoopPass;
+
+typedef enum {
+	CONTROL_TYPE_RATE = 0,
+	CONTROL_TYPE_POS = 1
+} ControlType;
 
 typedef struct {
     Uint32 param;
@@ -114,7 +123,11 @@ typedef struct {
     GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_status[AXIS_CNT];
     int16 tuning_rate_inject[AXIS_CNT];
     int16 rate_cmd_inject[AXIS_CNT];
+    int16 rate_cmd_inject_filtered[AXIS_CNT];
     RateLoopPass rate_loop_pass;
+    ControlType control_type;
+    // As a special case, a value of 0 in max allowed torque means unlimited allowed torque
+    int16 max_allowed_torque;
     Uint8 initialized;
     Uint8 enabled;
 } ControlBoardParms;
@@ -149,6 +162,8 @@ int16 CorrectEncoderError(int16 raw_error);
 void power_down_motor(void);
 void EnableAZAxis(void);
 void RelaxAZAxis(void);
+void SetMavlinkGimbalEnabled(void);
+void SetMavlinkGimbalDisabled(void);
 
 extern Uint32 global_timestamp_counter;
 

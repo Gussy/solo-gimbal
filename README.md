@@ -19,7 +19,8 @@ TI's full-fledged eclipse-based developement environment can also be used:
 
 * [Python](https://www.python.org/) must be installed and on the system PATH environment variable
 
-For benchtop development, you'll likely want a custom cable that integrates cables from a power supply (16.8V, current limit can be around 0.5A for just GoPro comms, or 3.0A to drive all the motors), and an FTDI cable onto the custom connector that plugs into the AZ board. todo: provide wiring diagram...
+For benchtop development, you'll likely want a custom cable that integrates cables from a power supply (16.8V, current limit can be around 0.5A for just GoPro comms, or 3.0A to drive all the motors), and an FTDI cable onto the custom connector that plugs into the AZ board. 
+![connection_diagram](https://cloud.githubusercontent.com/assets/3289118/8265887/829ae9ee-16e4-11e5-80d2-4be3dc290ca9.png)
 
 ## Building
 
@@ -42,14 +43,18 @@ The bootloaders must be installed via JTAG, usually using the XDS510 JTAG Emulat
 ### User LED (1 per board)
 * BLINK_NO_COMM - fast ,3Hz, duty cycle of 50%
 * BLINK_ERROR - fast, 3Hz, duty cycle 50%, pause after 3 cycles - system in an error state, usually an over-current
-* BLINK_INIT - slow, .8Hz, dudy cycle of 20%  - system being initialized
-* BLINK_READY - slow, .5Hz , dudy cycle of 90% - system initialized but idle, since there are no rate commands
+* BLINK_INIT - slow, .8Hz, duty cycle of 20%  - system being initialized
+* BLINK_READY - slow, .5Hz , duty cycle of 90% - system initialized but idle, since there are no rate commands
 * BLINK_RUNNING - on all the time  - system working
 
 ### Beacon LED (Camera Carriage Board)
 
-* Blinking white on Bootloader
-* Glows green on power up for a couple of seconds
+* Blinking orange on bootloader
+* Dim green once CAN bootload is complete
+* Fades to bright green on initialisation
+* Blinks three times when initialisation is complete
+* Blinks red when a fault has occurred
+* Blinks blue when CAN comms is lost
 
 ## Misc
 
