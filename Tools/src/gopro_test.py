@@ -151,11 +151,13 @@ class MAVLinkConn(object):
     def send_cmd(self, cmd_ind=4, value=None):
         self.start_display_thread(duration_sec=5)
         cmd = self.gopro_cmds[cmd_ind]
-        print("[get_request] Sending cmd: %s" % cmd.name)
-        if value:   # TODO: this should be made more robust with a check of cmd.description for Get/Set
+        print("[send_cmd] Sending cmd: %s" % cmd.name)
+        if value is not None:   # TODO: this should be made more robust with a check of cmd.description for Get/Set
             self.link.gopro_set_request_send(self.mavlink_sys_id, self.mavlink_comp_id, cmd_ind, value)
+            print("[send_cmd] set_request sent. (value = %d)" % (value))
         else:
             self.link.gopro_get_request_send(self.mavlink_sys_id, self.mavlink_comp_id, cmd_ind)
+            print("[send_cmd] get_request sent.")
 
     def print_gopro_cmds(self):
         for cmd in self.gopro_cmds:
