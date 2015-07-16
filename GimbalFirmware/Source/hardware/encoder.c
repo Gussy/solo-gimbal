@@ -42,14 +42,12 @@ void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_pa
     }
 
     // Apply joing angle offsets
-    encoder_parms->virtual_counts -= RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[GetBoardHWID()]);
+    encoder_parms->virtual_counts -= getAxisJointOffset((GimbalAxis)GetBoardHWID());
 
     // Accumulate the virtual counts at the torque loop rate (10kHz), which will then be averaged to be sent out
     // at the rate loop rate (1kHz)
     encoder_parms->virtual_counts_accumulator += encoder_parms->virtual_counts;
     encoder_parms->virtual_counts_accumulated++;
-
-
 
     // We've received our own encoder value, so indicate as such
     if (!cb_parms->encoder_value_received[EL]) {
@@ -57,6 +55,19 @@ void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_pa
     }
 }
 
+int16 getAxisJointOffset(GimbalAxis axis)
+{
+	switch (axis) {
+	case ROLL:
+		return RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[X_AXIS]);
+	case EL:
+		return RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[Y_AXIS]);
+	case AZ:
+		return RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[Z_AXIS]);
+	default:
+		return 0;
+	}
+}
 
 /**
  * Is axis near from top mech hardstop
