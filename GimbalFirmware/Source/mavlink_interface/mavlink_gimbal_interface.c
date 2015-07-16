@@ -27,7 +27,7 @@ void send_cmd_long_ack(uint16_t cmd_id, uint8_t result);
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
 
-unsigned char gimbal_sysid = 1;
+unsigned char gimbal_sysid = 0;
 
 int messages_received = 0;
 int heartbeats_received = 0;
@@ -46,6 +46,11 @@ void init_mavlink() {
 
 	// Initialize the default parameters for the parameter interface
 	init_default_mavlink_params();
+}
+
+void update_mavlink_sysid(Uint8 new_sysid)
+{
+	gimbal_sysid = new_sysid;
 }
 
 void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
@@ -94,9 +99,6 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			messages_received++;
 			switch (received_msg.msgid) {
 			case MAVLINK_MSG_ID_HEARTBEAT:
-				if (heartbeats_received ==0){ // Grab the compid from the first heartbeat message received
-					gimbal_sysid = received_msg.sysid;
-				}				
 				heartbeats_received++;
 				break;
 
@@ -342,12 +344,10 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
 void send_mavlink_gimbal_feedback() {
 	static mavlink_message_t feedback_msg;
 
-	uint8_t target_id = get_broadcast_msgs_state()?MAV_COMP_ID_ALL:gimbal_sysid;
-
 	// Copter mapping is X roll, Y el, Z az
 	mavlink_msg_gimbal_report_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL,
 			&feedback_msg,
-			target_id,
+			gimbal_sysid, // We assume the system we're talking to has the same sysid as us (or we're broadcasting)
 			0,
 			0.01f,
 			latest_gyro_telemetry[ROLL],
