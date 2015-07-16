@@ -305,6 +305,10 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     		Uint16 calculated_checksum = compute_flash_params_checksum();
                     		if (received_checksum == calculated_checksum) {
                     			load_ap_state_info->axis_parms_checksum_verified = TRUE;
+                    		} else {
+                    			// If we failed checksum check, re-request the entire flash params struct
+                    			load_ap_state_info->current_load_offset = 0;
+                    			load_ap_state_info->current_request_load_offset = 0;
                     		}
                     	}
                     	break;
