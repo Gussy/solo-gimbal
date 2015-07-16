@@ -1,41 +1,12 @@
-#!/usr/bin/python
-
-"""
-Utility for reading the software version from a 3DR Gimbal.
-
-"""
-
 import struct, time, datetime
 from pymavlink.mavparm import MAVParmDict
 import setup_param
 
-def float_to_bytes4(f):
-    return struct.unpack('4b', struct.pack('>f', f))
-
 def uint32_to_float(i):
     return struct.unpack('f', struct.pack('<I', i))[0]
 
-def float_to_uint32(f):
-    return struct.unpack('I',struct.pack('<f',f))[0]
-
 def string12_to_float3(s):
     return struct.unpack('3f',struct.pack('<12s', s))
-
-def float3_to_string12(f1, f2, f3):
-    return struct.unpack('12s',struct.pack('<3f', f1, f2, f3))[0]
-
-def read_software_version(link, timeout=1):
-    msg = setup_param.fetch_param(link, "GMB_SWVER", timeout=timeout)
-    if not msg:
-        return None
-    else:
-        return float_to_bytes4(msg.param_value)[:-1]
-
-def get_assembly_time(link):
-    value = setup_param.fetch_param(link, "GMB_ASM_TIME", timeout=1)
-    if value:
-        return float_to_uint32(value.param_value)
-    return None
 
 def set_assembly_date(link, commit=True):
     timestamp = time.time()
@@ -59,18 +30,6 @@ def set_serial_number_with_time(link, serial_str):
     timestamp = set_assembly_date(link, commit=False)
     setup_param.commit_to_flash(link)
     return sanitised_serial, timestamp
-
-def get_serial_number(link):
-    ser_num_1 = setup_param.fetch_param(link, "GMB_SER_NUM_1", timeout=1)
-    ser_num_2 = setup_param.fetch_param(link, "GMB_SER_NUM_2", timeout=1)
-    ser_num_3 = setup_param.fetch_param(link, "GMB_SER_NUM_3", timeout=1)
-    if ser_num_1 != None and ser_num_2 != None and ser_num_3 != None:
-        serial_str = float3_to_string12(ser_num_1.param_value, ser_num_2.param_value, ser_num_3.param_value)
-        if serial_str.startswith('GB'):
-            return serial_str
-        else:
-            return ''
-    return None
 
 def set_serial_number_3dr(link, month_serial_number):
     today = datetime.date.today() 

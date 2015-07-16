@@ -4,7 +4,7 @@ import os, sys, time, threading
 from math import sin, cos, radians
 import math
 from pymavlink.rotmat import Matrix3, Vector3
-import setup_mavlink, setup_param, setup_factory, gui_graph, setup_validate
+import setup_mavlink, setup_param, gui_graph, setup_validate
 import fixtureWobble
 
 #import visual.graph
@@ -26,7 +26,7 @@ class Log:
 
         self.logTimestamp = time.time()
         
-        self.logSerialNumber = setup_factory.get_serial_number(link)
+        self.logSerialNumber = setup_factory_pub.get_serial_number(link)
         if self.logSerialNumber == None:
             self.logSerialNumber = 'unknown'
 
