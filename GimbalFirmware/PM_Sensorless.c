@@ -160,14 +160,10 @@ ControlBoardParms control_board_parms = {
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
-    .current_param_to_load = 0,
-    .total_params_to_load = 0,
 	.current_load_offset = 0,
 	.current_request_load_offset = 0,
 	.total_words_to_load = 0,
     .request_retry_counter = REQUEST_RETRY_PERIOD,
-    .init_param_recvd_flags_1 = 0x0000,
-    .init_param_recvd_flags_2 = 0x0000,
 	.axis_parms_checksum_verified = FALSE,
     .axis_parms_load_complete = FALSE
 };
