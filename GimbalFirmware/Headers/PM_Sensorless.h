@@ -49,11 +49,12 @@ Next, Include project specific include files.
 
 typedef enum {
     BLINK_NO_COMM,
-    BLINK_NO_CAL,
     BLINK_INIT,
     BLINK_READY,
 	BLINK_RUNNING,
-    BLINK_ERROR
+    BLINK_ERROR,
+    BLINK_CALIBRATING,
+    BLINK_OVERRIDE
 } BlinkState;
 
 typedef enum {

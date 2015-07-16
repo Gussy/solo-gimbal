@@ -747,16 +747,11 @@ void C1(void) // Update Status LEDs
                 led_set_mode(LED_MODE_BLINK_FOREVER, rgba_blue, 0);
                 break;
 
-            case BLINK_NO_CAL:
-                led_set_mode(LED_MODE_SOLID, rgba_red, 0);
-            break;
-
             case BLINK_INIT:
                 led_set_mode(LED_MODE_FADE_IN, rgba_green, 0);
                 break;
 
             case BLINK_READY:
-                //led_set_mode(LED_MODE_DISCO, rgba_red, 0);
                 break;
 
             case BLINK_RUNNING:
@@ -765,6 +760,14 @@ void C1(void) // Update Status LEDs
 
             case BLINK_ERROR:
                 led_set_mode(LED_MODE_BLINK_FOREVER, rgba_red, 0);
+                break;
+
+            case BLINK_CALIBRATING:
+                led_set_mode(LED_MODE_DISCO, rgba_red, 0);
+                break;
+
+            case BLINK_OVERRIDE:
+            default:
                 break;
         }
 
