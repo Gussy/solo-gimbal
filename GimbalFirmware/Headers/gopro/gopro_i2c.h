@@ -10,6 +10,6 @@ void gopro_i2c_init();
 bool gopro_i2c_in_progress();
 void gopro_i2c_on_timeout();
 
-void gopro_i2c_send(const Uint8 *buf, Uint8 len);
+void gopro_i2c_send(const uint16_t *buf, Uint8 len);
 
 #endif // _GOPRO_I2C_H

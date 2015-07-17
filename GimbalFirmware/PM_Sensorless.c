@@ -841,24 +841,25 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 			cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)status);
 		}
 
-        if (gp_new_get_response_available()) {
-            // If there are, get them and package them up to be sent out over CAN.
-            GPGetResponse response = gp_last_get_response();
+        gp_transaction_t *txn;
+        if (gp_get_completed_transaction(&txn)) {
+
+            CAND_ParameterID can_id;
             Uint32 response_buffer = 0;
-            response_buffer |= ((((Uint32)response.cmd_id) << 8) & 0x0000FF00);
-            response_buffer |= ((((Uint32)response.value) << 0) & 0x00FF00FF);
+            response_buffer |= ((((Uint32)txn->mav_cmd) << 8) & 0x0000FF00);
 
-            cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_GET_RESPONSE, response_buffer);
-        }
+            if (txn->reqtype == GP_REQUEST_GET) {
+                // XXX: only returning first byte for now.
+                //      want to be able to return larger chunks in the future
+                response_buffer |= ((((Uint32)txn->payload[0]) << 0) & 0x000000FF);
+                can_id = CAND_PID_GOPRO_GET_RESPONSE;
 
-        if (gp_new_set_response_available()) {
-            // If there are, get them and package them up to be sent out over CAN.
-            GPSetResponse response = gp_last_set_response();
-            Uint32 response_buffer = 0;
-            response_buffer |= ((((Uint32)response.cmd_id) << 8) & 0x0000FF00);
-            response_buffer |= ((((Uint32)response.result) << 0) & 0x000000FF);
+            } else {
+                response_buffer |= ((((Uint32)txn->status) << 0) & 0x000000FF);
+                can_id = CAND_PID_GOPRO_SET_RESPONSE;
+            }
 
-            cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_SET_RESPONSE, response_buffer);
+            cand_tx_response(CAND_ID_AZ, can_id, response_buffer);
         }
 	}
 
