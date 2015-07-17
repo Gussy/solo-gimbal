@@ -53,7 +53,7 @@ void init_gp_interface()
 
     gopro_i2c_init();
 
-    gp_enable_hb_interface();
+    //gp_enable_hb_interface();
 }
 
 bool gp_ready_for_cmd()

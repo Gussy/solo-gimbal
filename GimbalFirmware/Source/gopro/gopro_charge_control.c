@@ -21,11 +21,13 @@ void gp_update_charge_control(int16 proc_temperature, int16 batt_level)
         case GOPRO_CHARGING:
             // If we're currently charging, need to check temperature and battery level limits
             if (proc_temperature > HALT_CHARGING_TEMP_LIMIT_C) {
-                gp_disable_charging();
+                //gp_disable_charging();
+                gp_enable_charging();
                 send_charge_event(CHARGING_HALTED_OVER_TEMP);
                 charge_state = GOPRO_CHARGE_HALTED_OVER_TEMP;
             } else if (batt_level > HALT_CHARGING_CHARGE_LEVEL) {
-                gp_disable_charging();
+                //gp_disable_charging();
+                gp_enable_charging();
                 send_charge_event(CHARGING_HALTED_CAPACITY_THRESHOLD_REACHED);
                 charge_state = GOPRO_CHARGE_HALTED_OVER_CAPACITY;
             }

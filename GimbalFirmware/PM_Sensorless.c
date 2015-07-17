@@ -904,11 +904,11 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 	// Monitor temperature and GoPro battery level every 5s to determine if we need to start or stop GoPro charging
 	if (board_hw_id == EL) {
 	    if (gopro_charge_control_counter++ >= 34) { // 34 = roughly every 5s, period of C3 is 150ms
-	        gp_update_charge_control(DegreesC, GoProBatteryLevel);
+	        //gp_update_charge_control(DegreesC, GoProBatteryLevel);
 	        gopro_charge_control_counter = 0;
 
 	        // Request GoPro battery level again, so it's up to date next time we update the charge control
-	        gp_get_request(GOPRO_COMMAND_BATTERY);
+	        //gp_get_request(GOPRO_COMMAND_BATTERY);
 	    }
 	}
 
