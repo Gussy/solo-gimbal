@@ -42,7 +42,7 @@ float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float 
 
         deltaPv = (deltaPv * PIDInfo->dTermAlpha) + ((1.0 - PIDInfo->dTermAlpha) * PIDInfo->processVarPrevious);
 
-        dTerm = deltaPv * (PIDInfo->gainD * d_detune_ratio);
+        dTerm = -deltaPv * (PIDInfo->gainD * d_detune_ratio);
     } else  {
         dTerm = 0;
     }
