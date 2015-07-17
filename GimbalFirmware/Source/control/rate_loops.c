@@ -149,15 +149,9 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             // Run PID rate loops
 
         	// Compute the new motor torque commands
-            if ((cb_parms->encoder_readings[EL] < EL_DETUNE_LIMIT_NEG) || (cb_parms->encoder_readings[EL] > EL_DETUNE_LIMIT_POS)) {
-                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], GainDetuneCoefficients[AZ][0], GainDetuneCoefficients[AZ][1], GainDetuneCoefficients[AZ][2]) * TorqueSignMap[AZ];
-                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], GainDetuneCoefficients[EL][0], GainDetuneCoefficients[EL][1], GainDetuneCoefficients[EL][2]) * TorqueSignMap[EL];
-                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], GainDetuneCoefficients[ROLL][0], GainDetuneCoefficients[ROLL][1], GainDetuneCoefficients[ROLL][2]) * TorqueSignMap[ROLL];
-            } else {
-                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], 1.0, 1.0, 1.0) * TorqueSignMap[AZ];
-                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], 1.0, 1.0, 1.0) * TorqueSignMap[EL];
-                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
-            }
+            cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], 1.0, 1.0, 1.0) * TorqueSignMap[AZ];
+            cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], 1.0, 1.0, 1.0) * TorqueSignMap[EL];
+            cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
 
             // Saturate torque command against configured limits if necessary
             if (cb_parms->max_allowed_torque != 0) {
