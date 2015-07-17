@@ -135,8 +135,8 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     case CAND_EPID_TORQUE_CMD_TELEMETRY:
                     	if (msg.extended_param_length == 6) {
                     		int16 az_torque_cmd = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
-                    		int16 el_torque_cmd = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
-                    		int16 rl_torque_cmd = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
+                    		int16 el_torque_cmd = ((((Uint16)msg.extended_param[2]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[3]) & 0x00FF);
+                    		int16 rl_torque_cmd = ((((Uint16)msg.extended_param[4]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[5]) & 0x00FF);
                     		receive_torque_cmd_telemetry(az_torque_cmd, el_torque_cmd, rl_torque_cmd);
                     	}
                     	break;
