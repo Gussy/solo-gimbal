@@ -401,14 +401,15 @@ void send_mavlink_gimbal_feedback() {
 void send_mavlink_torque_cmd_feedback(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd) {
 	static mavlink_message_t torque_cmd_fb_msg;
 
-	mavlink_msg_debug_vect_pack(gimbal_sysid,
-			MAV_COMP_ID_GIMBAL,
-			&torque_cmd_fb_msg,
-			"TorqueCmd",
-			0,
-			(float)az_torque_cmd,
-			(float)el_torque_cmd,
-			(float)rl_torque_cmd);
+	mavlink_msg_gimbal_torque_cmd_report_pack(gimbal_sysid,
+		MAV_COMP_ID_GIMBAL,
+		&torque_cmd_fb_msg,
+		gimbal_sysid,
+		0,
+		rl_torque_cmd,
+		el_torque_cmd,
+		az_torque_cmd);
+
 	send_mavlink_message(&torque_cmd_fb_msg);
 }
 
