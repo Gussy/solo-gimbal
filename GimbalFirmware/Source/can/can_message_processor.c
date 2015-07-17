@@ -245,6 +245,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     	// Protect against errant messages to the wrong axis
                     	if (GetBoardHWID() == EL) {
 							if (msg.extended_param_length == 6) {
+							    axis_parms->blink_state = BLINK_OVERRIDE;
 								LED_MODE mode = (LED_MODE)(msg.extended_param[0]);
 								LED_RGBA color;
 								color.red = msg.extended_param[1];
