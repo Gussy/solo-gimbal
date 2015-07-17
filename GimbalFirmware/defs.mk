@@ -32,6 +32,7 @@ OBJS = \
     $(PROJ_ROOT)/Source/control/running_average_filter.o 								\
     $(SHARED_ROOT)/src/flash/Example_Flash2806x_CsmKeys.o 								\
     $(SHARED_ROOT)/src/flash/flash.o 													\
+    $(SHARED_ROOT)/src/flash/flash_migrations.o											\
     $(PROJ_ROOT)/Source/hardware/adc.o 													\
     $(SHARED_ROOT)/src/hardware/device_init.o 											\
     $(PROJ_ROOT)/Source/hardware/encoder.o 												\

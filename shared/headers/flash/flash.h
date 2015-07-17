@@ -3,6 +3,12 @@
 
 #include "parameters/flash_params.h"
 
+#define OTP_START_ADDR  0x3D7800
+#define OTP_END_ADDR    0x3D7BFF
+
+#define START_ADDR      0x3D8000
+#define FLASH_END_ADDR  0x3F7FFF
+
 int erase_our_flash(void);
 int erase_param_flash(void);
 int write_flash(void);
