@@ -113,6 +113,8 @@ typedef struct {
     int16 encoder_readings[AXIS_CNT];
     int16 motor_torques[AXIS_CNT];
     int16 axis_errors[AXIS_CNT];
+    int16 setpoints[AXIS_CNT];
+    int16 process_vars[AXIS_CNT];
     CAND_FaultCode last_axis_fault[AXIS_CNT];
     Uint8 encoder_value_received[AXIS_CNT];
     Uint16 axes_homed[AXIS_CNT];
