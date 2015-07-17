@@ -7,7 +7,7 @@ from pymavlink.rotmat import Vector3
 import setup_mavlink
 import math
 
-EXPECTED_VERSION = '0.25.0'
+EXPECTED_VERSION = '0.26.0'
 
 EXPECTED_SERIAL_NUMBER_START = 'GB11A'
 EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
