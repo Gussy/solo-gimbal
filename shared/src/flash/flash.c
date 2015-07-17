@@ -4,25 +4,12 @@
 #include "Flash2806x_API_Library.h"
 #include "F2806x_SysCtrl.h"
 
-/*--- Callback function.  Function specified by defining Flash_CallbackPtr */
-void MyCallbackFunction(void);
-Uint32 MyCallbackCounter; // Just increment a counter in the callback function
-
 /*--- Global variables used to interface to the flash routines */
 FLASH_ST FlashStatus;
 
-/*---------------------------------------------------------------------------
-  Data/Program Buffer used for testing the flash API functions
----------------------------------------------------------------------------*/
-#define  WORDS_IN_FLASH_BUFFER 0x100               // Programming data buffer, Words
-Uint16  Buffer[WORDS_IN_FLASH_BUFFER];
-
-typedef struct {
-     Uint16 *StartAddr;
-     Uint16 *EndAddr;
-} SECTOR;
-
-extern SECTOR Sector[8];
+// Buffer used for calculating flash checksums
+#define  WORDS_IN_FLASH_BUFFER 0x100
+static Uint16  Buffer[WORDS_IN_FLASH_BUFFER];
 
 /*---------------------------------------------------------------------------
    These key values are used to unlock the CSM by this example
@@ -37,15 +24,7 @@ extern Uint16 PRG_key5;
 extern Uint16 PRG_key6;
 extern Uint16 PRG_key7;
 
-//---------------------------------------------------------------------------
-// Common CPU Definitions used by this example:
-//
-
-#define	 EALLOW	asm(" EALLOW")
-#define	 EDIS	asm(" EDIS")
-#define  DINT   asm(" setc INTM")
-
-Uint16 Example_CsmUnlock()
+Uint16 flash_csm_unlock()
 {
     volatile Uint16 temp;
 
@@ -120,7 +99,7 @@ int erase_our_flash()
 	    asm("    ESTOP0");
 	}
 
-	Example_CsmUnlock();
+	flash_csm_unlock();
 	/* only need to erase B, everything else will be erased again later. */
 	Status = Flash_Erase(SECTORB, &FlashStatus);
 	Status = Flash_Erase(SECTORG, &FlashStatus);
@@ -145,7 +124,7 @@ int erase_param_flash()
         asm("    ESTOP0");
     }
 
-    Example_CsmUnlock();
+    flash_csm_unlock();
     Status = Flash_Erase(SECTORH, &FlashStatus);
     if (Status != STATUS_SUCCESS) {
         return -1;
@@ -174,7 +153,7 @@ int write_flash(void)
 	    asm("    ESTOP0");
 	}
 
-	Example_CsmUnlock();
+	flash_csm_unlock();
 
 	Status = Flash_Erase(SECTORH, &FlashStatus);
 	if (Status != STATUS_SUCCESS) {
