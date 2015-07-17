@@ -65,8 +65,6 @@ void (*A_Task_Ptr)(void);		// State pointer A branch
 void (*B_Task_Ptr)(void);		// State pointer B branch
 void (*C_Task_Ptr)(void);		// State pointer C branch
 
-// Used for running BackGround in flash, and ISR in RAM
-extern Uint16 *RamfuncsLoadStart, *RamfuncsLoadEnd, *RamfuncsRunStart;
 #define TASKS_PER_BRANCH        3
 
 #define A_TASK_PERIOD_MS        1
@@ -80,7 +78,6 @@ extern Uint16 *RamfuncsLoadStart, *RamfuncsLoadEnd, *RamfuncsRunStart;
 int16	VTimer0[4];			// Virtual Timers slaved off CPU Timer 0 (A events)
 int16	VTimer1[4]; 		// Virtual Timers slaved off CPU Timer 1 (B events)
 int16	VTimer2[4]; 		// Virtual Timers slaved off CPU Timer 2 (C events)
-int16	SerialCommsTimer;
 
 // Global variables used in this system
 int16 DegreesC;
@@ -94,11 +91,7 @@ Uint32 global_timestamp_counter = 0;
 
 #define T (0.001/ISR_FREQUENCY)    // Samping period (sec), see parameter.h
 
-Uint8 feedback_decimator;
-
 Uint32 IsrTicker = 0;
-Uint32 GyroISRTicker = 0;
-Uint16 GyroISRTime = 0;
 Uint32 RateLoopStartTimestamp = 0;
 Uint32 RateLoopEndTimestamp = 0;
 Uint32 RateLoopElapsedTime = 0;
@@ -106,7 +99,6 @@ Uint32 MainWorkStartTimestamp = 0;
 Uint32 MainWorkEndTimestamp = 0;
 Uint32 MainWorkElapsedTime = 0;
 Uint32 MaxMainWorkElapsedTime = 0;
-Uint16 BackTicker = 0;
 
 Uint16 DRV_RESET = 0;
 
@@ -556,7 +548,6 @@ void A0(void)
 		//-----------------------------------------------------------
 
 		VTimer0[0]++;			// virtual timer 0, instance 0 (spare)
-		SerialCommsTimer++;
 	}
 
 	Alpha_State_Ptr = &B0;		// Comment out to allow only A tasks
@@ -683,13 +674,6 @@ void A2(void) // SPARE (not used)
 	A_Task_Ptr = &A3;
 	//-------------------
 }
-
-int standalone_enable_counts = 0;
-int standalone_enable_counts_max = 2667;
-Uint16 standalone_enabled = FALSE;
-
-int init_counts = 0;
-int init_counts_max = 333;
 
 //-----------------------------------------
 void A3(void) // SPARE (not used)
