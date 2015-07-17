@@ -263,6 +263,7 @@ int init_flash(void)
 					/* Removed parameters:
 					 * 	broadcast_msgs (was made volatile)
 					 */
+					break;
 
 				case 0x0002:
 					// Load the struct from flash into the old struct layout
