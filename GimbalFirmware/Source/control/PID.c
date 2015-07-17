@@ -46,7 +46,7 @@ float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float 
     } else  {
         dTerm = 0;
     }
-    PIDInfo->processVarPrevious = deltaPv;
+    PIDInfo->processVarPrevious = process_var;
 
     // Calculate result, sum of three individual gain terms
     result = (pTerm + iTerm + dTerm);
