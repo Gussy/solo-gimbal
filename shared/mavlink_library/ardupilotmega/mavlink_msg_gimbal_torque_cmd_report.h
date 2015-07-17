@@ -8,9 +8,9 @@
 
 typedef struct __mavlink_gimbal_torque_cmd_report_t
 {
- uint16_t rl_torque_cmd; ///< Roll Torque Command
- uint16_t el_torque_cmd; ///< Elevation Torque Command
- uint16_t az_torque_cmd; ///< Azimuth Torque Command
+ int16_t rl_torque_cmd; ///< Roll Torque Command
+ int16_t el_torque_cmd; ///< Elevation Torque Command
+ int16_t az_torque_cmd; ///< Azimuth Torque Command
  uint8_t target_system; ///< System ID
  uint8_t target_component; ///< Component ID
 } mavlink_gimbal_torque_cmd_report_t;
@@ -18,17 +18,17 @@ typedef struct __mavlink_gimbal_torque_cmd_report_t
 #define MAVLINK_MSG_ID_GIMBAL_TORQUE_CMD_REPORT_LEN 8
 #define MAVLINK_MSG_ID_214_LEN 8
 
-#define MAVLINK_MSG_ID_GIMBAL_TORQUE_CMD_REPORT_CRC 147
-#define MAVLINK_MSG_ID_214_CRC 147
+#define MAVLINK_MSG_ID_GIMBAL_TORQUE_CMD_REPORT_CRC 69
+#define MAVLINK_MSG_ID_214_CRC 69
 
 
 
 #define MAVLINK_MESSAGE_INFO_GIMBAL_TORQUE_CMD_REPORT { \
 	"GIMBAL_TORQUE_CMD_REPORT", \
 	5, \
-	{  { "rl_torque_cmd", NULL, MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_gimbal_torque_cmd_report_t, rl_torque_cmd) }, \
-         { "el_torque_cmd", NULL, MAVLINK_TYPE_UINT16_T, 0, 2, offsetof(mavlink_gimbal_torque_cmd_report_t, el_torque_cmd) }, \
-         { "az_torque_cmd", NULL, MAVLINK_TYPE_UINT16_T, 0, 4, offsetof(mavlink_gimbal_torque_cmd_report_t, az_torque_cmd) }, \
+	{  { "rl_torque_cmd", NULL, MAVLINK_TYPE_INT16_T, 0, 0, offsetof(mavlink_gimbal_torque_cmd_report_t, rl_torque_cmd) }, \
+         { "el_torque_cmd", NULL, MAVLINK_TYPE_INT16_T, 0, 2, offsetof(mavlink_gimbal_torque_cmd_report_t, el_torque_cmd) }, \
+         { "az_torque_cmd", NULL, MAVLINK_TYPE_INT16_T, 0, 4, offsetof(mavlink_gimbal_torque_cmd_report_t, az_torque_cmd) }, \
          { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 6, offsetof(mavlink_gimbal_torque_cmd_report_t, target_system) }, \
          { "target_component", NULL, MAVLINK_TYPE_UINT8_T, 0, 7, offsetof(mavlink_gimbal_torque_cmd_report_t, target_component) }, \
          } \
@@ -49,21 +49,21 @@ typedef struct __mavlink_gimbal_torque_cmd_report_t
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_gimbal_torque_cmd_report_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-						       uint8_t target_system, uint8_t target_component, uint16_t rl_torque_cmd, uint16_t el_torque_cmd, uint16_t az_torque_cmd)
+						       uint8_t target_system, uint8_t target_component, int16_t rl_torque_cmd, int16_t el_torque_cmd, int16_t az_torque_cmd)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_GIMBAL_TORQUE_CMD_REPORT_LEN];
-	_mav_put_uint16_t(buf, 0, rl_torque_cmd);
-	_mav_put_uint16_t(buf, 2, el_torque_cmd);
-	_mav_put_uint16_t(buf, 4, az_torque_cmd);
+	_mav_put_int16_t(buf, 0, rl_torque_cmd);
+	_mav_put_int16_t(buf, 2, el_torque_cmd);
+	_mav_put_int16_t(buf, 4, az_torque_cmd);
 	_mav_put_uint8_t(buf, 6, target_system);
 	_mav_put_uint8_t(buf, 7, target_component);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_GIMBAL_TORQUE_CMD_REPORT_LEN);
 #elif MAVLINK_C2000
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 0, rl_torque_cmd);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 2, el_torque_cmd);
-		mav_put_uint16_t_c2000(&(msg->payload64[0]), 4, az_torque_cmd);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 0, rl_torque_cmd);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 2, el_torque_cmd);
+		mav_put_int16_t_c2000(&(msg->payload64[0]), 4, az_torque_cmd);
 		mav_put_uint8_t_c2000(&(msg->payload64[0]), 6, target_system);
 		mav_put_uint8_t_c2000(&(msg->payload64[0]), 7, target_component);
 	
@@ -102,13 +102,13 @@ static inline uint16_t mavlink_msg_gimbal_torque_cmd_report_pack(uint8_t system_
  */
 static inline uint16_t mavlink_msg_gimbal_torque_cmd_report_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
 							   mavlink_message_t* msg,
-						           uint8_t target_system,uint8_t target_component,uint16_t rl_torque_cmd,uint16_t el_torque_cmd,uint16_t az_torque_cmd)
+						           uint8_t target_system,uint8_t target_component,int16_t rl_torque_cmd,int16_t el_torque_cmd,int16_t az_torque_cmd)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_GIMBAL_TORQUE_CMD_REPORT_LEN];
-	_mav_put_uint16_t(buf, 0, rl_torque_cmd);
-	_mav_put_uint16_t(buf, 2, el_torque_cmd);
-	_mav_put_uint16_t(buf, 4, az_torque_cmd);
+	_mav_put_int16_t(buf, 0, rl_torque_cmd);
+	_mav_put_int16_t(buf, 2, el_torque_cmd);
+	_mav_put_int16_t(buf, 4, az_torque_cmd);
 	_mav_put_uint8_t(buf, 6, target_system);
 	_mav_put_uint8_t(buf, 7, target_component);
 
@@ -171,13 +171,13 @@ static inline uint16_t mavlink_msg_gimbal_torque_cmd_report_encode_chan(uint8_t 
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_gimbal_torque_cmd_report_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint16_t rl_torque_cmd, uint16_t el_torque_cmd, uint16_t az_torque_cmd)
+static inline void mavlink_msg_gimbal_torque_cmd_report_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, int16_t rl_torque_cmd, int16_t el_torque_cmd, int16_t az_torque_cmd)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_GIMBAL_TORQUE_CMD_REPORT_LEN];
-	_mav_put_uint16_t(buf, 0, rl_torque_cmd);
-	_mav_put_uint16_t(buf, 2, el_torque_cmd);
-	_mav_put_uint16_t(buf, 4, az_torque_cmd);
+	_mav_put_int16_t(buf, 0, rl_torque_cmd);
+	_mav_put_int16_t(buf, 2, el_torque_cmd);
+	_mav_put_int16_t(buf, 4, az_torque_cmd);
 	_mav_put_uint8_t(buf, 6, target_system);
 	_mav_put_uint8_t(buf, 7, target_component);
 
@@ -210,13 +210,13 @@ static inline void mavlink_msg_gimbal_torque_cmd_report_send(mavlink_channel_t c
   is usually the receive buffer for the channel, and allows a reply to an
   incoming message with minimum stack space usage.
  */
-static inline void mavlink_msg_gimbal_torque_cmd_report_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint8_t target_system, uint8_t target_component, uint16_t rl_torque_cmd, uint16_t el_torque_cmd, uint16_t az_torque_cmd)
+static inline void mavlink_msg_gimbal_torque_cmd_report_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint8_t target_system, uint8_t target_component, int16_t rl_torque_cmd, int16_t el_torque_cmd, int16_t az_torque_cmd)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char *buf = (char *)msgbuf;
-	_mav_put_uint16_t(buf, 0, rl_torque_cmd);
-	_mav_put_uint16_t(buf, 2, el_torque_cmd);
-	_mav_put_uint16_t(buf, 4, az_torque_cmd);
+	_mav_put_int16_t(buf, 0, rl_torque_cmd);
+	_mav_put_int16_t(buf, 2, el_torque_cmd);
+	_mav_put_int16_t(buf, 4, az_torque_cmd);
 	_mav_put_uint8_t(buf, 6, target_system);
 	_mav_put_uint8_t(buf, 7, target_component);
 
@@ -280,12 +280,12 @@ static inline uint8_t mavlink_msg_gimbal_torque_cmd_report_get_target_component(
  *
  * @return Roll Torque Command
  */
-static inline uint16_t mavlink_msg_gimbal_torque_cmd_report_get_rl_torque_cmd(const mavlink_message_t* msg)
+static inline int16_t mavlink_msg_gimbal_torque_cmd_report_get_rl_torque_cmd(const mavlink_message_t* msg)
 {
 #if !MAVLINK_C2000
-	return _MAV_RETURN_uint16_t(msg,  0);
+	return _MAV_RETURN_int16_t(msg,  0);
 #else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  0);
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  0);
 #endif
 }
 
@@ -294,12 +294,12 @@ static inline uint16_t mavlink_msg_gimbal_torque_cmd_report_get_rl_torque_cmd(co
  *
  * @return Elevation Torque Command
  */
-static inline uint16_t mavlink_msg_gimbal_torque_cmd_report_get_el_torque_cmd(const mavlink_message_t* msg)
+static inline int16_t mavlink_msg_gimbal_torque_cmd_report_get_el_torque_cmd(const mavlink_message_t* msg)
 {
 #if !MAVLINK_C2000
-	return _MAV_RETURN_uint16_t(msg,  2);
+	return _MAV_RETURN_int16_t(msg,  2);
 #else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  2);
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  2);
 #endif
 }
 
@@ -308,12 +308,12 @@ static inline uint16_t mavlink_msg_gimbal_torque_cmd_report_get_el_torque_cmd(co
  *
  * @return Azimuth Torque Command
  */
-static inline uint16_t mavlink_msg_gimbal_torque_cmd_report_get_az_torque_cmd(const mavlink_message_t* msg)
+static inline int16_t mavlink_msg_gimbal_torque_cmd_report_get_az_torque_cmd(const mavlink_message_t* msg)
 {
 #if !MAVLINK_C2000
-	return _MAV_RETURN_uint16_t(msg,  4);
+	return _MAV_RETURN_int16_t(msg,  4);
 #else
-	return mav_get_uint16_t_c2000(&(msg->payload64[0]),  4);
+	return mav_get_int16_t_c2000(&(msg->payload64[0]),  4);
 #endif
 }
 
