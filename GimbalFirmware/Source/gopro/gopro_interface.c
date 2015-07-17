@@ -384,30 +384,6 @@ void gp_disable_charging()
     GpioDataRegs.GPASET.bit.GPIO23 = 1;
 }
 
-void gp_enable_hb_interface()
-{
-    // Set BacPac detect low (active low)
-    GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
-}
-
-void gp_disable_hb_interface()
-{
-    // Set BacPac detect high (active low)
-    GpioDataRegs.GPASET.bit.GPIO28 = 1;
-}
-
-void gp_enable_charging()
-{
-    // Set GoPro 5v enable low (active low)
-    GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;
-}
-
-void gp_disable_charging()
-{
-    // Set GoPro 5v enable high (active low)
-    GpioDataRegs.GPASET.bit.GPIO23 = 1;
-}
-
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
 // for proper gopro interface operation
 void gp_interface_state_machine()

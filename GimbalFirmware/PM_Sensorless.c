@@ -23,18 +23,12 @@
 #include "helpers/fault_handling.h"
 #include "motor/motor_commutation.h"
 #include "can/can_parameter_updates.h"
-<<<<<<< HEAD
 #include "hardware/encoder.h"
 #include "hardware/led.h"
 #include "flash/flash.h"
 #include "flash/flash_init.h"
 #include "hardware/interrupts.h"
-=======
-#include "hardware/encoder.h"
-#include "hardware/led.h"
-#include "flash/flash.h"
 #include "gopro/gopro_charge_control.h"
->>>>>>> 094b471... gopro: added temperature and charge level sensitive charge control logic
 
 #include <math.h>
 #include <string.h>
