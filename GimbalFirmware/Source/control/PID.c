@@ -4,9 +4,9 @@
 PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     // These get loaded over CAN at boot, so they are initialized to zero
     // (Except overall gain and d-term alpha, which are hardcoded)
-    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 },
-    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 },
-    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.0 }
+    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 }
 };
 
 float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float p_detune_ratio, float i_detune_ratio, float d_detune_ratio)
@@ -39,8 +39,7 @@ float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float 
     // Calculate derivative gain, gain * difference in error
     if(PIDInfo->gainD) {
         deltaPv = process_var - PIDInfo->processVarPrevious;
-
-        deltaPv = (deltaPv * PIDInfo->dTermAlpha) + ((1.0 - PIDInfo->dTermAlpha) * PIDInfo->processVarPrevious);
+        PIDInfo->deltaPvFilt += (deltaPv-PIDInfo->deltaPvFilt) * PIDInfo->dTermAlpha;
 
         dTerm = -deltaPv * (PIDInfo->gainD * d_detune_ratio);
     } else  {

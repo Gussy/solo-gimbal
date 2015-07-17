@@ -51,6 +51,7 @@ typedef struct {
     float   integralCumulative;
     float	dTermAlpha;
     float   processVarPrevious;
+    float   deltaPvFilt;
 } PIDData_Float;
 
 extern PIDData_Float rate_pid_loop_float[AXIS_CNT];
