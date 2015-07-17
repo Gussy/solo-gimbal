@@ -149,12 +149,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
                 cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
             }
 
-            // Accumulate torque commands for telemetry
-            cb_parms->accumulated_torque_cmds[AZ] += cb_parms->motor_torques[AZ];
-            cb_parms->accumulated_torque_cmds[EL] += cb_parms->motor_torques[EL];
-            cb_parms->accumulated_torque_cmds[ROLL] += cb_parms->motor_torques[ROLL];
-            cb_parms->num_torque_cmds_accumulated++;
-
             // Saturate torque command against configured limits if necessary
             if (cb_parms->max_allowed_torque != 0) {
             	if (cb_parms->motor_torques[AZ] < -cb_parms->max_allowed_torque) {
@@ -175,6 +169,12 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 					cb_parms->motor_torques[ROLL] = cb_parms->max_allowed_torque;
 				}
             }
+
+            // Accumulate torque commands for telemetry (make sure to do it after saturation against limits)
+			cb_parms->accumulated_torque_cmds[AZ] += cb_parms->motor_torques[AZ];
+			cb_parms->accumulated_torque_cmds[EL] += cb_parms->motor_torques[EL];
+			cb_parms->accumulated_torque_cmds[ROLL] += cb_parms->motor_torques[ROLL];
+			cb_parms->num_torque_cmds_accumulated++;
 
             // Send out motor torques
             MDBSendTorques(cb_parms->motor_torques[AZ], cb_parms->motor_torques[ROLL]);
