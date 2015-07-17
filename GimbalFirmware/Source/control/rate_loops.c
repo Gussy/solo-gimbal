@@ -82,7 +82,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 				cb_parms->rate_cmd_inject_filtered[AZ] = cb_parms->rate_cmd_inject_filtered[AZ]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[AZ] - cb_parms->rate_cmd_inject_filtered[AZ]);
 				cb_parms->setpoints[AZ] = cb_parms->rate_cmd_inject_filtered[AZ];
 				cb_parms->process_vars[AZ] = cb_parms->corrected_gyro_readings[AZ];
-				//cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject_filtered[AZ] - cb_parms->corrected_gyro_readings[AZ];
+				//cb_parms->axis_errors[AZ] = (int16)CLAMP_TO_BOUNDS(((int32)cb_parms->rate_cmd_inject_filtered[AZ] - (int32)cb_parms->corrected_gyro_readings[AZ]), INT16_MIN, INT16_MAX);
         	}
 
         	// Set up the next rate loop pass to be the el error computation pass
@@ -107,10 +107,10 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 				//cb_parms->axis_errors[EL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[EL];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
+				cb_parms->rate_cmd_inject_filtered[EL] = cb_parms->rate_cmd_inject_filtered[EL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[EL] - cb_parms->rate_cmd_inject_filtered[EL]);
         		cb_parms->setpoints[EL] = cb_parms->rate_cmd_inject_filtered[EL];
         		cb_parms->process_vars[EL] = cb_parms->corrected_gyro_readings[EL];
-				//cb_parms->rate_cmd_inject_filtered[EL] = cb_parms->rate_cmd_inject_filtered[EL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[EL] - cb_parms->rate_cmd_inject_filtered[EL]);
-				cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject_filtered[EL] - cb_parms->corrected_gyro_readings[EL];
+				//cb_parms->axis_errors[EL] = (int16)CLAMP_TO_BOUNDS(((int32)cb_parms->rate_cmd_inject_filtered[EL] - (int32)cb_parms->corrected_gyro_readings[EL]), INT16_MIN, INT16_MAX);
         	}
 
 			// Set up the next rate loop pass to be the roll error computation pass
@@ -138,7 +138,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 				cb_parms->rate_cmd_inject_filtered[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[ROLL] - cb_parms->rate_cmd_inject_filtered[ROLL]);
 				cb_parms->setpoints[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL];
 				cb_parms->process_vars[ROLL] = cb_parms->corrected_gyro_readings[ROLL];
-				//cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
+				//cb_parms->axis_errors[ROLL] = (int16)CLAMP_TO_BOUNDS(((int32)cb_parms->rate_cmd_inject_filtered[ROLL] - (int32)cb_parms->corrected_gyro_readings[ROLL]), INT16_MIN, INT16_MAX);
         	}
 
 			// Set up the next rate loop pass to be the torque command output pass
