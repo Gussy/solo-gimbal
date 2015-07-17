@@ -18,7 +18,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_EL_P].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[EL].integralCumulative = 0.0;
-        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        rate_pid_loop_float[EL].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_EL_P].param;
         rate_pid_loop_float[EL].gainP = float_converter.float_val;
@@ -28,7 +28,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_EL_I].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[EL].integralCumulative = 0.0;
-        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        rate_pid_loop_float[EL].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_EL_I].param;
         rate_pid_loop_float[EL].gainI = float_converter.float_val;
@@ -38,7 +38,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_EL_D].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[EL].integralCumulative = 0.0;
-        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        rate_pid_loop_float[EL].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_EL_D].param;
         rate_pid_loop_float[EL].gainD = float_converter.float_val;
@@ -48,7 +48,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_EL_WINDUP].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[EL].integralCumulative = 0.0;
-        rate_pid_loop_float[EL].errorPrevious = 0.0;
+        rate_pid_loop_float[EL].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_EL_WINDUP].param;
         rate_pid_loop_float[EL].integralMax = float_converter.float_val;
@@ -59,7 +59,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_AZ_P].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[AZ].integralCumulative = 0.0;
-        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        rate_pid_loop_float[AZ].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_P].param;
         rate_pid_loop_float[AZ].gainP = float_converter.float_val;
@@ -69,7 +69,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_AZ_I].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[AZ].integralCumulative = 0.0;
-        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        rate_pid_loop_float[AZ].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_I].param;
         rate_pid_loop_float[AZ].gainI = float_converter.float_val;
@@ -79,7 +79,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_AZ_D].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[AZ].integralCumulative = 0.0;
-        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        rate_pid_loop_float[AZ].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_D].param;
         rate_pid_loop_float[AZ].gainD = float_converter.float_val;
@@ -89,7 +89,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_AZ_WINDUP].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[AZ].integralCumulative = 0.0;
-        rate_pid_loop_float[AZ].errorPrevious = 0.0;
+        rate_pid_loop_float[AZ].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_WINDUP].param;
         rate_pid_loop_float[AZ].integralMax = float_converter.float_val;
@@ -100,7 +100,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_RL_P].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[ROLL].integralCumulative = 0.0;
-        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        rate_pid_loop_float[ROLL].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_RL_P].param;
         rate_pid_loop_float[ROLL].gainP = float_converter.float_val;
@@ -110,7 +110,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_RL_I].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[ROLL].integralCumulative = 0.0;
-        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        rate_pid_loop_float[ROLL].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_RL_I].param;
         rate_pid_loop_float[ROLL].gainI = float_converter.float_val;
@@ -120,7 +120,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_RL_D].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[ROLL].integralCumulative = 0.0;
-        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        rate_pid_loop_float[ROLL].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_RL_D].param;
         rate_pid_loop_float[ROLL].gainD = float_converter.float_val;
@@ -130,7 +130,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     if (*(param_set[CAND_PID_RATE_RL_WINDUP].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[ROLL].integralCumulative = 0.0;
-        rate_pid_loop_float[ROLL].errorPrevious = 0.0;
+        rate_pid_loop_float[ROLL].processVarPrevious = 0.0;
         // Load the new gain
         float_converter.uint32_val = param_set[CAND_PID_RATE_RL_WINDUP].param;
         rate_pid_loop_float[ROLL].integralMax = float_converter.float_val;

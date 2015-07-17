@@ -74,11 +74,15 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
         		} else {
         			pos_gain = POS_LOOP_GAIN_1;
         		}
-        		cb_parms->axis_errors[AZ] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[AZ];
+        		cb_parms->setpoints[AZ] = (pos_gain * encoder_error);
+        		cb_parms->process_vars[AZ] = cb_parms->corrected_gyro_readings[AZ];
+        		//cb_parms->axis_errors[AZ] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[AZ];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
 				cb_parms->rate_cmd_inject_filtered[AZ] = cb_parms->rate_cmd_inject_filtered[AZ]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[AZ] - cb_parms->rate_cmd_inject_filtered[AZ]);
-				cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject_filtered[AZ] - cb_parms->corrected_gyro_readings[AZ];
+				cb_parms->setpoints[AZ] = cb_parms->rate_cmd_inject_filtered[AZ];
+				cb_parms->process_vars[AZ] = cb_parms->corrected_gyro_readings[AZ];
+				//cb_parms->axis_errors[AZ] = cb_parms->rate_cmd_inject_filtered[AZ] - cb_parms->corrected_gyro_readings[AZ];
         	}
 
         	// Set up the next rate loop pass to be the el error computation pass
@@ -98,10 +102,14 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 				} else {
 					pos_gain = POS_LOOP_GAIN_1;
 				}
-				cb_parms->axis_errors[EL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[EL];
+				cb_parms->setpoints[EL] = (pos_gain * encoder_error);
+				cb_parms->process_vars[EL] = cb_parms->corrected_gyro_readings[EL];
+				//cb_parms->axis_errors[EL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[EL];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
-				cb_parms->rate_cmd_inject_filtered[EL] = cb_parms->rate_cmd_inject_filtered[EL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[EL] - cb_parms->rate_cmd_inject_filtered[EL]);
+        		cb_parms->setpoints[EL] = cb_parms->rate_cmd_inject_filtered[EL];
+        		cb_parms->process_vars[EL] = cb_parms->corrected_gyro_readings[EL];
+				//cb_parms->rate_cmd_inject_filtered[EL] = cb_parms->rate_cmd_inject_filtered[EL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[EL] - cb_parms->rate_cmd_inject_filtered[EL]);
 				cb_parms->axis_errors[EL] = cb_parms->rate_cmd_inject_filtered[EL] - cb_parms->corrected_gyro_readings[EL];
         	}
 
@@ -122,11 +130,15 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 				} else {
 					pos_gain = POS_LOOP_GAIN_1;
 				}
-				cb_parms->axis_errors[ROLL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[ROLL];
+				cb_parms->setpoints[ROLL] = (pos_gain * encoder_error);
+				cb_parms->process_vars[ROLL] = cb_parms->corrected_gyro_readings[ROLL];
+				//cb_parms->axis_errors[ROLL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[ROLL];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
 				cb_parms->rate_cmd_inject_filtered[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[ROLL] - cb_parms->rate_cmd_inject_filtered[ROLL]);
-				cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
+				cb_parms->setpoints[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL];
+				cb_parms->process_vars[ROLL] = cb_parms->corrected_gyro_readings[ROLL];
+				//cb_parms->axis_errors[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL] - cb_parms->corrected_gyro_readings[ROLL];
         	}
 
 			// Set up the next rate loop pass to be the torque command output pass
@@ -138,13 +150,13 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 
         	// Compute the new motor torque commands
             if ((cb_parms->encoder_readings[EL] < EL_DETUNE_LIMIT_NEG) || (cb_parms->encoder_readings[EL] > EL_DETUNE_LIMIT_POS)) {
-                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->axis_errors[AZ], GainDetuneCoefficients[AZ][0], GainDetuneCoefficients[AZ][1], GainDetuneCoefficients[AZ][2]) * TorqueSignMap[AZ];
-                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL], GainDetuneCoefficients[EL][0], GainDetuneCoefficients[EL][1], GainDetuneCoefficients[EL][2]) * TorqueSignMap[EL];
-                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL], GainDetuneCoefficients[ROLL][0], GainDetuneCoefficients[ROLL][1], GainDetuneCoefficients[ROLL][2]) * TorqueSignMap[ROLL];
+                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], GainDetuneCoefficients[AZ][0], GainDetuneCoefficients[AZ][1], GainDetuneCoefficients[AZ][2]) * TorqueSignMap[AZ];
+                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], GainDetuneCoefficients[EL][0], GainDetuneCoefficients[EL][1], GainDetuneCoefficients[EL][2]) * TorqueSignMap[EL];
+                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], GainDetuneCoefficients[ROLL][0], GainDetuneCoefficients[ROLL][1], GainDetuneCoefficients[ROLL][2]) * TorqueSignMap[ROLL];
             } else {
-                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->axis_errors[AZ], 1.0, 1.0, 1.0) * TorqueSignMap[AZ];
-                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL], 1.0, 1.0, 1.0) * TorqueSignMap[EL];
-                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
+                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], 1.0, 1.0, 1.0) * TorqueSignMap[AZ];
+                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], 1.0, 1.0, 1.0) * TorqueSignMap[EL];
+                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
             }
 
             // Saturate torque command against configured limits if necessary
