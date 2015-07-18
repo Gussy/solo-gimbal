@@ -39,6 +39,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 {
     static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
     static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
+    float torque_limit = cb_parms->max_allowed_torque != 0?cb_parms->max_allowed_torque : 32767.0;
 
     switch (cb_parms->rate_loop_pass) {
     case READ_GYRO_PASS:
@@ -162,33 +163,12 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             // Run PID rate loops
 
         	// Compute the new motor torque commands
-            cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], 1.0, 1.0, 1.0) * TorqueSignMap[AZ];
-            cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], 1.0, 1.0, 1.0) * TorqueSignMap[EL];
-            cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
+            cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], torque_limit) * TorqueSignMap[AZ];
+            cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], torque_limit) * TorqueSignMap[EL];
+            cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], torque_limit) * TorqueSignMap[ROLL];
 
             cb_parms->motor_torques[ROLL] = update_filt2p(&(roll_torque_filt_params[0]), &(roll_torque_filt_state[0]), cb_parms->motor_torques[ROLL]);
             cb_parms->motor_torques[ROLL] = update_filt2p(&(roll_torque_filt_params[1]), &(roll_torque_filt_state[1]), cb_parms->motor_torques[ROLL]);
-
-            // Saturate torque command against configured limits if necessary
-            if (cb_parms->max_allowed_torque != 0) {
-            	if (cb_parms->motor_torques[AZ] < -cb_parms->max_allowed_torque) {
-            		cb_parms->motor_torques[AZ] = -cb_parms->max_allowed_torque;
-            	} else if (cb_parms->motor_torques[AZ] > cb_parms->max_allowed_torque) {
-            		cb_parms->motor_torques[AZ] = cb_parms->max_allowed_torque;
-            	}
-
-            	if (cb_parms->motor_torques[EL] < -cb_parms->max_allowed_torque) {
-					cb_parms->motor_torques[EL] = -cb_parms->max_allowed_torque;
-				} else if (cb_parms->motor_torques[EL] > cb_parms->max_allowed_torque) {
-					cb_parms->motor_torques[EL] = cb_parms->max_allowed_torque;
-				}
-
-            	if (cb_parms->motor_torques[ROLL] < -cb_parms->max_allowed_torque) {
-					cb_parms->motor_torques[ROLL] = -cb_parms->max_allowed_torque;
-				} else if (cb_parms->motor_torques[ROLL] > cb_parms->max_allowed_torque) {
-					cb_parms->motor_torques[ROLL] = cb_parms->max_allowed_torque;
-				}
-            }
 
             // Accumulate torque commands for telemetry (make sure to do it after saturation against limits)
 			cb_parms->accumulated_torque_cmds[AZ] += cb_parms->motor_torques[AZ];

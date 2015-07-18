@@ -9,9 +9,9 @@ PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 }
 };
 
-float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float p_detune_ratio, float i_detune_ratio, float d_detune_ratio)
+float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float output_limit)
 {
-    float pTerm, dTerm, iTerm, result;
+    float pTerm, dTerm;
     float deltaPv;
     float output;
     float error = setpoint - process_var;
@@ -22,41 +22,32 @@ float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float 
     PIDInfo = &rate_pid_loop_float[axis];
 
     // Calcuate proportional gain, gain * current error
-    pTerm = (PIDInfo->gainP * p_detune_ratio) * error;
-
-    // Calculate integral gain, gain * accumulation of historical error
-    PIDInfo->integralCumulative += error;
-
-    // Limit accumulated integral error to windup limits
-    if (PIDInfo->integralCumulative > PIDInfo->integralMax) {
-        PIDInfo->integralCumulative = PIDInfo->integralMax;
-    } else if (PIDInfo->integralCumulative < PIDInfo->integralMin) {
-        PIDInfo->integralCumulative = PIDInfo->integralMin;
-    }
-
-    iTerm = (PIDInfo->gainI * i_detune_ratio) * PIDInfo->integralCumulative;
+    pTerm = PIDInfo->gainP * error;
 
     // Calculate derivative gain, gain * difference in error
     if(PIDInfo->gainD) {
         deltaPv = process_var - PIDInfo->processVarPrevious;
         PIDInfo->deltaPvFilt += (deltaPv-PIDInfo->deltaPvFilt) * PIDInfo->dTermAlpha;
 
-        dTerm = -deltaPv * (PIDInfo->gainD * d_detune_ratio);
+        dTerm = -deltaPv * PIDInfo->gainD;
     } else  {
         dTerm = 0;
     }
     PIDInfo->processVarPrevious = process_var;
 
-    // Calculate result, sum of three individual gain terms
-    result = (pTerm + iTerm + dTerm);
+    output = (pTerm + PIDInfo->integralCumulative + dTerm);
+
+    if((output <= output_limit && output >= -output_limit) || (output > output_limit && error < 0) || (output < -output_limit && error > 0)) {
+        float i_increment = error * PIDInfo->gainI;
+        PIDInfo->integralCumulative += i_increment;
+        output += i_increment;
+    }
 
     // Limit output
-    if (result > OUTPUT_LIMIT_UPPER_FLOAT) {
-        output = OUTPUT_LIMIT_UPPER_FLOAT;
-    } else if (result < OUTPUT_LIMIT_LOWER_FLOAT) {
-        output = OUTPUT_LIMIT_LOWER_FLOAT;
-    } else {
-        output = result;
+    if (output > output_limit) {
+        output = output_limit;
+    } else if (output < -output_limit) {
+        output = -output_limit;
     }
 
     return(output);
