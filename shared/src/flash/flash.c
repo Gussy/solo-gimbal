@@ -138,6 +138,30 @@ int erase_our_flash()
 	return 1;
 }
 
+int erase_param_flash()
+{
+    Uint16  Status;
+    Uint16  VersionHex;     // Version of the API in decimal encoded hex
+    EALLOW;
+    Flash_CPUScaleFactor = SCALE_FACTOR;
+    EDIS;
+
+    VersionHex = Flash_APIVersionHex();
+    if(VersionHex != 0x0100) {
+        // Unexpected API version
+        // Make a decision based on this info.
+        asm("    ESTOP0");
+    }
+
+    Example_CsmUnlock();
+    Status = Flash_Erase(SECTORH, &FlashStatus);
+    if (Status != STATUS_SUCCESS) {
+        return -1;
+    }
+
+    return 1;
+}
+
 int write_flash(void)
 {
 	Uint16  i;
@@ -388,4 +412,17 @@ int init_flash(void)
 	}
 
 	return -1;
+}
+
+Uint16 compute_flash_params_checksum()
+{
+	Uint16 checksum = 0;
+	Uint16 flash_params_num_words = sizeof(flash_params);
+	Uint16* flash_params_ptr = (Uint16*)(&flash_params);
+	int i;
+	for (i = 0; i < flash_params_num_words; i++) {
+		checksum += flash_params_ptr[i];
+	}
+
+	return checksum;
 }

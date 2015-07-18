@@ -11,13 +11,17 @@
 #include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
 #include "hardware/watchdog.h"
+#include "flash/flash.h"
 #include "version_git.h"
-#include <stdio.h>
 #include "hardware/watchdog.h"
+#include "hardware/encoder.h"
+
+#include <stdio.h>
 
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal();
+static void handle_full_reset_gimbal(void);
 static void handle_request_axis_calibration(MotorDriveParms* md_parms);
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
@@ -27,7 +31,7 @@ void send_cmd_long_ack(uint16_t cmd_id, uint8_t result);
 mavlink_system_t mavlink_system;
 uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
 
-unsigned char gimbal_sysid = 1;
+unsigned char gimbal_sysid = 0;
 
 int messages_received = 0;
 int heartbeats_received = 0;
@@ -46,6 +50,11 @@ void init_mavlink() {
 
 	// Initialize the default parameters for the parameter interface
 	init_default_mavlink_params();
+}
+
+void update_mavlink_sysid(Uint8 new_sysid)
+{
+	gimbal_sysid = new_sysid;
 }
 
 void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
@@ -73,7 +82,6 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 		// reset other axis
 		cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RESET);
 		// erase our flash
-		extern int erase_our_flash();
 		if (erase_our_flash() < 0) {
 			// something went wrong... but what do I do?
 		}
@@ -94,9 +102,6 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			messages_received++;
 			switch (received_msg.msgid) {
 			case MAVLINK_MSG_ID_HEARTBEAT:
-				if (heartbeats_received ==0){ // Grab the compid from the first heartbeat message received
-					gimbal_sysid = received_msg.sysid;
-				}				
 				heartbeats_received++;
 				break;
 
@@ -139,6 +144,17 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 			    case 42503:
 			    	handle_request_axis_calibration(md_parms);
 			    	break;
+			    case 42505:
+			        // Check all the params have the right keys
+			        if(mavlink_msg_command_long_get_param1(&received_msg) == 42.0 &&
+			                mavlink_msg_command_long_get_param2(&received_msg) == 49.0 &&
+			                mavlink_msg_command_long_get_param3(&received_msg) == 12.0 &&
+			                mavlink_msg_command_long_get_param4(&received_msg) == 26.0 &&
+			                mavlink_msg_command_long_get_param5(&received_msg) == 64.0 &&
+			                mavlink_msg_command_long_get_param6(&received_msg) == 85.0 &&
+			                mavlink_msg_command_long_get_param7(&received_msg) == 42.0) {
+			            handle_full_reset_gimbal();
+			        }
 			    default:
 					break;
 			    }
@@ -152,9 +168,10 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 
 void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder)
 {
-    latest_encoder_telemetry[AZ] = ENCODER_FORMAT_TO_RAD(az_encoder);
-    latest_encoder_telemetry[EL] = ENCODER_FORMAT_TO_RAD(el_encoder);
-    latest_encoder_telemetry[ROLL] = ENCODER_FORMAT_TO_RAD(rl_encoder);
+	// Undo joint angle offset cal here (copter applies its own joint offset angle correction, don't want to do it twice)
+    latest_encoder_telemetry[AZ] = ENCODER_FORMAT_TO_RAD(az_encoder + getAxisJointOffset(AZ));
+    latest_encoder_telemetry[EL] = ENCODER_FORMAT_TO_RAD(el_encoder + getAxisJointOffset(EL));
+    latest_encoder_telemetry[ROLL] = ENCODER_FORMAT_TO_RAD(rl_encoder + getAxisJointOffset(ROLL));
 
     telem_received |= ENCODER_TELEM_RECEIVED;
 
@@ -280,9 +297,9 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
         Uint32 rate_cmds[3] = {0, 0, 0};
 
         // Copter mapping is X roll, Y el, Z az
-        rate_cmds[EL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.demanded_rate_z, (float)INT16_MIN, (float)INT16_MAX));
-        rate_cmds[AZ] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.demanded_rate_y, (float)INT16_MIN, (float)INT16_MAX));
-        rate_cmds[ROLL] = (int16)RAD_S_TO_GYRO_FORMAT(CLAMP_TO_BOUNDS(decoded_msg.demanded_rate_x, (float)INT16_MIN, (float)INT16_MAX));
+        rate_cmds[EL] = (int16)CLAMP_TO_BOUNDS(RAD_S_TO_GYRO_FORMAT(decoded_msg.demanded_rate_z), (float)INT16_MIN, (float)INT16_MAX);
+        rate_cmds[AZ] = (int16)CLAMP_TO_BOUNDS(RAD_S_TO_GYRO_FORMAT(decoded_msg.demanded_rate_y), (float)INT16_MIN, (float)INT16_MAX);
+        rate_cmds[ROLL] = (int16)CLAMP_TO_BOUNDS(RAD_S_TO_GYRO_FORMAT(decoded_msg.demanded_rate_x), (float)INT16_MIN, (float)INT16_MAX);
 
         cand_tx_multi_param(CAND_ID_EL, rate_cmd_pids, rate_cmds, 3);
 
@@ -316,6 +333,22 @@ static void handle_reset_gimbal()
         watchdog_reset();
 }
 
+static void handle_full_reset_gimbal(void)
+{
+    // stop this axis
+    power_down_motor();
+
+    // reset other axis
+    cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
+
+    // erase program and param flash
+    erase_our_flash();
+    erase_param_flash();
+
+    // reset now
+    watchdog_immediate_reset();
+}
+
 static void handle_request_axis_calibration(MotorDriveParms* md_parms)
 {
     // Make sure we're in the waiting to calibrate state before commanding calibration
@@ -342,12 +375,10 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
 void send_mavlink_gimbal_feedback() {
 	static mavlink_message_t feedback_msg;
 
-	uint8_t target_id = get_broadcast_msgs_state()?MAV_COMP_ID_ALL:gimbal_sysid;
-
 	// Copter mapping is X roll, Y el, Z az
 	mavlink_msg_gimbal_report_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL,
 			&feedback_msg,
-			target_id,
+			gimbal_sysid, // We assume the system we're talking to has the same sysid as us (or we're broadcasting)
 			0,
 			0.01f,
 			latest_gyro_telemetry[ROLL],
