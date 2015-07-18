@@ -28,6 +28,7 @@ OBJS = \
     $(PROJ_ROOT)/Source/control/average_power_filter.o 									\
     $(PROJ_ROOT)/Source/control/gyro_kinematics_correction.o 							\
     $(PROJ_ROOT)/Source/control/PID.o 													\
+    $(PROJ_ROOT)/Source/control/filt2p.o 													\
     $(PROJ_ROOT)/Source/control/rate_loops.o 											\
     $(PROJ_ROOT)/Source/control/running_average_filter.o 								\
     $(SHARED_ROOT)/src/flash/Example_Flash2806x_CsmKeys.o 								\
