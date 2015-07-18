@@ -44,12 +44,6 @@ def clear_comutation_params(link):
     parameters.mavset(link.file, "GMB_PITCH_ICEPT", 0.0, 3)
     commit_to_flash(link)
 
-def message_brodcasting(link, broadcast=True):
-    if broadcast:
-        set_param(link, "GMB_BROADCAST", 1)
-    else:
-        set_param(link, "GMB_BROADCAST", 0)
-
 def set_offsets(link, kind, offsets):
     if offsets and kind:
         set_param(link, "GMB_OFF_" + kind + "_X", offsets.x)

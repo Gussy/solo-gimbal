@@ -7,8 +7,7 @@ from pymavlink.rotmat import Vector3
 import setup_mavlink
 import math
 
-EXPECTED_VERSION = '0.19.0'
-EXPECTED_BROADCAST = 0
+EXPECTED_VERSION = '0.26.0'
 
 EXPECTED_SERIAL_NUMBER_START = 'GB11A'
 EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
@@ -53,15 +52,15 @@ EXPECTED_ACC_OFFSET_Z_MAX = 2.0
 EXPECTED_GYRO = 0.05
 
 GAIN_TOLERANCE = 1e-6
-EXPECTED_PITCH_P = 3.00
-EXPECTED_PITCH_I = 0.50
-EXPECTED_PITCH_D = 0.10
-EXPECTED_ROLL_P = 5.00
-EXPECTED_ROLL_I = 0.50
-EXPECTED_ROLL_D = 0.10
-EXPECTED_YAW_P = 0.80
-EXPECTED_YAW_I = 0.30
-EXPECTED_YAW_D = 7.00
+EXPECTED_PITCH_P = 1.250000
+EXPECTED_PITCH_I = 0.250000
+EXPECTED_PITCH_D = 0.000000
+EXPECTED_ROLL_P = 8.000000
+EXPECTED_ROLL_I = 0.350000
+EXPECTED_ROLL_D = 0.000000
+EXPECTED_YAW_P = 4.500000
+EXPECTED_YAW_I = 0.500000
+EXPECTED_YAW_D = 0.000000
 EXPECTED_K_RATE = 10.0
 
 class Results:
@@ -315,8 +314,7 @@ def restore_defaults(link):
     parameters.mavset(link.file, "GMB_YAW_P", EXPECTED_YAW_P);
     parameters.mavset(link.file, "GMB_YAW_I", EXPECTED_YAW_I);
     parameters.mavset(link.file, "GMB_YAW_D", EXPECTED_YAW_D);
-    parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);
-    parameters.mavset(link.file, "GMB_BROADCAST", EXPECTED_BROADCAST);    
+    parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);   
     setup_param.commit_to_flash(link)
     setup_mavlink.reset_gimbal(link)
     return True

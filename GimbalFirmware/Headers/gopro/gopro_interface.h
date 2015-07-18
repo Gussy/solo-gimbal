@@ -2,6 +2,7 @@
 #define GOPRO_INTERFACE_H_
 
 #include "hardware/i2c.h"
+#include "gopro/gopro_hero_common.h"
 #include "PM_Sensorless-Settings.h"
 
 #include <stdbool.h>
@@ -12,7 +13,6 @@
 #define GP_STATE_MACHINE_PERIOD_MS 3
 #define GP_PWRON_TIME_MS 120 // Spec says 100ms, but I'm making it a little longer here just in case, and so it's an even multiple of our state machine poll period
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
-#define GP_INIT_TIMEOUT_MS 3000
 #define GP_PROTOCOL_VERSION 0x00
 #define GP_MAVLINK_HEARTBEAT_INTERVAL 1000
 #define GP_I2C_EEPROM_NUMBYTES 16
@@ -45,65 +45,29 @@ typedef enum {
 } GPPowerStatus;
 
 typedef enum {
-    GP_CMD_UNKNOWN,
-    GP_CMD_SUCCESSFUL,
-    GP_CMD_SEND_CMD_START_TIMEOUT,
-    GP_CMD_SEND_CMD_COMPLETE_TIMEOUT,
-    GP_CMD_GET_RESPONSE_START_TIMEOUT,
-    GP_CMD_GET_RESPONSE_COMPLETE_TIMEOUT,
-    GP_CMD_GET_CMD_COMPLETE_TIMEOUT,
-    GP_CMD_SEND_RESPONSE_START_TIMEOUT,
-    GP_CMD_SEND_RESPONSE_COMPLETE_TIMEOUT,
-    GP_CMD_PREEMPTED,
-    GP_CMD_RECEIVED_DATA_OVERFLOW,
-    GP_CMD_RECEIVED_DATA_UNDERFLOW
-} GPCmdResult;
-
-typedef enum {
-    GP_CMD_STATUS_SUCCESS = 0,
-    GP_CMD_STATUS_FAILURE = 1,
-	GP_CMD_STATUS_UNKNOWN = 2
-} GPCmdStatus;
-
-typedef enum {
     GP_HEARTBEAT_DISCONNECTED = 0,
     GP_HEARTBEAT_INCOMPATIBLE = 1,
     GP_HEARTBEAT_CONNECTED = 2,
     GP_HEARTBEAT_RECORDING = 3
 } GPHeartbeatStatus;
 
-typedef enum {
-	GP_REQUEST_NONE,
-	GP_REQUEST_GET,
-	GP_REQUEST_SET
-} GPRequestType;
+typedef enum{
+    GP_MODEL_HERO3P,
+    GP_MODEL_HERO4,
+    GP_MODEL_UNKNOWN
+} GPModel;
 
-typedef struct {
-    char cmd[2];
-    Uint8 cmd_parm;
-} GPCmd;
+// XXX: what should this actually be?
+#define GP_MAX_RESP_LEN     32
 
+// represents a command/response transaction
 typedef struct {
-    char cmd[2];
-    GPCmdStatus status; // as reported by the camera
-    Uint8 value;
-    GPCmdResult result; // of the i2c transaction itself
-} GPCmdResponse;
-
-typedef struct {
-    Uint8 cmd_id;
-    Uint8 value;
-} GPSetRequest;
-
-typedef struct {
-    Uint8 cmd_id;
-    Uint8 value;
-} GPGetResponse;
-
-typedef struct {
-    Uint8 cmd_id;
-    Uint8 result;
-} GPSetResponse;
+    GPRequestType reqtype;      // what kind of transaction is this
+    uint16_t mav_cmd;           // which msg was set/gotten (see GOPRO_COMMAND)
+    uint16_t status;            // was this set/get operation successful (see ...)
+    uint16_t payload[GP_MAX_RESP_LEN];  // response payload
+    uint16_t len;                       // response payload len
+} gp_transaction_t;
 
 void init_gp_interface();
 void gp_interface_state_machine();
@@ -111,10 +75,16 @@ GPPowerStatus gp_get_power_status();
 bool gp_request_power_on();
 bool gp_request_power_off();
 bool gp_send_command(const GPCmd* cmd);
+bool gp_send_cmd(const uint16_t* cmd, uint16_t len);
 bool gp_ready_for_cmd();
 void gp_write_eeprom();
 
 void gp_on_slave_address(bool addressed_as_tx);
+
+uint16_t gp_transaction_cmd();
+void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
+bool gp_transaction_result_available();
+bool gp_get_completed_transaction(gp_transaction_t **rsp);
 
 inline void gp_assert_intr() {
     GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;
@@ -125,15 +95,11 @@ inline void gp_deassert_intr(void) {
 }
 
 bool gp_new_heartbeat_available();
-bool gp_new_get_response_available();
-bool gp_new_set_response_available();
 
 int gp_get_request(Uint8 cmd_id);
 int gp_set_request(GPSetRequest* request);
 
 GPHeartbeatStatus gp_heartbeat_status();
-GPGetResponse gp_last_get_response();
-GPSetResponse gp_last_set_response();
 
 void gp_enable_hb_interface();
 void gp_disable_hb_interface();

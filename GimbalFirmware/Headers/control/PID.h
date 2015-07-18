@@ -50,12 +50,13 @@ typedef struct {
     float   gainTotal;
     float   integralCumulative;
     float	dTermAlpha;
-    float   errorPrevious;
+    float   processVarPrevious;
+    float   deltaPvFilt;
 } PIDData_Float;
 
 extern PIDData_Float rate_pid_loop_float[AXIS_CNT];
 
-float UpdatePID_Float(GimbalAxis axis, float error, float p_detune_ratio, float i_detune_ratio, float d_detune_ratio);
+float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float p_detune_ratio, float i_detune_ratio, float d_detune_ratio);
 
 
 #endif /* PID_H_ */

@@ -11,8 +11,10 @@ static const double RATE_UPSAMPLING_ALPHA = 0.1;
 static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);
 static void SendGyroTelemetry(int32 az_gyro, int32 el_gyro, int32 rl_gyro);
 static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
+static void SendTorqueCmdTelemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);
 
 Uint16 telemetry_decimation_count = 0;
+Uint16 torque_cmd_telemetry_decimation_count = 5; // Start this at 5 so it's staggered with respect to the rest of the telemetry
 
 #define POS_LOOP_GAIN_1 1
 #define POS_LOOP_GAIN_2 2
@@ -74,11 +76,15 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
         		} else {
         			pos_gain = POS_LOOP_GAIN_1;
         		}
-        		cb_parms->axis_errors[AZ] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[AZ];
+        		cb_parms->setpoints[AZ] = (pos_gain * encoder_error);
+        		cb_parms->process_vars[AZ] = cb_parms->corrected_gyro_readings[AZ];
+        		//cb_parms->axis_errors[AZ] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[AZ];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
 				cb_parms->rate_cmd_inject_filtered[AZ] = cb_parms->rate_cmd_inject_filtered[AZ]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[AZ] - cb_parms->rate_cmd_inject_filtered[AZ]);
-				cb_parms->axis_errors[AZ] = (int16)CLAMP_TO_BOUNDS(((int32)cb_parms->rate_cmd_inject_filtered[AZ] - (int32)cb_parms->corrected_gyro_readings[AZ]), INT16_MIN, INT16_MAX);
+				cb_parms->setpoints[AZ] = cb_parms->rate_cmd_inject_filtered[AZ];
+				cb_parms->process_vars[AZ] = cb_parms->corrected_gyro_readings[AZ];
+				//cb_parms->axis_errors[AZ] = (int16)CLAMP_TO_BOUNDS(((int32)cb_parms->rate_cmd_inject_filtered[AZ] - (int32)cb_parms->corrected_gyro_readings[AZ]), INT16_MIN, INT16_MAX);
         	}
 
         	// Set up the next rate loop pass to be the el error computation pass
@@ -98,11 +104,15 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 				} else {
 					pos_gain = POS_LOOP_GAIN_1;
 				}
-				cb_parms->axis_errors[EL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[EL];
+				cb_parms->setpoints[EL] = (pos_gain * encoder_error);
+				cb_parms->process_vars[EL] = cb_parms->corrected_gyro_readings[EL];
+				//cb_parms->axis_errors[EL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[EL];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
 				cb_parms->rate_cmd_inject_filtered[EL] = cb_parms->rate_cmd_inject_filtered[EL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[EL] - cb_parms->rate_cmd_inject_filtered[EL]);
-				cb_parms->axis_errors[EL] = (int16)CLAMP_TO_BOUNDS(((int32)cb_parms->rate_cmd_inject_filtered[EL] - (int32)cb_parms->corrected_gyro_readings[EL]), INT16_MIN, INT16_MAX);
+        		cb_parms->setpoints[EL] = cb_parms->rate_cmd_inject_filtered[EL];
+        		cb_parms->process_vars[EL] = cb_parms->corrected_gyro_readings[EL];
+				//cb_parms->axis_errors[EL] = (int16)CLAMP_TO_BOUNDS(((int32)cb_parms->rate_cmd_inject_filtered[EL] - (int32)cb_parms->corrected_gyro_readings[EL]), INT16_MIN, INT16_MAX);
         	}
 
 			// Set up the next rate loop pass to be the roll error computation pass
@@ -122,11 +132,15 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 				} else {
 					pos_gain = POS_LOOP_GAIN_1;
 				}
-				cb_parms->axis_errors[ROLL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[ROLL];
+				cb_parms->setpoints[ROLL] = (pos_gain * encoder_error);
+				cb_parms->process_vars[ROLL] = cb_parms->corrected_gyro_readings[ROLL];
+				//cb_parms->axis_errors[ROLL] = (pos_gain * encoder_error) - cb_parms->corrected_gyro_readings[ROLL];
         	} else {
         		// low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
 				cb_parms->rate_cmd_inject_filtered[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL]	+ RATE_UPSAMPLING_ALPHA * (cb_parms->rate_cmd_inject[ROLL] - cb_parms->rate_cmd_inject_filtered[ROLL]);
-				cb_parms->axis_errors[ROLL] = (int16)CLAMP_TO_BOUNDS(((int32)cb_parms->rate_cmd_inject_filtered[ROLL] - (int32)cb_parms->corrected_gyro_readings[ROLL]), INT16_MIN, INT16_MAX);
+				cb_parms->setpoints[ROLL] = cb_parms->rate_cmd_inject_filtered[ROLL];
+				cb_parms->process_vars[ROLL] = cb_parms->corrected_gyro_readings[ROLL];
+				//cb_parms->axis_errors[ROLL] = (int16)CLAMP_TO_BOUNDS(((int32)cb_parms->rate_cmd_inject_filtered[ROLL] - (int32)cb_parms->corrected_gyro_readings[ROLL]), INT16_MIN, INT16_MAX);
         	}
 
 			// Set up the next rate loop pass to be the torque command output pass
@@ -137,15 +151,9 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             // Run PID rate loops
 
         	// Compute the new motor torque commands
-            if ((cb_parms->encoder_readings[EL] < EL_DETUNE_LIMIT_NEG) || (cb_parms->encoder_readings[EL] > EL_DETUNE_LIMIT_POS)) {
-                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->axis_errors[AZ], GainDetuneCoefficients[AZ][0], GainDetuneCoefficients[AZ][1], GainDetuneCoefficients[AZ][2]) * TorqueSignMap[AZ];
-                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL], GainDetuneCoefficients[EL][0], GainDetuneCoefficients[EL][1], GainDetuneCoefficients[EL][2]) * TorqueSignMap[EL];
-                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL], GainDetuneCoefficients[ROLL][0], GainDetuneCoefficients[ROLL][1], GainDetuneCoefficients[ROLL][2]) * TorqueSignMap[ROLL];
-            } else {
-                cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->axis_errors[AZ], 1.0, 1.0, 1.0) * TorqueSignMap[AZ];
-                cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->axis_errors[EL], 1.0, 1.0, 1.0) * TorqueSignMap[EL];
-                cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->axis_errors[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
-            }
+            cb_parms->motor_torques[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], 1.0, 1.0, 1.0) * TorqueSignMap[AZ];
+            cb_parms->motor_torques[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], 1.0, 1.0, 1.0) * TorqueSignMap[EL];
+            cb_parms->motor_torques[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], 1.0, 1.0, 1.0) * TorqueSignMap[ROLL];
 
             // Saturate torque command against configured limits if necessary
             if (cb_parms->max_allowed_torque != 0) {
@@ -168,6 +176,12 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 				}
             }
 
+            // Accumulate torque commands for telemetry (make sure to do it after saturation against limits)
+			cb_parms->accumulated_torque_cmds[AZ] += cb_parms->motor_torques[AZ];
+			cb_parms->accumulated_torque_cmds[EL] += cb_parms->motor_torques[EL];
+			cb_parms->accumulated_torque_cmds[ROLL] += cb_parms->motor_torques[ROLL];
+			cb_parms->num_torque_cmds_accumulated++;
+
             // Send out motor torques
             MDBSendTorques(cb_parms->motor_torques[AZ], cb_parms->motor_torques[ROLL]);
 
@@ -177,9 +191,15 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 
             // Send encoder, gyro, and accelerometer telemetry at a decimated rate of 100Hz
             if (++telemetry_decimation_count >= TELEMETRY_DECIMATION_LIMIT) {
-                SendEncoderTelemetry(cb_parms->encoder_readings[AZ], cb_parms->encoder_readings[EL], cb_parms->encoder_readings[ROLL]);
-                SendGyroTelemetry(cb_parms->integrated_raw_gyro_readings[AZ], cb_parms->integrated_raw_gyro_readings[EL], cb_parms->integrated_raw_gyro_readings[ROLL]);
-                SendAccelTelemetry(cb_parms->integrated_raw_accel_readings[AZ], cb_parms->integrated_raw_accel_readings[EL], cb_parms->integrated_raw_accel_readings[ROLL]);
+            	SendEncoderTelemetry(cb_parms->encoder_readings[AZ],
+					cb_parms->encoder_readings[EL],
+					cb_parms->encoder_readings[ROLL]);
+                SendGyroTelemetry(cb_parms->integrated_raw_gyro_readings[AZ],
+					cb_parms->integrated_raw_gyro_readings[EL],
+					cb_parms->integrated_raw_gyro_readings[ROLL]);
+                SendAccelTelemetry(cb_parms->integrated_raw_accel_readings[AZ],
+					cb_parms->integrated_raw_accel_readings[EL],
+					cb_parms->integrated_raw_accel_readings[ROLL]);
 
                 // Zero out the gyro integrators for the next cycle
                 cb_parms->integrated_raw_gyro_readings[AZ] = 0;
@@ -192,6 +212,22 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
                 cb_parms->integrated_raw_accel_readings[ROLL] = 0;
 
                 telemetry_decimation_count = 0;
+            }
+
+            // Send torque command telemetry at a rate of 100Hz.
+            // This is staggered with respect to the encoder, gyro, and accelerometer telemetry so that we don't saturate the CAN bus
+            if (++torque_cmd_telemetry_decimation_count >= TELEMETRY_DECIMATION_LIMIT) {
+            	SendTorqueCmdTelemetry(cb_parms->accumulated_torque_cmds[AZ] / cb_parms->num_torque_cmds_accumulated,
+					cb_parms->accumulated_torque_cmds[EL] / cb_parms->num_torque_cmds_accumulated,
+					cb_parms->accumulated_torque_cmds[ROLL] / cb_parms->num_torque_cmds_accumulated);
+
+            	// Zero out the torque cmd accumulators for the next cycle
+				cb_parms->accumulated_torque_cmds[AZ] = 0;
+				cb_parms->accumulated_torque_cmds[EL] = 0;
+				cb_parms->accumulated_torque_cmds[ROLL] = 0;
+				cb_parms->num_torque_cmds_accumulated = 0;
+
+				torque_cmd_telemetry_decimation_count = 0;
             }
 
             // We've completed one full rate loop iteration, so on the next pass go back to the beginning
@@ -211,6 +247,19 @@ static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_en
     encoder_readings[5] = (rl_encoder & 0x00FF);
 
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ENCODER_TELEMETRY, encoder_readings, 6);
+}
+
+static void SendTorqueCmdTelemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd)
+{
+	Uint8 torque_cmds[6];
+	torque_cmds[0] = (az_torque_cmd >> 8) & 0x00FF;
+	torque_cmds[1] = (az_torque_cmd & 0x00FF);
+	torque_cmds[2] = (el_torque_cmd >> 8) & 0x00FF;
+	torque_cmds[3] = (el_torque_cmd & 0x00FF);
+	torque_cmds[4] = (rl_torque_cmd >> 8) & 0x00FF;
+	torque_cmds[5] = (rl_torque_cmd & 0x00FF);
+
+	cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_TORQUE_CMD_TELEMETRY, torque_cmds, 6);
 }
 
 static void SendGyroTelemetry(int32 az_gyro, int32 el_gyro, int32 rl_gyro)

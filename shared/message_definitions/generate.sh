@@ -17,7 +17,8 @@ if ! which mavgen.py > /dev/null; then
 fi
 
 echo "Removing old includes"
-rm -rf "../Headers/MAVLink/*"
+rm -rf ../mavlink_library/
 
 echo "Generating C code"
-mavgen.py --c2000 --lang=C --output=../Headers/MAVLink/ ardupilotmega.xml
+pwd
+mavgen.py --c2000 --lang=C --output=../mavlink_library/ ardupilotmega.xml

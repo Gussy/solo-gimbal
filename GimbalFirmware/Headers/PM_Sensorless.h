@@ -49,18 +49,13 @@ Next, Include project specific include files.
 
 typedef enum {
     BLINK_NO_COMM,
-    BLINK_NO_CAL,
     BLINK_INIT,
     BLINK_READY,
 	BLINK_RUNNING,
-    BLINK_ERROR
+    BLINK_ERROR,
+    BLINK_CALIBRATING,
+    BLINK_OVERRIDE
 } BlinkState;
-
-typedef enum {
-    BEACON_RED,
-    BEACON_GREEN,
-    BEACON_BLUE
-} BeaconState;
 
 typedef enum {
     READ_GYRO_PASS,
@@ -113,9 +108,13 @@ typedef struct {
     int16 corrected_gyro_readings[AXIS_CNT];
     int32 integrated_raw_gyro_readings[AXIS_CNT];
     int32 integrated_raw_accel_readings[AXIS_CNT];
+    int32 accumulated_torque_cmds[AXIS_CNT];
+    Uint16 num_torque_cmds_accumulated;
     int16 encoder_readings[AXIS_CNT];
     int16 motor_torques[AXIS_CNT];
     int16 axis_errors[AXIS_CNT];
+    int16 setpoints[AXIS_CNT];
+    int16 process_vars[AXIS_CNT];
     CAND_FaultCode last_axis_fault[AXIS_CNT];
     Uint8 encoder_value_received[AXIS_CNT];
     Uint16 axes_homed[AXIS_CNT];

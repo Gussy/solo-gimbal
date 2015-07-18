@@ -182,6 +182,11 @@ void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_enco
     }
 }
 
+void receive_torque_cmd_telemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd)
+{
+	send_mavlink_torque_cmd_feedback(az_torque_cmd, el_torque_cmd, rl_torque_cmd);
+}
+
 void receive_gyro_az_telemetry(int32 az_gyro)
 {
     latest_gyro_telemetry[AZ] = GYRO_FORMAT_TO_RAD_S(az_gyro) / 1000.0;
@@ -393,6 +398,20 @@ void send_mavlink_gimbal_feedback() {
 	send_mavlink_message(&feedback_msg);
 }
 
+void send_mavlink_torque_cmd_feedback(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd) {
+	static mavlink_message_t torque_cmd_fb_msg;
+
+	mavlink_msg_gimbal_torque_cmd_report_pack(gimbal_sysid,
+		MAV_COMP_ID_GIMBAL,
+		&torque_cmd_fb_msg,
+		gimbal_sysid,
+		0,
+		rl_torque_cmd,
+		el_torque_cmd,
+		az_torque_cmd);
+
+	send_mavlink_message(&torque_cmd_fb_msg);
+}
 
 void send_cmd_long_ack(uint16_t cmd_id, uint8_t result)
 {

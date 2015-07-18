@@ -59,6 +59,7 @@ void init_mavlink();
 void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_gimbal_feedback();
+void send_mavlink_torque_cmd_feedback(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);
 void send_mavlink_debug_data(DebugData* debug_data);
 void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status);
 void send_mavlink_gopro_get_response(GPGetResponse response);
@@ -71,6 +72,7 @@ void send_mavlink_message(mavlink_message_t* msg);
 void update_mavlink_sysid(Uint8 new_sysid);
 
 void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);
+void receive_torque_cmd_telemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);
 void receive_gyro_az_telemetry(int32 az_gyro);
 void receive_gyro_el_telemetry(int32 el_gyro);
 void receive_gyro_rl_telemetry(int32 rl_gyro);
