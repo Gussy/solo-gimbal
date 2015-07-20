@@ -102,7 +102,7 @@ def upload_data(link, binary):
 
     return Results.Success
             
-def finish_upload(link):
+def finish_upload(link, loadDefaultGains):
     """Send an "end of transmission" signal to the target, to cause a target reset""" 
     while True:
         setup_mavlink.reset_into_bootloader(link)
@@ -115,7 +115,8 @@ def finish_upload(link):
     if setup_mavlink.wait_for_heartbeat(link, retries=5) == None:
         return Results.Timeout
     else:
-        setup_validate.restore_defaults(link)
+        if loadDefaultGains:
+            setup_validate.restore_defaults(link)
         return Results.Success
 
 def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None, loadDefaultGains = True):
@@ -131,5 +132,5 @@ def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=
     if result != Results.Success:
         return result
 
-    return finish_upload(link)
+    return finish_upload(link, loadDefaultGains)
     
