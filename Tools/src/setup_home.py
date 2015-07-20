@@ -8,7 +8,6 @@ import os
 from setup_mavlink import get_current_joint_angles, get_current_delta_angles, get_current_delta_velocity
 from setup_param import set_offsets, set_param, commit_to_flash, set_accel_params
 from setup_factory_pub import get_serial_number
->>>>>>> master
 from pymavlink.rotmat import Vector3
 from math import degrees
 
