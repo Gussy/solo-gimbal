@@ -11,6 +11,7 @@
 #include "control/PID.h"
 #include "control/average_power_filter.h"
 #include "control/running_average_filter.h"
+#include "control/filt2p.h"
 #include "hardware/uart.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "can/can_message_processor.h"
