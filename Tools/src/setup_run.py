@@ -238,8 +238,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     # For wobble test
     if test == 'wobble':
         pointing_gain = 2
-        gyro_offsets_raw = setup_param.get_offsets(link, 'GYRO', timeout=4)
-        gyro_offsets = gyro_offsets_raw / 100 # gyro offsets in rad/s
+        gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
         error_integral = Vector3()
         if rpm:
             tag = '_%irpm' % rpm
@@ -309,7 +308,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
 
         if test == 'wobble':
             measured_rate = Vector3(report.delta_angle_x/report.delta_time , report.delta_angle_y/report.delta_time , report.delta_angle_z/report.delta_time)
-            measured_rate_corrected = measured_rate - gyro_offsets/report.delta_time
+            measured_rate_corrected = measured_rate - gyro_offsets * 0.010 # gyro offsets are in rad/s, mesurements are in rad ( delta_angle)
             measured_joint = Vector3(report.joint_roll,report.joint_el,report.joint_az)
             measured_joint_corrected = measured_joint - joint_offsets
 
@@ -341,7 +340,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
             #if reportCallback:
             #    reportCallback(report.joint_roll, report.joint_el, report.joint_az)
         elif test == 'wobble':
-            setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
+            setup_mavlink.send_gimbal_control(link, rate+gyro_offsets)
             #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
 
             # Wait for the gimbal t stabilise before starting the fixture motor
