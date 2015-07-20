@@ -1,5 +1,5 @@
 import setup_comutation
-import setup_factory
+import setup_factory_pub
 import setup_param
 from distutils.version import LooseVersion
 from pymavlink.mavparm import MAVParmDict
@@ -67,12 +67,12 @@ class Results:
     Pass, Fail, Error = 'pass', 'fail', 'error'
 
 def show(link):
-    swver = setup_factory.read_software_version(link, timeout=2)
+    swver = setup_factory_pub.read_software_version(link, timeout=2)
     if swver != None:
         major, minor, rev = int(swver[0]), int(swver[1]), int(swver[2])
         if major >= 0 and minor >= 18:
-            serial_number = setup_factory.get_serial_number(link)
-            assembly_time = setup_factory.get_assembly_time(link)
+            serial_number = setup_factory_pub.get_serial_number(link)
+            assembly_time = setup_factory_pub.get_assembly_time(link)
         else:
             serial_number = ''
             assembly_time = ''
@@ -147,7 +147,7 @@ def show(link):
 
 def validate_version(link, swver=None):
     if not swver:
-        swver = setup_factory.read_software_version(link, timeout=2)
+        swver = setup_factory_pub.read_software_version(link, timeout=2)
     if not swver:
         return Results.Error
     ver = LooseVersion("%i.%i.%i" % (swver[0], swver[1], swver[2]))
@@ -271,7 +271,7 @@ def validate_gains(link):
 
 def validate_date(link, assembly_time=None):
     if assembly_time == None:
-        assembly_time = setup_factory.get_assembly_time(link)
+        assembly_time = setup_factory_pub.get_assembly_time(link)
     if assembly_time == None:
         return Results.Error
     elif assembly_time > EXPETED_ASSEMBLY_DATE_MIN:
@@ -282,7 +282,7 @@ def validate_date(link, assembly_time=None):
 
 def validate_serial_number(link, serial_number=None):
     if serial_number == None:
-        serial_number = setup_factory.get_serial_number(link)
+        serial_number = setup_factory_pub.get_serial_number(link)
     if serial_number == None:
         return Results.Error
     elif serial_number.startswith(EXPECTED_SERIAL_NUMBER_START):

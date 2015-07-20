@@ -2,7 +2,7 @@ import time, datetime
 from PySide import QtCore, QtGui
 from PySide.QtCore import Slot
 from qtasync import AsyncTask, coroutine
-import setup_mavlink, setup_factory
+import setup_mavlink, setup_factory_pub, setup_factory_private
 import gui_utils
 
 class connectionUI(object):
@@ -143,12 +143,12 @@ class connectionUI(object):
         if self.isCycling and self.parent.autoUpdate:
             timeout = 5
 
-        version = setup_factory.read_software_version(self.link, timeout=timeout)
+        version = setup_factory_pub.read_software_version(self.link, timeout=timeout)
         if version != None:
             major, minor, rev = int(version[0]), int(version[1]), int(version[2])
             if major >= 0 and minor >= 18:
-                serial_number = setup_factory.get_serial_number(self.link)
-                assembly_time = setup_factory.get_assembly_time(self.link)
+                serial_number = setup_factory_pub.get_serial_number(self.link)
+                assembly_time = setup_factory_pub.get_assembly_time(self.link)
             else:
                 serial_number = None
                 assembly_time = None
@@ -157,7 +157,7 @@ class connectionUI(object):
 
     @gui_utils.waitCursor
     def writeSerialNumber(self, serialNumber):
-        serialNumber, assemblyTime = setup_factory.set_serial_number_with_time(self.link, serialNumber)
+        serialNumber, assemblyTime = setup_factory_private.set_serial_number_with_time(self.link, serialNumber)
         return serialNumber, assemblyTime
 
     @coroutine

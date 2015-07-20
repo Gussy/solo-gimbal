@@ -5,7 +5,7 @@ Command-line utility to handle comms to gimbal
 '''
 import time
 import sys, argparse, time, json
-import setup_factory
+import setup_factory_pub
 from setup_mavlink import open_comm, wait_for_heartbeat, wait_handshake, reset_into_bootloader
 
 from firmware_helper import load_firmware, append_checksum
@@ -20,9 +20,11 @@ from setup_param import set_offsets
 try:
     import setup_run
     import setup_home
+    import setup_factory_private
 except ImportError:
     setup_run = None
     setup_home = None
+    setup_factory_private = None
 
 def loaderProgressCallback(uploaded_kb, total_kb, percentage):
     sys.stdout.write("\rUpload %2.2fkB of %2.2fkB - %d%%     " % (uploaded_kb, total_kb, percentage))
@@ -223,7 +225,7 @@ def command_interface():
         parser.add_argument("-g", "--gyrocalibration", help="Calibrate gyros", action='store_true')
         parser.add_argument("-a", "--accelcalibration", help="Calibrate accelerometers", action='store_true')
         parser.add_argument("-x", "--staticcal", help="Calibrate all static home values", action='store_true')
-    if setup_factory:
+    if setup_factory_private:
         parser.add_argument("--date", help="Setup assembly date", action='store_true')
         parser.add_argument("--serialnumber", help="Setup gimbal serial number", type=int)
         parser.add_argument("--factoryreset", help="Reset gimbal factory parameters to default", action='store_true')
@@ -243,7 +245,7 @@ def command_interface():
 
     # Attempt to read the gimbal software version and then bootloader
     # If neither attempts are successful, we're connected to a copter without a gimbal
-    ver = setup_factory.read_software_version(link)
+    ver = setup_factory_pub.read_software_version(link)
     if ver is None:
         for _ in range(2):
             reset_into_bootloader(link)
@@ -365,24 +367,24 @@ def command_interface():
             setup_home.calibrate_accel(link)
             return
 
-    if setup_factory:
+    if setup_factory_private:
         if args.date:
-            timestamp = setup_factory.set_assembly_date(link)
+            timestamp = setup_factory_private.set_assembly_date(link)
             print("Assembly time set to %s" % time.ctime(timestamp))
             return
 
         if args.serialnumber is not None:
-            serial = setup_factory.set_serial_number_3dr(link, args.serialnumber)
+            serial = setup_factory_private.set_serial_number_3dr(link, args.serialnumber)
             print("Serial number set to %s" % serial)
             return
 
         if args.factoryreset:
-            serial = setup_factory.reset(link)
-            print("Factory parameters cleared")
+            serial = setup_factory_private.reset(link)
+            print("Facroty parameters cleared")
             return
 
         if args.fullreset:
-            setup_factory.full_reset(link)
+            setup_factory_private.full_reset(link)
             print("Full reset command sent")
             return
 
@@ -391,8 +393,8 @@ def command_interface():
         major, minor, rev = ver[0], ver[1], ver[2]
         print("Software version: v%i.%i.%i" % (major, minor, rev))
         
-        asm_time = setup_factory.get_assembly_time(link)
-        serial_number = setup_factory.get_serial_number(link)
+        asm_time = setup_factory_pub.get_assembly_time(link)
+        serial_number = setup_factory_pub.get_serial_number(link)
         if serial_number != None:
             if serial_number == '':
                 print("Serial number: not set")
