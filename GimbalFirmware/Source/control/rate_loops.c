@@ -69,7 +69,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
         cb_parms->integrated_raw_accel_readings[ROLL] += raw_accel_readings[ROLL];
 
         // Do gyro kinematics correction
-        do_gyro_correction(cb_parms->gyro_readings, cb_parms->encoder_readings, cb_parms->corrected_gyro_readings);
+        update_joint_ang_trig(cb_parms->encoder_readings); // TODO: determine where to run this such that it only updates as often as necessary
+        transform_ang_vel_to_joint_rate(cb_parms->gyro_readings, cb_parms->corrected_gyro_readings);
 
         // Set up the next rate loop pass to be the az error computation pass
         cb_parms->rate_loop_pass = ERROR_AZ_PASS;
