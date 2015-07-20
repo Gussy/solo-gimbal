@@ -4,12 +4,12 @@
 #define INTER_COMMAND_DELAY 2
 
 SpiPortDescriptor gyro_spi_desc = {
-        &SpiaRegs,                              // SPI Control Regs
-        19,                                     // Slave select GPIO number
-        CLOCK_POLARITY_NORMAL,                  // Spi Clock Polarity
-        CLOCK_PHASE_HALF_CYCLE_DELAY,           // Spi Clock Phase
-        CHAR_LENGTH_16_BITS,                    // Spi Character Length
-        19                                      // Baud rate configuration (1MHz (max supported by MPU-6K), Baud rate = LSPCLK / (baud_rate_configure + 1), LSPCLK = 20MHz)
+        .control_regs = &SpiaRegs,
+        .ss_gpio_num = 19,
+        .clk_polarity = CLOCK_POLARITY_NORMAL,
+        .clk_phase = CLOCK_PHASE_HALF_CYCLE_DELAY,
+        .char_length = CHAR_LENGTH_16_BITS,
+        .baud_rate_configure = 19
 };
 
 void InitGyro()
