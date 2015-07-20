@@ -9,6 +9,7 @@ import sys
 
 from firmware_helper import append_checksum, load_firmware
 import setup_mavlink
+import setup_validate
 
 bootloaderVersionHandler = None
 progressHandler = None
@@ -101,7 +102,7 @@ def upload_data(link, binary):
 
     return Results.Success
             
-def finish_upload(link):
+def finish_upload(link, loadDefaultGains):
     """Send an "end of transmission" signal to the target, to cause a target reset""" 
     while True:
         setup_mavlink.reset_into_bootloader(link)
@@ -109,9 +110,16 @@ def finish_upload(link):
         if msg == None:
             return Results.Timeout
         if msg.width == 0xFFFF:
-            return Results.Success
+            break
+        
+    if setup_mavlink.wait_for_heartbeat(link, retries=5) == None:
+        return Results.Timeout
+    else:
+        if loadDefaultGains:
+            setup_validate.restore_defaults(link)
+        return Results.Success
 
-def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None):
+def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None, loadDefaultGains = True):
     global bootloaderVersionHandler, progressHandler
 
     if progressCallback:
@@ -124,5 +132,5 @@ def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=
     if result != Results.Success:
         return result
 
-    return finish_upload(link)
+    return finish_upload(link, loadDefaultGains)
     
