@@ -239,17 +239,6 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     if test == 'wobble':
         pointing_gain = 2
         gyro_offsets_raw = setup_param.get_offsets(link, 'GYRO', timeout=4)
-        # Detect old gyro offsets
-        if (gyro_offsets_raw.x < setup_validate.EXPECTED_GYRO / 100 and
-            gyro_offsets_raw.y < setup_validate.EXPECTED_GYRO / 100 and
-            gyro_offsets_raw.z < setup_validate.EXPECTED_GYRO / 100):
-            msg = "Old gyro calibration detected, re-calibration required"
-            if eventCallback:
-                eventCallback(msg, fault=True)
-            else:
-                print(msg)
-            stopTestLoop = True
-            return
         gyro_offsets = gyro_offsets_raw / 100 # gyro offsets in rad/s
         error_integral = Vector3()
         if rpm:
