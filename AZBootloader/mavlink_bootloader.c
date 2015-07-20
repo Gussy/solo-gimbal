@@ -3,7 +3,6 @@
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
 #include "hardware/watchdog.h"
-#include "led_red.h"
 
 #include "uart.h"
 #include "mavlink_interface.h"
@@ -29,9 +28,6 @@
 
 mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];
 mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
-
-
-
 
 static Uint16 Example_CsmUnlock()
 {
@@ -152,7 +148,7 @@ Uint32 MAVLINK_Flash()
 								}
 
 								// Fast toggle the LED
-								STATUS_LED_TOGGLE();
+								led_status_toggle();
 								if (Flash_ptr <= (Uint16*)APP_END) {
 									// Unlock and erase flash with first packet
 									if(seq == 0) {
@@ -160,17 +156,17 @@ Uint32 MAVLINK_Flash()
 
 										/* don't erase SECTOR A */
 										Flash_Erase(SECTORB, &FlashStatus);
-										STATUS_LED_TOGGLE();
+										led_status_toggle();
 										Flash_Erase(SECTORC, &FlashStatus);
-										STATUS_LED_TOGGLE();
+										led_status_toggle();
 										Flash_Erase(SECTORD, &FlashStatus);
-										STATUS_LED_TOGGLE();
+										led_status_toggle();
 										Flash_Erase(SECTORE, &FlashStatus);
-										STATUS_LED_TOGGLE();
+										led_status_toggle();
 										Flash_Erase(SECTORF, &FlashStatus);
-										STATUS_LED_TOGGLE();
+										led_status_toggle();
 										Flash_Erase(SECTORG, &FlashStatus);
-										STATUS_LED_TOGGLE();
+										led_status_toggle();
 										/* don't erase SECTOR H */
 
 										// write data to flash
@@ -205,7 +201,7 @@ Uint32 MAVLINK_Flash()
 		// If we're here, we've timed out and are about to send another mavlink request for a boot image
 		// Toggle the LED in here to show that we're doing something
         if (++blink_counter >= 2) {
-            STATUS_LED_TOGGLE();
+            led_status_toggle();
             blink_counter = 0;
         }
 	}

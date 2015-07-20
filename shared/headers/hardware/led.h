@@ -59,6 +59,10 @@ inline void led_status_off(void) {
     GpioDataRegs.GPASET.bit.GPIO7 = 1;
 }
 
+inline void led_status_toggle(void) {
+    GpioDataRegs.GPATOGGLE.bit.GPIO7 = 1;
+}
+
 interrupt void led_epwm5_isr(void);
 interrupt void led_epwm6_isr(void);
 
