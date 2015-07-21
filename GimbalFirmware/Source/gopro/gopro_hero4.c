@@ -343,6 +343,8 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
                 len = 1;
             } else {
                 // do nothing, can't request power on
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return -1;
             }
             break;
 
