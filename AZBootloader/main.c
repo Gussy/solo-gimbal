@@ -10,6 +10,8 @@
 void PieCntlInit(void){}
 void PieVectTableInit(void){}
 
+static const LED_RGBA rgba_amber_dim = {.red=255, .green=160, .blue=0, .alpha=10};
+
 Uint32 SelectBootMode()
 {
 	  Uint32 EntryAddr;
@@ -55,24 +57,21 @@ Uint32 SelectBootMode()
 
 	  EALLOW;
 
-	  GimbalAxis axis = (GimbalAxis)GetBoardHWID();
-	  if(axis == AZ) {
-          if (verify_data_checksum()) {
-              // Enter the CAN bootloader (transmitter)
-              EntryAddr = CAN_Boot(axis);
-              reset_datapointer();
-          } else {
-              // Enter the MAVLink bootloader
-              MAVLINK_Flash(); // This never returns
-          }
-	  } else {
-          // Enable the beacon LED on the elevation board only
-          if(axis == EL) {
-              init_led();
-          }
+	  const GimbalAxis axis = (GimbalAxis)GetBoardHWID();
 
-          // Enter the CAN bootloader (receiver)
-          EntryAddr = CAN_Boot(axis);
+	  if(axis == AZ && !verify_data_checksum()) {
+          // Enter the MAVLink bootloader
+          MAVLINK_Flash(); // This never returns
 	  }
-	return EntryAddr;
+
+      // Enable the beacon LED on the elevation board only
+      if(axis == EL) {
+          init_led();
+          led_set_mode(LED_MODE_SOLID, rgba_amber_dim, 0);
+      }
+
+      EntryAddr = CAN_Boot(axis);
+      if(axis == AZ) reset_datapointer();
+
+      return EntryAddr;
 }
