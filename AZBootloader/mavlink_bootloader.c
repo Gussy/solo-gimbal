@@ -1,71 +1,30 @@
+#include "memory_map.h"
+#include "uart.h"
 #include "boot/Boot.h"
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
 #include "hardware/watchdog.h"
-
-#include "uart.h"
-#include "mavlink_interface.h"
-
-#include "mavlink_bootloader.h"
+#include "flash/flash_helpers.h"
 
 #define	FLASH_F2806x 1
+
 #include "Flash2806x_API_Library.h"
 #include "F2806x_SysCtrl.h"
 
-
-//#define MAVLINK_COMM_NUM_BUFFERS 1
 #define MAVLINK_EXTERNAL_RX_BUFFER
 #define MAVLINK_EXTERNAL_RX_STATUS
 
-#include "protocol_c2000.h"
-
 #include "mavlink.h"
-#include "memory_map.h"
+#include "mavlink_interface.h"
+#include "mavlink_bootloader.h"
+#include "protocol_c2000.h"
 
 #pragma    DATA_SECTION(m_mavlink_buffer,"DMARAML5");
 #pragma    DATA_SECTION(m_mavlink_status,"DMARAML5");
 
 mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];
 mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
-
-static Uint16 Example_CsmUnlock()
-{
-    volatile Uint16 temp;
-	Uint16 PRG_key0 = 0xFFFF;        //   CSM Key values
-
-    // Load the key registers with the current password
-    // These are defined in Example_Flash2806x_CsmKeys.asm
-
-    EALLOW;
-    CsmRegs.KEY0 = PRG_key0;
-    CsmRegs.KEY1 = PRG_key0;
-    CsmRegs.KEY2 = PRG_key0;
-    CsmRegs.KEY3 = PRG_key0;
-    CsmRegs.KEY4 = PRG_key0;
-    CsmRegs.KEY5 = PRG_key0;
-    CsmRegs.KEY6 = PRG_key0;
-    CsmRegs.KEY7 = PRG_key0;
-    EDIS;
-
-    // Perform a dummy read of the password locations
-    // if they match the key values, the CSM will unlock
-
-    temp = CsmPwl.PSWD0;
-    temp = CsmPwl.PSWD1;
-    temp = CsmPwl.PSWD2;
-    temp = CsmPwl.PSWD3;
-    temp = CsmPwl.PSWD4;
-    temp = CsmPwl.PSWD5;
-    temp = CsmPwl.PSWD6;
-    temp = CsmPwl.PSWD7;
-
-    // If the CSM unlocked, return succes, otherwise return
-    // failure.
-    if((CsmRegs.CSMSCR.all & 0x0001) == 0) return STATUS_SUCCESS;
-    else return STATUS_FAIL_CSM_LOCKED;
-
-}
 
 /* all these may be overwritten when loading the image */
 #pragma    DATA_SECTION(msg,"DMARAML5");
@@ -92,11 +51,11 @@ void mavlink_data_handshake(Uint16 seq) {
 void clearBuffers(){
 	memset(&msg, 0, sizeof(msg));
 	memset(&status, 0, sizeof(status));
-	memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer[0]));
-	memset(&m_mavlink_status, 0, sizeof(m_mavlink_status[0]));
+	memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer));
+	memset(&m_mavlink_status, 0, sizeof(m_mavlink_status));
 }
 
-Uint32 MAVLINK_Flash()
+void MAVLINK_Flash()
 {
 	int getting_messages = 0;
 	Uint16 seq = 0;
@@ -115,19 +74,17 @@ Uint32 MAVLINK_Flash()
 
 	// wait for an image to arrive over mavlink serial
 	while(1) {
-		// send a mavlink heartbeat if the bootload sequence hasn't started yet
-		//if(seq == 0)
-			MAVLINK_send_heartbeat();
+		// send a mavlink heartbeat
+	    MAVLINK_send_heartbeat();
 
 		// send mavlink message to request data stream
 		mavlink_data_handshake(seq);
 
 		getting_messages = 1;
-
 		while(getting_messages) {
 			int read_size = 0;
 			// read the serial port, and if I get no messages, timeout
-			memset(buffer, 0, sizeof(buffer[0])*BUFFER_LENGTH);
+			memset(buffer, 0, sizeof(buffer));
 			if((read_size = read_serial_port(buffer, BUFFER_LENGTH)) == 0) {
 				getting_messages = 0;
 				clearBuffers();
@@ -152,7 +109,7 @@ Uint32 MAVLINK_Flash()
 								if (Flash_ptr <= (Uint16*)APP_END) {
 									// Unlock and erase flash with first packet
 									if(seq == 0) {
-										Example_CsmUnlock();
+										flash_csm_unlock();
 
 										/* don't erase SECTOR A */
 										Flash_Erase(SECTORB, &FlashStatus);
@@ -168,17 +125,12 @@ Uint32 MAVLINK_Flash()
 										Flash_Erase(SECTORG, &FlashStatus);
 										led_status_toggle();
 										/* don't erase SECTOR H */
-
-										// write data to flash
-										Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
-										Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
-										seq++;
-									} else {
-										// write data to flash
-										Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
-										Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
-										seq++;
 									}
+
+                                    // write data to flash
+                                    Flash_Program(Flash_ptr, (Uint16 *)buffer, ENCAPSULATED_DATA_LENGTH/2, &FlashStatus);
+                                    Flash_ptr += ENCAPSULATED_DATA_LENGTH/2;
+                                    seq++;
 								}
 							}
 						} else if(inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE) {
@@ -205,7 +157,5 @@ Uint32 MAVLINK_Flash()
             blink_counter = 0;
         }
 	}
-
-	// reset?
 }
 
