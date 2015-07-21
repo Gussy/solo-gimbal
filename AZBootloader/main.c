@@ -6,7 +6,6 @@
 #include "checksum.h"
 
 // empty setup functions so this code can run  DeviceInit()
-void init_led_periph(void){}
 void PieCntlInit(void){}
 void PieVectTableInit(void){}
 

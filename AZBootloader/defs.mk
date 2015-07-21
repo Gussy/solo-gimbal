@@ -21,6 +21,7 @@ OBJS = \
     $(SHARED_ROOT)/src/hardware/pll.o 													\
     $(SHARED_ROOT)/src/hardware/watchdog.o												\
     $(SHARED_ROOT)/src/hardware/device_init.o 											\
+    $(SHARED_ROOT)/src/hardware/led.o 													\
     $(SHARED_ROOT)/src/flash/flash_helpers.o											\
     $(SHARED_ROOT)/src/flash/flash_csm_keys.o											\
     $(PROJ_ROOT)/main.o 																\

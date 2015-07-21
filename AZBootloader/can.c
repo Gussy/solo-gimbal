@@ -4,6 +4,10 @@
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
 
+// Used for ROLL and EL axes
+Uint32 words_received = 0;
+const LED_RGBA rgba_amber = {255, 160, 0, 0xff};
+
 void CAN_Init(GimbalAxis axis)
 {
 
@@ -98,32 +102,45 @@ void CAN_Init(GimbalAxis axis)
 
 /* Disable all Mailboxes  */
 
-   ECanaRegs.CANME.all = 0;     // Required before writing the MSGIDs
+    ECanaRegs.CANME.all = 0;     // Required before writing the MSGIDs
 
-/* Assign MSGID to MBOX1 */
 
-   ECanaRegs.CANTRR.bit.TRR1 = 1;
-   while ( ECanaRegs.CANTRS.bit.TRS1 == 1);
-   ECanaMboxes.MBOX1.MSGID.all = 0x00040000;	// Standard ID of 1, Acceptance mask disabled
-   //ECanaMboxes.MBOX1.MSGID.bit.STDMSGID = 0x3FF;
-   ECanaMboxes.MBOX1.MSGID.bit.STDMSGID = 0x0FF;
-   ECanaMboxes.MBOX1.MSGCTRL.bit.DLC = 2;
 
-/* Configure MBOX1 to be a send MBOX */
+    ECanaRegs.CANTRR.bit.TRR1 = 1;
+    while ( ECanaRegs.CANTRS.bit.TRS1 == 1);
 
-   {
-	   volatile Uint16 i;
-	   ECanaRegs.CANMD.all = 0x0000;
-	   // delay here for a bit to allow the other two boards to come up
-	   for (i = 0; i < 0x4000; i++) {
-	   }
-   }
+    if(axis == AZ) {
+        /* Assign MSGID to MBOX1 */
+        ECanaMboxes.MBOX1.MSGID.all = 0x00040000;	// Standard ID of 1, Acceptance mask disabled
+        //ECanaMboxes.MBOX1.MSGID.bit.STDMSGID = 0x3FF;
+        ECanaMboxes.MBOX1.MSGID.bit.STDMSGID = 0x0FF;
+        ECanaMboxes.MBOX1.MSGCTRL.bit.DLC = 2;
 
-/* Enable MBOX1 */
+        /* Configure MBOX1 to be a send MBOX */
+        {
+            volatile Uint16 i;
+            ECanaRegs.CANMD.all = 0x0000;
+            // delay here for a bit to allow the other two boards to come up
+            for (i = 0; i < 0x4000; i++) {}
+        }
 
-   ECanaRegs.CANME.all = 0x0002;
+        /* Enable MBOX1 */
+        ECanaRegs.CANME.all = 0x0002;
+    } else {
+        ECanaMboxes.MBOX1.MSGID.all = 0x00000000;    // Standard ID of 1, Acceptance mask disabled
+        ECanaMboxes.MBOX1.MSGID.bit.STDMSGID = 0xFF;//0b00111111111;
+        ECanaMboxes.MBOX2.MSGID.bit.STDMSGID = 0xFE;//0b00111111110;
+        ECanaMboxes.MBOX1.MSGCTRL.bit.DLC = 2;
+        ECanaMboxes.MBOX2.MSGCTRL.bit.DLC = 2;
 
-   EDIS;
+        /* Configure MBOX1 to be a send MBOX */
+        ECanaRegs.CANMD.all = 0x0002;
+
+        /* Enable MBOX1 and MBOX2 */
+        ECanaRegs.CANME.all = 0x0006;
+    }
+
+    EDIS;
     return;
 }
 
@@ -141,12 +158,43 @@ Uint16 CAN_GetWordData()
 {
    Uint16 wordData;
    Uint16 byteData;
+   Uint16 wait_time = 0;
+   Uint16 tenths_of_seconds = 0;
+   Uint16 blink_state = 0;
 
    wordData = 0x0000;
    byteData = 0x0000;
 
 // Fetch the LSB
-   while(ECanaRegs.CANRMP.all == 0) { }
+   while(ECanaRegs.CANRMP.bit.RMP1 == 0)
+   {
+       // waiting for boot message
+       if (words_received == 0) {
+           if (wait_time++ >= 0xC4EA) {
+               wait_time = 0;
+               if (tenths_of_seconds++ >= 10) {
+                   tenths_of_seconds = 0;
+                   ECanaMboxes.MBOX2.MDL.byte.BYTE0 = 0x00;   // LS byte
+                   ECanaMboxes.MBOX2.MDL.byte.BYTE1 = 0x01;   // MS byte
+                   ECanaRegs.CANTRS.all = (1ul<<2); // "writing 0 has no effect", previously queued boxes will stay queued
+                   ECanaRegs.CANTA.all = (1ul<<2);      // "writing 0 has no effect", clears pending interrupt, open for our tx
+
+                   // Toggle the LED in here to show that we're doing something
+                   if (blink_state == 0) {
+                       GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
+                       if(GetBoardHWID() == EL)
+                           led_set_mode(LED_MODE_SOLID, rgba_amber, 0);
+                       blink_state = 1;
+                   } else {
+                       GpioDataRegs.GPASET.bit.GPIO7 = 1;
+                       if(GetBoardHWID() == EL)
+                           led_set_mode(LED_MODE_OFF, rgba_amber, 0);
+                       blink_state = 0;
+                   }
+               }
+           }
+       }
+   }
    wordData =  (Uint16) ECanaMboxes.MBOX1.MDL.byte.BYTE0;   // LS byte
 
    // Fetch the MSB
