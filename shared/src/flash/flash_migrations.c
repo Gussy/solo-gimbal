@@ -4,15 +4,21 @@
 #include "hardware/watchdog.h"
 #include "can/cand.h"
 
+static void flash_migration_from_0004(void);
 static void flash_migration_from_0003(void);
 static void flash_migration_from_0002(void);
 static void flash_migration_from_0001(void);
 static void flash_migration_from_0000(void);
 static void flash_migration_not_possible(void);
 
-void flash_migration_run(Uint16 from_rev) {
+void flash_migration_run(const Uint16 from_rev) {
     // Handle flash param migrations *from* the id stored in flash *to* this version of the compiled firmware
     switch(from_rev) {
+        // Last seen in v0.26.2
+        case 0x0004:
+            flash_migration_from_0004();
+            break;
+
         // Last seen in aaea77faa48a592d1d0c12a6d1eb5beb3dda1b18
         case 0x0003:
             flash_migration_from_0003();
@@ -50,6 +56,44 @@ static void flash_migration_not_possible(void) {
     // Reset other axes then ourselves
     cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
     watchdog_reset();
+}
+
+static void flash_migration_from_0004(void) {
+    // Load the struct from flash into the old struct layout
+    struct flash_param_struct_0004 flash_params_0004 = {0};
+    memcpy(&flash_params_0004, (Uint16 *)START_ADDR, sizeof(flash_params_0004));
+
+    // Copy floats
+    flash_params.ser_num_1 = flash_params_0004.ser_num_1;
+    flash_params.ser_num_2 = flash_params_0004.ser_num_2;
+    flash_params.ser_num_3 = flash_params_0004.ser_num_3;
+    flash_params.assy_time = flash_params_0004.assy_time;
+    flash_params.k_rate = flash_params_0004.k_rate;
+    flash_params.gopro_charging_enabled = flash_params_0004.gopro_charging_enabled;
+
+    // Copy arrays
+    memcpy(flash_params.commutation_slope, flash_params_0004.commutation_slope, sizeof(flash_params_0004.commutation_slope));
+    memcpy(flash_params.commutation_icept, flash_params_0004.commutation_icept, sizeof(flash_params_0004.commutation_icept));
+
+    memcpy(flash_params.torque_pid_kp, flash_params_0004.torque_pid_kp, sizeof(flash_params_0004.torque_pid_kp));
+    memcpy(flash_params.torque_pid_ki, flash_params_0004.torque_pid_ki, sizeof(flash_params_0004.torque_pid_ki));
+    memcpy(flash_params.torque_pid_kd, flash_params_0004.torque_pid_kd, sizeof(flash_params_0004.torque_pid_kd));
+
+    memcpy(flash_params.rate_pid_p, flash_params_0004.rate_pid_p, sizeof(flash_params_0004.rate_pid_p));
+    memcpy(flash_params.rate_pid_i, flash_params_0004.rate_pid_i, sizeof(flash_params_0004.rate_pid_i));
+    memcpy(flash_params.rate_pid_d, flash_params_0004.rate_pid_d, sizeof(flash_params_0004.rate_pid_d));
+    memcpy(flash_params.rate_pid_windup, flash_params_0004.rate_pid_windup, sizeof(flash_params_0004.rate_pid_windup));
+
+    memcpy(flash_params.offset_joint, flash_params_0004.offset_joint, sizeof(flash_params_0004.offset_joint));
+    memcpy(flash_params.offset_gyro, flash_params_0004.offset_gyro, sizeof(flash_params_0004.offset_gyro));
+
+    memcpy(flash_params.offset_accelerometer, flash_params_0004.offset_accelerometer, sizeof(flash_params_0004.offset_accelerometer));
+    memcpy(flash_params.gain_accelerometer, flash_params_0004.gain_accelerometer, sizeof(flash_params_0004.gain_accelerometer));
+    memcpy(flash_params.alignment_accelerometer, flash_params_0004.alignment_accelerometer, sizeof(flash_params_0004.alignment_accelerometer));
+
+    /* Added parameters:
+     *  use_custom_gains
+     */
 }
 
 static void flash_migration_from_0003(void) {

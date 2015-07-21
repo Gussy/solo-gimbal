@@ -202,6 +202,12 @@ void init_default_mavlink_params()
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].float_data_ptr = &(flash_params.gopro_charging_enabled);
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].access_type = GIMBAL_PARAM_READ_WRITE;
 
+	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].param_id, "GMB_CUST_GAINS", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].float_data_ptr = &(flash_params.use_custom_gains);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].access_type = GIMBAL_PARAM_READ_WRITE;
+
     //----- Parameters for external calibration
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].param_id, "GMB_OFF_JNT_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].can_parameter_id = CAND_PID_INVALID;
