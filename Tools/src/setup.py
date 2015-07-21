@@ -61,7 +61,13 @@ def handle_file(args, link):
             print("Restarting target in bootloader mode")
 
         # Load the binary using the bootloader
-        result = load_binary(binary, link, bootloaderVersionCallback=bootloaderVersionCallback, progressCallback=loaderProgressCallback)
+        result = load_binary(
+            binary,
+            link,
+            bootloaderVersionCallback=bootloaderVersionCallback,
+            progressCallback=loaderProgressCallback,
+            clearParams=args.clearparams
+        )
         sys.stdout.write("\n")
         sys.stdout.flush();
         if result == loader_results.Success:
@@ -197,6 +203,7 @@ def command_interface():
     parser = argparse.ArgumentParser()
     parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default=None)
+    parser.add_argument("--clearparams", help="Erase all flash parameters after bootloading", action='store_true')
     parser.add_argument("--show", help="Show all gimbal parameters", action='store_true')
     parser.add_argument("--save", help="Save gimbal parameters to a file", action='store_true')
     parser.add_argument("-v", "--validate", help="Check gimbal parameters to see if they have valid values", action='store_true')

@@ -17,6 +17,7 @@ progressHandler = None
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
 DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_WIDTH = 0xFFFF
+DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_PACKETS_PARAM_ERASE = 0x42AA
 
 class Results:
     Success, NoResponse, Timeout, InBoot, Restarting = 'Success', 'NoResponse', 'Timeout', 'InBoot', 'Restarting'
@@ -106,10 +107,13 @@ def upload_data(link, binary):
 
     return Results.Success
             
-def finish_upload(link):
+def finish_upload(link, clearParams=False):
     """Send an "end of transmission" signal to the target, to cause a target reset""" 
     while True:
-        setup_mavlink.exit_bootloader(link)
+        if clearParams:
+            setup_mavlink.exit_bootloader(link, packets=DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_PACKETS_PARAM_ERASE)
+        else:
+            setup_mavlink.exit_bootloader(link)
         msg = setup_mavlink.wait_handshake(link)
         if msg == None:
             return Results.Timeout
@@ -121,7 +125,7 @@ def finish_upload(link):
     else:
         return Results.Success
 
-def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None):
+def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None, clearParams=False):
     global bootloaderVersionHandler, progressHandler
 
     if progressCallback:
@@ -134,5 +138,5 @@ def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=
     if result != Results.Success:
         return result
 
-    return finish_upload(link)
+    return finish_upload(link, clearParams)
     
