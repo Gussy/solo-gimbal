@@ -77,14 +77,10 @@ void CAN_Init()
 
     ECanaShadow.CANBTC.all = 0;
 
-	ECanaShadow.CANBTC.bit.BRPREG = 1;
-	ECanaShadow.CANBTC.bit.TSEG2REG = 7;
-	ECanaShadow.CANBTC.bit.TSEG1REG = 15;
-
+    /* CAN bitrate of 1Mbps */
 	ECanaShadow.CANBTC.bit.BRPREG = 1;
 	ECanaShadow.CANBTC.bit.TSEG2REG = 4;
 	ECanaShadow.CANBTC.bit.TSEG1REG = 13;
-
 
     ECanaRegs.CANBTC.all = ECanaShadow.CANBTC.all;
 
