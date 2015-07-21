@@ -352,27 +352,71 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
             api_group = 1;
             api_id = 1;
             b[0] = request->value;
+            if (!gp_set_capture_mode(request->value)){ // TODO: since capture modes would differ between gopro models, might have to create wrapper functions
+                // unknown capture mode requested
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return -1;
+            }
             len = 1;
             break;
 
         case GOPRO_COMMAND_SHUTTER:
-            // Start video recording
-            api_group = 2;
-            //api_id = 0x1b;
-
-            // TODO: this logic might change based on pending changes to how information is passed through MAVLink
-            // TODO: need to take into account the mode that the camera is in, the following logic should only work if the camera is in video-mode
-            switch (request->value) {
-            case GP_START_RECORDING:
-                api_id = 0x1b;
+            switch (gp_capture_mode()) {
+            case GP_CAPTURE_MODE_VIDEO:
+                api_group = 2;
+                switch (request->value) {
+                case GP_RECORDING_START:
+                    api_id = 0x1b;
+                    gp_set_recording_state(true);
+                    break;
+                case GP_RECORDING_STOP:
+                    api_id = 0x1c;
+                    gp_set_recording_state(false);
+                    break;
+                default:
+                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                    return -1;
+                }
                 break;
-            case GP_STOP_RECORDING:
-                api_id = 0x1c;
+            case GP_CAPTURE_MODE_PHOTO:
+                api_group = 3;
+                switch (request->value) {
+                case GP_RECORDING_START:
+                    api_id = 0x17;
+                    gp_set_recording_state(true);
+                    break;
+                case GP_RECORDING_STOP:
+                    api_id = 0x18;
+                    gp_set_recording_state(false);
+                    break;
+                default:
+                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                    return -1;
+                }
                 break;
+            case GP_CAPTURE_MODE_BURST:
+                api_group = 4;
+                switch (request->value) {
+                case GP_RECORDING_START:
+                    api_id = 0x1b;
+                    gp_set_recording_state(true);
+                    break;
+                case GP_RECORDING_STOP:
+                    api_id = 0x1c;
+                    gp_set_recording_state(false);
+                    break;
+                default:
+                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                    return -1;
+                }
+                break;
+            case GP_CAPTURE_MODE_UNKNOWN:
             default:
-                // unknown argument value
+                // unknown capture mode
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                 return -1;
             }
+
             len = 0;
             break;
 
