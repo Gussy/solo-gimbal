@@ -18,7 +18,7 @@ Uint32 CAN_Boot(GimbalAxis axis)
 {
    Uint32 EntryAddr;
 
-   reset_datapointer();
+   if(axis == AZ) reset_datapointer();
 
    // If the missing clock detect bit is set, just
    // loop here.

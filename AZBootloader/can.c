@@ -5,8 +5,8 @@
 #include "hardware/HWSpecific.h"
 
 // Used for ROLL and EL axes
-Uint32 words_received = 0;
-const LED_RGBA rgba_amber = {255, 160, 0, 0xff};
+static Uint32 words_received;
+static const LED_RGBA rgba_amber = {255, 160, 0, 0xff};
 
 void CAN_Init(GimbalAxis axis)
 {
@@ -138,6 +138,8 @@ void CAN_Init(GimbalAxis axis)
 
         /* Enable MBOX1 and MBOX2 */
         ECanaRegs.CANME.all = 0x0006;
+
+        words_received = 0;
     }
 
     EDIS;
@@ -181,16 +183,15 @@ Uint16 CAN_GetWordData()
 
                    // Toggle the LED in here to show that we're doing something
                    if (blink_state == 0) {
-                       GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
                        if(GetBoardHWID() == EL)
                            led_set_mode(LED_MODE_SOLID, rgba_amber, 0);
                        blink_state = 1;
                    } else {
-                       GpioDataRegs.GPASET.bit.GPIO7 = 1;
                        if(GetBoardHWID() == EL)
                            led_set_mode(LED_MODE_OFF, rgba_amber, 0);
                        blink_state = 0;
                    }
+                   led_status_toggle();
                }
            }
        }
