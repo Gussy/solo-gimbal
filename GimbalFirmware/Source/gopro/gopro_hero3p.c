@@ -80,6 +80,7 @@ int gp_h3p_forward_get_request(Uint8 cmd_id)
         case GOPRO_COMMAND_SHUTTER:
             cmd.cmd[0] = 's';
             cmd.cmd[1] = 'h';
+            // TODO: not sure if this command should be called directly, since don't want to be sending commands to GoPro while recording (spec document)
         break;
 
         case GOPRO_COMMAND_CAPTURE_MODE:
