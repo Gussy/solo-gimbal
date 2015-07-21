@@ -79,11 +79,11 @@ static void flash_migration_from_0003(void) {
     memcpy(flash_params.rate_pid_windup, flash_params_0003.rate_pid_windup, sizeof(flash_params_0003.rate_pid_windup));
 
     memcpy(flash_params.offset_joint, flash_params_0003.offset_joint, sizeof(flash_params_0003.offset_joint));
-    memcpy(flash_params.offset_accelerometer, flash_params_0003.offset_accelerometer, sizeof(flash_params_0003.offset_accelerometer));
     memcpy(flash_params.offset_gyro, flash_params_0003.offset_gyro, sizeof(flash_params_0003.offset_gyro));
 
+    memcpy(flash_params.offset_accelerometer, flash_params_0003.offset_accelerometer, sizeof(flash_params_0003.offset_accelerometer));
     memcpy(flash_params.gain_accelerometer, flash_params_0003.gain_accelerometer, sizeof(flash_params_0003.gain_accelerometer));
-    memcpy(flash_params.offset_accelerometer, flash_params_0003.offset_accelerometer, sizeof(flash_params_0003.gain_accelerometer));
+    memcpy(flash_params.alignment_accelerometer, flash_params_0003.alignment_accelerometer, sizeof(flash_params_0003.alignment_accelerometer));
 
     /* Removed parameters:
      *  broadcast_msgs (was made volatile)
@@ -116,11 +116,11 @@ static void flash_migration_from_0002(void) {
     memcpy(flash_params.rate_pid_windup, flash_params_0002.rate_pid_windup, sizeof(flash_params_0002.rate_pid_windup));
 
     memcpy(flash_params.offset_joint, flash_params_0002.offset_joint, sizeof(flash_params_0002.offset_joint));
-    memcpy(flash_params.offset_accelerometer, flash_params_0002.offset_accelerometer, sizeof(flash_params_0002.offset_accelerometer));
     memcpy(flash_params.offset_gyro, flash_params_0002.offset_gyro, sizeof(flash_params_0002.offset_gyro));
 
+    memcpy(flash_params.offset_accelerometer, flash_params_0002.offset_accelerometer, sizeof(flash_params_0002.offset_accelerometer));
     memcpy(flash_params.gain_accelerometer, flash_params_0002.gain_accelerometer, sizeof(flash_params_0002.gain_accelerometer));
-    memcpy(flash_params.offset_accelerometer, flash_params_0002.offset_accelerometer, sizeof(flash_params_0002.gain_accelerometer));
+    memcpy(flash_params.alignment_accelerometer, flash_params_0002.alignment_accelerometer, sizeof(flash_params_0002.alignment_accelerometer));
 
     /* Added parameters:
      *  gopro_charging_enabled
