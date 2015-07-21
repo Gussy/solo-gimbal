@@ -108,7 +108,12 @@ void MAVLINK_Flash()
 								}
 							}
 						} else if(inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE) {
-						    reset_to_app(); // This never returns
+						    // If the packets param contains the magic number, erase all the params before booting
+						    uint16_t packets_magic = mavlink_msg_data_transmission_handshake_get_packets(&inmsg);
+                            if(packets_magic == PARAM_ERASE_MAGIC)
+                                Flash_Erase(SECTORH, &FlashStatus);
+
+                            reset_to_app(); // This never returns
 						}
 					}
 				}

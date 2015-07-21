@@ -3,6 +3,7 @@
 
 void MAVLINK_Flash();
 
+#define PARAM_ERASE_MAGIC           0x42AA
 
 #define BOOTLOADER_VERSION_MAJOR	0x04
 #define BOOTLOADER_VERSION_MINOR	0x00
