@@ -93,7 +93,7 @@ LDLIBS += $(LIBS) $(LDSCRIPTS)
 ###############################################################################
 # rules
 
-all: $(PROJ).hex $(PROJ)_noapp.hex
+all: $(PROJ)_app.hex $(PROJ).hex
 
 flash: all
 	$(TILOAD) -a -c=$(JTAG_CONFIG) $(PROJ).hex
@@ -108,19 +108,19 @@ $(DATA_HDR): $(MAIN_FW)
 # http://www.gnu.org/software/make/manual/make.html#Prerequisite-Types
 $(OBJS): | $(DATA_HDR)
 
-$(PROJ).out: $(OBJS) $(LDSCRIPTS)
-	$(LD) $(LDFLAGS) -m$(PROJ).map --define=PACKAGE_APPLICATION $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
+$(PROJ)_app.out: $(OBJS) $(LDSCRIPTS)
+	$(LD) $(LDFLAGS) -m$(PROJ)_app.map --define=PACKAGE_APPLICATION $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
 
-$(PROJ)_noapp.out: $(OBJS) $(LDSCRIPTS)
-	$(LD) $(LDFLAGS) -m$(PROJ)_noapp.map $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
+$(PROJ).out: $(OBJS) $(LDSCRIPTS)
+	$(LD) $(LDFLAGS) -m$(PROJ).map $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
+
+$(PROJ)_app.hex: $(PROJ)_app.out
+	$(HEX) -i $< -o $@ -order MS -romwidth 16
+	$(SIZE_INFO) $(PROJ)_app.map --project=$(PROJ)
 
 $(PROJ).hex: $(PROJ).out
 	$(HEX) -i $< -o $@ -order MS -romwidth 16
 	$(SIZE_INFO) $(PROJ).map --project=$(PROJ)
-
-$(PROJ)_noapp.hex: $(PROJ)_noapp.out
-	$(HEX) -i $< -o $@ -order MS -romwidth 16
-	$(SIZE_INFO) $(PROJ)_noapp.map --project=$(PROJ)
 
 %.o: %.asm
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -fe $@
