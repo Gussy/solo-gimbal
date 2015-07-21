@@ -55,7 +55,7 @@ Uint32 SelectBootMode()
 	  EALLOW;
 
 	  if (verify_data_checksum()) {
-		  EntryAddr = CAN_Boot();
+		  EntryAddr = CAN_Boot((GimbalAxis)GetBoardHWID());
 		  reset_datapointer();
 	  } else {
 		  MAVLINK_Flash();

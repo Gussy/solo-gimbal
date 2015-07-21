@@ -9,13 +9,14 @@
 extern void CopyData(void);
 extern Uint32 GetLongData(void);
 extern void ReadReservedFn(void);
+extern Uint16 CAN_GetWordData();
 
-
-#pragma    DATA_SECTION(endRam,".endmem");
+#pragma DATA_SECTION(endRam,".endmem");
 Uint16 endRam;
 
+extern unsigned int location;
 
-Uint32 CAN_Boot()
+Uint32 CAN_Boot(GimbalAxis axis)
 {
    Uint32 EntryAddr;
 
@@ -29,9 +30,13 @@ Uint32 CAN_Boot()
 
    // Asign GetWordData to the CAN-A version of the
    // function.  GetWordData is a pointer to a function.
-   GetWordData = read_Data_and_Send;
+   if(axis == AZ) {
+      GetWordData = read_Data_and_Send;
+   } else {
+      GetWordData = CAN_GetWordData;
+   }
 
-   CAN_Init(AZ);
+   CAN_Init(axis);
 
    // If the KeyValue was invalid, abort the load
    // and return the flash entry point.
