@@ -1,4 +1,5 @@
 #include "boot/Boot.h"
+#include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
 #include "mavlink_bootloader.h"
@@ -54,11 +55,24 @@ Uint32 SelectBootMode()
 
 	  EALLOW;
 
-	  if (verify_data_checksum()) {
-		  EntryAddr = CAN_Boot((GimbalAxis)GetBoardHWID());
-		  reset_datapointer();
+	  GimbalAxis axis = (GimbalAxis)GetBoardHWID();
+	  if(axis == AZ) {
+          if (verify_data_checksum()) {
+              // Enter the CAN bootloader (transmitter)
+              EntryAddr = CAN_Boot(axis);
+              reset_datapointer();
+          } else {
+              // Enter the MAVLink bootloader
+              MAVLINK_Flash(); // This never returns
+          }
 	  } else {
-		  MAVLINK_Flash();
+          // Enable the beacon LED on the elevation board only
+          if(axis == EL) {
+              init_led();
+          }
+
+          // Enter the CAN bootloader (receiver)
+          EntryAddr = CAN_Boot(axis);
 	  }
 	return EntryAddr;
 }
