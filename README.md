@@ -56,6 +56,16 @@ The bootloaders must be installed via JTAG, usually using the XDS510 JTAG Emulat
 * Blinks red when a fault has occurred
 * Blinks blue when CAN comms is lost
 
+## Mavlink
+
+The c2000 toolchain requires changes to the standard mavlink code generator, which are available in the [mavlink-solo](https://github.com/3drobotics/mavlink-solo) repo on the `c2000-generator-only` branch. As the branch name implies, only changes to the c2000 generator should go into this branch. Specifically no mavlink msg changes should be made directly to this branch, since other projects won't have visibility to those messages.
+
+Any changes to the mavlink msg defs should go into the master branch of [mavlink-solo](https://github.com/3drobotics/mavlink-solo), and subsequently get merged into `c2000-generator-only`.
+
+To re-run the generator and update the headers used in the gimbal fw, ensure you've cloned mavlink-solo at a sibling level to this repo, then from the top level of this repo run:
+
+    $ ./shared/message_definitions/generate.sh
+
 ## Misc
 
 As the gimbal speaks mavlink, you can connect to it via [mavproxy](https://tridge.github.io/MAVProxy) for debugging and general development:
