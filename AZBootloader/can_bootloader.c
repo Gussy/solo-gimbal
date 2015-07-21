@@ -14,13 +14,11 @@ extern Uint16 CAN_GetWordData();
 #pragma DATA_SECTION(endRam,".endmem");
 Uint16 endRam;
 
-extern unsigned int location;
-
 Uint32 CAN_Boot(GimbalAxis axis)
 {
    Uint32 EntryAddr;
 
-   location = 0;
+   reset_datapointer();
 
    // If the missing clock detect bit is set, just
    // loop here.
