@@ -35,25 +35,10 @@ mavlink_message_t msg, inmsg;
 mavlink_status_t status;
 unsigned char buffer[BUFFER_LENGTH];
 
-void mavlink_data_handshake(Uint16 seq) {
-	// send mavlink message to request data stream
-	mavlink_msg_data_transmission_handshake_pack(
-	MAVLINK_SYSTEM_ID, MAV_COMP_ID_GIMBAL, &msg, MAVLINK_TYPE_UINT16_T,
-			0 /* size */, seq /* width */,
-			BOOTLOADER_VERSION /*uint16_t height*/, 0 /*uint16_t packets*/,
-			ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/, 0 /*uint8_t jpg_quality*/
-			);
-	Uint16 length;
-	length = mavlink_msg_to_send_buffer(buffer, &msg);
-	send_serial_port(buffer, length);
-}
-
-void clearBuffers(){
-	memset(&msg, 0, sizeof(msg));
-	memset(&status, 0, sizeof(status));
-	memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer));
-	memset(&m_mavlink_status, 0, sizeof(m_mavlink_status));
-}
+static void prepare_flash(void);
+static void mavlink_data_handshake(Uint16 seq);
+static void clear_buffers(void);
+static void reset_to_app(void);
 
 void MAVLINK_Flash()
 {
@@ -65,7 +50,7 @@ void MAVLINK_Flash()
     int idx1 = 0;
     Uint16 idx2 = 0;
 
-	clearBuffers();
+	clear_buffers();
 	setup_serial_port();
 
 	EALLOW;
@@ -87,7 +72,7 @@ void MAVLINK_Flash()
 			memset(buffer, 0, sizeof(buffer));
 			if((read_size = read_serial_port(buffer, BUFFER_LENGTH)) == 0) {
 				getting_messages = 0;
-				clearBuffers();
+				clear_buffers();
 			} else {
 				getting_messages = 1;
 				for(idx1 = 0; idx1 < read_size; idx1++) {
@@ -109,22 +94,7 @@ void MAVLINK_Flash()
 								if (Flash_ptr <= (Uint16*)APP_END) {
 									// Unlock and erase flash with first packet
 									if(seq == 0) {
-										flash_csm_unlock();
-
-										/* don't erase SECTOR A */
-										Flash_Erase(SECTORB, &FlashStatus);
-										led_status_toggle();
-										Flash_Erase(SECTORC, &FlashStatus);
-										led_status_toggle();
-										Flash_Erase(SECTORD, &FlashStatus);
-										led_status_toggle();
-										Flash_Erase(SECTORE, &FlashStatus);
-										led_status_toggle();
-										Flash_Erase(SECTORF, &FlashStatus);
-										led_status_toggle();
-										Flash_Erase(SECTORG, &FlashStatus);
-										led_status_toggle();
-										/* don't erase SECTOR H */
+										prepare_flash();
 									}
 
                                     // write data to flash
@@ -134,16 +104,7 @@ void MAVLINK_Flash()
 								}
 							}
 						} else if(inmsg.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE) {
-
-							mavlink_data_handshake(UINT16_MAX);
-
-							/* must be done */
-							watchdog_enable();
-
-							// Don't reset immediately, otherwise the MAVLink message above won't be flushed.
-
-							// This should never be reached.
-							while(1);
+						    reset_to_app(); // This never returns
 						}
 					}
 				}
@@ -159,3 +120,58 @@ void MAVLINK_Flash()
 	}
 }
 
+static void clear_buffers(void) {
+    memset(&msg, 0, sizeof(msg));
+    memset(&status, 0, sizeof(status));
+    memset(&m_mavlink_buffer, 0, sizeof(m_mavlink_buffer));
+    memset(&m_mavlink_status, 0, sizeof(m_mavlink_status));
+}
+
+static void prepare_flash(void) {
+    flash_csm_unlock();
+
+    FLASH_ST FlashStatus = {0};
+
+    /* don't erase SECTOR A */
+    Flash_Erase(SECTORB, &FlashStatus);
+    led_status_toggle();
+    Flash_Erase(SECTORC, &FlashStatus);
+    led_status_toggle();
+    Flash_Erase(SECTORD, &FlashStatus);
+    led_status_toggle();
+    Flash_Erase(SECTORE, &FlashStatus);
+    led_status_toggle();
+    Flash_Erase(SECTORF, &FlashStatus);
+    led_status_toggle();
+    Flash_Erase(SECTORG, &FlashStatus);
+    led_status_toggle();
+    /* don't erase SECTOR H */
+}
+
+static void mavlink_data_handshake(Uint16 seq) {
+    // send mavlink message to request data stream
+    mavlink_msg_data_transmission_handshake_pack(
+    MAVLINK_SYSTEM_ID, MAV_COMP_ID_GIMBAL, &msg, MAVLINK_TYPE_UINT16_T,
+            0 /* size */,
+            seq /* width */,
+            BOOTLOADER_VERSION /*uint16_t height*/,
+            0 /*uint16_t packets*/,
+            ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/,
+            0 /*uint8_t jpg_quality*/
+    );
+    Uint16 length;
+    length = mavlink_msg_to_send_buffer(buffer, &msg);
+    send_serial_port(buffer, length);
+}
+
+static void reset_to_app(void) {
+    mavlink_data_handshake(UINT16_MAX);
+
+    /* must be done */
+    watchdog_enable();
+
+    // Don't reset immediately, otherwise the MAVLink message above won't be flushed.
+
+    // This should never be reached.
+    while(1);
+}
