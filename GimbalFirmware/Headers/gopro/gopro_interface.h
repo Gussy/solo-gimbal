@@ -57,6 +57,14 @@ typedef enum{
     GP_MODEL_UNKNOWN
 } GPModel;
 
+typedef enum{
+    GP_CAPTURE_MODE_VIDEO,  // would like to start at 0x00 since this is consistent with spec but could be troublesome if mode enums begin to differ in the future
+    GP_CAPTURE_MODE_PHOTO,
+    GP_CAPTURE_MODE_BURST,
+    // GP_MODE_TIME_LAPSE // TODO: do we want to make these GP-specific? maybe do it at the i2c layer and keep this as the superset? GPMode in general?
+    GP_CAPTURE_MODE_UNKNOWN //= 99
+} GPCaptureMode;
+
 // XXX: what should this actually be?
 #define GP_MAX_RESP_LEN     32
 
@@ -105,5 +113,9 @@ void gp_enable_hb_interface();
 void gp_disable_hb_interface();
 void gp_enable_charging();
 void gp_disable_charging();
+
+GPCaptureMode gp_capture_mode();
+bool gp_set_capture_mode(Uint8 capture_mode);
+void gp_set_recording_state(bool state);
 
 #endif /* GOPRO_INTERFACE_H_ */

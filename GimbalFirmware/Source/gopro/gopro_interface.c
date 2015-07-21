@@ -44,6 +44,8 @@ typedef struct {
 
     uint16_t init_timeout_ms;
     GPModel model;
+    GPCaptureMode capture_mode;
+    bool recording;
 
     gp_h3p_t h3p;
     gp_h4_t h4;
@@ -66,6 +68,8 @@ void gp_reset()
 {
     gp.waiting_for_i2c = false;
     gp.model = GP_MODEL_UNKNOWN;
+    gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+    gp.recording = false;
     gp.init_timeout_ms = 0;
 
     gp_deassert_intr();
@@ -436,6 +440,7 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
 
     if (gp.model == GP_MODEL_UNKNOWN) {
         gp_detect_camera_model(buf, len);
+        // TODO: need to detect what video mode the camera is in and set gp.mode
     }
 
     // base case, we have received a response and we're back to idle,
@@ -610,4 +615,24 @@ void gp_timeout()
     //new_response_available = true;
 
     gp_control_state = GP_CONTROL_STATE_IDLE;
+}
+
+GPCaptureMode gp_capture_mode()
+{
+    return gp.capture_mode;
+}
+
+bool gp_set_capture_mode(Uint8 capture_mode)
+{
+    if (capture_mode == GP_CAPTURE_MODE_VIDEO || capture_mode == GP_CAPTURE_MODE_PHOTO || capture_mode == GP_CAPTURE_MODE_BURST) {
+        gp.capture_mode = (GPCaptureMode)capture_mode;
+        return true;
+    }
+
+    return false;
+}
+
+void gp_set_recording_state(bool state)
+{
+    gp.recording = state;
 }
