@@ -184,14 +184,14 @@ int init_flash(void)
 	// Flash verification will fail only if the flash has become corrupt, in which case no migrations can take place
 	if (verify_checksum((Uint16 *)START_ADDR)) {
 		// Copy the parameters in flash into a shadow struct first
-		struct CURRENT_FLASH_PARAM_STRUCT flash_params_shadow;
-		memcpy(&flash_params_shadow, (Uint16 *)START_ADDR, sizeof(flash_params_shadow));
+	    Uint16 current_flash_param_rev = 0xFFFF;
+		memcpy(&current_flash_param_rev, (Uint16 *)START_ADDR, sizeof(Uint16));
 
 		// Run a parameter migration if the struct id has changed
 		// This relies on the first 16 bit int of the flash param struct *always* being the id
-		if(flash_params_shadow.flash_struct_id != flash_params.flash_struct_id) {
+		if(current_flash_param_rev != flash_params.flash_struct_id) {
 		    // Run the flash migration operation
-		    flash_migration_run(flash_params_shadow.flash_struct_id);
+		    flash_migration_run(current_flash_param_rev);
 
 			// Save the new param struct to flash
 			write_flash();
