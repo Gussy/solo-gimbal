@@ -131,6 +131,18 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
             cmd.cmd[0] = 'S';
             cmd.cmd[1] = 'H';
             cmd.cmd_parm = request->value;
+
+            switch (cmd.cmd_parm) {
+            case GP_RECORDING_START:
+                gp_set_recording_state(true);
+                break;
+            case GP_RECORDING_STOP:
+                gp_set_recording_state(false);
+                break;
+            default:
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return -1;
+            }
             break;
 
         /* Unsupported commands */
