@@ -1,9 +1,10 @@
+#include "can.h"
 #include "boot/Boot.h"
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
 
-void CAN_Init()
+void CAN_Init(GimbalAxis axis)
 {
 
 /* Create a shadow register structure for the CAN control registers. This is

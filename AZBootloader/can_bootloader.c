@@ -31,7 +31,7 @@ Uint32 CAN_Boot()
    // function.  GetWordData is a pointer to a function.
    GetWordData = read_Data_and_Send;
 
-   CAN_Init();
+   CAN_Init(AZ);
 
    // If the KeyValue was invalid, abort the load
    // and return the flash entry point.
