@@ -21,7 +21,7 @@ def set_param(link, param_name, param_value):
     parameters = MAVParmDict()
     parameters.mavset(link.file, param_name, param_value, 3);
 
-def commit_to_flash(link):    
+def commit_to_flash(link):
     # Commit the zeroed out calibration parameters to flash
     link.param_set_send(link.target_sysid, 0, "GMB_FLASH", 69.0, MAV_PARAM_TYPE_REAL32)
     # Sleep for two seconds as immedietly following commands will fail (while the C2000 is writing flash)
@@ -126,3 +126,10 @@ def set_use_custom_gains(link, value):
             print("The gimbal must be restarted after changing GMB_CUST_GAINS")
         else:
             print("GMB_CUST_GAINS is already set to %0.1f" % new_value)
+
+def enable_torques_message(link, enabled=True):
+    if enabled:
+        value = 1.0
+    else:
+        value = 0.0
+    set_param(link, "GMB_SND_TORQUE", value)

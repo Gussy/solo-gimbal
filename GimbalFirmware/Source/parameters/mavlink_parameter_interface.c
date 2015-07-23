@@ -15,11 +15,12 @@ GimbalMavlinkParameter gimbal_params[MAVLINK_GIMBAL_PARAM_MAX];
 extern unsigned char gimbal_sysid;
 
 // Volatile parameters (these aren't saved in the flash params struct)
-static float commit_to_flash_status = 0.0;
-static float pos_hold = CONTROL_TYPE_POS;
-static float max_torque = LOW_TORQUE_MODE_MAX;
-static float sysid = 0.0;
-static float k_rate = 2.0;
+float commit_to_flash_status = 0.0;
+float pos_hold = CONTROL_TYPE_POS;
+float max_torque = LOW_TORQUE_MODE_MAX;
+float sysid = 0.0;
+float k_rate = 2.0;
+float send_torques = 1.0;
 
 void init_default_mavlink_params()
 {
@@ -208,6 +209,12 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].param_type = MAV_PARAM_TYPE_REAL32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].float_data_ptr = &(flash_params.use_custom_gains);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].access_type = GIMBAL_PARAM_READ_WRITE;
+
+	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_id, "GMB_SND_TORQUE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].float_data_ptr = &send_torques;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].access_type = GIMBAL_PARAM_READ_WRITE;
 
     //----- Parameters for external calibration
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].param_id, "GMB_OFF_JNT_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
