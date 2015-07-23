@@ -287,7 +287,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     		// First make sure this isn't data we've already received, and if not, load it into our copy of the flash params struct
                     		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
                     		Uint8 words_received = msg.extended_param[2];
-                    		if (load_ap_state_info->current_load_offset == start_offset) {
+                    		if (load_ap_state_info->current_load_offset == start_offset && (start_offset + words_received) <= sizeof(flash_params)) {
                     			// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
                     			int i;
                     			for (i = 0; i < words_received; i++) {
