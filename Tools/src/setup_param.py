@@ -115,3 +115,10 @@ def pos_hold_enable(link):
 def pos_hold_disable(link):
     parameters = MAVParmDict()
     parameters.mavset(link.file, "GMB_POS_HOLD", 0, 3)
+
+def enable_torques_message(link, enabled=True):
+    if enabled:
+        value = 1.0
+    else:
+        value = 0.0
+    set_param(link, "GMB_SND_TORQUE", value)
