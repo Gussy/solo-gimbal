@@ -43,6 +43,8 @@ Uint16 telem_received = 0;
 
 int last_parameter_sent = 0;
 
+extern float send_torques;
+
 void init_mavlink() {
 	// Reset the gimbal's communication channel so the parse state machine starts out in a known state
 	mavlink_reset_channel_status(MAVLINK_COMM_0);
@@ -183,7 +185,9 @@ void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_enco
 
 void receive_torque_cmd_telemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd)
 {
-	send_mavlink_torque_cmd_feedback(az_torque_cmd, el_torque_cmd, rl_torque_cmd);
+    if(send_torques == 1.0) {
+	    send_mavlink_torque_cmd_feedback(az_torque_cmd, el_torque_cmd, rl_torque_cmd);
+    }
 }
 
 void receive_gyro_az_telemetry(int32 az_gyro)

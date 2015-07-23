@@ -19,6 +19,7 @@ float commit_to_flash_status = 0.0;
 float pos_hold = CONTROL_TYPE_POS;
 float max_torque = LOW_TORQUE_MODE_MAX;
 float sysid = 0.0;
+float send_torques = 1.0;
 
 void init_default_mavlink_params()
 {
@@ -201,6 +202,12 @@ void init_default_mavlink_params()
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].param_type = MAV_PARAM_TYPE_REAL32;
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].float_data_ptr = &(flash_params.gopro_charging_enabled);
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].access_type = GIMBAL_PARAM_READ_WRITE;
+
+	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_id, "GMB_SND_TORQUE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].float_data_ptr = &send_torques;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].access_type = GIMBAL_PARAM_READ_WRITE;
 
     //----- Parameters for external calibration
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].param_id, "GMB_OFF_JNT_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);

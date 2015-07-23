@@ -227,6 +227,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     target = Vector3()
     log = None
 
+    setup_param.enable_torques_message(link, False)
     start_time = time.time()
     if timeout is not None:
         timeout = timeout + WOBBLE_TEST_ALIGNMENT_TIME
