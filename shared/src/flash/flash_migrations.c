@@ -66,24 +66,24 @@ static void flash_migration_from_0003(void) {
     flash_params.gopro_charging_enabled = flash_params_0003.gopro_charging_enabled;
 
     // Copy arrays
-    memcpy(flash_params.commutation_slope, flash_params_0003.commutation_slope, sizeof(flash_params_0003.commutation_slope) * AXIS_CNT);
-    memcpy(flash_params.commutation_icept, flash_params_0003.commutation_icept, sizeof(flash_params_0003.commutation_icept) * AXIS_CNT);
+    memcpy(flash_params.commutation_slope, flash_params_0003.commutation_slope, sizeof(flash_params_0003.commutation_slope));
+    memcpy(flash_params.commutation_icept, flash_params_0003.commutation_icept, sizeof(flash_params_0003.commutation_icept));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0003.torque_pid_kp, sizeof(flash_params_0003.torque_pid_kp) * AXIS_CNT);
-    memcpy(flash_params.torque_pid_ki, flash_params_0003.torque_pid_ki, sizeof(flash_params_0003.torque_pid_ki) * AXIS_CNT);
-    memcpy(flash_params.torque_pid_kd, flash_params_0003.torque_pid_kd, sizeof(flash_params_0003.torque_pid_kd) * AXIS_CNT);
+    memcpy(flash_params.torque_pid_kp, flash_params_0003.torque_pid_kp, sizeof(flash_params_0003.torque_pid_kp));
+    memcpy(flash_params.torque_pid_ki, flash_params_0003.torque_pid_ki, sizeof(flash_params_0003.torque_pid_ki));
+    memcpy(flash_params.torque_pid_kd, flash_params_0003.torque_pid_kd, sizeof(flash_params_0003.torque_pid_kd));
 
-    memcpy(flash_params.rate_pid_p, flash_params_0003.rate_pid_p, sizeof(flash_params_0003.rate_pid_p) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_i, flash_params_0003.rate_pid_i, sizeof(flash_params_0003.rate_pid_i) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_d, flash_params_0003.rate_pid_d, sizeof(flash_params_0003.rate_pid_d) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_windup, flash_params_0003.rate_pid_windup, sizeof(flash_params_0003.rate_pid_windup) * AXIS_CNT);
+    memcpy(flash_params.rate_pid_p, flash_params_0003.rate_pid_p, sizeof(flash_params_0003.rate_pid_p));
+    memcpy(flash_params.rate_pid_i, flash_params_0003.rate_pid_i, sizeof(flash_params_0003.rate_pid_i));
+    memcpy(flash_params.rate_pid_d, flash_params_0003.rate_pid_d, sizeof(flash_params_0003.rate_pid_d));
+    memcpy(flash_params.rate_pid_windup, flash_params_0003.rate_pid_windup, sizeof(flash_params_0003.rate_pid_windup));
 
-    memcpy(flash_params.offset_joint, flash_params_0003.offset_joint, sizeof(flash_params_0003.offset_joint) * AXIS_CNT);
-    memcpy(flash_params.offset_accelerometer, flash_params_0003.offset_accelerometer, sizeof(flash_params_0003.offset_accelerometer) * AXIS_CNT);
-    memcpy(flash_params.offset_gyro, flash_params_0003.offset_gyro, sizeof(flash_params_0003.offset_gyro) * AXIS_CNT);
+    memcpy(flash_params.offset_joint, flash_params_0003.offset_joint, sizeof(flash_params_0003.offset_joint));
+    memcpy(flash_params.offset_gyro, flash_params_0003.offset_gyro, sizeof(flash_params_0003.offset_gyro));
 
-    memcpy(flash_params.gain_accelerometer, flash_params_0003.gain_accelerometer, sizeof(flash_params_0003.gain_accelerometer) * AXIS_CNT);
-    memcpy(flash_params.offset_accelerometer, flash_params_0003.offset_accelerometer, sizeof(flash_params_0003.gain_accelerometer) * AXIS_CNT);
+    memcpy(flash_params.offset_accelerometer, flash_params_0003.offset_accelerometer, sizeof(flash_params_0003.offset_accelerometer));
+    memcpy(flash_params.gain_accelerometer, flash_params_0003.gain_accelerometer, sizeof(flash_params_0003.gain_accelerometer));
+    memcpy(flash_params.alignment_accelerometer, flash_params_0003.alignment_accelerometer, sizeof(flash_params_0003.alignment_accelerometer));
 
     /* Removed parameters:
      *  broadcast_msgs (was made volatile)
@@ -103,24 +103,24 @@ static void flash_migration_from_0002(void) {
     flash_params.k_rate = flash_params_0002.k_rate;
 
     // Copy arrays
-    memcpy(flash_params.commutation_slope, flash_params_0002.commutation_slope, sizeof(flash_params_0002.commutation_slope) * AXIS_CNT);
-    memcpy(flash_params.commutation_icept, flash_params_0002.commutation_icept, sizeof(flash_params_0002.commutation_icept) * AXIS_CNT);
+    memcpy(flash_params.commutation_slope, flash_params_0002.commutation_slope, sizeof(flash_params_0002.commutation_slope));
+    memcpy(flash_params.commutation_icept, flash_params_0002.commutation_icept, sizeof(flash_params_0002.commutation_icept));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0002.torque_pid_kp, sizeof(flash_params_0002.torque_pid_kp) * AXIS_CNT);
-    memcpy(flash_params.torque_pid_ki, flash_params_0002.torque_pid_ki, sizeof(flash_params_0002.torque_pid_ki) * AXIS_CNT);
-    memcpy(flash_params.torque_pid_kd, flash_params_0002.torque_pid_kd, sizeof(flash_params_0002.torque_pid_kd) * AXIS_CNT);
+    memcpy(flash_params.torque_pid_kp, flash_params_0002.torque_pid_kp, sizeof(flash_params_0002.torque_pid_kp));
+    memcpy(flash_params.torque_pid_ki, flash_params_0002.torque_pid_ki, sizeof(flash_params_0002.torque_pid_ki));
+    memcpy(flash_params.torque_pid_kd, flash_params_0002.torque_pid_kd, sizeof(flash_params_0002.torque_pid_kd));
 
-    memcpy(flash_params.rate_pid_p, flash_params_0002.rate_pid_p, sizeof(flash_params_0002.rate_pid_p) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_i, flash_params_0002.rate_pid_i, sizeof(flash_params_0002.rate_pid_i) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_d, flash_params_0002.rate_pid_d, sizeof(flash_params_0002.rate_pid_d) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_windup, flash_params_0002.rate_pid_windup, sizeof(flash_params_0002.rate_pid_windup) * AXIS_CNT);
+    memcpy(flash_params.rate_pid_p, flash_params_0002.rate_pid_p, sizeof(flash_params_0002.rate_pid_p));
+    memcpy(flash_params.rate_pid_i, flash_params_0002.rate_pid_i, sizeof(flash_params_0002.rate_pid_i));
+    memcpy(flash_params.rate_pid_d, flash_params_0002.rate_pid_d, sizeof(flash_params_0002.rate_pid_d));
+    memcpy(flash_params.rate_pid_windup, flash_params_0002.rate_pid_windup, sizeof(flash_params_0002.rate_pid_windup));
 
-    memcpy(flash_params.offset_joint, flash_params_0002.offset_joint, sizeof(flash_params_0002.offset_joint) * AXIS_CNT);
-    memcpy(flash_params.offset_accelerometer, flash_params_0002.offset_accelerometer, sizeof(flash_params_0002.offset_accelerometer) * AXIS_CNT);
-    memcpy(flash_params.offset_gyro, flash_params_0002.offset_gyro, sizeof(flash_params_0002.offset_gyro) * AXIS_CNT);
+    memcpy(flash_params.offset_joint, flash_params_0002.offset_joint, sizeof(flash_params_0002.offset_joint));
+    memcpy(flash_params.offset_gyro, flash_params_0002.offset_gyro, sizeof(flash_params_0002.offset_gyro));
 
-    memcpy(flash_params.gain_accelerometer, flash_params_0002.gain_accelerometer, sizeof(flash_params_0002.gain_accelerometer) * AXIS_CNT);
-    memcpy(flash_params.offset_accelerometer, flash_params_0002.offset_accelerometer, sizeof(flash_params_0002.gain_accelerometer) * AXIS_CNT);
+    memcpy(flash_params.offset_accelerometer, flash_params_0002.offset_accelerometer, sizeof(flash_params_0002.offset_accelerometer));
+    memcpy(flash_params.gain_accelerometer, flash_params_0002.gain_accelerometer, sizeof(flash_params_0002.gain_accelerometer));
+    memcpy(flash_params.alignment_accelerometer, flash_params_0002.alignment_accelerometer, sizeof(flash_params_0002.alignment_accelerometer));
 
     /* Added parameters:
      *  gopro_charging_enabled
@@ -140,21 +140,21 @@ static void flash_migration_from_0001(void) {
     flash_params.k_rate = flash_params_0001.k_rate;
 
     // Copy arrays
-    memcpy(flash_params.commutation_slope, flash_params_0001.commutation_slope, sizeof(flash_params_0001.commutation_slope) * AXIS_CNT);
-    memcpy(flash_params.commutation_icept, flash_params_0001.commutation_icept, sizeof(flash_params_0001.commutation_icept) * AXIS_CNT);
+    memcpy(flash_params.commutation_slope, flash_params_0001.commutation_slope, sizeof(flash_params_0001.commutation_slope));
+    memcpy(flash_params.commutation_icept, flash_params_0001.commutation_icept, sizeof(flash_params_0001.commutation_icept));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0001.torque_pid_kp, sizeof(flash_params_0001.torque_pid_kp) * AXIS_CNT);
-    memcpy(flash_params.torque_pid_ki, flash_params_0001.torque_pid_ki, sizeof(flash_params_0001.torque_pid_ki) * AXIS_CNT);
-    memcpy(flash_params.torque_pid_kd, flash_params_0001.torque_pid_kd, sizeof(flash_params_0001.torque_pid_kd) * AXIS_CNT);
+    memcpy(flash_params.torque_pid_kp, flash_params_0001.torque_pid_kp, sizeof(flash_params_0001.torque_pid_kp));
+    memcpy(flash_params.torque_pid_ki, flash_params_0001.torque_pid_ki, sizeof(flash_params_0001.torque_pid_ki));
+    memcpy(flash_params.torque_pid_kd, flash_params_0001.torque_pid_kd, sizeof(flash_params_0001.torque_pid_kd));
 
-    memcpy(flash_params.rate_pid_p, flash_params_0001.rate_pid_p, sizeof(flash_params_0001.rate_pid_p) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_i, flash_params_0001.rate_pid_i, sizeof(flash_params_0001.rate_pid_i) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_d, flash_params_0001.rate_pid_d, sizeof(flash_params_0001.rate_pid_d) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_windup, flash_params_0001.rate_pid_windup, sizeof(flash_params_0001.rate_pid_windup) * AXIS_CNT);
+    memcpy(flash_params.rate_pid_p, flash_params_0001.rate_pid_p, sizeof(flash_params_0001.rate_pid_p));
+    memcpy(flash_params.rate_pid_i, flash_params_0001.rate_pid_i, sizeof(flash_params_0001.rate_pid_i));
+    memcpy(flash_params.rate_pid_d, flash_params_0001.rate_pid_d, sizeof(flash_params_0001.rate_pid_d));
+    memcpy(flash_params.rate_pid_windup, flash_params_0001.rate_pid_windup, sizeof(flash_params_0001.rate_pid_windup));
 
-    memcpy(flash_params.offset_joint, flash_params_0001.offset_joint, sizeof(flash_params_0001.offset_joint) * AXIS_CNT);
-    memcpy(flash_params.offset_accelerometer, flash_params_0001.offset_accelerometer, sizeof(flash_params_0001.offset_accelerometer) * AXIS_CNT);
-    memcpy(flash_params.offset_gyro, flash_params_0001.offset_gyro, sizeof(flash_params_0001.offset_gyro) * AXIS_CNT);
+    memcpy(flash_params.offset_joint, flash_params_0001.offset_joint, sizeof(flash_params_0001.offset_joint));
+    memcpy(flash_params.offset_accelerometer, flash_params_0001.offset_accelerometer, sizeof(flash_params_0001.offset_accelerometer));
+    memcpy(flash_params.offset_gyro, flash_params_0001.offset_gyro, sizeof(flash_params_0001.offset_gyro));
 
     /* Added parameters:
      *  gain_accelerometer
@@ -185,21 +185,21 @@ static void flash_migration_from_0000(void) {
     flash_params.k_rate = flash_params_0000.k_rate;
 
     // Copy arrays
-    memcpy(flash_params.commutation_slope, flash_params_0000.AxisCalibrationSlopes, sizeof(flash_params_0000.AxisCalibrationSlopes) * AXIS_CNT);
-    memcpy(flash_params.commutation_icept, flash_params_0000.AxisCalibrationIntercepts, sizeof(flash_params_0000.AxisCalibrationIntercepts) * AXIS_CNT);
+    memcpy(flash_params.commutation_slope, flash_params_0000.AxisCalibrationSlopes, sizeof(flash_params_0000.AxisCalibrationSlopes));
+    memcpy(flash_params.commutation_icept, flash_params_0000.AxisCalibrationIntercepts, sizeof(flash_params_0000.AxisCalibrationIntercepts));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0000.torque_pid_kp, sizeof(flash_params_0000.torque_pid_kp) * AXIS_CNT);
-    memcpy(flash_params.torque_pid_ki, flash_params_0000.torque_pid_ki, sizeof(flash_params_0000.torque_pid_ki) * AXIS_CNT);
-    memcpy(flash_params.torque_pid_kd, flash_params_0000.torque_pid_kd, sizeof(flash_params_0000.torque_pid_kd) * AXIS_CNT);
+    memcpy(flash_params.torque_pid_kp, flash_params_0000.torque_pid_kp, sizeof(flash_params_0000.torque_pid_kp));
+    memcpy(flash_params.torque_pid_ki, flash_params_0000.torque_pid_ki, sizeof(flash_params_0000.torque_pid_ki));
+    memcpy(flash_params.torque_pid_kd, flash_params_0000.torque_pid_kd, sizeof(flash_params_0000.torque_pid_kd));
 
-    memcpy(flash_params.rate_pid_p, flash_params_0000.rate_pid_p, sizeof(flash_params_0000.rate_pid_p) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_i, flash_params_0000.rate_pid_i, sizeof(flash_params_0000.rate_pid_i) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_d, flash_params_0000.rate_pid_d, sizeof(flash_params_0000.rate_pid_d) * AXIS_CNT);
-    memcpy(flash_params.rate_pid_windup, flash_params_0000.rate_pid_windup, sizeof(flash_params_0000.rate_pid_windup) * AXIS_CNT);
+    memcpy(flash_params.rate_pid_p, flash_params_0000.rate_pid_p, sizeof(flash_params_0000.rate_pid_p));
+    memcpy(flash_params.rate_pid_i, flash_params_0000.rate_pid_i, sizeof(flash_params_0000.rate_pid_i));
+    memcpy(flash_params.rate_pid_d, flash_params_0000.rate_pid_d, sizeof(flash_params_0000.rate_pid_d));
+    memcpy(flash_params.rate_pid_windup, flash_params_0000.rate_pid_windup, sizeof(flash_params_0000.rate_pid_windup));
 
-    memcpy(flash_params.offset_joint, flash_params_0000.offset_joint, sizeof(flash_params_0000.offset_joint) * AXIS_CNT);
-    memcpy(flash_params.offset_accelerometer, flash_params_0000.offset_accelerometer, sizeof(flash_params_0000.offset_accelerometer) * AXIS_CNT);
-    memcpy(flash_params.offset_gyro, flash_params_0000.offset_gyro, sizeof(flash_params_0000.offset_gyro) * AXIS_CNT);
+    memcpy(flash_params.offset_joint, flash_params_0000.offset_joint, sizeof(flash_params_0000.offset_joint));
+    memcpy(flash_params.offset_accelerometer, flash_params_0000.offset_accelerometer, sizeof(flash_params_0000.offset_accelerometer));
+    memcpy(flash_params.offset_gyro, flash_params_0000.offset_gyro, sizeof(flash_params_0000.offset_gyro));
 
     /* Removed parameters:
      *  board_id
