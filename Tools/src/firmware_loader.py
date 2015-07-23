@@ -119,7 +119,7 @@ def finish_upload(link, loadDefaultGains):
             setup_validate.restore_defaults(link)
         return Results.Success
 
-def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None, loadDefaultGains = True):
+def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None, loadDefaultGains=False):
     global bootloaderVersionHandler, progressHandler
 
     if progressCallback:
