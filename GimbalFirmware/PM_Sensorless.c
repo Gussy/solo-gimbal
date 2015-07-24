@@ -29,6 +29,7 @@
 #include "flash/flash.h"
 #include "flash/flash_init.h"
 #include "hardware/interrupts.h"
+#include "hardware/watchdog.h"
 
 #include <math.h>
 #include <string.h>
@@ -423,6 +424,9 @@ void main(void)
 
     InitInterrupts();
 
+    // Enable the watchdog before entering the loop
+    watchdog_enable();
+
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
 	{
@@ -516,6 +520,9 @@ void main(void)
         if (MainWorkElapsedTime > MaxMainWorkElapsedTime) {
             MaxMainWorkElapsedTime = MainWorkElapsedTime;
         }
+
+        // Sercice the watchdog (reset the counter)
+        watchdog_service();
 	}
 } //END MAIN CODE
 

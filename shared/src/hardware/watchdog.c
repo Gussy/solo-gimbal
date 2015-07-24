@@ -4,7 +4,8 @@
 void watchdog_enable()
 {
 	EALLOW;
-    // Enable watchdog module
+    // Enable watchdog module with a 25.6uS counter clock rate
+	// The counter will overflow at 2^8, every ~6.55 ms
 	SysCtrlRegs.WDCR = 0x0028;
 	EDIS;
 
