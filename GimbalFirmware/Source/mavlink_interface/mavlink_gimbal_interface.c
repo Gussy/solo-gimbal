@@ -88,7 +88,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 		}
 
 		// reset now
-		watchdog_immediate_reset();
+		watchdog_immediate_device_reset();
 	}
 }
 
@@ -338,7 +338,7 @@ static void handle_reset_gimbal()
         cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
 
         // reset this axis
-        watchdog_reset();
+        watchdog_device_reset();
 }
 
 static void handle_full_reset_gimbal(void)
@@ -354,7 +354,7 @@ static void handle_full_reset_gimbal(void)
     erase_param_flash();
 
     // reset now
-    watchdog_immediate_reset();
+    watchdog_immediate_device_reset();
 }
 
 static void handle_request_axis_calibration(MotorDriveParms* md_parms)

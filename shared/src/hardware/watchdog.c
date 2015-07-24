@@ -25,7 +25,7 @@ void watchdog_enable()
 	EDIS;
 }
 
-void watchdog_reset()
+void watchdog_device_reset()
 {
 	// Enable watchdog
 	watchdog_enable();
@@ -34,7 +34,7 @@ void watchdog_reset()
 	for(;;);
 }
 
-void watchdog_immediate_reset() {
+void watchdog_immediate_device_reset() {
 	// Enable watchdog
 	watchdog_enable();
 

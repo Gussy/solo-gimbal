@@ -84,7 +84,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
         		power_down_motor();
 
         		// enable watchdog and wait until it goes off
-        		watchdog_immediate_reset();
+        		watchdog_immediate_device_reset();
         	}
         	break;
 

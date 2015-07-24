@@ -49,7 +49,7 @@ static void flash_migration_not_possible(void) {
 
     // Reset other axes then ourselves
     cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
-    watchdog_reset();
+    watchdog_device_reset();
 }
 
 static void flash_migration_from_0003(void) {
