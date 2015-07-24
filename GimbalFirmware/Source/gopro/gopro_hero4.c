@@ -262,14 +262,6 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
     return true;
 }
 
-#if 1
-// TODO: maybe use this one in gp_h4_request_power_off
-typedef enum{
-    GP_H4_POWER_OFF_NORMAL,
-    GP_H4_POWER_OFF_FORCED
-} GPH4Power;
-#endif
-
 bool gp_h4_request_power_off(gp_h4_t *h4)
 {
     uint16_t api_group = 8;
