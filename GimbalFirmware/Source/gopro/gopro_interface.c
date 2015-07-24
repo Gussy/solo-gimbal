@@ -718,7 +718,7 @@ bool gp_set_capture_mode(Uint8 capture_mode)
         return true;
     }
 
-    return true;
+    return false;
 }
 
 void gp_set_recording_state(bool recording_state)
