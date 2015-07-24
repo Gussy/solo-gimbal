@@ -116,6 +116,7 @@ void gp_disable_charging();
 
 GPCaptureMode gp_capture_mode();
 bool gp_set_capture_mode(Uint8 capture_mode);
-void gp_set_recording_state(bool state);
+void gp_set_recording_state(bool recording_state);
+bool gp_recording_state();
 
 #endif /* GOPRO_INTERFACE_H_ */

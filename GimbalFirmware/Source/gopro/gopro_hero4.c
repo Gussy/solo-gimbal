@@ -353,13 +353,14 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
             break;
 
         case GOPRO_COMMAND_SHUTTER:
+
             switch (gp_capture_mode()) {
             case GP_CAPTURE_MODE_VIDEO:
                 api_group = 2;
                 switch (request->value) {
                 case GP_RECORDING_START:
                     api_id = 0x1b;
-                    gp_set_recording_state(true);
+                    gp_set_recording_state(true); // TODO: settings this after the command has received a successful response would be more robust
                     break;
                 case GP_RECORDING_STOP:
                     api_id = 0x1c;
@@ -370,38 +371,41 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
                     return -1;
                 }
                 break;
+
             case GP_CAPTURE_MODE_PHOTO:
                 api_group = 3;
                 switch (request->value) {
                 case GP_RECORDING_START:
                     api_id = 0x17;
-                    gp_set_recording_state(true);
+                    //gp_set_recording_state(true);     // no need since we don't have a way to find out when recording is finished
                     break;
                 case GP_RECORDING_STOP:
                     api_id = 0x18;
-                    gp_set_recording_state(false);
+                    //gp_set_recording_state(false);
                     break;
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                     return -1;
                 }
                 break;
+
             case GP_CAPTURE_MODE_BURST:
                 api_group = 4;
                 switch (request->value) {
                 case GP_RECORDING_START:
                     api_id = 0x1b;
-                    gp_set_recording_state(true);
+                    //gp_set_recording_state(true);      // no need since we don't have a way to find out when recording is finished
                     break;
                 case GP_RECORDING_STOP:
                     api_id = 0x1c;
-                    gp_set_recording_state(false);
+                    //gp_set_recording_state(false);
                     break;
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                     return -1;
                 }
                 break;
+
             case GP_CAPTURE_MODE_UNKNOWN:
             default:
                 // unknown capture mode

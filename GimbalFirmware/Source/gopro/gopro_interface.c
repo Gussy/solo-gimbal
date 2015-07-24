@@ -632,7 +632,12 @@ bool gp_set_capture_mode(Uint8 capture_mode)
     return false;
 }
 
-void gp_set_recording_state(bool state)
+void gp_set_recording_state(bool recording_state)
 {
-    gp.recording = state;
+    gp.recording = recording_state;
+}
+
+bool gp_recording_state()
+{
+    return gp.recording;
 }

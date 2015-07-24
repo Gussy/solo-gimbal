@@ -132,16 +132,19 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
             cmd.cmd[1] = 'H';
             cmd.cmd_parm = request->value;
 
-            switch (cmd.cmd_parm) {
-            case GP_RECORDING_START:
-                gp_set_recording_state(true);
-                break;
-            case GP_RECORDING_STOP:
-                gp_set_recording_state(false);
-                break;
-            default:
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                return -1;
+            // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
+            if (gp_capture_mode() == GP_CAPTURE_MODE_VIDEO) {
+                switch (cmd.cmd_parm) {
+                case GP_RECORDING_START:
+                    gp_set_recording_state(true);
+                    break;
+                case GP_RECORDING_STOP:
+                    gp_set_recording_state(false);
+                    break;
+                default:
+                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                    return -1;
+                }
             }
             break;
 
