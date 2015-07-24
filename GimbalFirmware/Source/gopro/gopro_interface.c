@@ -453,6 +453,11 @@ void gp_interface_state_machine()
 
 void gp_on_txn_complete()
 {
+    /*
+     * Called after a transaction with the I2C layer
+     * has been completed.
+     */
+
     switch (gp.model) {
     case GP_MODEL_HERO3P:
         gp_h3p_on_txn_complete();
@@ -685,6 +690,18 @@ void gp_latch_pending_capture_mode()
 
 bool gp_pend_capture_mode(Uint8 capture_mode)
 {
+    /*
+     * Called when a 'SET capture mode' cmd, which contains the new capture
+     * mode, is received from the CAN/MAVLink layer. The new capture mode is
+     * then pended until we have confirmation that the I2C 'SET capture mode'
+     * transaction has completed successfully, at which point the new
+     * capture mode state will be set.
+     *
+     * The process described above is implemented because the response to the
+     * 'SET' I2C cmd does not contain information about the new capture mode.
+     *
+     */
+
     if (gp_is_valid_capture_mode(capture_mode)) {
         gp.pending_capture_mode = (GPCaptureMode)capture_mode;
         return true;
