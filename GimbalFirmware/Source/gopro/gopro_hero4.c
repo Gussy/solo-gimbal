@@ -237,24 +237,6 @@ void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         }
     }
 
-    // TODO: if not done already elsewhere (check), sanitize the payload in the short term to keep a consistent API? send only one byte back using a switch case based on command?
-#if 0
-    len = 1;
-
-    switch (cmd_id) {
-        case GOPRO_COMMAND_CAPTURE_MODE:
-            rsp->payload[0] = rsp->payload[3];      // payload format = [<ERROR>, 0, 1, <CAPTURE_MODE>]
-            break;
-
-        case GOPRO_COMMAND_BATTERY:
-            rsp->payload[0] = rsp->payload[3];      // payload format = [<ERROR>, 0, 1, <PERCENT>, <BARS>, <STATE>]
-            break;
-
-        default:
-            break;
-    }
-#endif
-
     gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_SUCCESS);
 }
 
