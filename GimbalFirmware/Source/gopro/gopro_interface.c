@@ -203,8 +203,13 @@ GPHeartbeatStatus gp_heartbeat_status()
 			&& last_set_request.cmd_id == GOPRO_COMMAND_SHUTTER
 			&& last_set_request.value == 1) {
 			heartbeat_status = GP_HEARTBEAT_RECORDING;
-    } else */if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
-		heartbeat_status = GP_HEARTBEAT_CONNECTED;
+    } else */
+    if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
+        if (gp_recording_state()) {
+            heartbeat_status = GP_HEARTBEAT_RECORDING;
+        } else {
+            heartbeat_status = GP_HEARTBEAT_CONNECTED;
+        }
 	} else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && GP_VON) {
 		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
