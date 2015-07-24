@@ -1,6 +1,7 @@
 #include "PM_Sensorless.h"
 #include "flash/flash.h"
 #include "flash/flash_migrations.h"
+#include "hardware/watchdog.h"
 #include "Flash2806x_API_Library.h"
 #include "F2806x_SysCtrl.h"
 
@@ -100,9 +101,13 @@ int erase_our_flash()
 	}
 
 	flash_csm_unlock();
+
 	/* only need to erase B, everything else will be erased again later. */
+	watchdog_disable();
 	Status = Flash_Erase(SECTORB, &FlashStatus);
 	Status = Flash_Erase(SECTORG, &FlashStatus);
+	watchdog_enable();
+
 	if (Status != STATUS_SUCCESS) {
 		return -1;
 	}
@@ -125,7 +130,10 @@ int erase_param_flash()
     }
 
     flash_csm_unlock();
+    watchdog_disable();
     Status = Flash_Erase(SECTORH, &FlashStatus);
+    watchdog_enable();
+
     if (Status != STATUS_SUCCESS) {
         return -1;
     }
@@ -155,18 +163,24 @@ int write_flash(void)
 
 	flash_csm_unlock();
 
+	watchdog_disable();
 	Status = Flash_Erase(SECTORH, &FlashStatus);
+
 	if (Status != STATUS_SUCCESS) {
 		return -1;
 	}
+
     for(i=0;i<WORDS_IN_FLASH_BUFFER;i++)
     {
         Buffer[i] = ((Uint16 *)&flash_params)[i];
     }
+
     make_checksum(Buffer);
     Flash_ptr = (Uint16 *)START_ADDR;
     Length = WORDS_IN_FLASH_BUFFER*sizeof(Buffer[0]);
-    Status = Flash_Program(Flash_ptr,Buffer,Length,&FlashStatus);
+    Status = Flash_Program(Flash_ptr, Buffer, Length, &FlashStatus);
+    watchdog_enable();
+
     if(Status != STATUS_SUCCESS)
     {
     	return -2;
