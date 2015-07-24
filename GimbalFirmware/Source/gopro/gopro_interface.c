@@ -41,7 +41,7 @@ typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 
     bool txn_result_pending;
-    bool txn_is_internal;           // TODO: this doesn't get reset after an internal txn is complete, which should be okay but should check this
+    bool txn_is_internal;
     gp_transaction_t txn;
 
     uint16_t init_timeout_ms;
@@ -454,8 +454,9 @@ void gp_interface_state_machine()
 void gp_on_txn_complete()
 {
     /*
-     * Called after a transaction with the I2C layer
+     * Called after a HeroBus request/response transaction
      * has been completed.
+     *
      */
 
     switch (gp.model) {
