@@ -90,6 +90,7 @@ void gp_write_eeprom();
 void gp_on_slave_address(bool addressed_as_tx);
 
 uint16_t gp_transaction_cmd();
+GPRequestType gp_transaction_direction();
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
 bool gp_transaction_result_available();
 bool gp_get_completed_transaction(gp_transaction_t **rsp);
@@ -104,7 +105,7 @@ inline void gp_deassert_intr(void) {
 
 bool gp_new_heartbeat_available();
 
-int gp_get_request(Uint8 cmd_id);
+int gp_get_request(Uint8 cmd_id, bool txn_is_internal);
 int gp_set_request(GPSetRequest* request);
 
 GPHeartbeatStatus gp_heartbeat_status();
@@ -115,6 +116,11 @@ void gp_enable_charging();
 void gp_disable_charging();
 
 GPCaptureMode gp_capture_mode();
+bool gp_handshake_complete();
+bool gp_capture_mode_initialized();
+bool gp_is_valid_capture_mode(Uint8 capture_mode);
+void gp_update_capture_mode();
+bool gp_pend_capture_mode(Uint8 capture_mode);
 bool gp_set_capture_mode(Uint8 capture_mode);
 void gp_set_recording_state(bool recording_state);
 bool gp_recording_state();

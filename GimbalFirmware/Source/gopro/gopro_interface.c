@@ -41,11 +41,13 @@ typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 
     bool txn_result_pending;
+    bool txn_is_internal;           // TODO: this doesn't get reset after an internal txn is complete, which should be okay but should check this
     gp_transaction_t txn;
 
     uint16_t init_timeout_ms;
     GPModel model;
     GPCaptureMode capture_mode;
+    GPCaptureMode pending_capture_mode;
     bool recording;
 
     gp_h3p_t h3p;
@@ -68,10 +70,16 @@ void init_gp_interface()
 void gp_reset()
 {
     gp.waiting_for_i2c = false;
+
+    gp.txn_result_pending = false;
+    gp.txn_is_internal = false;
+    // txn is not initialized
+
+    gp.init_timeout_ms = 0;
     gp.model = GP_MODEL_UNKNOWN;
     gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+    gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.recording = false;
-    gp.init_timeout_ms = 0;
 
     gp_deassert_intr();
 
@@ -118,6 +126,10 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
     gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
 
     return true;
+}
+
+GPRequestType gp_transaction_direction() {
+    return gp.txn.reqtype;
 }
 
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status)
@@ -173,9 +185,17 @@ bool gp_get_completed_transaction(gp_transaction_t ** rsp)
         return false;
     }
 
+    gp.txn_result_pending = false;
+
+    // if transaction is internal, don't return currently pending response
+    if (gp.txn_is_internal) {
+        gp.txn_is_internal = false;
+
+        return false;
+    }
+
     *rsp = &gp.txn;
 
-    gp.txn_result_pending = false;
     return true;
 }
 
@@ -248,18 +268,23 @@ bool gp_request_power_off()
     return false;
 }
 
-int gp_get_request(Uint8 cmd_id)
+int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
 {
     /*
-     * Called when a CAN msg has been received with a `gopro get request` msg type.
+     * Called when a CAN msg has been received with a `gopro get request` msg type
+     * or an internal transaction is performed.
      *
-     * Fire off the transaction for the requested cmd,
+     * Otherwise, fire off the transaction for the requested cmd,
      * and assume that the CAN layer will pick up the response
-     * via gp_get_last_get_response()
+     * via gp_get_last_get_response(), assuming txn_is_internal is false.
+     *
+     * If tx_is_internal is set to true, CAN layer will not pick up the response.
+     *
      */
 
     gp.txn.reqtype = GP_REQUEST_GET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)cmd_id;
+    gp.txn_is_internal = txn_is_internal;
 
     if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
         switch (gp.model) {
@@ -291,6 +316,7 @@ int gp_set_request(GPSetRequest* request)
 
     gp.txn.reqtype = GP_REQUEST_SET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)request->cmd_id;
+    gp.txn_is_internal = false;     // parameterize if we ever need to send an internal 'SET' command
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
 	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
@@ -641,14 +667,41 @@ GPCaptureMode gp_capture_mode()
     return gp.capture_mode;
 }
 
-bool gp_set_capture_mode(Uint8 capture_mode)
+bool gp_capture_mode_initialized()
 {
-    if (capture_mode == GP_CAPTURE_MODE_VIDEO || capture_mode == GP_CAPTURE_MODE_PHOTO || capture_mode == GP_CAPTURE_MODE_BURST) {
-        gp.capture_mode = (GPCaptureMode)capture_mode;
+    return (gp.capture_mode != GP_CAPTURE_MODE_UNKNOWN);
+}
+
+bool gp_is_valid_capture_mode(Uint8 capture_mode) {
+    return (capture_mode == GP_CAPTURE_MODE_VIDEO || capture_mode == GP_CAPTURE_MODE_PHOTO || capture_mode == GP_CAPTURE_MODE_BURST);
+}
+
+void gp_update_capture_mode()
+{
+    if (gp.pending_capture_mode != GP_CAPTURE_MODE_UNKNOWN) {
+        gp_set_capture_mode(gp.pending_capture_mode);
+    }
+}
+
+bool gp_pend_capture_mode(Uint8 capture_mode)
+{
+    if (gp_is_valid_capture_mode(capture_mode)) {
+        gp.pending_capture_mode = (GPCaptureMode)capture_mode;
         return true;
     }
 
     return false;
+}
+
+bool gp_set_capture_mode(Uint8 capture_mode)
+{
+    if (gp_is_valid_capture_mode(capture_mode)) {
+        gp.capture_mode = (GPCaptureMode)capture_mode;
+        gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+        return true;
+    }
+
+    return true;
 }
 
 void gp_set_recording_state(bool recording_state)

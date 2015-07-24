@@ -5,7 +5,7 @@
 #include <ctype.h>
 
 // Include for GOPRO_COMMAND enum
-#include "mavlink_interface/mavlink_gimbal_interface.h" // TODO: get rid of this after replacing GOPRO_COMMAND
+#include "mavlink_interface/mavlink_gimbal_interface.h"
 
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf);
 static void gp_h3p_handle_response(const uint16_t *respbuf);
@@ -38,6 +38,7 @@ bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len)
     return false;
 }
 
+// TODO: maybe switch this to be an internal command instead
 bool gp_h3p_request_power_off()
 {
     GPCmd cmd;
@@ -50,6 +51,10 @@ bool gp_h3p_request_power_off()
 
 void gp_h3p_on_txn_complete()
 {
+    if (!gp_capture_mode_initialized()) {
+        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, true);  // this MAVLINK enum might be model-specific in the future
+        return;
+    }
 }
 
 static bool gp_h3p_cmd_has_param(const GPCmd* c)
@@ -129,6 +134,7 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
             cmd.cmd[0] = 'C';
             cmd.cmd[1] = 'M';
             cmd.cmd_parm = request->value;
+            gp_pend_capture_mode(request->value);
             break;
 
         case GOPRO_COMMAND_SHUTTER:
@@ -241,8 +247,15 @@ void gp_h3p_handle_response(const uint16_t *respbuf)
     if (gp_transaction_cmd() == GOPRO_COMMAND_MODEL) {
         // Take third byte (CAMERA_MODEL) of the "camera model and firmware version" response
         gp_set_transaction_result(&respbuf[3], 1, status);
-
     } else {
+        if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
+            if (gp_transaction_direction() == GP_REQUEST_GET) {
+                gp_set_capture_mode(respbuf[2]);                           // Set capture mode state with capture mode received from GoPro
+            } else if (gp_transaction_direction() == GP_REQUEST_SET) {
+                gp_update_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
+            }
+        }
+
         gp_set_transaction_result(&respbuf[2], 1, status);
     }
 }

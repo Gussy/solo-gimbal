@@ -188,7 +188,7 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
 
         // Check for any new GoPro get requests
         if (*(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) == TRUE) {
-            gp_get_request((Uint8)param_set[CAND_PID_GOPRO_GET_REQUEST].param);
+            gp_get_request((Uint8)param_set[CAND_PID_GOPRO_GET_REQUEST].param, false);
             *(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) = FALSE;
         }
 

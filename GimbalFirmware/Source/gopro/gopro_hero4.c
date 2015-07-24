@@ -78,6 +78,11 @@ void gp_h4_on_txn_complete(gp_h4_t *h4)
         gp_h4_finish_handshake(h4);
         return;
     }
+
+    if (!gp_capture_mode_initialized()) {
+        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, true);  // this MAVLINK enum might be model-specific in the future
+        return;
+    }
 }
 
 bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len)
@@ -219,8 +224,36 @@ void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         // 'Get Channel ID/Open Channel' is api 0/1
         h4->channel_id = rsp->payload[0];
         h4->handshake_step = GP_H4_HANDSHAKE_CHANNEL_OPEN;
-        return;
+        return;         // TODO: update with new bool for internal transactions
     }
+
+    if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
+        if (gp_transaction_direction() == GP_REQUEST_GET) {
+            if (len >= 1) {
+                gp_set_capture_mode(rsp->payload[3]);                  // Set capture mode state with capture mode received from GoPro, index of three since fourth byte in payload (format = [<ERROR>, 0, 1, <CAPTURE_MODE>])
+            }
+        } else if (gp_transaction_direction() == GP_REQUEST_SET) {
+            gp_update_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
+        }
+    }
+
+    // TODO: if not done already elsewhere (check), sanitize the payload in the short term to keep a consistent API? send only one byte back using a switch case based on command?
+#if 0
+    len = 1;
+
+    switch (cmd_id) {
+        case GOPRO_COMMAND_CAPTURE_MODE:
+            rsp->payload[0] = rsp->payload[3];      // payload format = [<ERROR>, 0, 1, <CAPTURE_MODE>]
+            break;
+
+        case GOPRO_COMMAND_BATTERY:
+            rsp->payload[0] = rsp->payload[3];      // payload format = [<ERROR>, 0, 1, <PERCENT>, <BARS>, <STATE>]
+            break;
+
+        default:
+            break;
+    }
+#endif
 
     gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_SUCCESS);
 }
@@ -353,12 +386,9 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
             api_group = 1;
             api_id = 1;
             b[0] = request->value;
-            if (!gp_set_capture_mode(request->value)){ // TODO: since capture modes would differ between gopro models, might have to create wrapper functions
-                // unknown capture mode requested
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                return -1;
-            }
             len = 1;
+
+            gp_pend_capture_mode(request->value);
             break;
 
         case GOPRO_COMMAND_SHUTTER:
