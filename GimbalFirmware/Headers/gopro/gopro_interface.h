@@ -119,7 +119,7 @@ GPCaptureMode gp_capture_mode();
 bool gp_handshake_complete();
 bool gp_capture_mode_initialized();
 bool gp_is_valid_capture_mode(Uint8 capture_mode);
-void gp_update_capture_mode();
+void gp_latch_pending_capture_mode();
 bool gp_pend_capture_mode(Uint8 capture_mode);
 bool gp_set_capture_mode(Uint8 capture_mode);
 void gp_set_recording_state(bool recording_state);

@@ -233,7 +233,7 @@ void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
                 gp_set_capture_mode(rsp->payload[3]);                  // Set capture mode state with capture mode received from GoPro, index of three since fourth byte in payload (format = [<ERROR>, 0, 1, <CAPTURE_MODE>])
             }
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
-            gp_update_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
+            gp_latch_pending_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
     }
 

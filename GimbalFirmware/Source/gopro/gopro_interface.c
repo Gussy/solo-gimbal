@@ -676,7 +676,7 @@ bool gp_is_valid_capture_mode(Uint8 capture_mode) {
     return (capture_mode == GP_CAPTURE_MODE_VIDEO || capture_mode == GP_CAPTURE_MODE_PHOTO || capture_mode == GP_CAPTURE_MODE_BURST);
 }
 
-void gp_update_capture_mode()
+void gp_latch_pending_capture_mode()
 {
     if (gp.pending_capture_mode != GP_CAPTURE_MODE_UNKNOWN) {
         gp_set_capture_mode(gp.pending_capture_mode);

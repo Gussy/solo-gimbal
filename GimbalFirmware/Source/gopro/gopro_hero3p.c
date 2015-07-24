@@ -252,7 +252,7 @@ void gp_h3p_handle_response(const uint16_t *respbuf)
             if (gp_transaction_direction() == GP_REQUEST_GET) {
                 gp_set_capture_mode(respbuf[2]);                           // Set capture mode state with capture mode received from GoPro
             } else if (gp_transaction_direction() == GP_REQUEST_SET) {
-                gp_update_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
+                gp_latch_pending_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
             }
         }
 
