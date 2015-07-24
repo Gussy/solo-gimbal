@@ -57,7 +57,6 @@ class testsUI(object):
     def handleTestsStop(self):
         if self.connection.isConnected():
             self.stopTests = True
-            self.ui.btnTestsRun.setEnabled(True)
             self.ui.btnTestsStop.setEnabled(False)
 
     @coroutine
@@ -188,7 +187,7 @@ class testsUI(object):
             h, m, s = 0, 0, abs(time_delta)
         self.ui.lblTestsRunTime.setText("%d:%02d:%02d" % (h, m, s))
         for i in range(len(self.logMessages)):
-            self.ui.txtTestsLog.appendPlainText(self.logMessages.pop())
+            self.ui.txtTestsLog.appendPlainText(self.logMessages.pop(0))
         self.ui.lblTestsFaults.setText(str(self.faults))
         self.dequeueValues(self.pitchValues, self.pitchGraph)
         self.dequeueValues(self.rollValues, self.rollGraph)

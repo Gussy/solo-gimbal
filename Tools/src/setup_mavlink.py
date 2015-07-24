@@ -15,7 +15,7 @@ MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 TARGET_SYSTEM_ID = 1
 TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
-def getSerialPorts(preferred_list=[]):
+def getSerialPorts(preferred_list=['*USB Serial*','*FTDI*']):
     if os.name == 'nt':
         ports = list(serial.tools.list_ports.comports())
         ret = []

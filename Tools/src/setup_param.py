@@ -122,3 +122,10 @@ def enable_torques_message(link, enabled=True):
     else:
         value = 0.0
     set_param(link, "GMB_SND_TORQUE", value)
+
+def low_torque_mode(link, enabled=True):
+    if enabled:
+        value = 5000
+    else:
+        value = 0.0
+    set_param(link, "GMB_MAX_TORQUE", value)
