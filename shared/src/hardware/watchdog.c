@@ -1,28 +1,31 @@
-#include "hardware/device_init.h"
-
-//---------------------------------------------------------------
-// This module disables the watchdog timer.
-//---------------------------------------------------------------
-
-void watchdog_disable()
-{
-    // Disable watchdog module
-	EALLOW;
-	SysCtrlRegs.WDCR = 0x0068;
-	EDIS;
-}
-
-//---------------------------------------------------------------
-// This module enables the watchdog timer.
-//---------------------------------------------------------------
+#include "hardware/watchdog.h"
+#include "PeripheralHeaderIncludes.h"
 
 void watchdog_enable()
 {
 	EALLOW;
-	SysCtrlRegs.WDCR = 0x0028;               // Enable watchdog module
-	SysCtrlRegs.WDKEY = 0x55;                // Clear the WD counter
-	SysCtrlRegs.WDKEY = 0xAA;
+    // Enable watchdog module
+	SysCtrlRegs.WDCR = 0x0028;
 	EDIS;
+
+	watchdog_service();
+}
+
+void watchdog_disable()
+{
+    EALLOW;
+    // Disable watchdog module
+    SysCtrlRegs.WDCR = 0x0068;
+    EDIS;
+}
+
+void watchdog_service()
+{
+    EALLOW;
+    // Clear the WD counter
+    SysCtrlRegs.WDKEY = 0x55;
+    SysCtrlRegs.WDKEY = 0xAA;
+    EDIS;
 }
 
 void watchdog_device_reset()
