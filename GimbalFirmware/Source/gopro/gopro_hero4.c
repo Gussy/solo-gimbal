@@ -71,6 +71,15 @@ void gp_h4_finish_handshake(gp_h4_t *h4)
     }
 }
 
+void gp_h4_on_txn_complete(gp_h4_t *h4)
+{
+    // must kick off final step of handshake sequence on hero4
+    if (!gp_handshake_complete()) {
+        gp_h4_finish_handshake(h4);
+        return;
+    }
+}
+
 bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len)
 {
     /*

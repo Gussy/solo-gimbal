@@ -18,7 +18,8 @@ static void gp_reset();
 static void gp_timeout();
 
 static void gp_detect_camera_model(const uint16_t *buf, uint16_t len);
-static void handle_rx_data(uint16_t *buf, uint16_t len);
+static void gp_on_txn_complete();
+static bool handle_rx_data(uint16_t *buf, uint16_t len);
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
@@ -358,7 +359,15 @@ void gp_interface_state_machine()
 
             if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_GP_DATA_COMPLETE) {
                 // transaction was rx
-                handle_rx_data(rxbuf, i2c_get_rx_len());
+                if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
+                    // if we have data to send, send it over I2C
+                    gp_assert_intr();
+
+                    gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
+                    timeout_counter = 0;
+                } else {
+                    gp_on_txn_complete();
+                }
 
             } else {
                 // transaction was tx
@@ -368,10 +377,7 @@ void gp_interface_state_machine()
                     // sent response, we're all done
                     gp_control_state = GP_CONTROL_STATE_IDLE;
 
-                    // special case, must kick off final step of handshake sequence on hero4
-                    if (gp.model == GP_MODEL_HERO4 && !gp_handshake_complete()) {
-                        gp_h4_finish_handshake(&gp.h4);
-                    }
+                    gp_on_txn_complete();
                 }
             }
         }
@@ -414,6 +420,21 @@ void gp_interface_state_machine()
 	previous_power_status = new_power_status;
 }
 
+void gp_on_txn_complete()
+{
+    switch (gp.model) {
+    case GP_MODEL_HERO3P:
+        gp_h3p_on_txn_complete();
+        break;
+    case GP_MODEL_HERO4:
+        gp_h4_on_txn_complete(&gp.h4);
+        break;
+    case GP_MODEL_UNKNOWN:
+    default:
+        break;
+    }
+}
+
 void gp_detect_camera_model(const uint16_t *buf, uint16_t len)
 {
     /*
@@ -430,7 +451,7 @@ void gp_detect_camera_model(const uint16_t *buf, uint16_t len)
     }
 }
 
-void handle_rx_data(uint16_t *buf, uint16_t len)
+bool handle_rx_data(uint16_t *buf, uint16_t len)
 {
     /*
      * Called when an i2c rx transaction has completed.
@@ -440,16 +461,24 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
 
     if (gp.model == GP_MODEL_UNKNOWN) {
         gp_detect_camera_model(buf, len);
-        // TODO: need to detect what video mode the camera is in and set gp.mode
     }
 
     // base case, we have received a response and we're back to idle,
     // handlers can override if they have a response to send
     gp_control_state = GP_CONTROL_STATE_IDLE;
 
-    if (gp.model == GP_MODEL_HERO4) {
+    switch (gp.model) {
+    case GP_MODEL_HERO3P:{
+        bool from_camera;
+        if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
+            if (gp_h3p_handle_rx(&gp.h3p, buf, len, from_camera, txbuf)) {
+                return true;
+            }
+        }
+        break;
+    }
+    case GP_MODEL_HERO4:
         if (gp_h4_rx_data_is_valid(buf, len)) {
-
             // XXX: avoid all this copying
 
             gp_h4_pkt_t pkt;
@@ -466,34 +495,19 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
                     txbuf[i] = rsp.bytes[i];
                 }
 
-                gp_assert_intr();
-
-                gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
-                timeout_counter = 0;
+                return true;
             }
         }
-        return;
+        break;
+
+    default:
+        // error in data rx, return to idle
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        gp_control_state = GP_CONTROL_STATE_IDLE;
+        break;
     }
 
-    if (gp.model == GP_MODEL_HERO3P) {
-        bool from_camera;
-        if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
-
-            if (gp_h3p_handle_rx(&gp.h3p, buf, len, from_camera, txbuf)) {
-
-                gp_assert_intr();
-
-                gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
-                timeout_counter = 0;
-            }
-
-        }
-        return;
-    }
-
-    // error in data rx, return to idle
-    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-    gp_control_state = GP_CONTROL_STATE_IDLE;
+    return false;
 }
 
 void gp_write_eeprom()

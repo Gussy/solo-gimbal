@@ -48,6 +48,10 @@ bool gp_h3p_request_power_off()
     return true;
 }
 
+void gp_h3p_on_txn_complete()
+{
+}
+
 static bool gp_h3p_cmd_has_param(const GPCmd* c)
 {
     /*
