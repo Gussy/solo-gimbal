@@ -87,9 +87,16 @@ typedef union {
 
 } gp_h4_pkt_t;
 
+// TODO: maybe use this one in gp_h4_request_power_off
+typedef enum{
+    GP_H4_POWER_OFF_NORMAL,
+    GP_H4_POWER_OFF_FORCED
+} GPH4Power;
+
 void gp_h4_init(gp_h4_t *h4);
 bool gp_h4_handshake_complete(const gp_h4_t *h4);
 void gp_h4_finish_handshake(gp_h4_t *h4);
+void gp_h4_on_txn_complete(gp_h4_t *h4);
 bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len);
 
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len);

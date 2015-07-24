@@ -71,6 +71,20 @@ void gp_h4_finish_handshake(gp_h4_t *h4)
     }
 }
 
+void gp_h4_on_txn_complete(gp_h4_t *h4)
+{
+    // must kick off final step of handshake sequence on hero4
+    if (!gp_handshake_complete()) {
+        gp_h4_finish_handshake(h4);
+        return;
+    }
+
+    if (!gp_capture_mode_initialized()) {
+        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, true);  // this MAVLINK enum might be model-specific in the future
+        return;
+    }
+}
+
 bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len)
 {
     /*
@@ -210,7 +224,17 @@ void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         // 'Get Channel ID/Open Channel' is api 0/1
         h4->channel_id = rsp->payload[0];
         h4->handshake_step = GP_H4_HANDSHAKE_CHANNEL_OPEN;
-        return;
+        return;         // TODO: update with new bool for internal transactions
+    }
+
+    if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
+        if (gp_transaction_direction() == GP_REQUEST_GET) {
+            if (len >= 1) {
+                gp_set_capture_mode(rsp->payload[0]);                          // Set capture mode state with capture mode received from GoPro
+            }
+        } else if (gp_transaction_direction() == GP_REQUEST_SET) {
+            gp_latch_pending_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
+        }
     }
 
     gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_SUCCESS);
@@ -261,14 +285,6 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
 
     return true;
 }
-
-#if 1
-// TODO: maybe use this one in gp_h4_request_power_off
-typedef enum{
-    GP_H4_POWER_OFF_NORMAL,
-    GP_H4_POWER_OFF_FORCED
-} GPH4Power;
-#endif
 
 bool gp_h4_request_power_off(gp_h4_t *h4)
 {
@@ -343,6 +359,8 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
                 len = 1;
             } else {
                 // do nothing, can't request power on
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return -1;
             }
             break;
 
@@ -351,26 +369,71 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
             api_id = 1;
             b[0] = request->value;
             len = 1;
+
+            gp_pend_capture_mode(request->value);
             break;
 
         case GOPRO_COMMAND_SHUTTER:
-            // Start video recording
-            api_group = 2;
-            //api_id = 0x1b;
 
-            // TODO: this logic might change based on pending changes to how information is passed through MAVLink
-            // TODO: need to take into account the mode that the camera is in, the following logic should only work if the camera is in video-mode
-            switch (request->value) {
-            case GP_START_RECORDING:
-                api_id = 0x1b;
+            switch (gp_capture_mode()) {
+            case GP_CAPTURE_MODE_VIDEO:
+                api_group = 2;
+                switch (request->value) {
+                case GP_RECORDING_START:
+                    api_id = 0x1b;
+                    gp_set_recording_state(true); // TODO: settings this after the command has received a successful response would be more robust
+                    break;
+                case GP_RECORDING_STOP:
+                    api_id = 0x1c;
+                    gp_set_recording_state(false);
+                    break;
+                default:
+                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                    return -1;
+                }
                 break;
-            case GP_STOP_RECORDING:
-                api_id = 0x1c;
+
+            case GP_CAPTURE_MODE_PHOTO:
+                api_group = 3;
+                switch (request->value) {
+                case GP_RECORDING_START:
+                    api_id = 0x17;
+                    //gp_set_recording_state(true);     // no need since we don't have a way to find out when recording is finished
+                    break;
+                case GP_RECORDING_STOP:
+                    api_id = 0x18;
+                    //gp_set_recording_state(false);
+                    break;
+                default:
+                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                    return -1;
+                }
                 break;
+
+            case GP_CAPTURE_MODE_BURST:
+                api_group = 4;
+                switch (request->value) {
+                case GP_RECORDING_START:
+                    api_id = 0x1b;
+                    //gp_set_recording_state(true);      // no need since we don't have a way to find out when recording is finished
+                    break;
+                case GP_RECORDING_STOP:
+                    api_id = 0x1c;
+                    //gp_set_recording_state(false);
+                    break;
+                default:
+                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                    return -1;
+                }
+                break;
+
+            case GP_CAPTURE_MODE_UNKNOWN:
             default:
-                // unknown argument value
+                // unknown capture mode
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                 return -1;
             }
+
             len = 0;
             break;
 
