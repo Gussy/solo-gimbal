@@ -276,9 +276,7 @@ Uint16 CAN_SendWordData(Uint16 data)
 
 Uint16 CAN_GetWordDataAndSend()
 {
-    Uint16 retval = 0;
-    retval = DATA[location++];
-    retval = ((retval & 0xFF00)>>8)|((retval & 0x00FF)<<8);
+    Uint16 retval = read_firmware_data();
     CAN_SendWordData(retval); // This will block until the send is successful
     return retval;
 }

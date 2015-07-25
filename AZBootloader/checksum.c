@@ -8,11 +8,13 @@
 
 unsigned int location = 0;
 
+static inline Uint32 crc32_add(Uint16 value, Uint32 crc);
+
 void reset_datapointer(void) {
 	location = 0;
 }
 
-Uint16 read_Data()
+Uint16 read_firmware_data(void)
 {
 	Uint16 retval = 0;
 	retval = DATA[location++];
@@ -20,7 +22,7 @@ Uint16 read_Data()
 	return retval;
 }
 
-Uint32 crc32_add(Uint16 value, Uint32 crc)
+static inline Uint32 crc32_add(Uint16 value, Uint32 crc)
 {
 	Uint32 retval;
 	retval = (crc ^ value)&0xFFFF;
@@ -36,7 +38,7 @@ int verify_data_checksum(void)
 
    // Asign GetWordData to the CAN-A version of the
    // function.  GetWordData is a pointer to a function.
-   GetWordData = read_Data;
+   GetWordData = read_firmware_data;
    if (GetWordData() != BOOTLOADER_KEY_VALUE_8BIT) return 0;
    calculated_checksum = crc32_add(BOOTLOADER_KEY_VALUE_8BIT, calculated_checksum);
 
