@@ -5,6 +5,7 @@
 #include "hardware/HWSpecific.h"
 #include "hardware/watchdog.h"
 #include "flash/flash_helpers.h"
+#include <stdbool.h>
 
 #define	FLASH_F2806x 1
 
@@ -41,7 +42,7 @@ static void reset_to_app(void);
 
 void MAVLINK_Flash()
 {
-	int getting_messages = 0;
+	bool getting_messages = 0;
 	Uint16 seq = 0;
 	FLASH_ST FlashStatus = {0};
 	Uint16  *Flash_ptr = (Uint16 *)APP_START;     // Pointer to a location in flash
@@ -64,22 +65,22 @@ void MAVLINK_Flash()
 		// send mavlink message to request data stream
 		mavlink_data_handshake(seq);
 
-		getting_messages = 1;
+		getting_messages = true;
 		while(getting_messages) {
 			int read_size = 0;
 			// read the serial port, and if I get no messages, timeout
 			memset(buffer, 0, sizeof(buffer));
 			if((read_size = read_serial_port(buffer, BUFFER_LENGTH)) == 0) {
-				getting_messages = 0;
+				getting_messages = false;
 				clear_buffers();
 			} else {
-				getting_messages = 1;
+				getting_messages = true;
 				for(idx1 = 0; idx1 < read_size; idx1++) {
 					if(mavlink_parse_char(MAVLINK_COMM_0, buffer[idx1]&0xFF, &inmsg, &status)) {
 						if(inmsg.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA) {
 							if(inmsg.len > 2 && seq == mavlink_msg_encapsulated_data_get_seqnr(&inmsg)) {
 								mavlink_msg_encapsulated_data_get_data(&inmsg, buffer);
-								getting_messages = 0;
+								getting_messages = false;
 
 								// Convert the uint8_t[] into a uint16_t[]
 								// 16bit words are sent as LSB byte then MSB byte

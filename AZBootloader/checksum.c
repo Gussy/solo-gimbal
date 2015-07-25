@@ -30,7 +30,7 @@ static inline Uint32 crc32_add(Uint16 value, Uint32 crc)
 	return retval;
 }
 
-int verify_data_checksum(void)
+bool verify_data_checksum(void)
 {
    Uint32 stored_checksum = 0;
    Uint32 calculated_checksum = 0xFFFFFFFF;
@@ -90,6 +90,6 @@ int verify_data_checksum(void)
 
    reset_datapointer();
 
-   if (stored_checksum == calculated_checksum) return 1;
-   return 0;
+   if (stored_checksum == calculated_checksum) return true;
+   return false;
 }
