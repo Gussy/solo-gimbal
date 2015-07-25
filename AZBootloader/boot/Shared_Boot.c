@@ -1,23 +1,3 @@
-// TI File $Revision: /main/4 $
-// Checkin $Date: March 8, 2011   15:18:38 $
-//###########################################################################
-//
-// FILE:    Shared_Boot.c
-//
-// TITLE:   Boot loader shared functions
-//
-// Functions:
-//
-//     void   CopyData(void)
-//     Uint32 GetLongData(void)
-//     void ReadReservedFn(void)
-//
-//###########################################################################
-// $TI Release: TMS320x2806x Boot ROM V1.0 $
-// $Release Date: October 21, 2010 $
-//###########################################################################
-
-
 #include "Boot.h"
 
 #pragma    DATA_SECTION(EmuKey,"EmuKeyVar");

@@ -1,4 +1,5 @@
 #include "boot/Boot.h"
+#include "hardware/pll.h"
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
@@ -6,7 +7,13 @@
 #include "can_bootloader.h"
 #include "checksum.h"
 
-// empty setup functions so this code can run  DeviceInit()
+// Included for Flash_CPUScaleFactor and Flash_CallbackPtr
+#define FLASH_F2806x 1
+#include "Flash2806x_API_Library.h"
+
+#define BORTRIM (Uint16 *)0x0986
+
+// Empty setup functions so this code can run DeviceInit()
 void PieCntlInit(void){}
 void PieVectTableInit(void){}
 
@@ -26,7 +33,6 @@ Uint32 SelectBootMode()
 	  // set the POR to the minimum trip point
 	  // If the device was configured by the factory
 	  // this write will have no effect.
-
 	  *BORTRIM = 0x0100;
 
 	  // At reset we are in /4 mode.  Change to /1

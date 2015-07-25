@@ -5,6 +5,8 @@
 #include "can.h"
 #include "checksum.h"
 
+#define FLASH_ENTRY_POINT 0x3F7FF6
+
 // External functions
 extern void CopyData(void);
 extern Uint32 GetLongData(void);
