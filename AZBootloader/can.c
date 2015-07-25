@@ -212,6 +212,26 @@ Uint16 CAN_GetWordData()
    return wordData;
 }
 
+//#################################################
+// Uint32 GetLongData(void)
+//-----------------------------------------------------
+// This routine fetches a 32-bit value from the peripheral
+// input stream.
+//-----------------------------------------------------
+
+Uint32 CAN_GetLongData()
+{
+    Uint32 longData;
+
+    // Fetch the upper 1/2 of the 32-bit value
+    longData = ((Uint32)(*GetWordData)() << 16);
+
+    // Fetch the lower 1/2 of the 32-bit value
+    longData |= (Uint32)(*GetWordData)();
+
+    return longData;
+}
+
 #define CAN_SEND_WORD_LED_TIMEOUT_1 500000
 #define CAN_SEND_WORD_LED_TIMEOUT_2 50000
 

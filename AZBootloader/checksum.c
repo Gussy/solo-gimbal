@@ -9,9 +9,6 @@
 
 unsigned int location = 0;
 
-// External functions
-extern Uint32 GetLongData(void);
-
 void reset_datapointer(void) {
 	location = 0;
 }
@@ -82,7 +79,7 @@ int verify_data_checksum(void)
 
     while((BlockHeader.BlockSize != (Uint16)0x0000)&&(BlockHeader.BlockSize != 0xFFFF))
     {
-       BlockHeader.DestAddr = GetLongData();
+       BlockHeader.DestAddr = CAN_GetLongData();
        calculated_checksum = crc32_add(BlockHeader.DestAddr>>16,calculated_checksum);
        calculated_checksum = crc32_add(BlockHeader.DestAddr&0xFFFF,calculated_checksum);
        for(i = 1; i <= BlockHeader.BlockSize; i++)
