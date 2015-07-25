@@ -1,6 +1,4 @@
-#include "hardware/led.h"
-#include "hardware/device_init.h"
-#include "hardware/HWSpecific.h"
+#include "PeripheralHeaderIncludes.h"
 #include "can.h"
 #include "checksum.h"
 
@@ -88,7 +86,6 @@ static void CopyData(void)
       BlockHeader.DestAddr = CAN_GetLongData();
       for(i = 1; i <= BlockHeader.BlockSize; i++)
       {
-          extern Uint16 endRam;
           wordData = (*GetWordData)();
 
           // don't overwrite the memory space I am using.
