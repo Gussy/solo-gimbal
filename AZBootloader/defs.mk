@@ -14,16 +14,13 @@ INCS = \
     -I=$(PROJ_ROOT)/../controlSUITE/development_kits/~SupportFiles/F2806x_headers
 
 OBJS = \
-    $(SHARED_ROOT)/boot/ITRAPIsr.o 														\
-    $(SHARED_ROOT)/boot/Init_Boot.o 													\
-    $(SHARED_ROOT)/boot/Shared_Boot.o 													\
-    $(SHARED_ROOT)/boot/Vectors_Boot.o 													\
     $(SHARED_ROOT)/src/hardware/pll.o 													\
     $(SHARED_ROOT)/src/hardware/watchdog.o												\
     $(SHARED_ROOT)/src/hardware/device_init.o 											\
     $(SHARED_ROOT)/src/hardware/led.o 													\
     $(SHARED_ROOT)/src/flash/flash_helpers.o											\
     $(SHARED_ROOT)/src/flash/flash_csm_keys.o											\
+    $(SHARED_ROOT)/F2806x/source/F2806x_GlobalVariableDefs_patched.o 					\
     $(PROJ_ROOT)/main.o 																\
     $(PROJ_ROOT)/can.o 																	\
     $(PROJ_ROOT)/can_bootloader.o														\
@@ -31,7 +28,10 @@ OBJS = \
     $(PROJ_ROOT)/mavlink_bootloader.o 													\
     $(PROJ_ROOT)/mavlink_interface.o 													\
     $(PROJ_ROOT)/uart.o																	\
-    $(SHARED_ROOT)/F2806x/source/F2806x_GlobalVariableDefs_patched.o
+    $(PROJ_ROOT)/boot/ITRAPIsr.o 														\
+    $(PROJ_ROOT)/boot/Init_Boot.o 														\
+    $(PROJ_ROOT)/boot/Shared_Boot.o 													\
+    $(PROJ_ROOT)/boot/Vectors_Boot.o
 
 LIBS = \
     -l"libc.a" 																			\
