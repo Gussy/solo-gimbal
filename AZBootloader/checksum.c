@@ -1,24 +1,15 @@
+#include "data.h"
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
 #include "checksum.h"
 #include "can_bootloader.h"
-#include "data.h"
 #include "can.h"
 
 unsigned int location = 0;
 
 void reset_datapointer(void) {
 	location = 0;
-}
-
-Uint16 read_Data_and_Send()
-{
-	Uint16 retval = 0;
-	retval = DATA[location++];
-	retval = ((retval & 0xFF00)>>8)|((retval & 0x00FF)<<8);
-	CAN_SendWordData(retval); // This will block until the send is successful
-	return retval;
 }
 
 Uint16 read_Data()

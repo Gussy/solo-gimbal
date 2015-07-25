@@ -1,7 +1,10 @@
 #include "can.h"
+#include "checksum.h"
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
+
+extern const unsigned short DATA[];
 
 // GetWordData is a pointer to the function that interfaces to the peripheral.
 // Each loader assigns this pointer to it's particular GetWordData function.
@@ -270,3 +273,13 @@ Uint16 CAN_SendWordData(Uint16 data)
 
    return data;
 }
+
+Uint16 CAN_GetWordDataAndSend()
+{
+    Uint16 retval = 0;
+    retval = DATA[location++];
+    retval = ((retval & 0xFF00)>>8)|((retval & 0x00FF)<<8);
+    CAN_SendWordData(retval); // This will block until the send is successful
+    return retval;
+}
+

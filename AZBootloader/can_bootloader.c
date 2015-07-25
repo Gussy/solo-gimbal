@@ -27,7 +27,7 @@ Uint32 CAN_Boot(GimbalAxis axis)
    // Asign GetWordData to the CAN-A version of the
    // function.  GetWordData is a pointer to a function.
    if(axis == AZ) {
-      GetWordData = read_Data_and_Send;
+      GetWordData = CAN_GetWordDataAndSend;
    } else {
       GetWordData = CAN_GetWordData;
    }

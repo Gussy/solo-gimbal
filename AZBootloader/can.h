@@ -11,5 +11,6 @@ void CAN_Init(GimbalAxis axis);
 Uint16 CAN_GetWordData();
 Uint32 CAN_GetLongData();
 Uint16 CAN_SendWordData(Uint16 data);
+Uint16 CAN_GetWordDataAndSend();
 
 #endif /* CAN_H_ */
