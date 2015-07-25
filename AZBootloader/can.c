@@ -11,7 +11,7 @@ uint16fptr GetWordData;
 
 // Used for ROLL and EL axes
 static Uint32 words_received;
-static const LED_RGBA rgba_amber = {255, 160, 0, 0xff};
+static const LED_RGBA rgba_amber = {.red=255, .green.160, .blue=0, .alpha=0xff};
 
 void CAN_Init(GimbalAxis axis)
 {
