@@ -28,6 +28,7 @@ OBJS = \
     $(PROJ_ROOT)/mavlink_bootloader.o 													\
     $(PROJ_ROOT)/mavlink_interface.o 													\
     $(PROJ_ROOT)/uart.o																	\
+    $(PROJ_ROOT)/firmware_data.o														\
     $(PROJ_ROOT)/boot/ITRAPIsr.o 														\
     $(PROJ_ROOT)/boot/Init_Boot.o 														\
     $(PROJ_ROOT)/boot/Vectors_Boot.o

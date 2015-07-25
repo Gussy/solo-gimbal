@@ -1,10 +1,9 @@
 #include "can.h"
 #include "checksum.h"
+#include "firmware_data.h"
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
-
-extern const unsigned short DATA[];
 
 // GetWordData is a pointer to the function that interfaces to the peripheral.
 // Each loader assigns this pointer to it's particular GetWordData function.
