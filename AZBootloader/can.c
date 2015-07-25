@@ -1,8 +1,11 @@
 #include "can.h"
-#include "boot/Boot.h"
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
+
+// GetWordData is a pointer to the function that interfaces to the peripheral.
+// Each loader assigns this pointer to it's particular GetWordData function.
+uint16fptr GetWordData;
 
 // Used for ROLL and EL axes
 static Uint32 words_received;

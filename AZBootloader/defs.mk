@@ -30,7 +30,6 @@ OBJS = \
     $(PROJ_ROOT)/uart.o																	\
     $(PROJ_ROOT)/boot/ITRAPIsr.o 														\
     $(PROJ_ROOT)/boot/Init_Boot.o 														\
-    $(PROJ_ROOT)/boot/Shared_Boot.o 													\
     $(PROJ_ROOT)/boot/Vectors_Boot.o
 
 LIBS = \
