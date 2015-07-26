@@ -3,6 +3,7 @@ PROJ := AZBootloader
 
 PROJ_ROOT := .
 SHARED_ROOT := ../shared
+PROJ_PYTHON_ROOT := $(PROJ_ROOT)/../Tools/src
 
 ifeq ($(TI_ROOT),)
 # XXX: would really prefer to not require this but at least for now,
@@ -26,6 +27,8 @@ CC      := $(TI_ROOT)/bin/cl2000
 LD      := $(TI_ROOT)/bin/cl2000
 HEX     := $(TI_ROOT)/bin/hex2000
 TILOAD  := $(TI_ROOT)../../../ccs_base/scripting/examples/loadti/loadti.sh
+
+SIZE_INFO	:= python $(PROJ_PYTHON_ROOT)/firmware_size_info.py
 
 ###############################################################################
 # common flags
@@ -64,7 +67,7 @@ LDSCRIPTS := 28067_lnk.cmd
 STACK_SIZE := 0x200
 
 LDFLAGS += $(COMMFLAGS)
-LDFLAGS += -z -m$(PROJ).map --stack_size=$(STACK_SIZE) --warn_sections
+LDFLAGS += -z --stack_size=$(STACK_SIZE) --warn_sections
 LDFLAGS += -i$(TI_ROOT)/lib -i$(PROJ_ROOT)/../controlSUITE/libs/utilities/flash_api/2806x/v100/lib
 LDFLAGS += --reread_libs --xml_link_info=$(PROJ)_linkinfo.xml --rom_model
 
@@ -104,16 +107,18 @@ $(DATA_HDR): $(MAIN_FW)
 $(OBJS): | $(DATA_HDR)
 
 $(PROJ).out: $(OBJS) $(LDSCRIPTS)
-	$(LD) $(LDFLAGS) --define=PACKAGE_APPLICATION $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
+	$(LD) $(LDFLAGS) -m$(PROJ).map --define=PACKAGE_APPLICATION $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
 
 $(PROJ)_noapp.out: $(OBJS) $(LDSCRIPTS)
-	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
+	$(LD) $(LDFLAGS) -m$(PROJ)_noapp.map $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
 
 $(PROJ).hex: $(PROJ).out
 	$(HEX) -i $< -o $@ -order MS -romwidth 16
+	$(SIZE_INFO) $(PROJ).map --project=$(PROJ)
 
 $(PROJ)_noapp.hex: $(PROJ)_noapp.out
 	$(HEX) -i $< -o $@ -order MS -romwidth 16
+	$(SIZE_INFO) $(PROJ)_noapp.map --project=$(PROJ)
 
 %.o: %.asm
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -fe $@

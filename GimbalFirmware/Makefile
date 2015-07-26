@@ -27,6 +27,7 @@ HEX     := $(TI_ROOT)/bin/hex2000
 
 RELEASE_GEN         := python $(PROJ_PYTHON_ROOT)/firmware_release.py
 VERSION_HEADER_GEN  := python $(PROJ_PYTHON_ROOT)/firmware_version_header.py
+SIZE_INFO           := python $(PROJ_PYTHON_ROOT)/firmware_size_info.py
 SETUP_TOOL      	:= python $(PROJ_PYTHON_ROOT)/setup.py
 
 VERSION_HEADER      := $(PROJ_ROOT)/Headers/version_git.h
@@ -89,6 +90,7 @@ flash:
 
 $(PROJ).ax: $(PROJ).out $(PROJ).hex
 	$(RELEASE_GEN) --image=$(PROJ).hex --outdir=$(PROJ_ROOT)
+	$(SIZE_INFO) $(PROJ).map --project=$(PROJ)
 
 $(PROJ).out: $(VERSION_HEADER) $(OBJS) $(LDSCRIPTS)
 	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
