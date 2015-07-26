@@ -237,16 +237,10 @@ def command_interface():
     port, link = open_comm(args.port)
     print("Connecting via port %s" % port)
 
-    if wait_for_heartbeat(link, retries=1) == None:
-        print("Failed to comunicate to gimbal")
-        sys.exit(1)
-    else:
-        print("Mavlink connected")
-
-    # Attempt to read the gimbal software version and then bootloader
+    # Attempt to get any gimbal message (usually the GOPRO_HEARTBEAT), then any bootloader messages
     # If neither attempts are successful, we're connected to a copter without a gimbal
-    ver = setup_factory_pub.read_software_version(link)
-    if ver is None:
+    msg = setup_mavlink.get_gimbal_message(link)
+    if msg is False:
         handshake = setup_mavlink.wait_handshake(link, retries=2)
         if handshake is None:
             print("No gimbal messages received, exiting.")
@@ -385,6 +379,7 @@ def command_interface():
             return
 
     # Default command is to return the software version number
+    ver = setup_factory_pub.read_software_version(link, timeout=4)
     if ver != None:
         major, minor, rev = ver[0], ver[1], ver[2]
         print("Software version: v%i.%i.%i" % (major, minor, rev))
