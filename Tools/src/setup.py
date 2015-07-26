@@ -6,7 +6,7 @@ Command-line utility to handle comms to gimbal
 import time
 import sys, argparse, time, json
 import setup_factory_pub
-from setup_mavlink import open_comm, wait_for_heartbeat, wait_handshake, reset_into_bootloader
+from setup_mavlink import open_comm, wait_for_heartbeat
 
 from firmware_helper import load_firmware, append_checksum
 from firmware_loader import load_binary, start_bootloader
@@ -247,11 +247,7 @@ def command_interface():
     # If neither attempts are successful, we're connected to a copter without a gimbal
     ver = setup_factory_pub.read_software_version(link)
     if ver is None:
-        for _ in range(2):
-            reset_into_bootloader(link)
-            handshake = wait_handshake(link)
-            if handshake:
-                break
+        handshake = setup_mavlink.wait_handshake(link, retries=2)
         if handshake is None:
             print("No gimbal messages received, exiting.")
             sys.exit(1)
