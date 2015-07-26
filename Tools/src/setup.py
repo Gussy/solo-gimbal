@@ -237,6 +237,9 @@ def command_interface():
     port, link = open_comm(args.port)
     print("Connecting via port %s" % port)
 
+    # Send a heartbeat first to wake up the interface, because mavlink
+    link.heartbeat_send(0, 0, 0, 0, 0)
+
     # Attempt to get any gimbal message (usually the GOPRO_HEARTBEAT), then any bootloader messages
     # If neither attempts are successful, we're connected to a copter without a gimbal
     msg = setup_mavlink.get_gimbal_message(link)

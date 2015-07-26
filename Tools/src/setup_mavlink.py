@@ -168,14 +168,11 @@ if __name__ == '__main__':
     port, link = open_comm(args.port)
     print("Connecting via port %s" % port)
 
+    # Send a heartbeat first to wake up the interface
+    link.heartbeat_send(0, 0, 0, 0, 0)
+
     # while True:
     #     print get_any_message(link)
-
-    if wait_for_heartbeat(link, retries=2) is False:
-        print("Failed to comunicate to gimbal")
-        sys.exit(1)
-    else:
-        print("Mavlink connected")
 
     while True:
         print time.time(), get_gimbal_message(link)
