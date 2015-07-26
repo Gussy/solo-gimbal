@@ -36,7 +36,7 @@ SIZE_INFO	:= python $(PROJ_PYTHON_ROOT)/firmware_size_info.py
 #       though we should trim back as many of these as possible from the linker, since many
 #       appear irrelevant for linking
 
-COMMFLAGS += -v28 -ml -mt --float_support=fpu32 -O4 --opt_for_speed=2 -g -D=_DEBUG -D=LARGE_MODEL -D=FLOATING_MATH
+COMMFLAGS += -v28 -ml -mt --float_support=fpu32 -O3 --opt_for_speed=2 -g -D=_DEBUG -D=LARGE_MODEL -D=FLOATING_MATH
 COMMFLAGS += -DMAVLINK_COMM_NUM_BUFFERS=1
 
 
@@ -72,6 +72,7 @@ LDFLAGS += $(COMMFLAGS)
 LDFLAGS += -z --stack_size=$(STACK_SIZE) --warn_sections
 LDFLAGS += -i$(TI_ROOT)/lib -i$(PROJ_ROOT)/../controlSUITE/libs/utilities/flash_api/2806x/v100/lib
 LDFLAGS += --reread_libs --xml_link_info=$(PROJ)_linkinfo.xml --rom_model
+LDFLAGS += --warn_sections
 
 
 ###############################################################################
