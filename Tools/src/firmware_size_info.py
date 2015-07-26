@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse, re, sys
-from firmware_git_tools import osGitCommand, gitIdentity, gitBranch
 
 def getSection(text, name):
 	re_section = re.compile(ur"^ *(?P<name>%s) *(?P<origin>[0-9a-f]+) *(?P<length>[0-9a-f]+) *(?P<used>[0-9a-f]+) *(?P<unused>[0-9a-f]+).*$" % name, re.MULTILINE)
