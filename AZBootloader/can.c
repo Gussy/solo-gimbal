@@ -241,20 +241,21 @@ Uint32 CAN_GetLongData()
 
 Uint16 CAN_SendWordData(Uint16 data)
 {
+   struct ECAN_REGS ECanaShadow;
+   Uint32 timeout = 0;
+   Uint32 timeout_max = CAN_SEND_WORD_LED_TIMEOUT_1;
+
    ECanaMboxes.MBOX1.MDL.byte.BYTE0 = (data&0xFF);   // LS byte
 
    // Fetch the MSB
    ECanaMboxes.MBOX1.MDL.byte.BYTE1 = ((data >> 8)&0xFF);    // MS byte
 
    ECanaRegs.CANTRS.all = (1ul<<1);	// "writing 0 has no effect", previously queued boxes will stay queued
-   //while (ECanaRegs.CANTA.bit.TA1 != 1);
    ECanaRegs.CANTA.all = (1ul<<1);		// "writing 0 has no effect", clears pending interrupt, open for our tx
-   //while (ECanaRegs.CANTA.bit.TA1 != 0);
-   struct ECAN_REGS ECanaShadow;
+
    // wait for it to be sent
    ECanaShadow.CANTRS.all = ECanaRegs.CANTRS.all;
-   Uint32 timeout = 0;
-   Uint32 timeout_max = CAN_SEND_WORD_LED_TIMEOUT_1;
+
    while ((ECanaShadow.CANTRS.bit.TRS1 == 1)) {
        while ((ECanaShadow.CANTRS.bit.TRS1 == 1) && (timeout++ < timeout_max)) {
            ECanaShadow.CANTRS.all = ECanaRegs.CANTRS.all;

@@ -34,6 +34,15 @@ bool verify_data_checksum(void)
 {
    Uint32 stored_checksum = 0;
    Uint32 calculated_checksum = 0xFFFFFFFF;
+   Uint16 i;
+
+   struct HEADER {
+      Uint16 BlockSize;
+      Uint32 DestAddr;
+   } BlockHeader;
+
+   Uint16 wordData;
+
    reset_datapointer();
 
    // Asign GetWordData to the CAN-A version of the
@@ -42,7 +51,6 @@ bool verify_data_checksum(void)
    if (GetWordData() != BOOTLOADER_KEY_VALUE_8BIT) return 0;
    calculated_checksum = crc32_add(BOOTLOADER_KEY_VALUE_8BIT, calculated_checksum);
 
-   Uint16 i;
    // Read and discard the 8 reserved words.
    for(i = 1; i <= 8; i++) {
 	   calculated_checksum = crc32_add(GetWordData(), calculated_checksum);
@@ -51,13 +59,6 @@ bool verify_data_checksum(void)
    // Entry Addr
    calculated_checksum = crc32_add(GetWordData(), calculated_checksum);
    calculated_checksum = crc32_add(GetWordData(), calculated_checksum);
-
-   struct HEADER {
-      Uint16 BlockSize;
-      Uint32 DestAddr;
-    } BlockHeader;
-
-    Uint16 wordData;
 
     // Get the size in words of the first block
     BlockHeader.BlockSize = (*GetWordData)();

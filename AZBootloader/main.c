@@ -21,6 +21,7 @@ static const LED_RGBA rgba_amber_dim = {.red=255, .green=160, .blue=0, .alpha=10
 Uint32 SelectBootMode()
 {
 	  Uint32 EntryAddr;
+	  GimbalAxis axis;
 
 	  EALLOW;
 
@@ -62,7 +63,7 @@ Uint32 SelectBootMode()
 
 	  EALLOW;
 
-	  const GimbalAxis axis = (GimbalAxis)GetBoardHWID();
+	  axis = (GimbalAxis)GetBoardHWID();
 
 	  if(axis == AZ && !verify_data_checksum()) {
           // Enter the MAVLink bootloader

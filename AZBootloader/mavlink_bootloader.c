@@ -128,9 +128,9 @@ static void clear_buffers(void) {
 }
 
 static void prepare_flash(void) {
-    flash_csm_unlock();
-
     FLASH_ST FlashStatus = {0};
+
+    flash_csm_unlock();
 
     /* don't erase SECTOR A */
     Flash_Erase(SECTORB, &FlashStatus);
@@ -149,6 +149,8 @@ static void prepare_flash(void) {
 }
 
 static void mavlink_data_handshake(Uint16 seq) {
+    Uint16 length;
+
     // send mavlink message to request data stream
     mavlink_msg_data_transmission_handshake_pack(
     MAVLINK_SYSTEM_ID, MAV_COMP_ID_GIMBAL, &msg, MAVLINK_TYPE_UINT16_T,
@@ -159,7 +161,7 @@ static void mavlink_data_handshake(Uint16 seq) {
             ENCAPSULATED_DATA_LENGTH /*uint8_t payload*/,
             0 /*uint8_t jpg_quality*/
     );
-    Uint16 length;
+
     length = mavlink_msg_to_send_buffer(buffer, &msg);
     send_serial_port(buffer, length);
 }
