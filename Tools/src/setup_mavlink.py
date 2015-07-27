@@ -110,6 +110,9 @@ def reset_gimbal(link):
 def reset_into_bootloader(link):
     return link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC, 0, 0, 0, 0, 0)
 
+def exit_bootloader(link):
+    return link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
+
 def send_bootloader_data(link, sequence_number, data):
     return link.encapsulated_data_send(sequence_number, data)
 
