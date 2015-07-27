@@ -34,7 +34,9 @@ if __name__ == '__main__':
 		print("project '%s' not supported" % args.project)
 		sys.exit(1)
 	
-	print("\nMemory usage statistics for '%s'" % args.mapfile)
+	outputBuffer = list()
+	outputBuffer.append("\nMemory usage statistics for '%s'" % args.mapfile)
+
 	tableData = list()
 	tableData.append(['Section', 'Length', 'Used', 'Unused', 'Utilization'])
 	for s in sections:
@@ -42,5 +44,8 @@ if __name__ == '__main__':
 		tableData.append([s, info['length'], info['used'], info['unused'], "{0:.2f}%".format(info['percentage'])])
 
 	for row in tableData:
-		print("{: <15} {: <8} {: <8} {: <8} {: <15}".format(*row))
-	print('')
+		outputBuffer.append("{: <15} {: <8} {: <8} {: <8} {: <15}".format(*row))
+	outputBuffer.append('')
+
+	# Print all output at once to avoid making a mess of parallel build outputs
+	print('\n'.join(outputBuffer))
