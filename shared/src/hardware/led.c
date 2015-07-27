@@ -1,10 +1,12 @@
 #include "F2806x_EPwm_defines.h"
 #include "hardware/led.h"
+#include <math.h>
 
 static void set_rgba(Uint8 red, Uint8 green, Uint8 blue, Uint8 alpha);
 static void enable_epwm_interrupts(void);
 static void disable_epwm_interrupts(void);
-static void update_compare_fade_in(LED_EPWM_INFO *epwm_info);
+static void update_compare_fade_in();
+static void update_compare_breathing();
 static void update_compare_disco(LED_EPWM_INFO *epwm_info);
 
 // Pointer to update function. Point to disco by default
@@ -18,6 +20,8 @@ static LED_RGBA state_rgba;
 static Uint16 state_duration;
 static Uint16 blink_toggle = 0;
 static Uint32 fade_in_step_counter = 0;
+static Uint32 breathing_step_counter = 0;
+static Uint8 breathing_x = 0;
 
 void init_led_periph(void)
 {
@@ -189,6 +193,17 @@ void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 durati
 			state_duration = duration;
 			break;
 
+        case LED_MODE_BREATHING:
+            state_rgba = color;
+            state_rgba.alpha = 0;
+            breathing_x = 0;
+            update_function = &update_compare_breathing;
+            // Only enable 1 of the ePWM interrupts,
+            // which we use to step to fade alpha up
+            EPwm5Regs.ETSEL.bit.INTEN = 1;
+            EPwm6Regs.ETSEL.bit.INTEN = 0;
+            break;
+
 		// Cycle through RGB colours. Useful for testing.
 		case LED_MODE_DISCO:
 		    set_rgba(0, 0xff, 0, 0xff);
@@ -265,7 +280,7 @@ static void disable_epwm_interrupts(void)
 	EPwm6Regs.ETSEL.bit.INTEN = 0;
 }
 
-static void update_compare_fade_in(LED_EPWM_INFO *epwm_info)
+static void update_compare_fade_in()
 {
 	// Every 128th interrupt, change the alpha value
 	if(fade_in_step_counter == 0x7F) {
@@ -288,6 +303,26 @@ static void update_compare_fade_in(LED_EPWM_INFO *epwm_info)
 	}
 
 	return;
+}
+
+static void update_compare_breathing()
+{
+    // Every 80th interrupt, change the alpha value
+    if(breathing_step_counter == 0xff) {
+        breathing_step_counter = 0;
+
+        // Breathing pattern is f(x) = e^sin(x), altered to have a period of 255 and a min/max of 0/255
+        // Constants:
+        // 108.492061351 = 255/(e - 1/e)
+        // 0.36787944 = 1/e
+        // 128.0 = period/2
+        float alpha = (exp(sin(((float)breathing_x++/128.0f) * M_PI)) - 0.36787944f) * 108.492061351f;
+        set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, (Uint8)alpha);
+    } else {
+        breathing_step_counter++;
+    }
+
+    return;
 }
 
 static void update_compare_disco(LED_EPWM_INFO *epwm_info)
