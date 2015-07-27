@@ -19,8 +19,8 @@ static LED_MODE	state_mode;
 static LED_RGBA state_rgba;
 static Uint16 state_duration;
 static Uint16 blink_toggle = 0;
-static Uint32 fade_in_step_counter = 0;
-static Uint32 breathing_step_counter = 0;
+static Uint16 fade_in_step_counter = 0;
+static Uint16 breathing_step_counter = 0;
 static Uint8 breathing_x = 0;
 
 void init_led_periph(void)
@@ -307,7 +307,7 @@ static void update_compare_fade_in()
 
 static void update_compare_breathing()
 {
-    // Every 80th interrupt, change the alpha value
+    // Every 255th interrupt, change the alpha value
     if(breathing_step_counter == 0xff) {
         breathing_step_counter = 0;
 
