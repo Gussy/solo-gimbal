@@ -750,14 +750,19 @@ void C1(void) // Update Status LEDs
                 break;
 
             case BLINK_READY:
+                //led_set_mode(LED_MODE_BLINK, rgba_green, 4);
                 break;
 
             case BLINK_RUNNING:
-                led_set_mode(LED_MODE_BLINK, rgba_green, 4);
+                led_set_mode(LED_MODE_BREATHING, rgba_green, 0);
                 break;
 
             case BLINK_ERROR:
                 led_set_mode(LED_MODE_BLINK_FOREVER, rgba_red, 0);
+                break;
+
+            case BLINK_ERROR_UNRECOVERABLE:
+                led_set_mode(LED_MODE_SOLID, rgba_red, 0);
                 break;
 
             case BLINK_CALIBRATING:

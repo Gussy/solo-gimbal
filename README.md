@@ -49,12 +49,15 @@ The bootloaders must be installed via JTAG, usually using the XDS510 JTAG Emulat
 
 ### Beacon LED (Camera Carriage Board)
 
+* Party mode (animated colours) when calibrating
 * Blinking orange on bootloader
 * Dim green once CAN bootload is complete
 * Fades to bright green on initialisation
-* Blinks three times when initialisation is complete
-* Blinks red when a fault has occurred
+* Breathes green when running
 * Blinks blue when CAN comms is lost
+* Breathes red when gimbal is uncalibrated
+* Solid red when an unrecoverable fault has occurred
+* Blinks red when a recoverable fault has occurred
 
 ## Mavlink
 

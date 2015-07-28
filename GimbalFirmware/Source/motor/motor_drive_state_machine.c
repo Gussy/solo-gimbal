@@ -224,7 +224,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                     // If any axes require calibration, go to the wait for axis calibration command state, where we'll send a periodic
                     // status message and wait for a command to calibrate
                     md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
-                    CANUpdateBeaconState(LED_MODE_SOLID, rgba_red, 0);
+                    CANUpdateBeaconState(LED_MODE_BREATHING, rgba_red, 0);
                 } else {
                     cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_CALIBRATE_AXES);
                     md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
@@ -356,7 +356,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_UNRECOVERABLE_FAULT:
-            axis_parms->blink_state = BLINK_ERROR;
+            axis_parms->blink_state = BLINK_ERROR_UNRECOVERABLE;
             // Set park transformation angle to 0
             md_parms->park_xform_parms.Angle = 0;
 
