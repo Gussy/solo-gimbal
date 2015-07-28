@@ -77,7 +77,6 @@ Uint32 SelectBootMode()
       }
 
       EntryAddr = CAN_Boot(axis);
-      if(axis == AZ) reset_datapointer();
 
       return EntryAddr;
 }

@@ -19,8 +19,6 @@ Uint32 CAN_Boot(GimbalAxis axis)
 {
    Uint32 EntryAddr;
 
-   if(axis == AZ) reset_datapointer();
-
    // If the missing clock detect bit is set, just
    // loop here.
    if(SysCtrlRegs.PLLSTS.bit.MCLKSTS == 1) {
@@ -30,6 +28,7 @@ Uint32 CAN_Boot(GimbalAxis axis)
    // Asign GetWordData to the CAN-A version of the
    // function.  GetWordData is a pointer to a function.
    if(axis == AZ) {
+      reset_datapointer();
       GetWordData = CAN_GetWordDataAndSend;
    } else {
       GetWordData = CAN_GetWordData;
