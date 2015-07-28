@@ -58,10 +58,6 @@ void CopyData()
 
    Uint16 wordData;
    Uint16 i;
-//#define VERIFY
-#ifdef VERIFY
-   Uint32 errors = 0;
-#endif
 
    // Get the size in words of the first block
    BlockHeader.BlockSize = (*GetWordData)();
@@ -78,18 +74,13 @@ void CopyData()
       {
     	  extern Uint16 endRam;
           wordData = (*GetWordData)();
-#ifdef VERIFY
-          if (*(Uint16 *)BlockHeader.DestAddr++ != wordData) {
-        	  errors++;
-          }
-#else
+
           // don't overwrite the memory space I am using.
           if ((Uint16 *)BlockHeader.DestAddr >= &endRam) {
         	  *(Uint16 *)BlockHeader.DestAddr++ = wordData;
           } else {
         	  *(Uint16 *)BlockHeader.DestAddr++;
           }
-#endif
       }
 
       // Get the size of the next block
@@ -110,7 +101,7 @@ Uint32 GetLongData()
     Uint32 longData;
 
     // Fetch the upper 1/2 of the 32-bit value
-    longData = ( (Uint32)(*GetWordData)() << 16);
+    longData = ((Uint32)(*GetWordData)() << 16);
 
     // Fetch the lower 1/2 of the 32-bit value
     longData |= (Uint32)(*GetWordData)();

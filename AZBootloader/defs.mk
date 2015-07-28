@@ -21,6 +21,8 @@ OBJS = \
     $(SHARED_ROOT)/src/hardware/pll.o 													\
     $(SHARED_ROOT)/src/hardware/watchdog.o												\
     $(SHARED_ROOT)/src/hardware/device_init.o 											\
+    $(SHARED_ROOT)/src/flash/flash_helpers.o											\
+    $(SHARED_ROOT)/src/flash/flash_csm_keys.o											\
     $(PROJ_ROOT)/main.o 																\
     $(PROJ_ROOT)/can.o 																	\
     $(PROJ_ROOT)/can_bootloader.o														\

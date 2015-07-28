@@ -13,7 +13,6 @@ History:
 #ifndef __PID_GRANDO_H__
 #define __PID_GRANDO_H__
 
-#define MATH_TYPE 1 // Select floating point math before we include the IQmathLib header
 #include "IQmathLib.h"
 
 typedef struct {  _iq  Ref;   			// Input: reference set-point

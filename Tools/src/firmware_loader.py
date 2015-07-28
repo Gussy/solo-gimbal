@@ -16,6 +16,8 @@ progressHandler = None
 
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
 
+DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_WIDTH = 0xFFFF
+
 class Results:
     Success, NoResponse, Timeout, InBoot, Restarting = 'Success', 'NoResponse', 'Timeout', 'InBoot', 'Restarting'
 
@@ -105,11 +107,11 @@ def upload_data(link, binary):
 def finish_upload(link, loadDefaultGains):
     """Send an "end of transmission" signal to the target, to cause a target reset""" 
     while True:
-        setup_mavlink.reset_into_bootloader(link)
+        setup_mavlink.exit_bootloader(link)
         msg = setup_mavlink.wait_handshake(link)
         if msg == None:
             return Results.Timeout
-        if msg.width == 0xFFFF:
+        if msg.width == DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_WIDTH:
             break
         
     if setup_mavlink.wait_for_heartbeat(link, retries=5) == None:

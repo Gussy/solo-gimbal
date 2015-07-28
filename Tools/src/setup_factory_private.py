@@ -31,7 +31,7 @@ def set_serial_number_with_time(link, serial_str):
     setup_param.commit_to_flash(link)
     return sanitised_serial, timestamp
 
-def set_serial_number_3dr(link, month_serial_number):
+def set_serial_number_3dr(link, month_serial_number, commit=True):
     today = datetime.date.today() 
     
     # Build year identifier
@@ -53,8 +53,9 @@ def set_serial_number_3dr(link, month_serial_number):
     # Build serial number string
     serial_str = 'GB11A' + str(year) + str(month) + str(number)
     
-    # Save the serial number on the gimbal
-    set_serial_number(link, serial_str)
+    # Save the serial number and assembly date on the gimbal
+    set_serial_number(link, serial_str, commit=False)
+    set_assembly_date(link, commit=True)
     
     return serial_str
 

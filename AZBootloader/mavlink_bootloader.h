@@ -1,7 +1,7 @@
 #ifndef MAVLINK_BOOTLOADER_H_
 #define MAVLINK_BOOTLOADER_H_
 
-Uint32 MAVLINK_Flash();
+void MAVLINK_Flash();
 
 
 #define BOOTLOADER_VERSION_MAJOR	0x03

@@ -1,32 +1,11 @@
-/* ==============================================================================
-System Name:  	PM_Sensorless
-
-File Name:		PM_Sensorless.h
-
-Description:	Primary system header file for the Real Implementation of Sensorless  
-          		Field Orientation Control for a Three Phase Permanent-Magnet
-          		Synchronous Motor 
-
-Originator:		Digital control systems Group - Texas Instruments
-
-Note: In this software, the default inverter is supposed to be DRV8312-EVM. 
-=====================================================================================
- History:
--------------------------------------------------------------------------------------
- 02-07-2011	Version 1.0
-=================================================================================  */
-
 #ifndef _PM_SENSORLESS_H
 #define _PM_SENSORLESS_H
 
-/*-------------------------------------------------------------------------------
-Next, Include project specific include files.
--------------------------------------------------------------------------------*/
 #include "f2806x_int8.h"
 #include "PeripheralHeaderIncludes.h"
 
 // Headers for TI libraries
-#define MATH_TYPE 1 // Select floating point math before we include the IQmathLib header
+#define MATH_TYPE FLOAT_MATH // Select floating point math before we include the IQmathLib header
 #include "IQmathLib.h"
 
 #include "park.h"                           // Include header for the PARK object
@@ -53,6 +32,7 @@ typedef enum {
     BLINK_READY,
 	BLINK_RUNNING,
     BLINK_ERROR,
+    BLINK_ERROR_UNRECOVERABLE,
     BLINK_CALIBRATING,
     BLINK_OVERRIDE
 } BlinkState;
@@ -68,16 +48,14 @@ typedef enum {
 } RateLoopPass;
 
 typedef enum {
-	CONTROL_TYPE_RATE = 0,
-	CONTROL_TYPE_POS = 1
+	CONTROL_TYPE_RATE,
+	CONTROL_TYPE_POS
 } ControlType;
 
 typedef struct {
     Uint32 param;
     Uint8 *sema;
 } ParamSet;
-
-#define ENCODER_MEDIAN_HISTORY_SIZE 6
 
 typedef struct {
     int16 raw_theta;
@@ -166,7 +144,3 @@ void SetMavlinkGimbalDisabled(void);
 extern Uint32 global_timestamp_counter;
 
 #endif
-
-//===========================================================================
-// No more.
-//===========================================================================

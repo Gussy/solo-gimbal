@@ -7,8 +7,8 @@ AES gimbal software for C2000 uC
 
 The compiler tools can be downloaded for Linux, OS X, and Windows from [TI's website](http://software-dl.ti.com/codegen/non-esd/downloads/download.htm#C2000). 3DR keeps mirrors of a subset of compiler versions for convenient download:
 
-* [linux (ti tools v6.4.2)](https://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti-cgt-c2000_6.4.2.tar.gz)
-* [os x (ti tools v6.4.2)](https://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti_cgt_c2000_6.4.2_mac_installer.sh)
+* [linux (ti tools v6.4.2)](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti-cgt-c2000_6.4.2.tar.gz)
+* [os x (ti tools v6.4.2)](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti_cgt_c2000_6.4.2_mac_installer.sh)
 * windows...
 
 TI's full-fledged eclipse-based developement environment can also be used:
@@ -49,12 +49,15 @@ The bootloaders must be installed via JTAG, usually using the XDS510 JTAG Emulat
 
 ### Beacon LED (Camera Carriage Board)
 
+* Party mode (animated colours) when calibrating
 * Blinking orange on bootloader
 * Dim green once CAN bootload is complete
 * Fades to bright green on initialisation
-* Blinks three times when initialisation is complete
-* Blinks red when a fault has occurred
+* Breathes green when running
 * Blinks blue when CAN comms is lost
+* Breathes red when gimbal is uncalibrated
+* Solid red when an unrecoverable fault has occurred
+* Blinks red when a recoverable fault has occurred
 
 ## Mavlink
 

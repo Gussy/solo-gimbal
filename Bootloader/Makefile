@@ -3,6 +3,7 @@ PROJ := Bootloader
 
 PROJ_ROOT := .
 SHARED_ROOT := ../shared
+PROJ_PYTHON_ROOT := $(PROJ_ROOT)/../Tools/src
 
 ifeq ($(TI_ROOT),)
 # XXX: would really prefer to not require this but at least for now,
@@ -16,8 +17,8 @@ include defs.mk
 # Disable implicit rules - we don't rely on them, and this is faster.
 .SUFFIXES:
 
-JTAG_TOOL = XDS500
-#JTAG_TOOL = XDS100v3
+JTAG_TOOL := XDS500
+#JTAG_TOOL := XDS100v3
 
 ###############################################################################
 # executables
@@ -26,6 +27,8 @@ CC      := $(TI_ROOT)/bin/cl2000
 LD      := $(TI_ROOT)/bin/cl2000
 HEX     := $(TI_ROOT)/bin/hex2000
 TILOAD  := $(TI_ROOT)../../../ccs_base/scripting/examples/loadti/loadti.sh
+
+SIZE_INFO	:= python $(PROJ_PYTHON_ROOT)/firmware_size_info.py
 
 ###############################################################################
 # common flags
@@ -94,6 +97,7 @@ $(PROJ).out: $(OBJS) $(LDSCRIPTS)
 
 $(PROJ).hex: $(PROJ).out
 	$(HEX) -i $< -o $@ -order MS -romwidth 16
+	$(SIZE_INFO) $(PROJ).map --project=$(PROJ)
 
 %.o: %.asm
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -fe $@

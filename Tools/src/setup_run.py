@@ -227,7 +227,11 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     target = Vector3()
     log = None
 
+    # Disable position hold mode, low-torque mode and torque messages
+    setup_param.pos_hold_disable(link)
     setup_param.enable_torques_message(link, False)
+    setup_param.low_torque_mode(link, False)
+
     start_time = time.time()
     if timeout is not None:
         timeout = timeout + WOBBLE_TEST_ALIGNMENT_TIME
@@ -267,9 +271,6 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         else:
             _wobble = wobble
 
-    # Disable position hold mode
-    setup_param.pos_hold_disable(link)
-
     lastCycle = time.time()
     lastReport = time.time()
     commsLost = False
@@ -292,6 +293,10 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
                     log.writeEvent('gimbal connected')
                 if eventCallback:
                     eventCallback('gimbal connected')
+
+                setup_param.pos_hold_disable(link)
+                setup_param.enable_torques_message(link, False)
+                setup_param.low_torque_mode(link, False)
         elif report.get_type() == 'STATUSTEXT':
             if log:
                 log.writeEvent(report.text)
@@ -395,8 +400,10 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         current_angle = Vector3(*Tvg.to_euler312())
         lastCycle = time.time()
 
-    # Re-enable position hold mode
+    # Re-enable position hold mode, low-torque more and torque messages
     setup_param.pos_hold_enable(link)
+    setup_param.low_torque_mode(link, True)
+    setup_param.enable_torques_message(link, True)
 
     if log:
         if test == 'wobble':

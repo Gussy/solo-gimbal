@@ -3,6 +3,8 @@
 
 #include "PeripheralHeaderIncludes.h"
 
+#define M_PI (float)3.14159265358979323846
+
 // Configure the period for each timer
 #define LED_EPWM_TIMER_TBPRD	0xFF
 #define LED_EPWM_MAX_CMP		(LED_EPWM_TIMER_TBPRD - 1)
@@ -19,6 +21,7 @@ typedef enum {
 	LED_MODE_FADE_IN_BLINK_3,
 	LED_MODE_BLINK,
 	LED_MODE_BLINK_FOREVER,
+	LED_MODE_BREATHING,
 	LED_MODE_DISCO
 } LED_MODE;
 
@@ -57,6 +60,10 @@ inline void led_status_on(void) {
 
 inline void led_status_off(void) {
     GpioDataRegs.GPASET.bit.GPIO7 = 1;
+}
+
+inline void led_status_toggle(void) {
+    GpioDataRegs.GPATOGGLE.bit.GPIO7 = 1;
 }
 
 interrupt void led_epwm5_isr(void);

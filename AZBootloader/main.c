@@ -59,7 +59,7 @@ Uint32 SelectBootMode()
 		  EntryAddr = CAN_Boot();
 		  reset_datapointer();
 	  } else {
-		  EntryAddr = MAVLINK_Flash();
+		  MAVLINK_Flash();
 	  }
 	return EntryAddr;
 }
