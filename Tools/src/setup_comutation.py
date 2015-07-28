@@ -5,7 +5,6 @@ Utility for loading firmware into the 3DR Gimbal.
 
 """
 import setup_mavlink, setup_param
-from setup_param import getAxisCalibrationParam
 
 axis_enum = ['PITCH', 'ROLL', 'YAW']
 status_enum = ['in progress', 'succeeded', 'failed']
@@ -20,7 +19,7 @@ def getAxisCalibrationValues(link):
         'yaw': {'slope': 0, 'intercept': 0},
     }
     for i in range(len(axis_enum)):
-        result = getAxisCalibrationParam(link, axis_enum[i])
+        result = setup_param.getAxisCalibrationParam(link, axis_enum[i])
         if result == None:
             return None
         values[axis_enum[i].lower()]['slope'] = result[0]
@@ -28,9 +27,9 @@ def getAxisCalibrationValues(link):
     return values
 
 def getAxisCalibrationParams(link):
-    pitch = getAxisCalibrationParam(link, axis_enum[0])
-    roll = getAxisCalibrationParam(link, axis_enum[1])
-    yaw = getAxisCalibrationParam(link, axis_enum[2])
+    pitch = setup_param.getAxisCalibrationParam(link, axis_enum[0])
+    roll = setup_param.getAxisCalibrationParam(link, axis_enum[1])
+    yaw = setup_param.getAxisCalibrationParam(link, axis_enum[2])
     if pitch == None or roll == None or yaw == None:
         return None
     else:
