@@ -225,7 +225,7 @@ GPHeartbeatStatus gp_heartbeat_status()
 			heartbeat_status = GP_HEARTBEAT_RECORDING;
     } else */
     if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
-        if (gp_recording_state()) {
+        if (gp_is_recording()) {
             heartbeat_status = GP_HEARTBEAT_RECORDING;
         } else {
             heartbeat_status = GP_HEARTBEAT_CONNECTED;
@@ -727,7 +727,7 @@ void gp_set_recording_state(bool recording_state)
     gp.recording = recording_state;
 }
 
-bool gp_recording_state()
+bool gp_is_recording()
 {
     return gp.recording;
 }
