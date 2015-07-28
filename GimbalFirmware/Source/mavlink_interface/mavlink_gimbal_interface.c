@@ -519,6 +519,10 @@ void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code,
         case CAND_FAULT_MOTOR_DRIVER_FAULT:
             fault_str = "Motor driver fault";
             break;
+
+        case CAND_FAULT_CURRENT_SENSOR_FAULT:
+            fault_str = "Current sensor fault";
+            break;
     }
 
     MAV_SEVERITY severity = MAV_SEVERITY_ENUM_END;
