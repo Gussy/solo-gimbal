@@ -752,7 +752,7 @@ void C1(void) // Update Status LEDs
                 break;
 
             case BLINK_READY:
-                led_set_mode(LED_MODE_BLINK, rgba_green, 4);
+                //led_set_mode(LED_MODE_BLINK, rgba_green, 4);
                 break;
 
             case BLINK_RUNNING:
