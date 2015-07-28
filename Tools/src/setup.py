@@ -3,8 +3,7 @@
 '''
 Command-line utility to handle comms to gimbal 
 '''
-import time
-import sys, argparse, time, json
+import time, os, sys, argparse, time, json
 import setup_factory_pub
 from setup_mavlink import open_comm, wait_for_heartbeat, wait_handshake, reset_into_bootloader
 
@@ -38,6 +37,11 @@ def handle_file(args, link):
     fileExtension = str(args.file).split(".")[-1].lower()
     if fileExtension == 'param':
         setup_param.load_param_file(args.file, link)
+    elif fileExtension == 'json':
+        with open(args.file) as f:    
+            params = json.load(f)
+            setup_param.restore_params(link, params)
+            print("Gimbal parameters restored.")
     elif fileExtension == 'ax':
         # Prepare the binary to load from the compressed .ax file
         print('Application firmware_file: %s' % args.file)
@@ -200,7 +204,8 @@ def command_interface():
     parser = argparse.ArgumentParser()
     parser.add_argument("file",  nargs='?', help="parameter or firmware file to be loaded into the gimbal", default=None)
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default=None)
-    parser.add_argument("-s", "--show", help="Show all useful gimbal parameters", action='store_true')
+    parser.add_argument("--show", help="Show all gimbal parameters", action='store_true')
+    parser.add_argument("--save", help="Save gimbal parameters to a file", action='store_true')
     parser.add_argument("-v", "--validate", help="Check gimbal parameters to see if they have valid values", action='store_true')
     parser.add_argument("-d", "--defaults", help="Reset gimbal parameters to default values", action='store_true')
     parser.add_argument("-r","--reboot", help="Reboot the gimbal", action='store_true')
@@ -284,6 +289,23 @@ def command_interface():
         params = setup_validate.show(link)
         if params:
             print(json.dumps(params, sort_keys=True, indent=4, separators=(',', ': ')))
+        else:
+            print("Error fetching parameters from gimbal")
+        return
+
+    if args.save:
+        params = setup_validate.show(link)
+        if params:
+            if not os.path.isdir('logs'):
+                os.makedirs('logs')
+
+            if params['serial_number'] != None and params['serial_number'] != '':
+                filePath = os.path.join('logs', '%s.json' % params['serial_number'])
+                with open(filePath, 'w') as f:
+                    json.dump(params, f, sort_keys=True, indent=4, separators=(',', ': '))
+                    print("Gimbal prameters saved to %s" % filePath)
+            else:
+                print("Gimbal serial number not set, prameters not saved.")
         else:
             print("Error fetching parameters from gimbal")
         return
