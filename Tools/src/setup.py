@@ -14,7 +14,6 @@ from firmware_loader import Results as loader_results
 import setup_comutation, setup_mavlink
 from setup_comutation import Results as calibration_results
 import setup_validate, setup_param
-from setup_param import set_offsets
 
 # Optional imports
 try:
@@ -208,6 +207,7 @@ def command_interface():
     parser.add_argument("-c", "--calibrate", help="Run the comutation setup", action='store_true')
     parser.add_argument("-f", "--forcecal", help="Force the comutation setup", action='store_true')
     parser.add_argument("-e", "--erase", help="Erase calibration values", action='store_true')
+    parser.add_argument("--customgains", help="Enable the use of custom gains (0 to disable, 1 to enable)", type=int)
 
     # Optional commands (not included with sololink tools)
     if setup_run:
@@ -298,6 +298,10 @@ def command_interface():
     
     if args.erase:
         eraseCalibration(link)
+        return
+
+    if args.customgains == 1 or args.customgains == 0:
+        setup_param.set_use_custom_gains(link, args.customgains)
         return
 
     if setup_run:

@@ -19,6 +19,7 @@ float commit_to_flash_status = 0.0;
 float pos_hold = CONTROL_TYPE_POS;
 float max_torque = LOW_TORQUE_MODE_MAX;
 float sysid = 0.0;
+float k_rate = 2.0;
 float send_torques = 1.0;
 
 void init_default_mavlink_params()
@@ -203,6 +204,12 @@ void init_default_mavlink_params()
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].float_data_ptr = &(flash_params.gopro_charging_enabled);
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].access_type = GIMBAL_PARAM_READ_WRITE;
 
+	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].param_id, "GMB_CUST_GAINS", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].can_parameter_id = CAND_PID_INVALID;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].float_data_ptr = &(flash_params.use_custom_gains);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].access_type = GIMBAL_PARAM_READ_WRITE;
+
 	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_id, "GMB_SND_TORQUE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].can_parameter_id = CAND_PID_INVALID;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_type = MAV_PARAM_TYPE_REAL32;
@@ -303,7 +310,8 @@ void init_default_mavlink_params()
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].param_id, "GMB_K_RATE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].can_parameter_id = CAND_PID_INVALID;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].float_data_ptr = &(flash_params.k_rate);
+    // If GMB_CUST_GAINS is set to 1.0, use the K_RATE from flash params, otherwise use the hard-coded volatile value declared above
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].float_data_ptr = (flash_params.use_custom_gains == 1.0 ? &(flash_params.k_rate) : &k_rate);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].param_id, "GMB_SYSID", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);

@@ -1,12 +1,53 @@
 #include "control/PID.h"
 
 #include <stdlib.h>
+
 PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
-    // These get loaded over CAN at boot, so they are initialized to zero
-    // (Except overall gain and d-term alpha, which are hardcoded)
-    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 }
+    // These get loaded over CAN at boot and are hard-coded with the default PID values
+    // The hardcoded PID gains can be overriden by the parameteres stored in flash, by
+    //  setting the GMB_CUST_GAINS parameter from 0.0 to 1.0
+
+    // Elevation
+    {
+            .gainP = 1.850000,
+            .gainI = 0.200000,
+            .gainD = 0.000000,
+            .integralMax = 32768.0,
+            .integralMin = -32768.0,
+            .gainTotal = 1.0,
+            .integralCumulative = 0.0,
+            .dTermAlpha = 0.24,
+            .processVarPrevious = 0.0,
+            .deltaPvFilt = 0.0
+    },
+
+    // Azimuth
+    {
+            .gainP = 2.700000,
+            .gainI = 0.500000,
+            .gainD = 0.000000,
+            .integralMax = 32768.0,
+            .integralMin = -32768.0,
+            .gainTotal = 1.0,
+            .integralCumulative = 0.0,
+            .dTermAlpha = 0.24,
+            .processVarPrevious = 0.0,
+            .deltaPvFilt = 0.0
+    },
+
+    // Roll
+    {
+            .gainP = 7.000000,
+            .gainI = 0.500000,
+            .gainD = 0.000000,
+            .integralMax = 32768.0,
+            .integralMin = -32768.0,
+            .gainTotal = 1.0,
+            .integralCumulative = 0.0,
+            .dTermAlpha = 0.24,
+            .processVarPrevious = 0.0,
+            .deltaPvFilt = 0.0
+    }
 };
 
 float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float output_limit)

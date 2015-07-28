@@ -136,8 +136,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 				AxisCalibrationSlopes[my_axis] = flash_params.commutation_slope[my_axis];
 				AxisCalibrationIntercepts[my_axis] = flash_params.commutation_icept[my_axis];
 
-				// If this is the elevation axis, we also need to load rate loop PID gains
-				if (my_axis == EL) {
+				// If this is the elevation axis, we also need to load rate loop PID gains,
+				// if the param "GMB_CUST_GAINS" is set to 1.0
+				if (my_axis == EL && flash_params.use_custom_gains == 1.0) {
 					rate_pid_loop_float[AZ].gainP = flash_params.rate_pid_p[AZ];
 					rate_pid_loop_float[AZ].gainI = flash_params.rate_pid_i[AZ];
 					rate_pid_loop_float[AZ].gainD = flash_params.rate_pid_d[AZ];
