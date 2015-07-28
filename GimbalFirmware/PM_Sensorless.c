@@ -763,6 +763,10 @@ void C1(void) // Update Status LEDs
                 led_set_mode(LED_MODE_BLINK_FOREVER, rgba_red, 0);
                 break;
 
+            case BLINK_ERROR_UNRECOVERABLE:
+                led_set_mode(LED_MODE_SOLID, rgba_red, 0);
+                break;
+
             case BLINK_CALIBRATING:
                 led_set_mode(LED_MODE_DISCO, rgba_red, 0);
                 break;

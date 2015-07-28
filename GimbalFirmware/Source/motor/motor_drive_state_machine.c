@@ -356,7 +356,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_UNRECOVERABLE_FAULT:
-            axis_parms->blink_state = BLINK_ERROR;
+            axis_parms->blink_state = BLINK_ERROR_UNRECOVERABLE;
             // Set park transformation angle to 0
             md_parms->park_xform_parms.Angle = 0;
 
