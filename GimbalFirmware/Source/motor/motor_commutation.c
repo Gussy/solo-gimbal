@@ -37,15 +37,12 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
                 power_filter_parms,
                 load_ap_state_info);
 
-
-
-        // ------------------------------------------------------------------------------
-        //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).
-        //  Connect inputs of the CLARKE module and call the clarke transformation macro
-        // ------------------------------------------------------------------------------
-        if(AdcResult.ADCRESULT1 < ADC_MIN_REASONABLE_VALUE || AdcResult.ADCRESULT3 < ADC_MIN_REASONABLE_VALUE) {
+        // If both Ia and Ib currents are at their minimum values (-2.75A), the current sensor has probably lost it's +5V supply
+        if(AdcResult.ADCRESULT1 < ADC_MIN_REASONABLE_VALUE && AdcResult.ADCRESULT3 < ADC_MIN_REASONABLE_VALUE) {
             AxisFault(CAND_FAULT_CURRENT_SENSOR_FAULT, CAND_FAULT_TYPE_RECOVERABLE, cb_parms, md_parms, axis_parms);
         } else {
+            //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).
+            //  Connect inputs of the CLARKE module and call the clarke transformation macro
             md_parms->clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-md_parms->cal_offset_A)*2); // Phase A curr.
             md_parms->clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-md_parms->cal_offset_B)*2); // Phase B curr.
 
