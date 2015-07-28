@@ -16,7 +16,7 @@
 void PieCntlInit(void){}
 void PieVectTableInit(void){}
 
-static const LED_RGBA rgba_amber_dim = {.red=255, .green=160, .blue=0, .alpha=10};
+static const LED_RGBA rgba_amber_dim = {.red=1, .green=1, .blue=0, .alpha=0xff};
 
 Uint32 SelectBootMode()
 {

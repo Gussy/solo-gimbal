@@ -4,8 +4,13 @@
 
 #define FLASH_ENTRY_POINT 0x3F7FF6
 
-#pragma DATA_SECTION(endRam,".endmem");
+// Although the Emu* variables are unused, these are required since they are defined in the linker file
+#pragma DATA_SECTION(EmuKey, "EmuKeyVar");
+#pragma DATA_SECTION(EmuBMode, "EmuBModeVar");
+#pragma DATA_SECTION(endRam, ".endmem");
 Uint16 endRam;
+Uint16 EmuKey;
+Uint16 EmuBMode;
 
 static void ReadReservedFn(void);
 static void CopyData(void);
