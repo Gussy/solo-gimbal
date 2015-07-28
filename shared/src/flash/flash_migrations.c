@@ -1,6 +1,8 @@
 #include "PM_Sensorless.h"
+#include "memory_map.h"
 #include "flash/flash.h"
 #include "flash/flash_migrations.h"
+#include "parameters/flash_params.h"
 #include "hardware/watchdog.h"
 #include "can/cand.h"
 
@@ -55,7 +57,7 @@ static void flash_migration_not_possible(void) {
 static void flash_migration_from_0003(void) {
     // Load the struct from flash into the old struct layout
     struct flash_param_struct_0003 flash_params_0003 = {0};
-    memcpy(&flash_params_0003, (Uint16 *)START_ADDR, sizeof(flash_params_0003));
+    memcpy(&flash_params_0003, (Uint16 *)PARAMS_START, sizeof(flash_params_0003));
 
     // Copy floats
     flash_params.ser_num_1 = flash_params_0003.ser_num_1;
@@ -93,7 +95,7 @@ static void flash_migration_from_0003(void) {
 static void flash_migration_from_0002(void) {
     // Load the struct from flash into the old struct layout
     struct flash_param_struct_0002 flash_params_0002 = {0};
-    memcpy(&flash_params_0002, (Uint16 *)START_ADDR, sizeof(flash_params_0002));
+    memcpy(&flash_params_0002, (Uint16 *)PARAMS_START, sizeof(flash_params_0002));
 
     // Copy floats
     flash_params.ser_num_1 = flash_params_0002.ser_num_1;
@@ -130,7 +132,7 @@ static void flash_migration_from_0002(void) {
 static void flash_migration_from_0001(void) {
     // Load the struct from flash into the old struct layout
     struct flash_param_struct_0001 flash_params_0001 = {0};
-    memcpy(&flash_params_0001, (Uint16 *)START_ADDR, sizeof(flash_params_0001));
+    memcpy(&flash_params_0001, (Uint16 *)PARAMS_START, sizeof(flash_params_0001));
 
     // Copy floats
     flash_params.ser_num_1 = flash_params_0001.ser_num_1;
@@ -165,7 +167,7 @@ static void flash_migration_from_0001(void) {
 static void flash_migration_from_0000(void) {
     // Load the struct from flash into the old struct layout
     struct flash_param_struct_0000 flash_params_0000 = {0};
-    memcpy(&flash_params_0000, (Uint16 *)START_ADDR, sizeof(flash_params_0000));
+    memcpy(&flash_params_0000, (Uint16 *)PARAMS_START, sizeof(flash_params_0000));
 
     // The following parameters were stored as uint32_t in the version 0x0000 struct
     IntOrFloat float_converter;

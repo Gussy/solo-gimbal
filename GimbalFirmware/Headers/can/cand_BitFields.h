@@ -171,18 +171,6 @@ typedef enum {
     CAND_BIT_F8                 = 0x80
 } CAND_BITReg;
 
-typedef enum {
-    CAND_BEACON_OFF         = 0x00,
-    CAND_BEACON_RED         = 0x01,
-    CAND_BEACON_BLUE        = 0x02,
-    CAND_BEACON_GREEN       = 0x04,
-    CAND_BEACON_SOLID       = 0x08,
-    CAND_BEACON_FAST_FLASH  = 0x10,
-    CAND_BEACON_SLOW_FLASH  = 0x20,
-    CAND_BEACON_ERR_FLASH   = 0x40,
-    CAND_BEACON_PARTY       = 0x80
-} CAND_BeaconMode;
-
 /**
  *  CAN API Return Codes
  */

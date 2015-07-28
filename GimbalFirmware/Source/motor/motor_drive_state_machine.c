@@ -13,20 +13,20 @@
 
 #include <string.h>
 
-static const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
+static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
 
 static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set);
 
 CommutationCalibrationParms cc_parms = {
-    COMMUTATION_CALIBRATION_STATE_INIT,     // Commutation calibration state
-    0,                                      // Current iteration
-    0,                                      // Current electrical cycle
-    0,                                      // Current electrical sub-cycle
-    0,                                      // Current direction
-    0,                                      // Settling timer
-    0,
-    RMPCNTL_DEFAULTS,                       // Ramp control parameters
-    {0}                                     // Calibration data
+    .calibration_state = COMMUTATION_CALIBRATION_STATE_INIT,
+    .current_iteration = 0,
+    .current_elec_cycle = 0,
+    .current_elec_sub_cycle = 0,
+    .current_dir = 0,
+    .settling_timer = 0,
+    .ezero_step = 0,
+    .ramp_cntl = RMPCNTL_DEFAULTS,
+    .calibration_data = {0}
 };
 
 void MotorDriveStateMachine(AxisParms* axis_parms,

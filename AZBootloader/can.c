@@ -2,7 +2,6 @@
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
-#include "led_red.h"
 
 void CAN_Init()
 {
@@ -197,7 +196,7 @@ Uint16 CAN_SendWordData(Uint16 data)
        } else {
            timeout_max = CAN_SEND_WORD_LED_TIMEOUT_1;
        }
-       STATUS_LED_TOGGLE();
+       led_status_toggle();
    }
 
    return data;

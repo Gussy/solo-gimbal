@@ -364,8 +364,6 @@ void main(void)
 
         // Initialize the beacon LED
         init_led();
-        //const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
-        //led_set_mode(LED_MODE_FADE_IN_BLINK_3, rgba_green, 0);
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication
@@ -730,9 +728,9 @@ static int led_cnt = 0;
 static uint16_t beacon_startup_counter = 0;
 static const uint16_t beacon_startup_delay_cycles = 14;
 static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
-static const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
-static const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
-static const LED_RGBA rgba_blue = {0, 0, 0xff, 0xff};
+static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
+static const LED_RGBA rgba_green = {.red = 0, .green = 0xff, .blue = 0, .alpha = 0xff};
+static const LED_RGBA rgba_blue = {.red = 0, .green = 0, .blue = 0xff, .alpha = 0xff};
 
 //----------------------------------------
 void C1(void) // Update Status LEDs

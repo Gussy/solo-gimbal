@@ -13,8 +13,6 @@ static void ECanInitGpio( void );
 static int ECanTx( struct MBOX* outbox );
 static int ECanRx( struct MBOX* inbox );
 
-//#define FORCE_CAN_ID_TO_AZ
-
 #ifndef BOOL
 typedef enum { FALSE = 0, TRUE } BOOL;
 #endif

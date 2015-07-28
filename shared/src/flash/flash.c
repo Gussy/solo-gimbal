@@ -1,65 +1,17 @@
-#include "PM_Sensorless.h"
+#include "memory_map.h"
 #include "flash/flash.h"
+#include "flash/flash_helpers.h"
 #include "flash/flash_migrations.h"
+#include "parameters/flash_params.h"
 #include "Flash2806x_API_Library.h"
 #include "F2806x_SysCtrl.h"
+#include "F2806x_Device.h"
 
-/*--- Global variables used to interface to the flash routines */
-FLASH_ST FlashStatus;
+static FLASH_ST FlashStatus;
 
 // Buffer used for calculating flash checksums
 #define  WORDS_IN_FLASH_BUFFER 0x100
 static Uint16  Buffer[WORDS_IN_FLASH_BUFFER];
-
-/*---------------------------------------------------------------------------
-   These key values are used to unlock the CSM by this example
-   They are defined in Example_Flash2806x_CsmKeys.asm
---------------------------------------------------------------------------*/
-extern Uint16 PRG_key0;        //   CSM Key values
-extern Uint16 PRG_key1;
-extern Uint16 PRG_key2;
-extern Uint16 PRG_key3;
-extern Uint16 PRG_key4;
-extern Uint16 PRG_key5;
-extern Uint16 PRG_key6;
-extern Uint16 PRG_key7;
-
-Uint16 flash_csm_unlock()
-{
-    volatile Uint16 temp;
-
-    // Load the key registers with the current password
-    // These are defined in Example_Flash2806x_CsmKeys.asm
-
-    EALLOW;
-    CsmRegs.KEY0 = PRG_key0;
-    CsmRegs.KEY1 = PRG_key1;
-    CsmRegs.KEY2 = PRG_key2;
-    CsmRegs.KEY3 = PRG_key3;
-    CsmRegs.KEY4 = PRG_key4;
-    CsmRegs.KEY5 = PRG_key5;
-    CsmRegs.KEY6 = PRG_key6;
-    CsmRegs.KEY7 = PRG_key7;
-    EDIS;
-
-    // Perform a dummy read of the password locations
-    // if they match the key values, the CSM will unlock
-
-    temp = CsmPwl.PSWD0;
-    temp = CsmPwl.PSWD1;
-    temp = CsmPwl.PSWD2;
-    temp = CsmPwl.PSWD3;
-    temp = CsmPwl.PSWD4;
-    temp = CsmPwl.PSWD5;
-    temp = CsmPwl.PSWD6;
-    temp = CsmPwl.PSWD7;
-
-    // If the CSM unlocked, return succes, otherwise return
-    // failure.
-    if ( (CsmRegs.CSMSCR.all & 0x0001) == 0) return STATUS_SUCCESS;
-    else return STATUS_FAIL_CSM_LOCKED;
-
-}
 
 static int verify_checksum(Uint16 *start_addr)
 {
@@ -164,7 +116,7 @@ int write_flash(void)
         Buffer[i] = ((Uint16 *)&flash_params)[i];
     }
     make_checksum(Buffer);
-    Flash_ptr = (Uint16 *)START_ADDR;
+    Flash_ptr = (Uint16 *)PARAMS_START;
     Length = WORDS_IN_FLASH_BUFFER*sizeof(Buffer[0]);
     Status = Flash_Program(Flash_ptr,Buffer,Length,&FlashStatus);
     if(Status != STATUS_SUCCESS)
@@ -182,10 +134,10 @@ int init_flash(void)
 	}
 
 	// Flash verification will fail only if the flash has become corrupt, in which case no migrations can take place
-	if (verify_checksum((Uint16 *)START_ADDR)) {
-		// Copy the parameters in flash into a shadow struct first
+	if (verify_checksum((Uint16 *)PARAMS_START)) {
+		// Get the current flash_struct_id from flash
 	    Uint16 current_flash_param_rev = 0xFFFF;
-		memcpy(&current_flash_param_rev, (Uint16 *)START_ADDR, sizeof(Uint16));
+		memcpy(&current_flash_param_rev, (Uint16 *)PARAMS_START, sizeof(Uint16));
 
 		// Run a parameter migration if the struct id has changed
 		// This relies on the first 16 bit int of the flash param struct *always* being the id
@@ -198,14 +150,14 @@ int init_flash(void)
 		}
 
 		// Copy parameters from flash to ram
-		memcpy(&flash_params, (Uint16 *)START_ADDR, sizeof(flash_params));
+		memcpy(&flash_params, (Uint16 *)PARAMS_START, sizeof(flash_params));
 		return 1;
 	}
 
 	return -1;
 }
 
-Uint16 compute_flash_params_checksum()
+Uint16 compute_flash_params_checksum(void)
 {
 	Uint16 checksum = 0;
 	Uint16 flash_params_num_words = sizeof(flash_params);
