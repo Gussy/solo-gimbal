@@ -17,6 +17,7 @@
 #include "hardware/encoder.h"
 
 #include <stdio.h>
+#include <stdint.h>
 
 static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
@@ -44,6 +45,8 @@ Uint16 telem_received = 0;
 int last_parameter_sent = 0;
 
 extern float send_torques;
+
+#define DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC  0x42AA5542
 
 void init_mavlink() {
 	// Reset the gimbal's communication channel so the parse state machine starts out in a known state
@@ -75,8 +78,10 @@ void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* c
 
 static void handle_data_transmission_handshake(mavlink_message_t *msg)
 {
+    uint32_t size_magic = mavlink_msg_data_transmission_handshake_get_size(msg);
+
 	/* does this need to be a state machine? */
-	if (msg->compid == MAV_COMP_ID_GIMBAL) {
+	if (msg->compid == MAV_COMP_ID_GIMBAL && size_magic == DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC) {
 		// make sure this message is for us
 		// stop this axis
 		power_down_motor();
