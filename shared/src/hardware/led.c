@@ -195,8 +195,7 @@ void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 durati
 
         case LED_MODE_BREATHING:
             state_rgba = color;
-            state_rgba.alpha = 0;
-            breathing_x = 0;
+            breathing_x = 64; // Start at the high point, ready to fade out
             update_function = &update_compare_breathing;
             // Only enable 1 of the ePWM interrupts,
             // which we use to step to fade alpha up
@@ -316,6 +315,7 @@ static void update_compare_breathing()
         // 108.492061351 = 255/(e - 1/e)
         // 0.36787944 = 1/e
         // 128.0 = period/2
+        // Wolframalpha link: http://www.wolframalpha.com/input/?i=%28exp%28sin%28%28x%2F128.0%29+*+PI%29%29+-+0.36787944%29+*+108.492061351+x%3D0+to+255
         float alpha = (exp(sin(((float)breathing_x++/128.0f) * M_PI)) - 0.36787944f) * 108.492061351f;
         set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, (Uint8)alpha);
     } else {
