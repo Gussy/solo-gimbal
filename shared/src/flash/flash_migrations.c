@@ -2,7 +2,9 @@
 #include "flash/flash.h"
 #include "flash/flash_migrations.h"
 #include "hardware/watchdog.h"
+#include "hardware/led.h"
 #include "can/cand.h"
+#include "can/cb.h"
 
 static void flash_migration_from_0003(void);
 static void flash_migration_from_0002(void);
@@ -10,7 +12,12 @@ static void flash_migration_from_0001(void);
 static void flash_migration_from_0000(void);
 static void flash_migration_not_possible(void);
 
+static const LED_RGBA rgba_green_dim = {0, 0xff, 0, 1};
+
 void flash_migration_run(Uint16 from_rev) {
+    // Override the "axis_parms.blink_state" on the elevation board to avoid moving into "BLINK_NO_COMM" too early
+    CANUpdateBeaconState(LED_MODE_SOLID, rgba_green_dim, 0);
+
     // Handle flash param migrations *from* the id stored in flash *to* this version of the compiled firmware
     switch(from_rev) {
         // Last seen in aaea77faa48a592d1d0c12a6d1eb5beb3dda1b18
