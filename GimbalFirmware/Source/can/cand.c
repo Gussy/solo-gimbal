@@ -607,7 +607,7 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
             payload_cnt = 5;
         }
     } else {
-        int param_in_cnt = 0, pid_cnt = 0;
+        Uint8 param_in_cnt = 0, pid_cnt = 0;
 
         // Now we must be sending multiple parameters to a single endpoint
         if (param_cnt == 1) {
@@ -734,7 +734,7 @@ CAND_Result cand_tx_multi_request(CAND_DestinationID did, CAND_ParameterID* pids
 {
     CAND_SID sid;
     uint8_t payload[8];
-    int i;
+    uint8_t i;
 
     // We only support requesting up to 8 parameters at a time
     if (request_cnt > 8) {

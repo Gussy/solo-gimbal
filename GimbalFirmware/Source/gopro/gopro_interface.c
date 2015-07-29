@@ -113,7 +113,7 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
      * Called by protocol modules (h4, h3p, etc)
      * to send a command to the camera.
      */
-    int i;
+    uint16_t i;
 
     if (gp_control_state != GP_CONTROL_STATE_IDLE) {
         return false;
@@ -559,7 +559,7 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
             gp_h4_pkt_t pkt;
             gp_h4_pkt_t rsp;
 
-            int i;
+            uint16_t i;
             for (i = 0; i < GP_COMMAND_RECEIVE_BUFFER_SIZE; ++i) {
                 pkt.bytes[i] = buf[i];
             }

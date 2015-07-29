@@ -267,7 +267,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
 
                     case CAND_EPID_PARAMS_LOAD:
                     	if (GetBoardHWID() == AZ) {
-                    	    int i;
+                    	    Uint8 i;
                     		// This means the parameter was a request, so load up the necessary data and broadcast it to the other two boards
                     		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF);
                     		CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[2];
@@ -290,7 +290,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     		Uint8 words_received = msg.extended_param[2];
                     		if (load_ap_state_info->current_load_offset == start_offset && (start_offset + words_received) <= sizeof(flash_params)) {
                     			// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
-                    			int i;
+                    		    Uint8 i;
                     			for (i = 0; i < words_received; i++) {
                     				Uint16 received_word = ((((Uint16)msg.extended_param[(2 * i) + 3]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[(2 * i) + 4]) & 0x00FF);
                     				((Uint16*)(&flash_params))[start_offset + i] = received_word;
