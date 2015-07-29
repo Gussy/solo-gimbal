@@ -119,7 +119,6 @@ void gp_disable_charging();
 
 GPCaptureMode gp_capture_mode();
 bool gp_handshake_complete();
-bool gp_capture_mode_initialized();
 bool gp_is_valid_capture_mode(Uint8 capture_mode);
 void gp_latch_pending_capture_mode();
 bool gp_pend_capture_mode(Uint8 capture_mode);

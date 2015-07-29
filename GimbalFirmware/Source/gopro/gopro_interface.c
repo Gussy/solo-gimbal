@@ -443,9 +443,8 @@ void gp_interface_state_machine()
             break;
     }
 
-    // request an update on GoPro's current capture mode if unitiliazed or after a certain period of time
-    bool polling_timeout_expired = (gp.capture_mode_polling_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS));
-    if (!gp_capture_mode_initialized() || polling_timeout_expired) {
+    // request an update on GoPro's current capture mode, infrequently to avoid freezing the GoPro
+    if (gp.capture_mode_polling_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
         gp.capture_mode_polling_counter = 0;
         if (gp_control_state == GP_CONTROL_STATE_IDLE && !gp_is_recording()) {
             gp_request_capture_mode();
@@ -692,11 +691,6 @@ void gp_timeout()
 GPCaptureMode gp_capture_mode()
 {
     return gp.capture_mode;
-}
-
-bool gp_capture_mode_initialized()
-{
-    return (gp.capture_mode != GP_CAPTURE_MODE_UNKNOWN);
 }
 
 bool gp_is_valid_capture_mode(Uint8 capture_mode) {
