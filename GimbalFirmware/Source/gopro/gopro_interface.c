@@ -438,6 +438,12 @@ void gp_interface_state_machine()
     // the heartbeat with an incompatible state while it's gccb version is being queried
     if(!gp_handshake_complete() && !init_timed_out()) {
         gp.init_timeout_ms++;
+
+        if (init_timed_out()) {
+            // camera is incompatible,
+            // try to avoid freezing it by disabling bacpac detect
+            gp_disable_hb_interface();
+        }
     }
 
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
