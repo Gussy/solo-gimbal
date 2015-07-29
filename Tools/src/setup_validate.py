@@ -51,18 +51,6 @@ EXPECTED_ACC_OFFSET_Z_MAX = 2.0
 
 EXPECTED_GYRO = 0.05
 
-GAIN_TOLERANCE = 1e-6
-EXPECTED_PITCH_P = 1.850000
-EXPECTED_PITCH_I = 0.200000
-EXPECTED_PITCH_D = 0.000000
-EXPECTED_ROLL_P = 7.000000
-EXPECTED_ROLL_I = 0.500000
-EXPECTED_ROLL_D = 0.000000
-EXPECTED_YAW_P = 2.700000
-EXPECTED_YAW_I = 0.500000
-EXPECTED_YAW_D = 0.000000
-EXPECTED_K_RATE = 2.0
-
 class Results:
     Pass, Fail, Error = 'pass', 'fail', 'error'
 
@@ -241,24 +229,8 @@ def validate_accelerometers(link, offset=None, gain=None, alignment=None):
     else:
         return Results.Fail
 
-def validate_gain_axis(link, axis, p_e, i_e, d_e):
-    p, i, d = setup_param.get_gains(link, axis)
-    if p == None or i == None or d == None:
-        return None
-    return (abs(p - p_e) < GAIN_TOLERANCE and
-            abs(i - i_e) < GAIN_TOLERANCE and
-            abs(d - d_e) < GAIN_TOLERANCE)
-
-def validate_k_rate(link, value):
-    k_rate = setup_param.fetch_param(link, "GMB_K_RATE")
-    if k_rate:
-        return (abs(k_rate.param_value - value) < GAIN_TOLERANCE)
-    else:
-        return None
-
 def validate_gains(link):
     return Results.Pass
-
 
 def validate_date(link, assembly_time=None):
     if assembly_time == None:
