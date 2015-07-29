@@ -21,7 +21,6 @@
 void Process_CAN_Messages(AxisParms* axis_parms,
 		MotorDriveParms* md_parms,
 		ControlBoardParms* cb_parms,
-		EncoderParms* encoder_parms,
 		ParamSet* param_set,
 		LoadAxisParmsStateInfo* load_ap_state_info)
 {
@@ -109,7 +108,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
         	break;
 
         default:
-            AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
+            AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms);
             break;
         }
         cmd_cnt++;
@@ -373,7 +372,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                 break;
 
             default:
-                AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
+                AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER, CAND_FAULT_TYPE_INFO, cb_parms, md_parms);
                 break;
             }
             msg.param_request_cnt--;

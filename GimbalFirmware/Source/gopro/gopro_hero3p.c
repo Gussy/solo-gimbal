@@ -180,7 +180,7 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
     return 0;
 }
 
-bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, uint16_t len, bool from_camera, uint16_t *txbuf)
+bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, bool from_camera, uint16_t *txbuf)
 {
     /*
      * Handle incoming i2c data from the camera.

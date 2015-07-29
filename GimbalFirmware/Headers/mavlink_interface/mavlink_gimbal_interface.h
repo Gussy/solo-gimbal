@@ -56,7 +56,7 @@ typedef struct {
 #define MAVLINK_HEARTBEAT_PERIOD 6
 
 void init_mavlink();
-void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
+void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms);
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_gimbal_feedback();
 void send_mavlink_torque_cmd_feedback(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);

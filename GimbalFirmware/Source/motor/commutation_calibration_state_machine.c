@@ -199,7 +199,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
     						send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS);
                 		} else {
                 		    send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_FAILED);
-                			AxisFault(CAND_FAULT_CALIBRATING_POT, CAND_FAULT_TYPE_UNRECOVERABLE, cb_parms, md_parms, axis_parms);
+                			AxisFault(CAND_FAULT_CALIBRATING_POT, CAND_FAULT_TYPE_UNRECOVERABLE, cb_parms, md_parms);
                 		}
 		                cc_parms->current_iteration = 0;
 						last_position = encoder_parms->mech_theta;

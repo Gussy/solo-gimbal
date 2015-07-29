@@ -19,14 +19,14 @@
 #include <stdio.h>
 #include <stdint.h>
 
-static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
+static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal();
 static void handle_full_reset_gimbal(void);
 static void handle_request_axis_calibration(MotorDriveParms* md_parms);
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
-static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms);
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
 void send_cmd_long_ack(uint16_t cmd_id, uint8_t result);
 
 static uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
@@ -61,10 +61,10 @@ void update_mavlink_sysid(Uint8 new_sysid)
 	gimbal_sysid = new_sysid;
 }
 
-void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
+void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms) {
 	switch (mavlink_info->mavlink_processing_state) {
 	case MAVLINK_STATE_PARSE_INPUT:
-		process_mavlink_input(mavlink_info, cb_parms, md_parms, encoder_parms, load_ap_state_info);
+		process_mavlink_input(mavlink_info, md_parms);
 		break;
 
 	case MAVLINK_STATE_SEND_PARAM_LIST:
@@ -97,7 +97,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 	}
 }
 
-static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
+static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms) {
 	static mavlink_message_t received_msg;
 	mavlink_status_t parse_status;
 
@@ -138,7 +138,7 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 				break;
 
 			case MAVLINK_MSG_ID_GIMBAL_CONTROL:
-			    handle_gimbal_control(&received_msg, mavlink_info, cb_parms);
+			    handle_gimbal_control(&received_msg, mavlink_info);
 			    break;
 
 
@@ -299,7 +299,7 @@ static void handle_gopro_set_request(mavlink_message_t* received_msg)
     }
 }
 
-static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms)
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info)
 {
     mavlink_gimbal_control_t decoded_msg;
     mavlink_msg_gimbal_control_decode(received_msg, &decoded_msg);

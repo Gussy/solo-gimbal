@@ -546,7 +546,7 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
     case GP_MODEL_HERO3P:{
         bool from_camera;
         if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
-            if (gp_h3p_handle_rx(&gp.h3p, buf, len, from_camera, txbuf)) {
+            if (gp_h3p_handle_rx(&gp.h3p, buf, from_camera, txbuf)) {
                 return true;
             }
         }

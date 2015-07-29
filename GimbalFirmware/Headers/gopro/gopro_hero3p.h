@@ -52,7 +52,7 @@ bool gp_h3p_request_power_off();
 int gp_h3p_forward_get_request(Uint8 cmd_id);
 int gp_h3p_forward_set_request(const GPSetRequest* request);
 
-bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, uint16_t len, bool from_camera, uint16_t *txbuf);
+bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, bool from_camera, uint16_t *txbuf);
 
 bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camera);
 bool gp_h3p_send_command(const GPCmd* cmd);
