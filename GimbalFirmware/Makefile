@@ -47,6 +47,7 @@ COMMFLAGS += -v28 -ml --float_support=fpu32 -O4 --opt_for_speed=2 -g -D=_DEBUG -
 CFLAGS  += -v28 -ml --float_support=fpu32
 CFLAGS  += --emit_warnings_as_errors
 CFLAGS  += --quiet --diag_warning=225 --preproc_with_compile --preproc_dependency=$(@:.o=.pp)
+CFLAGS  += --c99 --issue_remarks
 
 
 ###############################################################################
