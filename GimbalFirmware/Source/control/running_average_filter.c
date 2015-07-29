@@ -3,10 +3,10 @@
 
 void initialize_running_average_filter(RunningAvgFilterParms* filter_parms, int16 az_initial_value, int16 el_initial_value, int16 rl_initial_value)
 {
+    int i;
     filter_parms->initialized = FALSE;
     filter_parms->sample_position = 0;
 
-    int i;
     // Fill up the sample histories with the initial value.  This ensures that the math always works, although it will take one
     // complete cycle through the filter history for the filtering to actually take full effect
     for (i = 0; i < RUNNING_AVERAGE_NUM_SAMPLES; i++) {

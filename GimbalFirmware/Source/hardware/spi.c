@@ -144,13 +144,15 @@ Uint32 SpiSendRecv24Bit(SpiPortDescriptor* desc, Uint32 data)
 
 Uint8 SpiReadReg8Bit(SpiPortDescriptor* desc, Uint8 addr)
 {
+    Uint16 response;
+
     // Take the slave select line low to begin the transaction
     SSAssert(desc);
 
     // Need at least 8ns set up time
     DELAY_US(1);
 
-    Uint16 response = SpiSendRecvAddressedReg(desc, addr, 0x00, SPI_READ);
+    response = SpiSendRecvAddressedReg(desc, addr, 0x00, SPI_READ);
 
     // Need at least 500ns hold time
     DELAY_US(1);

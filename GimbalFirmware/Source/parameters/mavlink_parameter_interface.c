@@ -323,12 +323,13 @@ void init_default_mavlink_params()
 
 void handle_param_set(mavlink_message_t* received_msg)
 {
+    int param_found = -1;
+    int i;
+
     mavlink_param_set_t decoded_msg;
     mavlink_msg_param_set_decode(received_msg, &decoded_msg);
 
     // Search the onboard param list for the param id being updated
-    int param_found = -1;
-    int i;
     for(i = 0; i < MAVLINK_GIMBAL_PARAM_MAX; i++) {
         if (strncmp(decoded_msg.param_id, gimbal_params[i].param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN) == 0) {
             param_found = i;

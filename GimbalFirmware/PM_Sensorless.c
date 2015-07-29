@@ -88,6 +88,7 @@ Uint32 global_timestamp_counter = 0;
 
 Uint8 feedback_decimator;
 
+static Uint32 OldIsrTicker = 0;
 Uint32 IsrTicker = 0;
 Uint32 GyroISRTicker = 0;
 Uint16 GyroISRTime = 0;
@@ -406,13 +407,13 @@ void main(void)
 
 	if (board_hw_id == AZ) {
 	    // Parse version
+	    IntOrFloat float_converter;
         Uint32 version_number = 0x00000000;
         version_number |= (((Uint32)atoi(GitVersionMajor) << 24) & 0xFF000000);
         version_number |= (((Uint32)atoi(GitVersionMinor) << 16) & 0x00FF0000);
         version_number |= (((Uint32)atoi(GitVersionRevision) << 8) & 0x0000FF00);
         version_number |= ((Uint32)atoi(GitCommit) & 0x0000007F);
         version_number |= strstr(GitVersionString, "dirty") ? (0x1 << 7) : 0x00;
-        IntOrFloat float_converter;
         float_converter.uint32_val = version_number;
         flash_params.sys_swver = float_converter.float_val;
 
@@ -456,7 +457,6 @@ void main(void)
 		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
 
 		// If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
-        static Uint32 OldIsrTicker = 0;
         if (OldIsrTicker != IsrTicker) {
             if (OldIsrTicker != (IsrTicker-1)) {
                 MissedInterrupts++;
@@ -836,6 +836,8 @@ void C1(void) // Update Status LEDs
 void C2(void) // Send periodic BIT message and send fault messages if necessary
 //----------------------------------------
 {
+    gp_transaction_t *txn;
+
 	// Send the BIT message once every ~1sec
 	if (axis_parms.BIT_heartbeat_enable && (axis_parms.BIT_heartbeat_decimate-- <= 0)) {
 		CBSendStatus();
@@ -850,7 +852,6 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 			cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)status);
 		}
 
-        gp_transaction_t *txn;
         if (gp_get_completed_transaction(&txn)) {
 
             CAND_ParameterID can_id;

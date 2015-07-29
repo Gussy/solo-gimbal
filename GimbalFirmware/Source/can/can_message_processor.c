@@ -241,21 +241,22 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                         break;
 
                     case CAND_EPID_BEACON_CONTROL:
-                    	// Only makes sense to do this on elevation (since that's where the beacon is)
-                    	// Protect against errant messages to the wrong axis
-                    	if (GetBoardHWID() == EL) {
-							if (msg.extended_param_length == 6) {
-							    axis_parms->blink_state = BLINK_OVERRIDE;
-								LED_MODE mode = (LED_MODE)(msg.extended_param[0]);
-								LED_RGBA color;
-								color.red = msg.extended_param[1];
-								color.green = msg.extended_param[2];
-								color.blue = msg.extended_param[3];
-								color.alpha = msg.extended_param[4];
-								Uint8 duration = msg.extended_param[5];
-								led_set_mode(mode, color, duration);
-							}
-                    	}
+                        {
+                            LED_RGBA color;
+
+                            // Only makes sense to do this on elevation (since that's where the beacon is)
+                            // Protect against errant messages to the wrong axis
+                            if (GetBoardHWID() == EL) {
+                                if (msg.extended_param_length == 6) {
+                                    axis_parms->blink_state = BLINK_OVERRIDE;
+                                    color.red = msg.extended_param[1];
+                                    color.green = msg.extended_param[2];
+                                    color.blue = msg.extended_param[3];
+                                    color.alpha = msg.extended_param[4];
+                                    led_set_mode((LED_MODE)(msg.extended_param[0]), color, msg.extended_param[5]);
+                                }
+                            }
+                        }
                     	break;
 
                     case CAND_EPID_MAX_TORQUE:
@@ -266,6 +267,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
 
                     case CAND_EPID_PARAMS_LOAD:
                     	if (GetBoardHWID() == AZ) {
+                    	    int i;
                     		// This means the parameter was a request, so load up the necessary data and broadcast it to the other two boards
                     		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF);
                     		CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[2];
@@ -275,7 +277,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     		params[0] = msg.extended_param[0];
                     		params[1] = msg.extended_param[1];
                     		params[2] = words_to_send;
-                    		int i;
                     		// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
                     		for (i = 0; i < words_to_send; i++) {
                     			params[(2 * i) + 3] = ((((Uint16*)(&flash_params))[start_offset + i]) >> 8) & 0x00FF;

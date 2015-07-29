@@ -42,6 +42,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
     switch (cc_parms->calibration_state) {
         case COMMUTATION_CALIBRATION_STATE_INIT:
+        {
+            Uint16 dataIndex;
 		    encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
 		    encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
         	// don't calibrate if we got slope set already
@@ -63,8 +65,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
             cc_parms->ramp_cntl.TargetValue = IdRefLockCommutationCalibration;
             cc_parms->ramp_cntl.RampDelayMax = COMMUTATION_CALIBRATION_SETTLE_RAMP_SPEED;
             cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_RAMP_ID;
-            Uint16 dataIndex;
             for (dataIndex = 0; dataIndex < COMMUTATION_ARRAY_SIZE; dataIndex++) cc_parms->calibration_data[dataIndex] = 0;
+        }
             break;
 
 
@@ -101,6 +103,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
             // Wait at current setpoint for settling time
             if (cc_parms->settling_timer++ > (((Uint32)ISR_FREQUENCY) * ((Uint32)COMMUTATION_CALIBRATION_HARDSTOP_SETTLING_TIME_MS))) {
+                float new_mech_theta;
                 cc_parms->settling_timer = 0;
 
                 // Send updated calibration progress
@@ -118,7 +121,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 }
 
                 // If we've not moved much since the last cycle, we're at a hard stop
-                float new_mech_theta = encoder_parms->mech_theta;
+                new_mech_theta = encoder_parms->mech_theta;
                 if (((last_position - new_mech_theta) < HARDSTOP_ENCODER_DETECTION_THRESHOLD)) {
                 	hardstop++;
                 	if (hardstop > 1) {
@@ -166,6 +169,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
             }
 
             if (cc_parms->settling_timer++ > (((Uint32)ISR_FREQUENCY) * ((Uint32)AXIS_CALIBRATION_SETTLING_TIME_MS[GetBoardHWID()]))) {
+                float new_mech_theta;
                 cc_parms->settling_timer = 0;
 
                 // Send updated calibration progress
@@ -182,7 +186,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                     break;
                 }
 
-                float new_mech_theta = encoder_parms->mech_theta;
+                new_mech_theta = encoder_parms->mech_theta;
                 cc_parms->calibration_data[cc_parms->current_iteration++] = encoder_parms->mech_theta;
                 if (((cc_parms->current_iteration > 2) && ((last_position - new_mech_theta) > -HARDSTOP_ENCODER_DETECTION_THRESHOLD)) || (cc_parms->current_iteration >= COMMUTATION_ARRAY_SIZE)) {
                 	hardstop++;

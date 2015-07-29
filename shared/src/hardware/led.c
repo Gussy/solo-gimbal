@@ -308,6 +308,7 @@ static void update_compare_breathing()
 {
     // Every 255th interrupt, change the alpha value
     if(breathing_step_counter == 0xff) {
+        float alpha;
         breathing_step_counter = 0;
 
         // Breathing pattern is f(x) = e^sin(x), altered to have a period of 255 and a min/max of 0/255
@@ -316,7 +317,7 @@ static void update_compare_breathing()
         // 0.36787944 = 1/e
         // 128.0 = period/2
         // Wolframalpha link: http://www.wolframalpha.com/input/?i=%28exp%28sin%28%28x%2F128.0%29+*+PI%29%29+-+0.36787944%29+*+108.492061351+x%3D0+to+255
-        float alpha = (exp(sin(((float)breathing_x++/128.0f) * M_PI)) - 0.36787944f) * 108.492061351f;
+        alpha = (exp(sin(((float)breathing_x++/128.0f) * M_PI)) - 0.36787944f) * 108.492061351f;
         set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, (Uint8)alpha);
     } else {
         breathing_step_counter++;

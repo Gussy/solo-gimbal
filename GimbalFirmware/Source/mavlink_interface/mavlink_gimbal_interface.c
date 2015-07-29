@@ -480,6 +480,10 @@ void send_mavlink_debug_data(DebugData* debug_data) {
 void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code, CAND_FaultType fault_type)
 {
     char* axis_str = "Unknown";
+    char* fault_str = "None";
+    MAV_SEVERITY severity = MAV_SEVERITY_ENUM_END;
+    char error_msg[100];
+
     switch (axis) {
         case CAND_ID_AZ:
             axis_str = "Yaw";
@@ -493,8 +497,6 @@ void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code,
             axis_str = "Roll";
             break;
     }
-
-    char* fault_str = "None";
 
     switch (fault_code) {
         case CAND_FAULT_CALIBRATING_POT:
@@ -530,7 +532,6 @@ void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code,
             break;
     }
 
-    MAV_SEVERITY severity = MAV_SEVERITY_ENUM_END;
     switch (fault_type) {
         case CAND_FAULT_TYPE_INFO:
             severity = MAV_SEVERITY_INFO;
@@ -545,7 +546,6 @@ void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code,
             break;
     }
 
-    char error_msg[100];
     snprintf(error_msg, 100, "Axis %s indicated fault: %s", axis_str, fault_str);
     send_mavlink_statustext(error_msg, severity);
 }

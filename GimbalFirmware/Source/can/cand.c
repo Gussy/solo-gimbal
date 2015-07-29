@@ -34,14 +34,15 @@ void ECanInit( void )        // Initialize eCAN-A module
 	volatile struct MBOX* mbox;
 	int i;
 
-	ECanInitGpio();
-
 	/* Create a shadow register structure for the CAN control registers. This is
-	 needed, since only 32-bit access is allowed to these registers. 16-bit access
-	 to these registers could potentially corrupt the register contents or return
-	 false data. */
+     needed, since only 32-bit access is allowed to these registers. 16-bit access
+     to these registers could potentially corrupt the register contents or return
+     false data. */
 
 	volatile struct ECAN_REGS ECanaShadow;
+
+
+	ECanInitGpio();
 
     EALLOW;     // EALLOW enables access to protected bits
 
@@ -167,12 +168,13 @@ static int ECanTx( struct MBOX* outbox )
 {
 	static uint8_t can_tx_mbox = 0;
 	volatile struct MBOX *mptr;
+	unsigned long temp;
 
     //get next output box
     mptr = &ECanaMboxes.MBOX0+can_tx_mbox;
 
     //ECanaRegs.CANME.all &= ~((0x00000001ul)<<can_tx_mbox) //didnt work, mmk, then i'll make a shadow?
-    unsigned long temp = ECanaRegs.CANME.all;
+    temp = ECanaRegs.CANME.all;
     temp  &= ~((0x00000001ul)<<can_tx_mbox);
 
     ECanaRegs.CANME.all = temp;
@@ -385,10 +387,10 @@ CAND_Result cand_rx( struct cand_message * msg )
 				    // If it does, it requires special processing
 				    CAND_ParameterID first_parameter_id = (CAND_ParameterID)sid.param_set.extended.param_id;
 				    if (first_parameter_id == CAND_PID_EXTENDED) {
+				        int i;
 				        msg->param_id[0] = CAND_PID_EXTENDED;
 				        msg->extended_param_id = (CAND_ExtendedParameterID)CANMD8(mbox, 0); // First byte of payload is extended parameter ID
 				        // Extract the remainder of the message payload into the parsed message
-				        int i;
 				        for (i = 1; i < mbox.MSGCTRL.bit.DLC; i++) {
 				            msg->extended_param[i - 1] = CANMD8(mbox, i);
 				        }
@@ -605,6 +607,8 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
             payload_cnt = 5;
         }
     } else {
+        int param_in_cnt = 0, pid_cnt = 0;
+
         // Now we must be sending multiple parameters to a single endpoint
         if (param_cnt == 1) {
             // you should call the right function:
@@ -614,7 +618,6 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
         // this is where we need to check whether all pids are <CAND_PID_WORD_CUTOFF,
         // so we know we can send in immediate mode
 
-        int param_in_cnt = 0, pid_cnt = 0;
         payload_cnt = 0;
 
         for (param_in_cnt = 0; (param_in_cnt < param_cnt) && (payload_cnt < 8); param_in_cnt++, pid_cnt++) {
@@ -650,14 +653,13 @@ CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 p
     // assemble packet
     CAND_SID sid;
     Uint8 payload[4];
+    uint8_t payload_size = 0;
 
     sid.sidWord               = 0;
     sid.all.m_id              = CAND_MID_PARAMETER_SET;
     sid.param_set.all.d_id    = did;
     sid.param_set.all.param   = pid;
     sid.param_set.extended.addr_mode = CAND_ADDR_MODE_EXTENDED;
-
-    uint8_t payload_size = 0;
 
     if (pid < CAND_PID_4_BYTE_CUTOFF) {
         // 32-bit param
@@ -685,6 +687,8 @@ CAND_Result cand_tx_extended_param(CAND_DestinationID did, CAND_ExtendedParamete
 {
     CAND_SID sid;
     Uint8 payload[8];
+    int payload_length = param_length;
+    int i;
 
     sid.sidWord               = 0;
     sid.all.m_id              = CAND_MID_PARAMETER_SET;
@@ -697,13 +701,11 @@ CAND_Result cand_tx_extended_param(CAND_DestinationID did, CAND_ExtendedParamete
 
     // Make sure we don't overflow the payload
     // Max size of extended param is 7 bytes
-    int payload_length = param_length;
     if (payload_length > 7) {
         payload_length = 7;
     }
 
     // Rest of payload is actual parameter
-    int i;
     for (i = 0; i < payload_length; i++) {
         payload[i + 1] = param[i];
     }
@@ -732,6 +734,7 @@ CAND_Result cand_tx_multi_request(CAND_DestinationID did, CAND_ParameterID* pids
 {
     CAND_SID sid;
     uint8_t payload[8];
+    int i;
 
     // We only support requesting up to 8 parameters at a time
     if (request_cnt > 8) {
@@ -745,7 +748,6 @@ CAND_Result cand_tx_multi_request(CAND_DestinationID did, CAND_ParameterID* pids
     sid.param_query.dir = CAND_DIR_QUERY;
     sid.param_query.repeat = 0;
 
-    int i;
     for (i = 0; i < request_cnt; i++) {
         payload[i] = pids[i];
     }

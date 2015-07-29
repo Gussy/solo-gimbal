@@ -5,6 +5,8 @@
 
 void init_average_power_filter(AveragePowerFilterParms* filter_parms, int current_sample_freq, int tau, float current_limit)
 {
+    float sample_period;
+
     // Zero out the starting filter output and accumulator
     filter_parms->iq_filter = 0.0;
     filter_parms->iq_filter_prev = 0.0;
@@ -14,7 +16,7 @@ void init_average_power_filter(AveragePowerFilterParms* filter_parms, int curren
     filter_parms->iq_over = FALSE;
 
     // Calculate alpha parameter
-    float sample_period = 1.0 / (float)current_sample_freq;
+    sample_period = 1.0 / (float)current_sample_freq;
     filter_parms->alpha = sample_period / ((float)tau + sample_period);
 
 }
