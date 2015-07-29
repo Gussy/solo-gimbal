@@ -135,8 +135,8 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     case CAND_EPID_TORQUE_CMD_TELEMETRY:
                     	if (msg.extended_param_length == 6) {
                     		int16 az_torque_cmd = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
-                    		int16 el_torque_cmd = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
-                    		int16 rl_torque_cmd = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
+                    		int16 el_torque_cmd = ((((Uint16)msg.extended_param[2]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[3]) & 0x00FF);
+                    		int16 rl_torque_cmd = ((((Uint16)msg.extended_param[4]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[5]) & 0x00FF);
                     		receive_torque_cmd_telemetry(az_torque_cmd, el_torque_cmd, rl_torque_cmd);
                     	}
                     	break;
@@ -245,6 +245,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     	// Protect against errant messages to the wrong axis
                     	if (GetBoardHWID() == EL) {
 							if (msg.extended_param_length == 6) {
+							    axis_parms->blink_state = BLINK_OVERRIDE;
 								LED_MODE mode = (LED_MODE)(msg.extended_param[0]);
 								LED_RGBA color;
 								color.red = msg.extended_param[1];
@@ -286,7 +287,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     		// First make sure this isn't data we've already received, and if not, load it into our copy of the flash params struct
                     		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
                     		Uint8 words_received = msg.extended_param[2];
-                    		if (load_ap_state_info->current_load_offset == start_offset) {
+                    		if (load_ap_state_info->current_load_offset == start_offset && (start_offset + words_received) <= sizeof(flash_params)) {
                     			// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
                     			int i;
                     			for (i = 0; i < words_received; i++) {
@@ -294,6 +295,11 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     				((Uint16*)(&flash_params))[start_offset + i] = received_word;
                     			}
                     			load_ap_state_info->current_load_offset += words_received;
+                    		}
+
+                    		// If we have received all of the params, preload the request_retry_counter to ask for the checksum immediately on the next cycle
+                    		if (load_ap_state_info->current_load_offset == sizeof(flash_params)) {
+                    		    load_ap_state_info->request_retry_counter = REQUEST_RETRY_PERIOD;
                     		}
                     	}
                     	break;

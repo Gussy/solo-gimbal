@@ -55,6 +55,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
         	// If we're here, we need to calibrate this axis, so send the status message
         	send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS);
+        	axis_parms->blink_state = BLINK_CALIBRATING;
 
             // Set up the ramp control macro for locking to the first electrical 0
             md_parms->park_xform_parms.Angle = 0;//cc_parms->ramp_cntl.TargetValue =

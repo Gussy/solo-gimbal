@@ -1,11 +1,22 @@
 language: c
-sudo: required
+sudo: false
+
+# try to clone enough revisions to see the last tag
+# so `git describe` can generate a version string
+git:
+  depth: 500
+addons:
+  apt:
+    packages:
+    - gcc-multilib
 before_script:
   - "./Tools/scripts/setupPrereqs.sh"
   - . ~/.profile
 script:
   - make -j8
-cache: apt
+cache:
+  directories:
+  - $HOME/opt
 notifications:
   slack:
     secure: oXtbv3lCX60o7/iQkmoty9OM3A/pZWRnAISm2Ht+GZBfAgItM1DOgYAopg8CUpFNtY6CkAwDoO5O1WocOrKKlBNZqRjYK6Hqo2QVbMvJp9U2mBgxILauXwbknGoiM5YkqhkKQcHSbIqQc8EEAzfymYoeZoylAOTDIihnpHkiT2I=

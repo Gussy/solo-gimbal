@@ -1,6 +1,5 @@
-'''
+#!/usr/bin/python
 
-'''
 import os, sys, time, fnmatch
 import serial.tools.list_ports
 from pymavlink import mavutil
@@ -15,7 +14,9 @@ MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 TARGET_SYSTEM_ID = 1
 TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
-def getSerialPorts(preferred_list=[]):
+DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC = 0x42AA5542
+
+def getSerialPorts(preferred_list=['*USB Serial*','*FTDI*']):
     if os.name == 'nt':
         ports = list(serial.tools.list_ports.comports())
         ret = []
@@ -45,6 +46,11 @@ def wait_for_heartbeat(link, retries=5):
         if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1):
             return True
     return False
+
+def print_heartbeat(link):
+    link.heartbeat_send(0, 0, 0, 0, 0)
+    msg = link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1)
+    print(msg)
 
 def wait_handshake(link, timeout=1, retries=1):
     '''wait for a handshake so we know the target system IDs'''
@@ -102,6 +108,9 @@ def reset_gimbal(link):
         return False 
 
 def reset_into_bootloader(link):
+    return link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC, 0, 0, 0, 0, 0)
+
+def exit_bootloader(link):
     return link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, 0, 0, 0, 0, 0, 0)
 
 def send_bootloader_data(link, sequence_number, data):
@@ -134,3 +143,46 @@ def get_all(link, timeout=1):
             return msg
     return None
 
+def get_any_message(link, timeout=1):
+    return link.file.recv_match(blocking=True, timeout=timeout)
+
+def get_gimbal_message(link, timeout=2):
+    start_time = time.time()
+    while (time.time() - start_time) < timeout:
+        msg = link.file.recv_match(blocking=True, timeout=timeout)
+        if msg:
+            if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
+                # Ignore the two types of bootloader messages
+                if msg.get_msgId() == mavlink.MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
+                    return False
+                if msg.get_msgId() == mavlink.MAVLINK_MSG_ID_HEARTBEAT:
+                    return False
+                else:
+                    return True
+    return False
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default=None)
+    args = parser.parse_args()
+
+    # Open the serial port
+    port, link = open_comm(args.port)
+    print("Connecting via port %s" % port)
+
+    # Send a heartbeat first to wake up the interface
+    link.heartbeat_send(0, 0, 0, 0, 0)
+
+    # while True:
+    #     print get_any_message(link)
+
+    while True:
+        print time.time(), get_gimbal_message(link)
+
+    while True:
+        msg = get_all(link)
+        if msg is not None:
+            print time.time(), msg
+        else:
+            print('.')

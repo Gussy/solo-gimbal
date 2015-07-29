@@ -1,5 +1,5 @@
 import setup_comutation
-import setup_factory
+import setup_factory_pub
 import setup_param
 from distutils.version import LooseVersion
 from pymavlink.mavparm import MAVParmDict
@@ -7,8 +7,7 @@ from pymavlink.rotmat import Vector3
 import setup_mavlink
 import math
 
-EXPECTED_VERSION = '0.19.0'
-EXPECTED_BROADCAST = 0
+EXPECTED_VERSION = '0.26.0'
 
 EXPECTED_SERIAL_NUMBER_START = 'GB11A'
 EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
@@ -53,27 +52,27 @@ EXPECTED_ACC_OFFSET_Z_MAX = 2.0
 EXPECTED_GYRO = 0.05
 
 GAIN_TOLERANCE = 1e-6
-EXPECTED_PITCH_P = 3.00
-EXPECTED_PITCH_I = 0.50
-EXPECTED_PITCH_D = 0.10
-EXPECTED_ROLL_P = 5.00
-EXPECTED_ROLL_I = 0.50
-EXPECTED_ROLL_D = 0.10
-EXPECTED_YAW_P = 0.80
-EXPECTED_YAW_I = 0.30
-EXPECTED_YAW_D = 7.00
-EXPECTED_K_RATE = 10.0
+EXPECTED_PITCH_P = 1.850000
+EXPECTED_PITCH_I = 0.200000
+EXPECTED_PITCH_D = 0.000000
+EXPECTED_ROLL_P = 7.000000
+EXPECTED_ROLL_I = 0.500000
+EXPECTED_ROLL_D = 0.000000
+EXPECTED_YAW_P = 2.700000
+EXPECTED_YAW_I = 0.500000
+EXPECTED_YAW_D = 0.000000
+EXPECTED_K_RATE = 2.0
 
 class Results:
     Pass, Fail, Error = 'pass', 'fail', 'error'
 
 def show(link):
-    swver = setup_factory.read_software_version(link, timeout=2)
+    swver = setup_factory_pub.read_software_version(link, timeout=2)
     if swver != None:
         major, minor, rev = int(swver[0]), int(swver[1]), int(swver[2])
         if major >= 0 and minor >= 18:
-            serial_number = setup_factory.get_serial_number(link)
-            assembly_time = setup_factory.get_assembly_time(link)
+            serial_number = setup_factory_pub.get_serial_number(link)
+            assembly_time = setup_factory_pub.get_assembly_time(link)
         else:
             serial_number = ''
             assembly_time = ''
@@ -148,7 +147,7 @@ def show(link):
 
 def validate_version(link, swver=None):
     if not swver:
-        swver = setup_factory.read_software_version(link, timeout=2)
+        swver = setup_factory_pub.read_software_version(link, timeout=2)
     if not swver:
         return Results.Error
     ver = LooseVersion("%i.%i.%i" % (swver[0], swver[1], swver[2]))
@@ -272,7 +271,7 @@ def validate_gains(link):
 
 def validate_date(link, assembly_time=None):
     if assembly_time == None:
-        assembly_time = setup_factory.get_assembly_time(link)
+        assembly_time = setup_factory_pub.get_assembly_time(link)
     if assembly_time == None:
         return Results.Error
     elif assembly_time > EXPETED_ASSEMBLY_DATE_MIN:
@@ -283,7 +282,7 @@ def validate_date(link, assembly_time=None):
 
 def validate_serial_number(link, serial_number=None):
     if serial_number == None:
-        serial_number = setup_factory.get_serial_number(link)
+        serial_number = setup_factory_pub.get_serial_number(link)
     if serial_number == None:
         return Results.Error
     elif serial_number.startswith(EXPECTED_SERIAL_NUMBER_START):
@@ -315,8 +314,7 @@ def restore_defaults(link):
     parameters.mavset(link.file, "GMB_YAW_P", EXPECTED_YAW_P);
     parameters.mavset(link.file, "GMB_YAW_I", EXPECTED_YAW_I);
     parameters.mavset(link.file, "GMB_YAW_D", EXPECTED_YAW_D);
-    parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);
-    parameters.mavset(link.file, "GMB_BROADCAST", EXPECTED_BROADCAST);    
+    parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);   
     setup_param.commit_to_flash(link)
     setup_mavlink.reset_gimbal(link)
     return True

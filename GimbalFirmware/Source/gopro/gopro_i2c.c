@@ -24,7 +24,7 @@ bool gopro_i2c_in_progress()
     return true;
 }
 
-void gopro_i2c_send(const Uint8 *buf, Uint8 len)
+void gopro_i2c_send(const uint16_t *buf, Uint8 len)
 {
     /*
      * Send pending data, and clear INTR line
@@ -33,7 +33,7 @@ void gopro_i2c_send(const Uint8 *buf, Uint8 len)
      * Size of message is count in size field of message, +1 for size byte
      */
 
-    i2c_send_data(buf, len);
+    i2c_begin_tx(buf, len);
 }
 
 void gopro_i2c_isr(I2CAIntSrc int_src)
