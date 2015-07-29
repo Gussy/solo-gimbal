@@ -66,15 +66,6 @@ def get_offsets(link, kind, timeout=2):
     else:
         return Vector3(x=x.param_value, y=y.param_value, z=z.param_value)
 
-def get_gains(link, kind):
-    P = fetch_param(link, "GMB_" + kind + "_P")
-    I = fetch_param(link, "GMB_" + kind + "_I")
-    D = fetch_param(link, "GMB_" + kind + "_D")
-    if P == None or I == None or D == None:
-        return None
-    else:
-        return P.param_value, I.param_value, D.param_value
-
 def getAxisCalibrationParam(link, axis_enum):
     icept = fetch_param(link, "GMB_" + axis_enum + "_ICEPT")
     slope = fetch_param(link, "GMB_" + axis_enum + "_SLOPE")

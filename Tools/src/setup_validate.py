@@ -51,18 +51,6 @@ EXPECTED_ACC_OFFSET_Z_MAX = 2.0
 
 EXPECTED_GYRO = 0.05
 
-GAIN_TOLERANCE = 1e-6
-EXPECTED_PITCH_P = 1.850000
-EXPECTED_PITCH_I = 0.200000
-EXPECTED_PITCH_D = 0.000000
-EXPECTED_ROLL_P = 7.000000
-EXPECTED_ROLL_I = 0.500000
-EXPECTED_ROLL_D = 0.000000
-EXPECTED_YAW_P = 2.700000
-EXPECTED_YAW_I = 0.500000
-EXPECTED_YAW_D = 0.000000
-EXPECTED_K_RATE = 2.0
-
 class Results:
     Pass, Fail, Error = 'pass', 'fail', 'error'
 
@@ -241,33 +229,8 @@ def validate_accelerometers(link, offset=None, gain=None, alignment=None):
     else:
         return Results.Fail
 
-def validate_gain_axis(link, axis, p_e, i_e, d_e):
-    p, i, d = setup_param.get_gains(link, axis)
-    if p == None or i == None or d == None:
-        return None
-    return (abs(p - p_e) < GAIN_TOLERANCE and
-            abs(i - i_e) < GAIN_TOLERANCE and
-            abs(d - d_e) < GAIN_TOLERANCE)
-
-def validate_k_rate(link, value):
-    k_rate = setup_param.fetch_param(link, "GMB_K_RATE")
-    if k_rate:
-        return (abs(k_rate.param_value - value) < GAIN_TOLERANCE)
-    else:
-        return None
-
 def validate_gains(link):
-    pitch = validate_gain_axis(link, 'PITCH', EXPECTED_PITCH_P, EXPECTED_PITCH_I, EXPECTED_PITCH_D)
-    roll = validate_gain_axis(link, 'ROLL',  EXPECTED_ROLL_P, EXPECTED_ROLL_I, EXPECTED_ROLL_D)
-    yaw = validate_gain_axis(link, 'YAW',   EXPECTED_YAW_P, EXPECTED_YAW_I, EXPECTED_YAW_D)
-    krate = validate_k_rate(link, EXPECTED_K_RATE)
-    if pitch == True and roll == True and yaw == True and krate == True:
-        return Results.Pass
-    elif pitch == False or roll == False or yaw == False or krate == False:
-        return Results.Fail
-    else:
-        return Results.Error
-
+    return Results.Pass
 
 def validate_date(link, assembly_time=None):
     if assembly_time == None:
@@ -298,23 +261,13 @@ def validate(link):
         'commutation': validate_comutation(link),
         'joints': validate_joints(link),
         'gyros': validate_gyros(link),
-        'accels': validate_accelerometers(link),
-        'gains': validate_gains(link)
+        'accels': validate_accelerometers(link)
     }
     return validation
 
 def restore_defaults(link):
     parameters = MAVParmDict()
-    parameters.mavset(link.file, "GMB_PITCH_P", EXPECTED_PITCH_P);
-    parameters.mavset(link.file, "GMB_PITCH_I", EXPECTED_PITCH_I);
-    parameters.mavset(link.file, "GMB_PITCH_D", EXPECTED_PITCH_D);
-    parameters.mavset(link.file, "GMB_ROLL_P", EXPECTED_ROLL_P);
-    parameters.mavset(link.file, "GMB_ROLL_I", EXPECTED_ROLL_I);
-    parameters.mavset(link.file, "GMB_ROLL_D", EXPECTED_ROLL_D);
-    parameters.mavset(link.file, "GMB_YAW_P", EXPECTED_YAW_P);
-    parameters.mavset(link.file, "GMB_YAW_I", EXPECTED_YAW_I);
-    parameters.mavset(link.file, "GMB_YAW_D", EXPECTED_YAW_D);
-    parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);   
+    parameters.mavset(link.file, "GMB_CUST_GAINS", 0.0); # do not use custom gains for default values   
     setup_param.commit_to_flash(link)
     setup_mavlink.reset_gimbal(link)
     return True
