@@ -39,6 +39,7 @@ VERSION_HEADER      := $(PROJ_ROOT)/Headers/version_git.h
 #       appear irrelevant for linking
 
 COMMFLAGS += -v28 -ml --float_support=fpu32 -O4 --opt_for_speed=2 -g -D=_DEBUG -D=LARGE_MODEL -D=FLOATING_MATH
+COMMFLAGS += -DMAVLINK_COMM_NUM_BUFFERS=1
 
 
 ###############################################################################
