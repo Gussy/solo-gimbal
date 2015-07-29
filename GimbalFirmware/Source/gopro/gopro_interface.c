@@ -230,7 +230,7 @@ GPHeartbeatStatus gp_heartbeat_status()
         } else {
             heartbeat_status = GP_HEARTBEAT_CONNECTED;
         }
-	} else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && GP_VON) {
+    } else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && gp_von_is_enabled()) {
 		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
     } else if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
@@ -344,7 +344,7 @@ GPPowerStatus gp_get_power_status()
     if (gp_control_state == GP_CONTROL_STATE_REQUEST_POWER_ON || gp_control_state == GP_CONTROL_STATE_WAIT_POWER_ON) {
         return GP_POWER_WAIT;
     } else {
-        if (GP_VON == 1) {
+        if (gp_von_is_enabled()) {
             return GP_POWER_ON;
         } else {
             return GP_POWER_OFF;
@@ -549,7 +549,7 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
 
 void gp_write_eeprom()
 {
-	if(GP_VON != 1)
+    if (!gp_von_is_enabled())
 		return;
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
