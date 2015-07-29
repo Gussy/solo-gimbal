@@ -15,6 +15,7 @@
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
 #define GP_PROTOCOL_VERSION 0x00
 #define GP_MAVLINK_HEARTBEAT_INTERVAL 1000
+#define GP_CAPTURE_MODE_POLLING_INTERVAL 1000
 #define GP_I2C_EEPROM_NUMBYTES 16
 
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
@@ -124,5 +125,6 @@ bool gp_pend_capture_mode(Uint8 capture_mode);
 bool gp_set_capture_mode(Uint8 capture_mode);
 void gp_set_recording_state(bool recording_state);
 bool gp_is_recording();
+bool gp_on_capture_mode_request();
 
 #endif /* GOPRO_INTERFACE_H_ */

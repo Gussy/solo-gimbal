@@ -48,6 +48,7 @@ typedef struct {
     GPModel model;
     GPCaptureMode capture_mode;
     GPCaptureMode pending_capture_mode;
+    uint16_t capture_mode_polling_counter;
     bool recording;
 
     gp_h3p_t h3p;
@@ -79,6 +80,7 @@ void gp_reset()
     gp.model = GP_MODEL_UNKNOWN;
     gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+    gp.capture_mode_polling_counter = 0;
     gp.recording = false;
 
     gp_deassert_intr();
@@ -431,6 +433,15 @@ void gp_interface_state_machine()
             break;
     }
 
+    // request an update on GoPro's current capture mode if unitiliazed or after a certain period of time
+    bool polling_timeout_expired = (gp.capture_mode_polling_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS));
+    if ((!gp_capture_mode_initialized() || polling_timeout_expired)  ) {
+        gp.capture_mode_polling_counter = 0;
+        if (gp_control_state == GP_CONTROL_STATE_IDLE && !gp_is_recording()) {
+            gp_on_capture_mode_request();
+        }
+    }
+
     // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
     // the heartbeat with an incompatible state while it's gccb version is being queried
     if(!gp_handshake_complete() && !init_timed_out()) {
@@ -730,4 +741,14 @@ void gp_set_recording_state(bool recording_state)
 bool gp_is_recording()
 {
     return gp.recording;
+}
+
+bool gp_on_capture_mode_request()
+{
+    if (!gp_is_recording()) {
+        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, true);  // this MAVLINK enum might be model-specific in the future, might need to parameterize function
+        return true;
+    }
+
+    return false;
 }
