@@ -7,6 +7,25 @@
 #include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
 
+static const int TorqueSignMap[AXIS_CNT] = {
+        1, // EL
+        -1, // AZ
+        -1  // ROLL
+};
+
+static const int GyroSignMap[AXIS_CNT] = {
+        1, // EL
+        1, // AZ
+        -1  // ROLL
+};
+
+// Map gyro axes to gimbal axes
+static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
+        AZ,
+        EL,
+        ROLL
+};
+
 static const double RATE_UPSAMPLING_ALPHA = 0.1;
 
 static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);

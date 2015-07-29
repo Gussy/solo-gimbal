@@ -6,6 +6,12 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "parameters/flash_params.h"
 
+static const int EncoderSignMap[AXIS_CNT] = {
+        1, // EL
+        -1, // AZ
+        -1  // ROLL
+};
+
 void UpdateEncoderReadings(EncoderParms* encoder_parms, ControlBoardParms* cb_parms)
 {
     encoder_parms->raw_theta = AdcResult.ADCRESULT5;

@@ -9,6 +9,12 @@
 #include "PM_Sensorless-Settings.h"
 #include "flash/flash.h"
 
+static const int AXIS_CALIBRATION_SETTLING_TIME_MS[AXIS_CNT] = {
+    100,    // EL
+    500,    // AZ
+    300     // ROLL
+};
+
 static void send_calibration_progress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status);
 
 static void calc_slope_intercept(CommutationCalibrationParms* cc_parms, int start, int end, float *slope, float *intercept)
