@@ -67,7 +67,7 @@ void init_gp_interface()
 
     gopro_i2c_init();
 
-    gp_enable_hb_interface();
+    // bacpac detect is enabled once we know the camera is powered on
 }
 
 void gp_reset()
@@ -446,12 +446,20 @@ void gp_interface_state_machine()
 		heartbeat_counter = 0;
 	}
 
-	// Detect a change in power status to reset some flags when a GoPro is re-connected during operation
-	GPPowerStatus new_power_status = gp_get_power_status();
+    // Detect a change in power status to reset some flags when a GoPro is re-connected during operation
+    GPPowerStatus new_power_status = gp_get_power_status();
     if (gp.power_status != new_power_status) {
         gp_reset();
-	}
-    gp.power_status = new_power_status;
+        gp.power_status = new_power_status;
+
+        if (gp.power_status == GP_POWER_ON) {
+            // camera is up and running, we can let it know we're here
+            gp_enable_hb_interface();
+        } else {
+            // keep bacpac detect disabled by default
+            gp_disable_hb_interface();
+        }
+    }
 }
 
 void gp_on_txn_complete()
