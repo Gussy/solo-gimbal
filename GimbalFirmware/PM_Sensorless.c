@@ -941,7 +941,7 @@ interrupt void MainISR(void)
     // Verifying the ISR
     IsrTicker++;
 
-#if (DSP2803x_DEVICE_H==1)||(DSP280x_DEVICE_H==1)||(F2806x_DEVICE_H==1)
+#if F2806x_DEVICE_H==1
     // Enable more interrupts from this timer
     // KRK Changed to ECAP1 interrupt
     ECap1Regs.ECCLR.bit.CTR_EQ_PRD1 = 0x1;

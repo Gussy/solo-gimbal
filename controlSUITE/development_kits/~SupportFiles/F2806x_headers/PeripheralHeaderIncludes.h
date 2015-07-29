@@ -11,6 +11,32 @@
 #ifndef F2806x_DEVICE_H
 #define F2806x_DEVICE_H 1
 
+// Define to 0 to stop warnings from bad code in PeripheralHeaderIncludes.h
+// Added by 3DR
+#define DSP28_SPIA 0
+#define DSP28_SPIB 0
+#define DSP28_SCIA 0
+#define DSP28_SCIB 0
+#define DSP28_MCBSPA 0
+#define DSP28_I2CA 0
+#define DSP28_EQEP1 0
+#define DSP28_EQEP2 0
+#define DSP28_EPWM1 0
+#define DSP28_EPWM2 0
+#define DSP28_EPWM3 0
+#define DSP28_EPWM4 0
+#define DSP28_EPWM5 0
+#define DSP28_EPWM6 0
+#define DSP28_EPWM7 0
+#define DSP28_EPWM8 0
+#define DSP28_ECAP1 0
+#define DSP28_ECAP2 0
+#define DSP28_ECAP3 0
+#define DSP28_ECANA 0
+#define DSP28_COMP1 0
+#define DSP28_COMP2 0
+#define DSP28_COMP3 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif
