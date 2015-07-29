@@ -472,7 +472,7 @@ void gp_on_txn_complete()
 
     switch (gp.model) {
     case GP_MODEL_HERO3P:
-        gp_h3p_on_txn_complete();
+        // do nothing
         break;
     case GP_MODEL_HERO4:
         gp_h4_on_txn_complete(&gp.h4);

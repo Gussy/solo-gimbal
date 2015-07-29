@@ -49,8 +49,6 @@ bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len);
 
 bool gp_h3p_request_power_off();
 
-void gp_h3p_on_txn_complete();
-
 int gp_h3p_forward_get_request(Uint8 cmd_id);
 int gp_h3p_forward_set_request(const GPSetRequest* request);
 

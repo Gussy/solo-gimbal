@@ -78,11 +78,6 @@ void gp_h4_on_txn_complete(gp_h4_t *h4)
         gp_h4_finish_handshake(h4);
         return;
     }
-
-    if (!gp_capture_mode_initialized()) {
-        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, true);  // this MAVLINK enum might be model-specific in the future
-        return;
-    }
 }
 
 bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len)
