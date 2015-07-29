@@ -83,6 +83,7 @@ void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
 bool gp_request_power_on();
 bool gp_request_power_off();
+bool gp_request_capture_mode();
 bool gp_send_command(const GPCmd* cmd);
 bool gp_send_cmd(const uint16_t* cmd, uint16_t len);
 bool gp_ready_for_cmd();
@@ -125,6 +126,5 @@ bool gp_pend_capture_mode(Uint8 capture_mode);
 bool gp_set_capture_mode(Uint8 capture_mode);
 void gp_set_recording_state(bool recording_state);
 bool gp_is_recording();
-bool gp_on_capture_mode_request();
 
 #endif /* GOPRO_INTERFACE_H_ */

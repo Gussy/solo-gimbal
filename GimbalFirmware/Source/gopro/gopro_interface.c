@@ -270,6 +270,16 @@ bool gp_request_power_off()
     return false;
 }
 
+bool gp_request_capture_mode()
+{
+    if (!gp_is_recording()) {
+        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, true);
+        return true;
+    }
+
+    return false;
+}
+
 int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
 {
     /*
@@ -435,10 +445,10 @@ void gp_interface_state_machine()
 
     // request an update on GoPro's current capture mode if unitiliazed or after a certain period of time
     bool polling_timeout_expired = (gp.capture_mode_polling_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS));
-    if ((!gp_capture_mode_initialized() || polling_timeout_expired)  ) {
+    if (!gp_capture_mode_initialized() || polling_timeout_expired) {
         gp.capture_mode_polling_counter = 0;
         if (gp_control_state == GP_CONTROL_STATE_IDLE && !gp_is_recording()) {
-            gp_on_capture_mode_request();
+            gp_request_capture_mode();
         }
     }
 
@@ -743,12 +753,3 @@ bool gp_is_recording()
     return gp.recording;
 }
 
-bool gp_on_capture_mode_request()
-{
-    if (!gp_is_recording()) {
-        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, true);  // this MAVLINK enum might be model-specific in the future, might need to parameterize function
-        return true;
-    }
-
-    return false;
-}
