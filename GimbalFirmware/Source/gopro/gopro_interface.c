@@ -80,7 +80,7 @@ void gp_reset()
     gp.model = GP_MODEL_UNKNOWN;
     gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
-    gp.capture_mode_polling_counter = 0;
+    gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
     gp_deassert_intr();
