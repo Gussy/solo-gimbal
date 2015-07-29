@@ -34,7 +34,6 @@ static uint16_t rxbuf[RX_BUF_SZ];
 bool new_heartbeat_available = false;
 
 Uint16 heartbeat_counter = 0;
-GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
 
 typedef struct {
@@ -43,6 +42,8 @@ typedef struct {
     bool txn_result_pending;
     bool txn_is_internal;
     gp_transaction_t txn;
+
+    GPPowerStatus power_status;
 
     uint16_t init_timeout_ms;
     GPModel model;
@@ -62,6 +63,8 @@ static gopro_t gp;
 void init_gp_interface()
 {
     gp_reset();
+    gp.power_status = GP_POWER_UNKNOWN;
+
     gopro_i2c_init();
 
     gp_enable_hb_interface();
@@ -445,10 +448,10 @@ void gp_interface_state_machine()
 
 	// Detect a change in power status to reset some flags when a GoPro is re-connected during operation
 	GPPowerStatus new_power_status = gp_get_power_status();
-    if (previous_power_status != new_power_status) {
+    if (gp.power_status != new_power_status) {
         gp_reset();
 	}
-	previous_power_status = new_power_status;
+    gp.power_status = new_power_status;
 }
 
 void gp_on_txn_complete()
