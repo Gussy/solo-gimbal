@@ -129,9 +129,13 @@ class calibrationUI(object):
             self.progress = progress
             self.status = message
             return self.continueAccelCal
+        def accelErrorCallback(msg):
+            # Trigger a message box to show on the next timer update
+            self.waitingForContinue = True
+            self.status = str(msg)
         result = None, None, None
         try:
-            result = setup_home.calibrate_accel(self.connection.getLink(), accelProgressCallback)
+            result = setup_home.calibrate_accel(self.connection.getLink(), accelProgressCallback, accelErrorCallback)
         except ValueError:
             # Trigger a message box to show on the next timer update
             self.waitingForContinue = True
@@ -435,8 +439,8 @@ class calibrationUI(object):
         self.timer.stop()
 
     def timerUpdate(self):
+        self.ui.pbarCalibration.setValue(self.progress)
+        self.setCalibrationStatus(self.status)
         if self.waitingForContinue:
             result = self.showInformationMessageBox('Accel Calibration', self.status)
             self.continueAccelCal = True
-        self.ui.pbarCalibration.setValue(self.progress)
-        self.setCalibrationStatus(self.status)
