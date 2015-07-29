@@ -257,16 +257,7 @@ def validate_k_rate(link, value):
         return None
 
 def validate_gains(link):
-    pitch = validate_gain_axis(link, 'PITCH', EXPECTED_PITCH_P, EXPECTED_PITCH_I, EXPECTED_PITCH_D)
-    roll = validate_gain_axis(link, 'ROLL',  EXPECTED_ROLL_P, EXPECTED_ROLL_I, EXPECTED_ROLL_D)
-    yaw = validate_gain_axis(link, 'YAW',   EXPECTED_YAW_P, EXPECTED_YAW_I, EXPECTED_YAW_D)
-    krate = validate_k_rate(link, EXPECTED_K_RATE)
-    if pitch == True and roll == True and yaw == True and krate == True:
-        return Results.Pass
-    elif pitch == False or roll == False or yaw == False or krate == False:
-        return Results.Fail
-    else:
-        return Results.Error
+    return Results.Pass
 
 
 def validate_date(link, assembly_time=None):
@@ -298,8 +289,7 @@ def validate(link):
         'commutation': validate_comutation(link),
         'joints': validate_joints(link),
         'gyros': validate_gyros(link),
-        'accels': validate_accelerometers(link),
-        'gains': validate_gains(link)
+        'accels': validate_accelerometers(link)
     }
     return validation
 
