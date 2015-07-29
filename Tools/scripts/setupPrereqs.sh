@@ -17,7 +17,7 @@ else
   echo 'Using cached compiler directory.';
 fi
 
-exportline="export TI_ROOT=$OPT/ti/ccsv6/tools/compiler/ti-cgt-c2000_6.4.2/";
+exportline="export TI_ROOT=$OPT/ti/ccsv6/tools/compiler/ti-cgt-c2000_6.4.2";
 echo $exportline >> ~/.profile
 
 . ~/.profile
