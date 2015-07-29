@@ -295,16 +295,7 @@ def validate(link):
 
 def restore_defaults(link):
     parameters = MAVParmDict()
-    parameters.mavset(link.file, "GMB_PITCH_P", EXPECTED_PITCH_P);
-    parameters.mavset(link.file, "GMB_PITCH_I", EXPECTED_PITCH_I);
-    parameters.mavset(link.file, "GMB_PITCH_D", EXPECTED_PITCH_D);
-    parameters.mavset(link.file, "GMB_ROLL_P", EXPECTED_ROLL_P);
-    parameters.mavset(link.file, "GMB_ROLL_I", EXPECTED_ROLL_I);
-    parameters.mavset(link.file, "GMB_ROLL_D", EXPECTED_ROLL_D);
-    parameters.mavset(link.file, "GMB_YAW_P", EXPECTED_YAW_P);
-    parameters.mavset(link.file, "GMB_YAW_I", EXPECTED_YAW_I);
-    parameters.mavset(link.file, "GMB_YAW_D", EXPECTED_YAW_D);
-    parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);   
+    parameters.mavset(link.file, "GMB_CUST_GAINS", 0.0); # do not use custom gains for default values   
     setup_param.commit_to_flash(link)
     setup_mavlink.reset_gimbal(link)
     return True
