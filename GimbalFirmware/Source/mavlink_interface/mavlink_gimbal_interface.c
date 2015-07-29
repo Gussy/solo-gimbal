@@ -144,13 +144,13 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 
 			case MAVLINK_MSG_ID_COMMAND_LONG:
 			    switch(mavlink_msg_command_long_get_command(&received_msg)){
-			    case 42501:
+			    case MAV_CMD_GIMBAL_RESET:
 			    	handle_reset_gimbal();
 			    	break;
-			    case 42503:
+			    case MAV_CMD_GIMBAL_REQUEST_AXIS_CALIBRATION:
 			    	handle_request_axis_calibration(md_parms);
 			    	break;
-			    case 42505:
+			    case MAV_CMD_GIMBAL_FULL_RESET:
 			        // Check all the params have the right keys
 			        if(mavlink_msg_command_long_get_param1(&received_msg) == 42.0 &&
 			                mavlink_msg_command_long_get_param2(&received_msg) == 49.0 &&
@@ -333,7 +333,7 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
 
 static void handle_reset_gimbal()
 {
-		send_cmd_long_ack(42501, MAV_CMD_ACK_OK);
+		send_cmd_long_ack(MAV_CMD_GIMBAL_RESET, MAV_CMD_ACK_OK);
 
         // stop this axis
         RelaxAZAxis();
@@ -566,7 +566,7 @@ void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis,
 		GIMBAL_AXIS_CALIBRATION_STATUS calibration_status) {
     mavlink_message_t msg;
 	mavlink_msg_command_long_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &msg, 0, 0,
-			42502, 0, (float) axis, (float) progress,
+			MAV_CMD_GIMBAL_AXIS_CALIBRATION_STATUS, 0, (float) axis, (float) progress,
 			(float) calibration_status, 0, 0, 0, 0);
 	send_mavlink_message(&msg);
 }
