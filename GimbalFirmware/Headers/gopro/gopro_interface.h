@@ -20,7 +20,9 @@
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
 #define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
 
-#define GP_VON (GpioDataRegs.GPADAT.bit.GPIO6)
+inline bool gp_von_is_enabled() {
+    return GpioDataRegs.GPADAT.bit.GPIO6;
+}
 
 typedef enum {
     GP_CONTROL_STATE_IDLE,

@@ -34,7 +34,6 @@ static uint16_t rxbuf[RX_BUF_SZ];
 bool new_heartbeat_available = false;
 
 Uint16 heartbeat_counter = 0;
-GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
 
 typedef struct {
@@ -43,6 +42,8 @@ typedef struct {
     bool txn_result_pending;
     bool txn_is_internal;
     gp_transaction_t txn;
+
+    GPPowerStatus power_status;
 
     uint16_t init_timeout_ms;
     GPModel model;
@@ -62,9 +63,11 @@ static gopro_t gp;
 void init_gp_interface()
 {
     gp_reset();
+    gp.power_status = GP_POWER_UNKNOWN;
+
     gopro_i2c_init();
 
-    gp_enable_hb_interface();
+    // bacpac detect is enabled once we know the camera is powered on
 }
 
 void gp_reset()
@@ -230,7 +233,7 @@ GPHeartbeatStatus gp_heartbeat_status()
         } else {
             heartbeat_status = GP_HEARTBEAT_CONNECTED;
         }
-	} else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && GP_VON) {
+    } else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && gp_von_is_enabled()) {
 		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
     } else if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
@@ -344,7 +347,7 @@ GPPowerStatus gp_get_power_status()
     if (gp_control_state == GP_CONTROL_STATE_REQUEST_POWER_ON || gp_control_state == GP_CONTROL_STATE_WAIT_POWER_ON) {
         return GP_POWER_WAIT;
     } else {
-        if (GP_VON == 1) {
+        if (gp_von_is_enabled()) {
             return GP_POWER_ON;
         } else {
             return GP_POWER_OFF;
@@ -435,6 +438,12 @@ void gp_interface_state_machine()
     // the heartbeat with an incompatible state while it's gccb version is being queried
     if(!gp_handshake_complete() && !init_timed_out()) {
         gp.init_timeout_ms++;
+
+        if (init_timed_out()) {
+            // camera is incompatible,
+            // try to avoid freezing it by disabling bacpac detect
+            gp_disable_hb_interface();
+        }
     }
 
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
@@ -443,12 +452,20 @@ void gp_interface_state_machine()
 		heartbeat_counter = 0;
 	}
 
-	// Detect a change in power status to reset some flags when a GoPro is re-connected during operation
-	GPPowerStatus new_power_status = gp_get_power_status();
-    if (previous_power_status != new_power_status) {
+    // Detect a change in power status to reset some flags when a GoPro is re-connected during operation
+    GPPowerStatus new_power_status = gp_get_power_status();
+    if (gp.power_status != new_power_status) {
         gp_reset();
-	}
-	previous_power_status = new_power_status;
+        gp.power_status = new_power_status;
+
+        if (gp.power_status == GP_POWER_ON) {
+            // camera is up and running, we can let it know we're here
+            gp_enable_hb_interface();
+        } else {
+            // keep bacpac detect disabled by default
+            gp_disable_hb_interface();
+        }
+    }
 }
 
 void gp_on_txn_complete()
@@ -549,7 +566,7 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
 
 void gp_write_eeprom()
 {
-	if(GP_VON != 1)
+    if (!gp_von_is_enabled())
 		return;
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
