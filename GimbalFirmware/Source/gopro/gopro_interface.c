@@ -49,6 +49,7 @@ typedef struct {
     GPModel model;
     GPCaptureMode capture_mode;
     GPCaptureMode pending_capture_mode;
+    uint16_t capture_mode_polling_counter;
     bool recording;
 
     gp_h3p_t h3p;
@@ -82,6 +83,7 @@ void gp_reset()
     gp.model = GP_MODEL_UNKNOWN;
     gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+    gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
     gp_deassert_intr();
@@ -228,7 +230,7 @@ GPHeartbeatStatus gp_heartbeat_status()
 			heartbeat_status = GP_HEARTBEAT_RECORDING;
     } else */
     if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
-        if (gp_recording_state()) {
+        if (gp_is_recording()) {
             heartbeat_status = GP_HEARTBEAT_RECORDING;
         } else {
             heartbeat_status = GP_HEARTBEAT_CONNECTED;
@@ -266,6 +268,16 @@ bool gp_request_power_off()
             default:
                 return false;
         }
+    }
+
+    return false;
+}
+
+bool gp_request_capture_mode()
+{
+    if (gp_control_state == GP_CONTROL_STATE_IDLE && !gp_is_recording()) {
+        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, false);                  // not internal since currently there is no other method to notify when the capture mode changes, besides addressing a request
+        return true;
     }
 
     return false;
@@ -434,6 +446,13 @@ void gp_interface_state_machine()
             break;
     }
 
+    // request an update on GoPro's current capture mode, infrequently to avoid freezing the GoPro
+    if (gp.capture_mode_polling_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
+        gp.capture_mode_polling_counter = 0;
+
+        gp_request_capture_mode();
+    }
+
     // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
     // the heartbeat with an incompatible state while it's gccb version is being queried
     if(!gp_handshake_complete() && !init_timed_out()) {
@@ -478,7 +497,7 @@ void gp_on_txn_complete()
 
     switch (gp.model) {
     case GP_MODEL_HERO3P:
-        gp_h3p_on_txn_complete();
+        // do nothing
         break;
     case GP_MODEL_HERO4:
         gp_h4_on_txn_complete(&gp.h4);
@@ -690,11 +709,6 @@ GPCaptureMode gp_capture_mode()
     return gp.capture_mode;
 }
 
-bool gp_capture_mode_initialized()
-{
-    return (gp.capture_mode != GP_CAPTURE_MODE_UNKNOWN);
-}
-
 bool gp_is_valid_capture_mode(Uint8 capture_mode) {
     return (capture_mode == GP_CAPTURE_MODE_VIDEO || capture_mode == GP_CAPTURE_MODE_PHOTO || capture_mode == GP_CAPTURE_MODE_BURST);
 }
@@ -744,7 +758,8 @@ void gp_set_recording_state(bool recording_state)
     gp.recording = recording_state;
 }
 
-bool gp_recording_state()
+bool gp_is_recording()
 {
     return gp.recording;
 }
+

@@ -49,14 +49,6 @@ bool gp_h3p_request_power_off()
     return true;
 }
 
-void gp_h3p_on_txn_complete()
-{
-    if (!gp_capture_mode_initialized()) {
-        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, true);  // this MAVLINK enum might be model-specific in the future
-        return;
-    }
-}
-
 static bool gp_h3p_cmd_has_param(const GPCmd* c)
 {
     /*
