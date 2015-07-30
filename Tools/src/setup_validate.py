@@ -159,7 +159,6 @@ def validate_comutation_axis_value(axis, values):
         return Results.Pass
     else:
         return Results.Fail
-    
 
 def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
     icept = axis[0]
@@ -230,7 +229,13 @@ def validate_accelerometers(link, offset=None, gain=None, alignment=None):
         return Results.Fail
 
 def validate_gains(link):
-    return Results.Pass
+    custom_gains = setup_param.fetch_param(link, "GMB_CUST_GAINS")
+    if custom_gains is None:
+        return Results.Error
+    elif custom_gains.param_value == 0.0:
+        return Results.Pass
+    else:
+        return Results.Fail
 
 def validate_date(link, assembly_time=None):
     if assembly_time == None:
@@ -241,7 +246,6 @@ def validate_date(link, assembly_time=None):
         return Results.Pass
     else:
         return Results.Fail
-
 
 def validate_serial_number(link, serial_number=None):
     if serial_number == None:
@@ -261,7 +265,8 @@ def validate(link):
         'commutation': validate_comutation(link),
         'joints': validate_joints(link),
         'gyros': validate_gyros(link),
-        'accels': validate_accelerometers(link)
+        'accels': validate_accelerometers(link),
+        'gains': validate_gains(link)
     }
     return validation
 
