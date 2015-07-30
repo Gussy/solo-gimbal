@@ -4,7 +4,14 @@
 #include "hardware/HWSpecific.h"
 #include "Flash2806x_API_Library.h"
 
-#define CURRENT_FLASH_PARAM_STRUCT	flash_param_struct_0006
+#define CURRENT_FLASH_PARAM_STRUCT_VERSION 0006
+
+// Generate the name of the current flash_param_struct by appending _VERSION
+// This makes for fewer mistakes (only one place to increment the current version)
+#define PPCAT_NX(A, B) A ## B
+#define PPCAT(A, B) PPCAT_NX(A, B)
+#define FLASH_PARAM_STRUCT_PREFIX flash_param_struct_
+#define CURRENT_FLASH_PARAM_STRUCT PPCAT(FLASH_PARAM_STRUCT_PREFIX, CURRENT_FLASH_PARAM_STRUCT_VERSION)
 
 struct flash_param_struct_0006 {
     Uint16 flash_struct_id;
