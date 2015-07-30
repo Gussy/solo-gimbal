@@ -8,6 +8,7 @@
 #include "can/cand.h"
 #include "can/cb.h"
 
+static void flash_migration_from_0005(void);
 static void flash_migration_from_0004(void);
 static void flash_migration_from_0003(void);
 static void flash_migration_from_0002(void);
@@ -23,7 +24,12 @@ void flash_migration_run(const Uint16 from_rev) {
 
     // Handle flash param migrations *from* the id stored in flash *to* this version of the compiled firmware
     switch(from_rev) {
-        // Last seen in v0.26.2
+        // Last seen in v0.27.1
+        case 0x0005:
+            flash_migration_from_0005();
+            break;
+
+        // Last seen in v0.26.4
         case 0x0004:
             flash_migration_from_0004();
             break;
@@ -65,6 +71,44 @@ static void flash_migration_not_possible(void) {
     // Reset other axes then ourselves
     cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
     watchdog_reset();
+}
+
+static void flash_migration_from_0005(void) {
+    // Load the struct from flash into the old struct layout
+    struct flash_param_struct_0005 flash_params_0005 = {0};
+    memcpy(&flash_params_0005, (Uint16 *)PARAMS_START, sizeof(flash_params_0005));
+
+    // Copy floats
+    flash_params.ser_num_1 = flash_params_0005.ser_num_1;
+    flash_params.ser_num_2 = flash_params_0005.ser_num_2;
+    flash_params.ser_num_3 = flash_params_0005.ser_num_3;
+    flash_params.assy_time = flash_params_0005.assy_time;
+    flash_params.k_rate = flash_params_0005.k_rate;
+    flash_params.gopro_charging_enabled = flash_params_0005.gopro_charging_enabled;
+
+    // Copy arrays
+    memcpy(flash_params.commutation_slope, flash_params_0005.commutation_slope, sizeof(flash_params_0005.commutation_slope));
+    memcpy(flash_params.commutation_icept, flash_params_0005.commutation_icept, sizeof(flash_params_0005.commutation_icept));
+
+    memcpy(flash_params.torque_pid_kp, flash_params_0005.torque_pid_kp, sizeof(flash_params_0005.torque_pid_kp));
+    memcpy(flash_params.torque_pid_ki, flash_params_0005.torque_pid_ki, sizeof(flash_params_0005.torque_pid_ki));
+    memcpy(flash_params.torque_pid_kd, flash_params_0005.torque_pid_kd, sizeof(flash_params_0005.torque_pid_kd));
+
+    memcpy(flash_params.rate_pid_p, flash_params_0005.rate_pid_p, sizeof(flash_params_0005.rate_pid_p));
+    memcpy(flash_params.rate_pid_i, flash_params_0005.rate_pid_i, sizeof(flash_params_0005.rate_pid_i));
+    memcpy(flash_params.rate_pid_d, flash_params_0005.rate_pid_d, sizeof(flash_params_0005.rate_pid_d));
+    memcpy(flash_params.rate_pid_windup, flash_params_0005.rate_pid_windup, sizeof(flash_params_0005.rate_pid_windup));
+
+    memcpy(flash_params.offset_joint, flash_params_0005.offset_joint, sizeof(flash_params_0005.offset_joint));
+    memcpy(flash_params.offset_gyro, flash_params_0005.offset_gyro, sizeof(flash_params_0005.offset_gyro));
+
+    memcpy(flash_params.offset_accelerometer, flash_params_0005.offset_accelerometer, sizeof(flash_params_0005.offset_accelerometer));
+    memcpy(flash_params.gain_accelerometer, flash_params_0005.gain_accelerometer, sizeof(flash_params_0005.gain_accelerometer));
+    memcpy(flash_params.alignment_accelerometer, flash_params_0005.alignment_accelerometer, sizeof(flash_params_0005.alignment_accelerometer));
+
+    /* Removed parameters:
+     *  sys_swver
+     */
 }
 
 static void flash_migration_from_0004(void) {
