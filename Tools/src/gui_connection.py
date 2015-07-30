@@ -137,6 +137,10 @@ class connectionUI(object):
         return setup_mavlink.wait_for_heartbeat(self.link)
 
     @gui_utils.waitCursor
+    def getGimbalMessage(self):
+        return setup_mavlink.get_gimbal_message(self.link)
+
+    @gui_utils.waitCursor
     def enableTorquesMessages(self, enabled):
         return setup_param.enable_torques_message(self.link, enabled)
 
@@ -186,10 +190,16 @@ class connectionUI(object):
             self.setConnectionState(False)
             self.ui.tabWidget.setEnabled(False)
         else:
-            _ = yield AsyncTask(self.enableTorquesMessages, False)
-            _ = yield AsyncTask(self.disablePositionHoldMode)
             self.setConnectionStatusBanner('connected')
-            softwareVersion, serialNumber, assemblyTime = yield AsyncTask(self.getGimbalParameters)
+
+            # Check if we're connected to a gimbal in bootloader
+            gimbalMsg = yield AsyncTask(self.getGimbalMessage)
+            if gimbalMsg:
+                _ = yield AsyncTask(self.enableTorquesMessages, False)
+                _ = yield AsyncTask(self.disablePositionHoldMode)
+                softwareVersion, serialNumber, assemblyTime = yield AsyncTask(self.getGimbalParameters)
+            else:
+                softwareVersion, serialNumber, assemblyTime = None, None, None
 
             # Prompt a for the serial number if the gimbal is factory fresh
             if serialNumber == '' or assemblyTime == 0:
