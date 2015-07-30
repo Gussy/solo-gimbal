@@ -405,17 +405,6 @@ void main(void)
 	TempSlope = getTempSlope();
 
 	if (board_hw_id == AZ) {
-	    // Parse version
-        Uint32 version_number = 0x00000000;
-        version_number |= (((Uint32)atoi(GitVersionMajor) << 24) & 0xFF000000);
-        version_number |= (((Uint32)atoi(GitVersionMinor) << 16) & 0x00FF0000);
-        version_number |= (((Uint32)atoi(GitVersionRevision) << 8) & 0x0000FF00);
-        version_number |= ((Uint32)atoi(GitCommit) & 0x0000007F);
-        version_number |= strstr(GitVersionString, "dirty") ? (0x1 << 7) : 0x00;
-        IntOrFloat float_converter;
-        float_converter.uint32_val = version_number;
-        flash_params.sys_swver = float_converter.float_val;
-
 	    axis_parms.enable_flag = TRUE;
 	}
 
