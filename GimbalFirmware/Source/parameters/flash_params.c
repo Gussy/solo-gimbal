@@ -7,12 +7,11 @@
 
 struct CURRENT_FLASH_PARAM_STRUCT flash_params =
 {
-        .flash_struct_id = 0x0005,
-        .sys_swver = 0.0,                                   // Software version number, loaded from compiled in version information at boot time
-        .assy_time = 0.0,                                   // Unix timestamp (seconds since Jan 01 1970 UTC)
-        .ser_num_1 = 0.0,                                   // Serial number part 1 (part code, design, language/country)
-        .ser_num_2 = 0.0,                                   // Serial number part 2 (option, year, month)
-        .ser_num_3 = 0.0,                                   // Serial number part 3 (incrementing serial number per month)
+        .flash_struct_id = CURRENT_FLASH_PARAM_STRUCT_VERSION,
+        .assy_time = 0.0,   // Unix timestamp (seconds since Jan 01 1970 UTC)
+        .ser_num_1 = 0.0,   // Serial number part 1 (part code, design, language/country)
+        .ser_num_2 = 0.0,   // Serial number part 2 (option, year, month)
+        .ser_num_3 = 0.0,   // Serial number part 3 (incrementing serial number per month)
 
         .k_rate = 0.0,
 
@@ -31,7 +30,7 @@ struct CURRENT_FLASH_PARAM_STRUCT flash_params =
         .rate_pid_d = { 0.0, 0.0, 0.0 },
         .rate_pid_windup = { 32768.0, 32768.0, 32768.0 },
 
-        //  { X,   Y,   Z   }
+        //  { X, Y, Z }
         .offset_joint = { 0.0, 0.0, 0.0 },
         .offset_gyro = { 0.0, 0.0, 0.0 },
         .offset_accelerometer = { 0.0, 0.0, 0.0 },

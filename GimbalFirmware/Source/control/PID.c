@@ -50,8 +50,16 @@ PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     }
 };
 
-float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float output_limit)
+float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float output_limit, float gain, float ff)
 {
+    /*
+     * This function implements a modified PID controller (D term on process
+     * variable only) with support for integrator windup protection and injection
+     * of a feedforward term which is added to the output.
+     *
+     * The gain term in the function parameters scales the P, I, and D gains,
+     * providing a way to implement gain scheduling.
+     */
     float pTerm, dTerm;
     float deltaPv;
     float output;
@@ -66,20 +74,20 @@ float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float 
     pTerm = PIDInfo->gainP * error;
 
     // Calculate derivative gain, gain * difference in error
-    if(PIDInfo->gainD) {
+    if(PIDInfo->gainD != 0.0f) {
         deltaPv = process_var - PIDInfo->processVarPrevious;
         PIDInfo->deltaPvFilt += (deltaPv-PIDInfo->deltaPvFilt) * PIDInfo->dTermAlpha;
 
-        dTerm = -deltaPv * PIDInfo->gainD;
+        dTerm = -PIDInfo->deltaPvFilt * PIDInfo->gainD;
     } else  {
         dTerm = 0;
     }
     PIDInfo->processVarPrevious = process_var;
 
-    output = (pTerm + PIDInfo->integralCumulative + dTerm);
+    output = (pTerm + dTerm) * gain + PIDInfo->integralCumulative + ff;
 
     if((output <= output_limit && output >= -output_limit) || (output > output_limit && error < 0) || (output < -output_limit && error > 0)) {
-        float i_increment = error * PIDInfo->gainI;
+        float i_increment = error * PIDInfo->gainI * gain;
         PIDInfo->integralCumulative += i_increment;
         output += i_increment;
     }
