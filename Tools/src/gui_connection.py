@@ -141,6 +141,10 @@ class connectionUI(object):
         return setup_param.enable_torques_message(self.link, enabled)
 
     @gui_utils.waitCursor
+    def disablePositionHoldMode(self):
+        return setup_param.pos_hold_disable(self.link)
+
+    @gui_utils.waitCursor
     def getGimbalParameters(self):
         # Delay to allow the gimbal to start up if we're cycling and auto-updating
         timeout = 1
@@ -183,6 +187,7 @@ class connectionUI(object):
             self.ui.tabWidget.setEnabled(False)
         else:
             _ = yield AsyncTask(self.enableTorquesMessages, False)
+            _ = yield AsyncTask(self.disablePositionHoldMode)
             self.setConnectionStatusBanner('connected')
             softwareVersion, serialNumber, assemblyTime = yield AsyncTask(self.getGimbalParameters)
 
