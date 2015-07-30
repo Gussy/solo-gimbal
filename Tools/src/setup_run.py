@@ -400,10 +400,11 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         current_angle = Vector3(*Tvg.to_euler312())
         lastCycle = time.time()
 
-    # Re-enable position hold mode, low-torque more and torque messages
-    setup_param.pos_hold_enable(link)
+    # Re-enable low-torque mode
     setup_param.low_torque_mode(link, True)
-    setup_param.enable_torques_message(link, True)
+    # XXX: Disabled for now, since it causes problems with the GUI after running a test
+    # setup_param.pos_hold_enable(link)
+    # setup_param.enable_torques_message(link, True)
 
     if log:
         if test == 'wobble':
