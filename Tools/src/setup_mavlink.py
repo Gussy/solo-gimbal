@@ -20,25 +20,31 @@ def getSerialPorts(preferred_list=['*USB Serial*','*FTDI*']):
     if os.name == 'nt':
         ports = list(serial.tools.list_ports.comports())
         ret = []
-        for port, desc, hwid in ports:
+        for name, desc, hwid in ports:
             for preferred in preferred_list:
                 if fnmatch.fnmatch(desc, preferred) or fnmatch.fnmatch(hwid, preferred):
-                    ret.append(SerialPort(port, description=desc, hwid=hwid))
+                    ret.append(SerialPort(name, description=desc, hwid=hwid))
+                    break
         return ret
     return mavutil.auto_detect_serial(preferred_list=preferred_list)
 
 def open_comm(port=None, baudrate=230400):
-    if not port:
-        serial_list = getSerialPorts(preferred_list=['*USB Serial*','*FTDI*'])
-        if len(serial_list) >= 1:
-            port = serial_list[0].device
-        else:
-            port = '0.0.0.0:14550'
-    mavserial = mavutil.mavlink_connection(device=port, baud=baudrate)
-    link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
-    link.target_sysid = TARGET_SYSTEM_ID
-    link.target_compid = TARGET_COMPONENT_ID
-    return (port, link)
+    link = None
+    try:
+        if not port:
+            serial_list = getSerialPorts(preferred_list=['*USB Serial*','*FTDI*'])
+            if len(serial_list) >= 1:
+                port = serial_list[0].device
+            else:
+                port = '0.0.0.0:14550'
+        mavserial = mavutil.mavlink_connection(device=port, baud=baudrate)
+        link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
+        link.target_sysid = TARGET_SYSTEM_ID
+        link.target_compid = TARGET_COMPONENT_ID
+    except Exception:
+        pass
+    finally:
+        return (port, link)
 
 def wait_for_heartbeat(link, retries=5):
     for i in range(retries):
