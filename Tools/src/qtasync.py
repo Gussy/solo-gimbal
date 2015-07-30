@@ -224,7 +224,10 @@ def coroutine(func):
         def execute(gen, input=None):
             if isinstance(gen, types.GeneratorType):
                 if not input:
-                    obj = next(gen)
+                    try:
+                        obj = next(gen)
+                    except StopIteration as e:
+                        return
                 else:
                     try:
                         obj = gen.send(input)

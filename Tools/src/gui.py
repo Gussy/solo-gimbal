@@ -47,7 +47,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.firmwareUI.loadFirmwareFile(filename)  
 
     def autoConnect(self):
-        self.ui.btnConnect.clicked.emit()  
+        self.ui.btnConnect.clicked.emit()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
