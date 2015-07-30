@@ -37,6 +37,7 @@ SIZE_INFO	:= python $(PROJ_PYTHON_ROOT)/firmware_size_info.py
 #       appear irrelevant for linking
 
 COMMFLAGS += -v28 -ml -mt --float_support=fpu32 -O4 --opt_for_speed=2 -g -D=_DEBUG -D=LARGE_MODEL -D=FLOATING_MATH
+COMMFLAGS += -DMAVLINK_COMM_NUM_BUFFERS=1
 
 
 ###############################################################################
