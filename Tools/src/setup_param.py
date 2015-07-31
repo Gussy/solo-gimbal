@@ -138,6 +138,14 @@ def low_torque_mode(link, enabled=True):
         value = 0.0
     set_param(link, "GMB_MAX_TORQUE", value)
 
+def charging(link, enabled=True):
+    if enabled:
+        value = 1.0
+    else:
+        value = 0.0
+    set_param(link, "GMB_GP_CHARGE", value)
+    commit_to_flash(link)
+
 def restore_params(link, params):
     parameters = MAVParmDict()
 
