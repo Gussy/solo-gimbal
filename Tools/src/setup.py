@@ -206,6 +206,7 @@ def command_interface():
     parser.add_argument("-f", "--forcecal", help="Force the comutation setup", action='store_true')
     parser.add_argument("-e", "--erase", help="Erase calibration values", action='store_true')
     parser.add_argument("--customgains", help="Enable the use of custom gains (0 to disable, 1 to enable)", type=int)
+    parser.add_argument("--charging", help="Set camera charging (0 to disable, 1 to enable)", type=int)
 
     # Optional commands (not included with sololink tools)
     if setup_run:
@@ -317,6 +318,10 @@ def command_interface():
 
     if args.customgains == 1 or args.customgains == 0:
         setup_param.set_use_custom_gains(link, args.customgains)
+        return
+
+    if args.charging == 1 or args.charging == 0:
+        setup_param.charging(link, args.charging)
         return
 
     if setup_run:
