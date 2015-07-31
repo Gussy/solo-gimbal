@@ -303,7 +303,7 @@ void main(void)
 	        // Rough approximation of 1-second of busy waiting, doesn't need to be super accurate
 	        if (++can_init_fault_message_resend_counter >= 0x7B124) {
 	            can_init_fault_message_resend_counter = 0;
-	            AxisFault(CAND_FAULT_UNKNOWN_AXIS_ID, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+	            AxisFault(CAND_FAULT_UNKNOWN_AXIS_ID, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms);
 	        }
 	    }
 	}
@@ -434,12 +434,12 @@ void main(void)
 
 		// Process and respond to any waiting CAN messages
 		if (EnableCAN) {
-		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, &encoder_parms, param_set, &load_ap_state_info);
+		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, param_set, &load_ap_state_info);
 		}
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
 		if (board_hw_id == AZ) {
-		    mavlink_state_machine(&mavlink_gimbal_info, &control_board_parms, &motor_drive_parms, &encoder_parms, &load_ap_state_info);
+		    mavlink_state_machine(&mavlink_gimbal_info, &motor_drive_parms);
 		}
 
 		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
@@ -489,7 +489,7 @@ void main(void)
         }
 
         // Update any parameters that have changed due to CAN messages
-        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &encoder_parms);
+        ProcessParamUpdates(param_set, &control_board_parms, &debug_data);
 
 		// Measure total main work timing
 		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;
@@ -913,7 +913,7 @@ interrupt void GyroIntISR(void)
 interrupt void MotorDriverFaultIntISR()
 {
     // Process the motor drive fault
-    AxisFault(CAND_FAULT_MOTOR_DRIVER_FAULT, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+    AxisFault(CAND_FAULT_MOTOR_DRIVER_FAULT, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms);
 
     // TODO: May want to have some sort of recovery code here
     // Some motor driver faults need the motor driver chip to be

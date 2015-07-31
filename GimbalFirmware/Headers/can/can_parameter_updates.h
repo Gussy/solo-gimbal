@@ -3,6 +3,6 @@
 
 #include "PM_Sensorless.h"
 
-void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data, EncoderParms* encoder_parms);
+void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data);
 
 #endif /* CAN_PARAMETER_UPDATES_H_ */

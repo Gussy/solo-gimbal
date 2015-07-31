@@ -180,7 +180,7 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
     return 0;
 }
 
-bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, uint16_t len, bool from_camera, uint16_t *txbuf)
+bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, bool from_camera, uint16_t *txbuf)
 {
     /*
      * Handle incoming i2c data from the camera.
@@ -262,11 +262,12 @@ bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camer
      * Drain all the data from the i2c ringbuf, and ensure
      * the advertised len matches what we actually recevied.
      */
+    uint16_t buf_len;
 
     // first byte is the length of the received data,
     // top bit signals the cmd originator, 1 == camera, 0 == backpack
     *from_camera = buf[0] & (1 << 7);
-    uint16_t buf_len = buf[0] & 0x7f;
+    buf_len = buf[0] & 0x7f;
 
     if (buf_len != len - 1) {
         return false;

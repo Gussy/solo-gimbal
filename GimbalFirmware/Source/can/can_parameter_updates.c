@@ -11,7 +11,7 @@
 int16 rate_cmds_received[3];
 Uint32 debug_output_decimation_count = 0;
 
-void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data,  EncoderParms* encoder_parms)
+void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data)
 {
     IntOrFloat float_converter;
     // Check for updated rate loop PID params

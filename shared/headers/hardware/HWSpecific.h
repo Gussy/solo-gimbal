@@ -14,31 +14,6 @@ typedef enum {
     Z_AXIS
 } GyroAxis;
 
-// Map gyro axes to gimbal axes
-static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
-        AZ,
-        EL,
-        ROLL
-};
-
-static const int GyroSignMap[AXIS_CNT] = {
-        1, // EL
-        1, // AZ
-        -1  // ROLL
-};
-
-static const int TorqueSignMap[AXIS_CNT] = {
-        1, // EL
-        -1, // AZ
-        -1  // ROLL
-};
-
-static const int EncoderSignMap[AXIS_CNT] = {
-        1, // EL
-        -1, // AZ
-        -1  // ROLL
-};
-
 extern float AxisCalibrationSlopes[AXIS_CNT];
 extern float AxisCalibrationIntercepts[AXIS_CNT];
 extern float AxisTorqueLoopKp[AXIS_CNT];

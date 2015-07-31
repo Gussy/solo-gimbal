@@ -187,6 +187,8 @@ int16 ReadTemp()
 {
     Uint16 response1 = 0;
     Uint16 response2 = 0;
+    int16 raw_temp;
+    int32 scaled_temp;
 
     // Take the slave select line low to begin the transaction
     // NOTE: It's important to read all of these registers in one transaction
@@ -213,12 +215,12 @@ int16 ReadTemp()
     SSDeassert(&gyro_spi_desc);
 
     // Unpack the raw value from the temp sensor
-    int16 raw_temp = ((response1 << 8) & 0xFF00) | ((response2 >> 8) & 0x00FF);
+    raw_temp = ((response1 << 8) & 0xFF00) | ((response2 >> 8) & 0x00FF);
 
     // Perform the scaling to put the reading in Degrees C
     // Per the MPU6K datasheet, DegreesC = (TEMP_OUT / 340) + 36.53
     // Doing the division last to preserve precision (36.53 * 340 = 12420.2)
-    int32 scaled_temp = ((int32)raw_temp + (int32)12420) / (int32)340;
+    scaled_temp = ((int32)raw_temp + (int32)12420) / (int32)340;
     return scaled_temp;
 }
 

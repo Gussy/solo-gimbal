@@ -260,12 +260,13 @@ static void flash_migration_from_0001(void) {
 }
 
 static void flash_migration_from_0000(void) {
+    IntOrFloat float_converter;
+
     // Load the struct from flash into the old struct layout
     struct flash_param_struct_0000 flash_params_0000 = {0};
     memcpy(&flash_params_0000, (Uint16 *)PARAMS_START, sizeof(flash_params_0000));
 
     // The following parameters were stored as uint32_t in the version 0x0000 struct
-    IntOrFloat float_converter;
     float_converter.uint32_val = flash_params_0000.ser_num_1;
     flash_params.ser_num_1 = float_converter.float_val;
 

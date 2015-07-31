@@ -162,6 +162,7 @@ void gp_h4_send_yy_cmd(gp_h4_t *h4, uint16_t api_group, uint16_t api_id, const u
      *
      * 'len' specifies payload length.
      */
+    uint16_t i;
 
     gp_h4_pkt_t p;
     gp_h4_yy_cmd_t *c = &p.yy_cmd;
@@ -175,7 +176,6 @@ void gp_h4_send_yy_cmd(gp_h4_t *h4, uint16_t api_group, uint16_t api_id, const u
     c->api_group = api_group;
     c->api_id = api_id;
 
-    int i;
     for (i = 0; i < len; ++i) {
         c->payload[i] = b[i];
     }

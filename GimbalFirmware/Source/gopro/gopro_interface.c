@@ -113,12 +113,12 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
      * Called by protocol modules (h4, h3p, etc)
      * to send a command to the camera.
      */
+    uint16_t i;
 
     if (gp_control_state != GP_CONTROL_STATE_IDLE) {
         return false;
     }
 
-    int i;
     for (i = 0; i < len; ++i) {
         txbuf[i] = cmd[i];
     }
@@ -395,6 +395,8 @@ void gp_disable_charging()
 // for proper gopro interface operation
 void gp_interface_state_machine()
 {
+    GPPowerStatus new_power_status;
+
     if (gp.waiting_for_i2c) {
         if (gopro_i2c_in_progress()) {
             if (timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
@@ -474,7 +476,7 @@ void gp_interface_state_machine()
 	}
 
     // Detect a change in power status to reset some flags when a GoPro is re-connected during operation
-    GPPowerStatus new_power_status = gp_get_power_status();
+    new_power_status = gp_get_power_status();
     if (gp.power_status != new_power_status) {
         gp_reset();
         gp.power_status = new_power_status;
@@ -546,7 +548,7 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
     case GP_MODEL_HERO3P:{
         bool from_camera;
         if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
-            if (gp_h3p_handle_rx(&gp.h3p, buf, len, from_camera, txbuf)) {
+            if (gp_h3p_handle_rx(&gp.h3p, buf, from_camera, txbuf)) {
                 return true;
             }
         }
@@ -559,7 +561,7 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
             gp_h4_pkt_t pkt;
             gp_h4_pkt_t rsp;
 
-            int i;
+            uint16_t i;
             for (i = 0; i < GP_COMMAND_RECEIVE_BUFFER_SIZE; ++i) {
                 pkt.bytes[i] = buf[i];
             }
@@ -587,14 +589,15 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
 
 void gp_write_eeprom()
 {
+    // Data to write into EEPROM
+    uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
+    uint8_t i;
+
     if (!gp_von_is_enabled())
 		return;
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
 	gp_disable_hb_interface();
-
-	// Data to write into EEPROM
-	uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
 
 	// Init I2C peripheral
 	I2caRegs.I2CMDR.all = 0x0000;
@@ -621,7 +624,6 @@ void gp_write_eeprom()
 	// Start, stop, no rm, reset i2c
 	I2caRegs.I2CMDR.all = 0x6E20;
 
-	uint8_t i;
 	for(i = 0; i < GP_I2C_EEPROM_NUMBYTES; i++){
 		// Setup I2C Master Write
 		I2caRegs.I2CMDR.all = 0x6E20;
