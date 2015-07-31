@@ -275,7 +275,7 @@ bool gp_request_power_off()
 
 bool gp_request_capture_mode()
 {
-    if (gp_control_state == GP_CONTROL_STATE_IDLE && !gp_is_recording()) {
+    if (gp_ready_for_cmd() && !gp_is_recording()) {
         gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, false);                  // not internal since currently there is no other method to notify when the capture mode changes, besides addressing a request
         return true;
     }
