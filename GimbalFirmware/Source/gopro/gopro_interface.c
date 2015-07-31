@@ -12,7 +12,7 @@
 #include <ctype.h>
 
 
-#define GP_INIT_TIMEOUT_MS 3000
+#define GP_INIT_TIMEOUT_MS 10000    // Time allowed for GoPro to complete handshake before it is deemed incompatible, could probably be reduced to something lower but it should be at least > 3000, if not more (accurate time TBD)
 
 static void gp_reset();
 static void gp_timeout();
