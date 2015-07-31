@@ -11,8 +11,16 @@
 #ifndef F2806x_DEVICE_H
 #define F2806x_DEVICE_H 1
 
-// Define to 0 to stop warnings from bad code in PeripheralHeaderIncludes.h
-// Added by 3DR
+/*
+ * Define to 0 to stop warnings from bad code in PeripheralHeaderIncludes.h
+ *
+ * They are actually all set to 0 somewhere else, but there's a bit of a mess of circular header dependencies.
+ * Ideally some time in the future we could abstract all the controlSUITE and TI headers into our own headers, so we're not calling them directly from all over the place. That way we could control things like this easier.
+ * We're not using the DSP28 series chip so these should never be eval'd to 1 anywhere.
+ *
+ * Added by 3DR
+ */
+
 #define DSP28_SPIA 0
 #define DSP28_SPIB 0
 #define DSP28_SCIA 0
