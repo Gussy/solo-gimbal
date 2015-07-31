@@ -13,19 +13,19 @@ EXPECTED_SERIAL_NUMBER_START = 'GB11A'
 EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
 
 EXPECTED_PITCH_ICEPT_MAX = 0.30
-EXPECTED_PITCH_ICEPT_MIN = 0.10
+EXPECTED_PITCH_ICEPT_MIN = 0.09
 EXPECTED_PITCH_SLOPE_MAX = 0.14
 EXPECTED_PITCH_SLOPE_MIN = 0.12
 EXPECTED_ROLL_ICEPT_MIN = 0.35
 EXPECTED_ROLL_ICEPT_MAX = 0.53
-EXPECTED_ROLL_SLOPE_MAX = 0.14
+EXPECTED_ROLL_SLOPE_MAX = 0.15
 EXPECTED_ROLL_SLOPE_MIN = 0.11
 EXPECTED_YAW_ICEPT_MAX = 0.54
 EXPECTED_YAW_ICEPT_MIN = 0.40
 EXPECTED_YAW_SLOPE_MAX = 0.12
 EXPECTED_YAW_SLOPE_MIN = 0.10
 
-EXPECTED_JOINT_X_MAX = 0.12
+EXPECTED_JOINT_X_MAX = 0.16
 EXPECTED_JOINT_X_MIN = -0.02
 EXPECTED_JOINT_Y_MAX = 0.15
 EXPECTED_JOINT_Y_MIN = -0.07
@@ -49,7 +49,7 @@ EXPECTED_ACC_OFFSET_Y_MAX = 2.0
 EXPECTED_ACC_OFFSET_Z_MIN = -2.0
 EXPECTED_ACC_OFFSET_Z_MAX = 2.0
 
-EXPECTED_GYRO = 0.05
+EXPECTED_GYRO = 0.07
 
 class Results:
     Pass, Fail, Error = 'pass', 'fail', 'error'
@@ -159,7 +159,6 @@ def validate_comutation_axis_value(axis, values):
         return Results.Pass
     else:
         return Results.Fail
-    
 
 def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
     icept = axis[0]
@@ -230,7 +229,13 @@ def validate_accelerometers(link, offset=None, gain=None, alignment=None):
         return Results.Fail
 
 def validate_gains(link):
-    return Results.Pass
+    custom_gains = setup_param.fetch_param(link, "GMB_CUST_GAINS")
+    if custom_gains is None:
+        return Results.Error
+    elif custom_gains.param_value == 0.0:
+        return Results.Pass
+    else:
+        return Results.Fail
 
 def validate_date(link, assembly_time=None):
     if assembly_time == None:
@@ -241,7 +246,6 @@ def validate_date(link, assembly_time=None):
         return Results.Pass
     else:
         return Results.Fail
-
 
 def validate_serial_number(link, serial_number=None):
     if serial_number == None:
@@ -261,7 +265,8 @@ def validate(link):
         'commutation': validate_comutation(link),
         'joints': validate_joints(link),
         'gyros': validate_gyros(link),
-        'accels': validate_accelerometers(link)
+        'accels': validate_accelerometers(link),
+        'gains': validate_gains(link)
     }
     return validation
 

@@ -13,6 +13,7 @@ from firmware_loader import Results as loader_results
 import setup_comutation, setup_mavlink
 from setup_comutation import Results as calibration_results
 import setup_validate, setup_param
+import firmware_git_tools
 
 # Optional imports
 try:
@@ -400,6 +401,8 @@ def command_interface():
             return
 
     # Default command is to return the software version number
+    os_git_command = firmware_git_tools.osGitCommand()
+    print("Tools version: %s"%(firmware_git_tools.gitIdentity(os_git_command)))
     ver = setup_factory_pub.read_software_version(link, timeout=4)
     if ver != None:
         major, minor, rev = ver[0], ver[1], ver[2]

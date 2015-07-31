@@ -31,12 +31,17 @@ def osGitCommand():
 	return os_git_command
 
 def gitIdentity(os_git_command):
-	# Get the current git info
-	cmd = " ".join([os_git_command, "describe", "--tags", "--dirty", "--long"])
-	p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
-	git_identity = str(p.read().strip())
-	p.close()
-	return git_identity
+	git_identity = ''
+	try:
+		# Get the current git info
+		cmd = " ".join([os_git_command, "describe", "--tags", "--dirty", "--long"])
+		p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
+		git_identity = str(p.read().strip())
+		p.close()
+	except Exception:
+		pass
+	finally:
+		return git_identity
 
 def gitBranch(os_git_command):
 	cmd = " ".join([os_git_command, "branch", "--list"])

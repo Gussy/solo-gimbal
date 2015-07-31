@@ -20,7 +20,7 @@ typedef struct {
 
 extern PIDData_Float rate_pid_loop_float[AXIS_CNT];
 
-float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float output_limit);
+float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float output_limit, float gain, float ff);
 
 
 #endif /* PID_H_ */

@@ -6,6 +6,7 @@
 #include "flash/flash.h"
 #include "hardware/led.h"
 #include "can/cb.h"
+#include "version_git.h"
 
 #include <string.h>
 #include <math.h>
@@ -15,6 +16,7 @@ GimbalMavlinkParameter gimbal_params[MAVLINK_GIMBAL_PARAM_MAX];
 extern unsigned char gimbal_sysid;
 
 // Volatile parameters (these aren't saved in the flash params struct)
+float sys_swver = GitVersionFloat;
 float commit_to_flash_status = 0.0;
 float pos_hold = CONTROL_TYPE_POS;
 float max_torque = LOW_TORQUE_MODE_MAX;
@@ -153,7 +155,7 @@ void init_default_mavlink_params()
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_id, "GMB_SWVER", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].can_parameter_id = CAND_PID_INVALID;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].float_data_ptr = &(flash_params.sys_swver);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].float_data_ptr = &sys_swver;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].access_type = GIMBAL_PARAM_READ_ONLY;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_DATE].param_id, "GMB_ASM_TIME", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
