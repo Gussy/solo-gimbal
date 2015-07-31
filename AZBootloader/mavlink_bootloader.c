@@ -173,11 +173,7 @@ static void mavlink_data_handshake(Uint16 seq) {
 static void reset_to_app(void) {
     mavlink_data_handshake(UINT16_MAX);
 
-    /* must be done */
-    watchdog_enable();
-
+    // Reset using the watchdog
     // Don't reset immediately, otherwise the MAVLink message above won't be flushed.
-
-    // This should never be reached.
-    while(1);
+    watchdog_reset();
 }
