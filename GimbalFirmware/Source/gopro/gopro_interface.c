@@ -446,7 +446,7 @@ void gp_interface_state_machine()
             break;
     }
 
-    if (gp.power_status == GP_POWER_ON) {
+    if (gp_get_power_status() == GP_POWER_ON) {
         // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
         // the heartbeat with an incompatible state while it's gccb version is being queried
         if(!gp_handshake_complete() && !init_timed_out()) {
