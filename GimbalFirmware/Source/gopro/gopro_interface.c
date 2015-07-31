@@ -446,13 +446,6 @@ void gp_interface_state_machine()
             break;
     }
 
-    // request an update on GoPro's current capture mode, infrequently to avoid freezing the GoPro
-    if (gp.capture_mode_polling_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
-        gp.capture_mode_polling_counter = 0;
-
-        gp_request_capture_mode();
-    }
-
     // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
     // the heartbeat with an incompatible state while it's gccb version is being queried
     if(!gp_handshake_complete() && !init_timed_out()) {
@@ -463,6 +456,13 @@ void gp_interface_state_machine()
             // try to avoid freezing it by disabling bacpac detect
             gp_disable_hb_interface();
         }
+    }
+
+    // request an update on GoPro's current capture mode, infrequently to avoid freezing the GoPro
+    if (gp.power_status == GP_POWER_ON && gp.capture_mode_polling_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
+        gp.capture_mode_polling_counter = 0;
+
+        gp_request_capture_mode();
     }
 
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
