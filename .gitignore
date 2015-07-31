@@ -8,7 +8,6 @@ project.log
 /**/.launches/
 /*/.settings/
 version_git.h
-firmware_data.c
 *.bin
 *.ax
 /Tools/3DRGimbalFactoryApplication/build-*/
