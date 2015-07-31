@@ -42,7 +42,8 @@ static void reset_to_app(void);
 
 void MAVLINK_Flash()
 {
-	bool getting_messages = 0;
+	bool getting_messages = false;
+	bool flash_erased = false;
 	Uint16 seq = 0;
 	FLASH_ST FlashStatus = {0};
 	Uint16  *Flash_ptr = (Uint16 *)APP_START;     // Pointer to a location in flash
@@ -94,7 +95,10 @@ void MAVLINK_Flash()
 								if (Flash_ptr <= (Uint16*)APP_END) {
 									// Unlock and erase flash with first packet
 									if(seq == 0) {
-										prepare_flash();
+									    if(!flash_erased) {
+									        prepare_flash();
+									        flash_erased = true;
+									    }
 									}
 
                                     // write data to flash
