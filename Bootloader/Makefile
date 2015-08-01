@@ -36,7 +36,7 @@ SIZE_INFO	:= python $(PROJ_PYTHON_ROOT)/firmware_size_info.py
 #       though we should trim back as many of these as possible from the linker, since many
 #       appear irrelevant for linking
 
-COMMFLAGS += -v28 -ml -mt --float_support=fpu32 -O4 --opt_for_speed=2 -g -D=_DEBUG -D=LARGE_MODEL -D=FLOATING_MATH
+COMMFLAGS += -v28 -ml -mt --float_support=fpu32 -O3 --opt_for_speed=2 -g -D=BOOTLOADER -D=_DEBUG -D=LARGE_MODEL -D=FLOATING_MATH
 COMMFLAGS += -DMAVLINK_COMM_NUM_BUFFERS=1
 
 
@@ -69,16 +69,20 @@ LDSCRIPTS := 28067_lnk.cmd
 STACK_SIZE := 0x200
 
 LDFLAGS += $(COMMFLAGS)
-LDFLAGS += -z -m$(PROJ).map --stack_size=$(STACK_SIZE) --warn_sections
-LDFLAGS += -i$(TI_ROOT)/lib
+LDFLAGS += -z --stack_size=$(STACK_SIZE) --warn_sections
+LDFLAGS += -i$(TI_ROOT)/lib -i$(PROJ_ROOT)/../controlSUITE/libs/utilities/flash_api/2806x/v100/lib
 LDFLAGS += --reread_libs --xml_link_info=$(PROJ)_linkinfo.xml --rom_model
+LDFLAGS += --warn_sections
+
 
 ###############################################################################
 # other deps
 
+# build result from GimbalFirmware, we just expect this to already be built for now
+MAIN_FW := $(PROJ_ROOT)/../GimbalFirmware/PM_Sensorless_F2806x.out
+
 # JTAG Programmer configuration file
 JTAG_CONFIG	:= $(PROJ_ROOT)/targetConfigs/TMS320F28067_$(JTAG_TOOL).ccxml
-
 
 ###############################################################################
 # Used libraries
@@ -95,7 +99,7 @@ flash: all
 	$(TILOAD) -a -c=$(JTAG_CONFIG) $(PROJ).hex
 
 $(PROJ).out: $(OBJS) $(LDSCRIPTS)
-	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
+	$(LD) $(LDFLAGS) -m$(PROJ).map $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
 
 $(PROJ).hex: $(PROJ).out
 	$(HEX) -i $< -o $@ -order MS -romwidth 16

@@ -1,6 +1,12 @@
 #ifndef PLL_H_
 #define PLL_H_
 
+#include "F2806x_Device.h" // Included for Uint16 typedef
+
+#define DIVSEL_BY_4     0
+#define DIVSEL_BY_2     2
+#define DIVSEL_BY_1     3
+
 // SYSTEM CLOCK speed based on external 20MHz crystal
 #define PLL_90MHZ_SYSTEM_CLOCK_20MHZ_XTAL 0x9
 #define PLL_80MHZ_SYSTEM_CLOCK_20MHZ_XTAL 0x8

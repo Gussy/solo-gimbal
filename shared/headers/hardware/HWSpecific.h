@@ -8,6 +8,9 @@ typedef enum {
     AXIS_CNT
 } GimbalAxis;
 
+// The defines below are not used in the bootlader project
+// XXX: These defines should really split out into seperate files
+#ifndef BOOTLOADER
 typedef enum {
     X_AXIS = 0,
     Y_AXIS,
@@ -19,5 +22,7 @@ extern float AxisCalibrationIntercepts[AXIS_CNT];
 extern float AxisTorqueLoopKp[AXIS_CNT];
 extern float AxisTorqueLoopKi[AXIS_CNT];
 extern float AxisTorqueLoopKd[AXIS_CNT];
+
+#endif
 
 #endif /* HWSPECIFIC_H_ */

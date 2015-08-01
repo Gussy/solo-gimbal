@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>3DRBootloader</name>
+	<name>Bootloader</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -38,7 +38,7 @@
 	</linkedResources>
 	<filteredResources>
 		<filter>
-			<id>1435372104068</id>
+			<id>1435372116804</id>
 			<name></name>
 			<type>22</type>
 			<matcher>
@@ -47,7 +47,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1435372104074</id>
+			<id>1435372116808</id>
 			<name></name>
 			<type>6</type>
 			<matcher>
@@ -56,10 +56,4 @@
 			</matcher>
 		</filter>
 	</filteredResources>
-	<variableList>
-		<variable>
-			<name>CONTROLSUITE_ROOT</name>
-			<value>file:/home/arthur/ti/controlSUITE</value>
-		</variable>
-	</variableList>
 </projectDescription>

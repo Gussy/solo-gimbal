@@ -1,16 +1,27 @@
-#include "boot/Boot.h"
+#include "hardware/pll.h"
 #include "hardware/led.h"
 #include "hardware/device_init.h"
 #include "hardware/HWSpecific.h"
+#include "mavlink_bootloader.h"
 #include "can_bootloader.h"
+#include "checksum.h"
 
-// empty setup functions so this code can run  DeviceInit()
+// Included for Flash_CPUScaleFactor and Flash_CallbackPtr
+#define FLASH_F2806x 1
+#include "Flash2806x_API_Library.h"
+
+#define BORTRIM (Uint16 *)0x0986
+
+// Empty setup functions so this code can run DeviceInit()
 void PieCntlInit(void){}
 void PieVectTableInit(void){}
+
+static const LED_RGBA rgba_amber_dim = {.red=1, .green=1, .blue=0, .alpha=0xff};
 
 Uint32 SelectBootMode()
 {
 	  Uint32 EntryAddr;
+	  GimbalAxis axis;
 
 	  EALLOW;
 
@@ -22,7 +33,6 @@ Uint32 SelectBootMode()
 	  // set the POR to the minimum trip point
 	  // If the device was configured by the factory
 	  // this write will have no effect.
-
 	  *BORTRIM = 0x0100;
 
 	  // At reset we are in /4 mode.  Change to /1
@@ -53,14 +63,20 @@ Uint32 SelectBootMode()
 
 	  EALLOW;
 
-	  // Enable the beacon LED on the elevation board only
-	  if(GetBoardHWID() == EL) {
-	  	  init_led();
+	  axis = (GimbalAxis)GetBoardHWID();
 
-	  	  const LED_RGBA rgba_blank = {0, 0, 0, 0};
-	  	  led_set_mode(LED_MODE_OFF, rgba_blank, 0);
-	   }
+	  if(axis == AZ && !verify_data_checksum()) {
+          // Enter the MAVLink bootloader
+          MAVLINK_Flash(); // This never returns
+	  }
 
-	  EntryAddr = CAN_Boot();
-	return EntryAddr;
+      // Enable the beacon LED on the elevation board only
+      if(axis == EL) {
+          init_led();
+          led_set_mode(LED_MODE_SOLID, rgba_amber_dim, 0);
+      }
+
+      EntryAddr = CAN_Boot(axis);
+
+      return EntryAddr;
 }
