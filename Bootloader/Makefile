@@ -1,5 +1,5 @@
 
-PROJ := AZBootloader
+PROJ := Bootloader
 
 PROJ_ROOT := .
 SHARED_ROOT := ../shared
