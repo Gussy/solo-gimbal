@@ -240,17 +240,14 @@ def command_interface():
     # Send a heartbeat first to wake up the interface, because mavlink
     link.heartbeat_send(0, 0, 0, 0, 0)
 
-    # Attempt to get any gimbal message (usually the GOPRO_HEARTBEAT), then any bootloader messages
-    # If neither attempts are successful, we're connected to a copter without a gimbal
-    msg = setup_mavlink.get_gimbal_message(link)
-    if msg is False:
-        handshake = setup_mavlink.wait_handshake(link, retries=2)
-        if handshake is None:
-            print("No gimbal messages received, exiting.")
-            sys.exit(1)
-        elif not args.file:
+    msg = setup_mavlink.get_any_gimbal_message(link)
+    if msg:
+        if setup_mavlink.is_bootloader_message(msg) and not args.file:
             print("Gimbal in bootloader, only firmware loading is available")
             sys.exit(0)
+    else:
+        print("No gimbal messages received, exiting.")
+        sys.exit(1)
 
     if args.file:
         handle_file(args, link)

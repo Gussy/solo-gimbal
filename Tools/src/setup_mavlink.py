@@ -56,7 +56,6 @@ def wait_for_heartbeat(link, retries=5):
 def print_heartbeat(link):
     link.heartbeat_send(0, 0, 0, 0, 0)
     msg = link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1)
-    print(msg)
 
 def wait_handshake(link, timeout=1, retries=1):
     '''wait for a handshake so we know the target system IDs'''
@@ -155,7 +154,7 @@ def get_any_message(link, timeout=1):
 def get_gimbal_message(link, timeout=2):
     start_time = time.time()
     while (time.time() - start_time) < timeout:
-        msg = link.file.recv_match(blocking=True, timeout=timeout)
+        msg = link.file.recv_match(blocking=True, timeout=1)
         if msg:
             if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
                 # Ignore the two types of bootloader messages
@@ -165,6 +164,22 @@ def get_gimbal_message(link, timeout=2):
                     return False
                 else:
                     return True
+    return False
+
+def get_any_gimbal_message(link, timeout=2):
+    start_time = time.time()
+    while (time.time() - start_time) < timeout:
+        msg = link.file.recv_match(blocking=True, timeout=1)
+        if msg:
+            if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
+                return msg
+    return None
+
+def is_bootloader_message(msg):
+    if (msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL and
+        msg.get_msgId() == mavlink.MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE
+        or msg.get_msgId() == mavlink.MAVLINK_MSG_ID_HEARTBEAT):
+        return True
     return False
 
 if __name__ == '__main__':

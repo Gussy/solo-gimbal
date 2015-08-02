@@ -1,4 +1,4 @@
-import os, json
+import os, json, time
 from PySide import QtGui
 from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
@@ -170,39 +170,43 @@ class calibrationUI(object):
         result = yield AsyncTask(self.runMotorCalibration)
 
         if result == setup_comutation.Results.ParamFetchFailed:
-            self.setCalibrationStatus("Failed to get calibration parameters from the gimbal")
+            self.status = "Failed to get calibration parameters from the gimbal"
         elif result == setup_comutation.Results.CommsFailed:
-            self.setCalibrationStatus("Gimbal failed to communicate calibration progress")
+            self.status = "Gimbal failed to communicate calibration progress"
         elif result == setup_comutation.Results.CalibrationExists:
-            self.setCalibrationStatus("A calibration already exists, erase current calibration first")
+            self.status = "A calibration already exists, erase current calibration first"
         elif result != None:
             # These results require a reset of the Gimbal
             if result == setup_comutation.Results.Success:
                 pass
             # Below assumes that the calibration runs in the order: pitch->roll->yaw
             elif result == setup_comutation.Results.PitchFailed:
-                self.setCalibrationStatus("Pitch calibration failed")
+                self.status = "Pitch calibration failed"
                 self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, False)
             elif result == setup_comutation.Results.RollFailed:
-                self.setCalibrationStatus("Roll calibration failed")
+                self.status = "Roll calibration failed"
                 self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, True)
                 self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, False)
             elif result == setup_comutation.Results.YawFailed:
-                self.setCalibrationStatus("Yaw calibration failed")
+                self.status = "Yaw calibration failed"
                 self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, True)
                 self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, True)
                 self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, False)
 
             # Reset the gimbal
+            self.status = "Resetting"
             reset = yield AsyncTask(self.resetGimbal)
+            if reset:
+                # If the connection is cycled too early, the gimbal doesn't fully
+                # initialise and won't send us any gimbal report messages...
+                time.sleep(10) 
+                self.connection.cycleConnection()
 
             if result == setup_comutation.Results.Success:
-                self.setCalibrationStatus("Calibration successful!")
-                # Get all the parameters if the calibration was successful
-                allParams = yield AsyncTask(self.getAllParams)
-                if allParams != None:
-                    self.updateCalibrationTable(allParams)
-                    self.logParameters(allParams)
+                self.status = "Calibration successful!"
+                self.setCalibrationStatusLabel(self.ui.lblCalibrationPitchStatus, True)
+                self.setCalibrationStatusLabel(self.ui.lblCalibrationRollStatus, True)
+                self.setCalibrationStatusLabel(self.ui.lblCalibrationYawStatus, True) 
 
         self.timerStop()
         self.setButtonsEnabled(True)
@@ -435,6 +439,7 @@ class calibrationUI(object):
         self.timer.start()
 
     def timerStop(self):
+        self.timerUpdate()
         self.ui.pbarCalibration.setValue(0)
         self.timer.stop()
 

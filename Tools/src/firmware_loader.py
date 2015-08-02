@@ -85,13 +85,15 @@ def upload_data(link, binary):
     # Loop until we are finished
     end_idx = 0
     retries = 0
+    MAX_RETRIES = 10 # Seconds
     while end_idx < len(binary):
         msg = setup_mavlink.wait_handshake(link)
-        if msg == None:
-            retries += 1
-            continue
-        if retries > 20:
-            return Results.NoResponse
+        if msg is None:
+            if retries > MAX_RETRIES:
+                return Results.NoResponse
+            else:
+                retries += 1
+                continue
         retries = 0
 
         end_idx = send_block(link, binary, msg)
