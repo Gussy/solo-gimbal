@@ -12,7 +12,7 @@ The compiler tools can be downloaded for Linux, OS X, and Windows from [TI's web
 * windows...
 
 TI's full-fledged eclipse-based developement environment can also be used:
-* [Code Composer Studio](http://www.ti.com/tool/ccstudio) - also avaliable on [this mirror](https://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti.tar.gz)
+* [Code Composer Studio](http://www.ti.com/tool/ccstudio) - also avaliable on [this mirror](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti.tar.gz)
 * Import the project into CCS via ```File>Import>C/C++>CCS Projects```, and browse for the root source folder
 
 ### Requirements
