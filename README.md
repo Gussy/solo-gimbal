@@ -7,19 +7,19 @@ AES gimbal software for C2000 uC
 
 The compiler tools can be downloaded for Linux, OS X, and Windows from [TI's website](http://software-dl.ti.com/codegen/non-esd/downloads/download.htm#C2000). 3DR keeps mirrors of a subset of compiler versions for convenient download:
 
-* [linux (ti tools v6.4.2)](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti-cgt-c2000_6.4.2.tar.gz)
-* [os x (ti tools v6.4.2)](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti_cgt_c2000_6.4.2_mac_installer.sh)
+* [linux (ti tools v6.4.2)](https://d2w8om3hfjwr3f.cloudfront.net/compiler/ti-cgt-c2000_6.4.2.tar.gz)
+* [os x (ti tools v6.4.2)](https://d2w8om3hfjwr3f.cloudfront.net/compiler/ti_cgt_c2000_6.4.2_mac_installer.sh)
 * windows...
 
 TI's full-fledged eclipse-based developement environment can also be used:
-* [Code Composer Studio](http://www.ti.com/tool/ccstudio) - also avaliable on [this mirror](http://gimbal-ci.s3-website-us-east-1.amazonaws.com/compiler/ti.tar.gz)
+* [Code Composer Studio](http://www.ti.com/tool/ccstudio) - also avaliable on [this mirror](https://d2w8om3hfjwr3f.cloudfront.net/compiler/ti.tar.gz)
 * Import the project into CCS via ```File>Import>C/C++>CCS Projects```, and browse for the root source folder
 
 ### Requirements
 
 * [Python](https://www.python.org/) must be installed and on the system PATH environment variable
 
-For benchtop development, you'll likely want a custom cable that integrates cables from a power supply (16.8V, current limit can be around 0.5A for just GoPro comms, or 3.0A to drive all the motors), and an FTDI cable onto the custom connector that plugs into the AZ board. 
+For benchtop development, you'll likely want a custom cable that integrates cables from a power supply (16.8V, current limit can be around 0.5A for just GoPro comms, or 3.0A to drive all the motors), and an FTDI cable onto the custom connector that plugs into the AZ board.
 ![connection_diagram](https://cloud.githubusercontent.com/assets/3289118/8265887/829ae9ee-16e4-11e5-80d2-4be3dc290ca9.png)
 
 ## Building
