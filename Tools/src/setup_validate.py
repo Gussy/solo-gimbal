@@ -7,7 +7,7 @@ from pymavlink.rotmat import Vector3
 import setup_mavlink
 import math
 
-EXPECTED_VERSION = '0.26.0'
+EXPECTED_VERSION = '0.28.1'
 
 EXPECTED_SERIAL_NUMBER_START = 'GB11A'
 EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
@@ -35,12 +35,8 @@ EXPECTED_JOINT_Z_MIN = -0.18
 EXPECTED_ACC_GAIN_MIN = 0.95
 EXPECTED_ACC_GAIN_MAX = 1.05
 
-EXPECTED_ACC_ALIGN_X_MIN = math.radians(-5)
-EXPECTED_ACC_ALIGN_X_MAX = math.radians(5)
-EXPECTED_ACC_ALIGN_Y_MIN = math.radians(-5)
-EXPECTED_ACC_ALIGN_Y_MAX = math.radians(5)
-EXPECTED_ACC_ALIGN_Z_MIN = math.radians(-5)
-EXPECTED_ACC_ALIGN_Z_MAX = math.radians(5)
+EXPECTED_ACC_ALIGN_MIN = math.radians(-5)
+EXPECTED_ACC_ALIGN_MAX = math.radians(5)
 
 EXPECTED_ACC_OFFSET_X_MIN = -2.0
 EXPECTED_ACC_OFFSET_X_MAX = 2.0
@@ -218,9 +214,9 @@ def validate_accelerometers(link, offset=None, gain=None, alignment=None):
     if ((offset.x >= EXPECTED_ACC_OFFSET_X_MIN) and (offset.x <= EXPECTED_ACC_OFFSET_X_MAX) and
         (offset.y >= EXPECTED_ACC_OFFSET_Y_MIN) and (offset.y <= EXPECTED_ACC_OFFSET_Y_MAX) and
         (offset.z >= EXPECTED_ACC_OFFSET_Z_MIN) and (offset.z <= EXPECTED_ACC_OFFSET_Z_MAX) and
-        (alignment.x >= EXPECTED_ACC_ALIGN_X_MIN) and (alignment.x <= EXPECTED_ACC_ALIGN_X_MAX) and
-        (alignment.y >= EXPECTED_ACC_ALIGN_Y_MIN) and (alignment.y <= EXPECTED_ACC_ALIGN_Y_MAX) and
-        (alignment.z >= EXPECTED_ACC_ALIGN_Z_MIN) and (alignment.z <= EXPECTED_ACC_ALIGN_Z_MAX) and
+        (alignment.x >= EXPECTED_ACC_ALIGN_MIN) and (alignment.x <= EXPECTED_ACC_ALIGN_MAX) and
+        (alignment.y >= EXPECTED_ACC_ALIGN_MIN) and (alignment.y <= EXPECTED_ACC_ALIGN_MAX) and
+        (alignment.z >= EXPECTED_ACC_ALIGN_MIN) and (alignment.z <= EXPECTED_ACC_ALIGN_MAX) and
         (gain.x >= EXPECTED_ACC_GAIN_MIN) and (gain.x <= EXPECTED_ACC_GAIN_MAX) and
         (gain.y >= EXPECTED_ACC_GAIN_MIN) and (gain.y <= EXPECTED_ACC_GAIN_MAX) and
         (gain.z >= EXPECTED_ACC_GAIN_MIN) and (gain.z <= EXPECTED_ACC_GAIN_MAX)):

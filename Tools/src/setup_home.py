@@ -1,5 +1,3 @@
-"""
-"""
 import math
 import numpy as np
 import setup_accelcal
@@ -11,11 +9,7 @@ from setup_factory_pub import get_serial_number
 from pymavlink.rotmat import Vector3
 from math import degrees
 
-
-NUMBER_OF_SAMPLES = 200
-ENCODER_COUNTS_PER_RADIAN = 1000.0 / (2 * math.pi)
-
-def getAverage(link, get_variable, sample_count=NUMBER_OF_SAMPLES, progressCallback=None):
+def getAverage(link, get_variable, sample_count=200, progressCallback=None):
     sum_angles = Vector3()
     for i in range(sample_count):
         if progressCallback:
@@ -58,7 +52,7 @@ def getAccelSample(link, AVG_COUNT=50, progressCallback=None):
 def calibrate_accel(link, progressCallback=None, errorCallback=None):
 
     enable_torques_message(link, False)
-    
+
     # Expected values +/- 2.0 [x, y, z]
     # level [ 0    0   -9.8]
     # left  [ 0    9.8  0  ]
@@ -149,14 +143,14 @@ def calibrate_accel(link, progressCallback=None, errorCallback=None):
             break
     if failed:
         return None, None, None
-    
+
     p = setup_accelcal.calibrate_accel_6dof(samples)
     level = setup_accelcal.calc_level_euler_rpy(p, samples[0])
 
     if progressCallback is None:
         print('\nCalibration values are ' + str(p))
         print('Offset values are ' + str(level.T * degrees(1)))
-    
+
     # Save the parameters to flash
     set_accel_params(link, p, level)
 

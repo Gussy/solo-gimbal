@@ -1,4 +1,3 @@
-
 PROJ := PM_Sensorless_F2806x
 
 PROJ_ROOT := .
@@ -38,7 +37,7 @@ VERSION_HEADER      := $(PROJ_ROOT)/Headers/version_git.h
 #       though we should trim back as many of these as possible from the linker, since many
 #       appear irrelevant for linking
 
-COMMFLAGS += -v28 -ml --float_support=fpu32 -O4 --opt_for_speed=2 -g -D=_DEBUG -D=LARGE_MODEL -D=FLOATING_MATH
+COMMFLAGS += -v28 -ml --float_support=fpu32 -O4 --opt_for_speed=2 -g
 COMMFLAGS += -DMAVLINK_COMM_NUM_BUFFERS=1
 
 
@@ -48,7 +47,7 @@ COMMFLAGS += -DMAVLINK_COMM_NUM_BUFFERS=1
 CFLAGS  += -v28 -ml --float_support=fpu32
 CFLAGS  += --emit_warnings_as_errors
 CFLAGS  += --quiet --diag_warning=225 --preproc_with_compile --preproc_dependency=$(@:.o=.pp)
-CFLAGS  += --c99 --issue_remarks
+CFLAGS  += --c99 --issue_remarks --single_inline
 
 
 ###############################################################################

@@ -55,32 +55,30 @@ def wait_handshake(link, timeout=1, retries=1):
     return None
 
 def get_current_joint_angles(link):
-    while(True):
-        msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
-        if msg_gimbal == None:
-            return None
-        else:
-            return Vector3([msg_gimbal.joint_roll, msg_gimbal.joint_el, msg_gimbal.joint_az])
+    msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
+    if msg_gimbal == None:
+        return None
+    else:
+        return Vector3([msg_gimbal.joint_roll, msg_gimbal.joint_el, msg_gimbal.joint_az])
         
 def get_current_delta_angles(link):
-    while(True):
-        msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
-        if msg_gimbal == None:
-            return None
-        else:
-            return Vector3([msg_gimbal.delta_angle_x, msg_gimbal.delta_angle_y, msg_gimbal.delta_angle_z])
+    msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
+    if msg_gimbal == None:
+        return None
+    else:
+        return Vector3([msg_gimbal.delta_angle_x, msg_gimbal.delta_angle_y, msg_gimbal.delta_angle_z])
 
 def get_current_delta_velocity(link, timeout=1):
     if not isinstance(link.file, mavserial):
         print "accelerometer calibration requires a serial connection"
         sys.exit(1)    
     link.file.port.flushInput() # clear any messages in the buffer, so we get a current one
-    while(True):
-        msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=timeout)
-        if msg_gimbal == None:
-            return None
-        else:
-            return Vector3([msg_gimbal.delta_velocity_x, msg_gimbal.delta_velocity_y, msg_gimbal.delta_velocity_z])
+
+    msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=timeout)
+    if msg_gimbal == None:
+        return None
+    else:
+        return Vector3([msg_gimbal.delta_velocity_x, msg_gimbal.delta_velocity_y, msg_gimbal.delta_velocity_z])
 
 def get_gimbal_report(link, timeout=2):
     msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=timeout)
@@ -110,7 +108,7 @@ def send_bootloader_data(link, sequence_number, data):
     return link.encapsulated_data_send(sequence_number, data)
 
 def getCalibrationProgress(link):
-    while(True):
+    while True:
         msg_progress = link.file.recv_match(type="COMMAND_LONG", blocking=True, timeout=1)
         if msg_progress is None:
             return None

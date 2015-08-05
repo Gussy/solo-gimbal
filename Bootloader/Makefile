@@ -36,7 +36,7 @@ SIZE_INFO	:= python $(PROJ_PYTHON_ROOT)/firmware_size_info.py
 #       though we should trim back as many of these as possible from the linker, since many
 #       appear irrelevant for linking
 
-COMMFLAGS += -v28 -ml -mt --float_support=fpu32 -O3 --opt_for_speed=2 -g -D=BOOTLOADER -D=_DEBUG -D=LARGE_MODEL -D=FLOATING_MATH
+COMMFLAGS += -v28 -ml -mt --float_support=fpu32 -O3 --opt_for_speed=2 -g -D=BOOTLOADER
 COMMFLAGS += -DMAVLINK_COMM_NUM_BUFFERS=1
 
 
@@ -46,7 +46,7 @@ COMMFLAGS += -DMAVLINK_COMM_NUM_BUFFERS=1
 CFLAGS  += -v28 -ml --float_support=fpu32
 CFLAGS  += --emit_warnings_as_errors
 CFLAGS  += --quiet --diag_warning=225 --preproc_with_compile --preproc_dependency=$(@:.o=.pp)
-CFLAGS  += --c99 --issue_remarks
+CFLAGS  += --c99 --issue_remarks --single_inline
 
 
 ###############################################################################
