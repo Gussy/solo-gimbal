@@ -739,10 +739,6 @@ void C1(void) // Update Status LEDs
                 led_set_mode(LED_MODE_FADE_IN, rgba_green, 0);
                 break;
 
-            case BLINK_READY:
-                //led_set_mode(LED_MODE_BLINK, rgba_green, 4);
-                break;
-
             case BLINK_RUNNING:
                 led_set_mode(LED_MODE_BREATHING, rgba_green, 0);
                 break;
@@ -781,15 +777,6 @@ void C1(void) // Update Status LEDs
         case BLINK_INIT:
             // slow, .8Hz, dudy cycle of 20%
             if((led_cnt%10) < 2) {
-                led_status_on();
-            } else {
-                led_status_off();
-            }
-            break;
-
-        case BLINK_READY:
-            // slow, .5Hz , dudy cycle of 90%
-            if((led_cnt % 10) < 9) {
                 led_status_on();
             } else {
                 led_status_off();
