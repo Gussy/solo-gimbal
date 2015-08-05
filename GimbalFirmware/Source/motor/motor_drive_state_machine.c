@@ -273,7 +273,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
                 md_parms->md_initialized = TRUE;
                 axis_parms->enable_flag = TRUE;
-                md_parms->motor_drive_state = STATE_RUNNING;
+                md_parms->motor_drive_state = md_parms->motor_drive_state_after_initialisation;
             }
             break;
 

@@ -992,6 +992,8 @@ void RelaxAZAxis(void)
 {
     if (motor_drive_parms.md_initialized) {
         motor_drive_parms.motor_drive_state = STATE_DISABLED;
+    } else {
+        motor_drive_parms.motor_drive_state_after_initialisation = STATE_DISABLED;
     }
 }
 
