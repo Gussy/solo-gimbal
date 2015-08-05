@@ -35,6 +35,7 @@ typedef enum {
 
 typedef struct {
     MotorDriveState motor_drive_state;
+    MotorDriveState motor_drive_state_after_initialisation;
     PARK park_xform_parms;
     CLARKE clarke_xform_parms;
     IPARK ipark_xform_parms;

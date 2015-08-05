@@ -72,7 +72,16 @@ void Process_CAN_Messages(AxisParms* axis_parms,
             break;
 
         case CAND_CMD_RELAX:
-            md_parms->motor_drive_state = STATE_DISABLED;
+            /* If a relax command is sent before the motor driver state machine has initialised,
+             * let it finish initialising before disabling it otherwise the Roll board will not
+             * send encoder values or the Elevation board will not call RunRateLoops.
+             * Without this initialisaiton the gimbal won't send feedback messages, even if it's
+             * moved out of the disabled state into a running state at a later time */
+            if (!md_parms->md_initialized) {
+                md_parms->motor_drive_state_after_initialisation = STATE_DISABLED;
+            } else {
+                md_parms->motor_drive_state = STATE_DISABLED;
+            }
             break;
 
         case CAND_CMD_RESET:

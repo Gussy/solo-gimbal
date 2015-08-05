@@ -196,6 +196,7 @@ AveragePowerFilterParms power_filter_parms = {
 
 MotorDriveParms motor_drive_parms = {
     .motor_drive_state = STATE_INIT,
+    .motor_drive_state_after_initialisation = STATE_RUNNING,
     .park_xform_parms = PARK_DEFAULTS,
     .clarke_xform_parms = CLARKE_DEFAULTS,
     .ipark_xform_parms = IPARK_DEFAULTS,
