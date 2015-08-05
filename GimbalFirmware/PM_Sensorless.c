@@ -985,6 +985,8 @@ void EnableAZAxis(void)
 {
     if (motor_drive_parms.md_initialized) {
         motor_drive_parms.motor_drive_state = STATE_RUNNING;
+    } else {
+        motor_drive_parms.motor_drive_state_after_initialisation = STATE_RUNNING;
     }
 }
 

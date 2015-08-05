@@ -68,6 +68,8 @@ void Process_CAN_Messages(AxisParms* axis_parms,
             if (md_parms->md_initialized) {
                 axis_parms->enable_flag = TRUE;
                 md_parms->motor_drive_state = STATE_RUNNING;
+            } else {
+                md_parms->motor_drive_state_after_initialisation = STATE_RUNNING;
             }
             break;
 
