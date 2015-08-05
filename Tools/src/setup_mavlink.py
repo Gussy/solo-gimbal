@@ -56,6 +56,7 @@ def wait_for_heartbeat(link, retries=5):
 def print_heartbeat(link):
     link.heartbeat_send(0, 0, 0, 0, 0)
     msg = link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1)
+    print(msg)
 
 def wait_handshake(link, timeout=1, retries=1):
     '''wait for a handshake so we know the target system IDs'''
@@ -195,15 +196,15 @@ if __name__ == '__main__':
     # Send a heartbeat first to wake up the interface
     link.heartbeat_send(0, 0, 0, 0, 0)
 
+    while True:
+        print get_any_message(link)
+
     # while True:
-    #     print get_any_message(link)
+    #     print time.time(), get_gimbal_message(link)
 
-    while True:
-        print time.time(), get_gimbal_message(link)
-
-    while True:
-        msg = get_all(link)
-        if msg is not None:
-            print time.time(), msg
-        else:
-            print('.')
+    # while True:
+    #     msg = get_all(link)
+    #     if msg is not None:
+    #         print time.time(), msg
+    #     else:
+    #         print('.')
