@@ -33,19 +33,19 @@ def start_bootloader(link):
     if msg and setup_mavlink.is_bootloader_message(msg):
         return Results.InBoot
     
-    timeout_counter = 0;
-    while True:
-        # Signal the target to reset into bootloader mode
-        setup_mavlink.reset_into_bootloader(link)
+    # Signal the target to reset into bootloader mode
+    setup_mavlink.reset_into_bootloader(link)
+
+    # Wait for the bootloader to send a handshake
+    timeout_counter = 0
+    while timeout_counter < 5:
         msg = setup_mavlink.wait_handshake(link)
-        timeout_counter += 1
-        
-        if msg == None:
-            if timeout_counter > 20:
-                return Results.NoResponse
+        if msg is None:
+            setup_mavlink.reset_into_bootloader(link)
+            timeout_counter += 1
         else:
-            break
-    return Results.Restarting
+            return Results.Restarting
+    return Results.NoResponse
 
 def send_block(link, binary, msg):
     sequence_number = msg.width
