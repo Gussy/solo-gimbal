@@ -115,11 +115,11 @@ def finish_upload(link):
             return Results.Timeout
         if msg.width == DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_WIDTH:
             break
-        
-    if setup_mavlink.wait_for_heartbeat(link, retries=5) == None:
-        return Results.Timeout
-    else:
+
+    if setup_mavlink.wait_for_gimbal_message(link, timeout=5):
         return Results.Success
+    else:
+        return Results.Timeout
 
 def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None):
     global bootloaderVersionHandler, progressHandler

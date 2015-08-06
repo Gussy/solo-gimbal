@@ -4,15 +4,13 @@
 Command-line utility to handle comms to gimbal 
 '''
 import time, os, sys, argparse, time, json
-import setup_factory_pub
-from setup_mavlink import open_comm, wait_for_heartbeat
+import setup_mavlink, setup_factory_pub
 
 from firmware_helper import load_firmware, append_checksum
 from firmware_loader import load_binary, start_bootloader
 from firmware_loader import Results as loader_results
-import setup_comutation, setup_mavlink
+import setup_validate, setup_param, setup_comutation
 from setup_comutation import Results as calibration_results
-import setup_validate, setup_param
 
 # Optional imports
 try:
@@ -58,7 +56,7 @@ def handle_file(args, link):
         elif result == loader_results.InBoot:
             print('Target already in bootloader mode')
         elif result == loader_results.Restarting:
-            print("Restarting target in bootloader mode")
+            print("Restarted target in bootloader mode")
 
         # Load the binary using the bootloader
         result = load_binary(binary, link, bootloaderVersionCallback=bootloaderVersionCallback, progressCallback=loaderProgressCallback)
@@ -234,7 +232,7 @@ def command_interface():
     args = parser.parse_args()
 
     # Open the serial port
-    port, link = open_comm(args.port)
+    port, link = setup_mavlink.open_comm(args.port)
     print("Connecting via port %s" % port)
 
     # Send a heartbeat first to wake up the interface, because mavlink
@@ -264,7 +262,6 @@ def command_interface():
     
     if args.forcecal:
         eraseCalibration(link)
-        wait_for_heartbeat(link)
         # TODO: Check if this timeout is necessary
         time.sleep(5)
         runCalibration(link)

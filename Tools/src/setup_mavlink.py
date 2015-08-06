@@ -46,23 +46,11 @@ def open_comm(port=None, baudrate=230400):
     finally:
         return (port, link)
 
-def wait_for_heartbeat(link, retries=5):
-    for i in range(retries):
-        link.heartbeat_send(0, 0, 0, 0, 0)
-        if link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1):
-            return True
-    return False
-
-def print_heartbeat(link):
-    link.heartbeat_send(0, 0, 0, 0, 0)
-    msg = link.file.recv_match(type='HEARTBEAT', blocking=True, timeout=1)
-
 def wait_handshake(link, timeout=1, retries=1):
     '''wait for a handshake so we know the target system IDs'''
     for retries in range(retries):
         msg = link.file.recv_match(type='DATA_TRANSMISSION_HANDSHAKE', blocking=True, timeout=timeout)
-        if msg != None:
-            if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
+        if msg and msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
                 return msg
     return None
 
@@ -108,7 +96,7 @@ def reset_gimbal(link):
         # Sleep to allow the reset command to take
         time.sleep(2)
         # Wait for the gimbal to reset and begin comms again
-        return setup_mavlink.wait_for_heartbeat(link)
+        return setup_mavlink.get_any_gimbal_message(link, timeout=5)
     else:
         return False 
 
@@ -161,24 +149,38 @@ def get_gimbal_message(link, timeout=2):
                 if msg.get_msgId() == mavlink.MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
                     return False
                 if msg.get_msgId() == mavlink.MAVLINK_MSG_ID_HEARTBEAT:
-                    return False
+                    continue
                 else:
                     return True
     return False
+
+def wait_for_gimbal_message(link, timeout=5):
+    start_time = time.time()
+    while (time.time() - start_time) < timeout:
+        if get_gimbal_message(link, timeout=1):
+            return True
+    return None
 
 def get_any_gimbal_message(link, timeout=2):
     start_time = time.time()
     while (time.time() - start_time) < timeout:
         msg = link.file.recv_match(blocking=True, timeout=1)
         if msg:
-            if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
+            if (msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL
+                and msg.get_msgId() != mavlink.MAVLINK_MSG_ID_HEARTBEAT):
                 return msg
+    return None
+
+def wait_for_any_gimbal_message(link, timeout=5):
+    start_time = time.time()
+    while (time.time() - start_time) < timeout:
+        if get_any_gimbal_message(link, timeout=1):
+            return True
     return None
 
 def is_bootloader_message(msg):
     if (msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL and
-        msg.get_msgId() == mavlink.MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE
-        or msg.get_msgId() == mavlink.MAVLINK_MSG_ID_HEARTBEAT):
+        msg.get_msgId() == mavlink.MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE):
         return True
     return False
 
@@ -199,7 +201,7 @@ if __name__ == '__main__':
     #     print get_any_message(link)
 
     while True:
-        print time.time(), get_gimbal_message(link)
+        print time.time(), get_any_gimbal_message(link)
 
     while True:
         msg = get_all(link)
