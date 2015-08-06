@@ -114,15 +114,9 @@ Uint16 IndexTimeOut = 0;
 static bool gp_connected = true;
 static Uint32 gp_connected_elapsed = 0;
 static const Uint32 gp_connected_delay_ms = 4000;
-
-static int led_cnt = 0;
-static uint16_t beacon_startup_counter = 0;
-static const uint16_t beacon_startup_delay_cycles = 14;
-static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
-static const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
-static const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
-static const LED_RGBA rgba_blue = {0, 0, 0xff, 0xff};
 static const LED_RGBA rgba_purple = {0xff, 0, 0xff, 0xff};
+
+static uint16_t beacon_startup_counter = 0;
 
 EncoderParms encoder_parms = {
     .raw_theta = 0,
@@ -689,17 +683,17 @@ void B1(void)
 {
     // Disable the gimbal when the GoPro is disconnected, re-enable when it's connected again
     if (GetBoardHWID() == EL) {
-        if (!GP_VON && gp_connected) {
+        if (!gp_von_is_enabled() && gp_connected) {
             // Disable the other two axes and ourselves
             cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_DISABLE);
             RelaxAZAxis();
             gp_connected = false;
             axis_parms.blink_state = BLINK_NO_CAMERA;
-        } else if (!GP_VON) {
+        } else if (!gp_von_is_enabled()) {
             axis_parms.blink_state = BLINK_NO_CAMERA;
             led_set_mode(LED_MODE_BLINK, rgba_purple, 0);
             gp_connected = false;
-        } else if (GP_VON && !gp_connected) {
+        } else if (gp_von_is_enabled() && !gp_connected) {
             if (gp_connected_elapsed++ > (gp_connected_delay_ms / B_TASK_FREQUENCY_MS)) {
                 // Enable the other two axes and ourselves
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
@@ -748,7 +742,6 @@ void B3(void) //  SPARE
 
 //--------------------------------- USER ------------------------------------------
 
-static uint16_t beacon_startup_counter = 0;
 static const uint16_t beacon_startup_delay_cycles = 14;
 static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
 static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
