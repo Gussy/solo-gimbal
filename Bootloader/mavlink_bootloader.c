@@ -137,18 +137,7 @@ static void prepare_flash(void) {
     flash_csm_unlock();
 
     /* don't erase SECTOR A */
-    Flash_Erase(SECTORB, &FlashStatus);
-    led_status_toggle();
-    Flash_Erase(SECTORC, &FlashStatus);
-    led_status_toggle();
-    Flash_Erase(SECTORD, &FlashStatus);
-    led_status_toggle();
-    Flash_Erase(SECTORE, &FlashStatus);
-    led_status_toggle();
-    Flash_Erase(SECTORF, &FlashStatus);
-    led_status_toggle();
-    Flash_Erase(SECTORG, &FlashStatus);
-    led_status_toggle();
+    Flash_Erase(SECTORB|SECTORC|SECTORD|SECTORE|SECTORF|SECTORG, &FlashStatus);
     /* don't erase SECTOR H */
 }
 
