@@ -196,6 +196,7 @@ AveragePowerFilterParms power_filter_parms = {
 
 MotorDriveParms motor_drive_parms = {
     .motor_drive_state = STATE_INIT,
+    .motor_drive_state_after_initialisation = STATE_RUNNING,
     .park_xform_parms = PARK_DEFAULTS,
     .clarke_xform_parms = CLARKE_DEFAULTS,
     .ipark_xform_parms = IPARK_DEFAULTS,
@@ -737,10 +738,6 @@ void C1(void) // Update Status LEDs
                 led_set_mode(LED_MODE_FADE_IN, rgba_green, 0);
                 break;
 
-            case BLINK_READY:
-                //led_set_mode(LED_MODE_BLINK, rgba_green, 4);
-                break;
-
             case BLINK_RUNNING:
                 led_set_mode(LED_MODE_BREATHING, rgba_green, 0);
                 break;
@@ -938,6 +935,8 @@ void EnableAZAxis(void)
 {
     if (motor_drive_parms.md_initialized) {
         motor_drive_parms.motor_drive_state = STATE_RUNNING;
+    } else {
+        motor_drive_parms.motor_drive_state_after_initialisation = STATE_RUNNING;
     }
 }
 
@@ -945,6 +944,8 @@ void RelaxAZAxis(void)
 {
     if (motor_drive_parms.md_initialized) {
         motor_drive_parms.motor_drive_state = STATE_DISABLED;
+    } else {
+        motor_drive_parms.motor_drive_state_after_initialisation = STATE_DISABLED;
     }
 }
 

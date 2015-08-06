@@ -197,9 +197,6 @@ class calibrationUI(object):
             self.status = "Resetting"
             reset = yield AsyncTask(self.resetGimbal)
             if reset:
-                # If the connection is cycled too early, the gimbal doesn't fully
-                # initialise and won't send us any gimbal report messages...
-                time.sleep(10) 
                 self.connection.cycleConnection()
 
             if result == setup_comutation.Results.Success:
