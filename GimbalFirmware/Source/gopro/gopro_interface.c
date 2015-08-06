@@ -12,13 +12,14 @@
 #include <ctype.h>
 
 
-#define GP_INIT_TIMEOUT_MS 3000
+#define GP_INIT_TIMEOUT_MS 10000    // Time allowed for GoPro to complete handshake before it is deemed incompatible, could probably be reduced to something lower but it should be at least > 3000, if not more (accurate time TBD)
 
 static void gp_reset();
 static void gp_timeout();
 
 static void gp_detect_camera_model(const uint16_t *buf, uint16_t len);
-static void handle_rx_data(uint16_t *buf, uint16_t len);
+static void gp_on_txn_complete();
+static bool handle_rx_data(uint16_t *buf, uint16_t len);
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
@@ -33,17 +34,23 @@ static uint16_t rxbuf[RX_BUF_SZ];
 bool new_heartbeat_available = false;
 
 Uint16 heartbeat_counter = 0;
-GPPowerStatus previous_power_status = GP_POWER_UNKNOWN;
 
 
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 
     bool txn_result_pending;
+    bool txn_is_internal;
     gp_transaction_t txn;
+
+    GPPowerStatus power_status;
 
     uint16_t init_timeout_ms;
     GPModel model;
+    GPCaptureMode capture_mode;
+    GPCaptureMode pending_capture_mode;
+    uint16_t capture_mode_polling_counter;
+    bool recording;
 
     gp_h3p_t h3p;
     gp_h4_t h4;
@@ -57,16 +64,27 @@ static gopro_t gp;
 void init_gp_interface()
 {
     gp_reset();
+    gp.power_status = GP_POWER_UNKNOWN;
+
     gopro_i2c_init();
 
-    gp_enable_hb_interface();
+    // bacpac detect is enabled once we know the camera is powered on
 }
 
 void gp_reset()
 {
     gp.waiting_for_i2c = false;
-    gp.model = GP_MODEL_UNKNOWN;
+
+    gp.txn_result_pending = false;
+    gp.txn_is_internal = false;
+    // txn is not initialized
+
     gp.init_timeout_ms = 0;
+    gp.model = GP_MODEL_UNKNOWN;
+    gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+    gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+    gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
+    gp.recording = false;
 
     gp_deassert_intr();
 
@@ -95,12 +113,12 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
      * Called by protocol modules (h4, h3p, etc)
      * to send a command to the camera.
      */
+    uint16_t i;
 
     if (gp_control_state != GP_CONTROL_STATE_IDLE) {
         return false;
     }
 
-    int i;
     for (i = 0; i < len; ++i) {
         txbuf[i] = cmd[i];
     }
@@ -113,6 +131,10 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
     gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
 
     return true;
+}
+
+GPRequestType gp_transaction_direction() {
+    return gp.txn.reqtype;
 }
 
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status)
@@ -168,9 +190,17 @@ bool gp_get_completed_transaction(gp_transaction_t ** rsp)
         return false;
     }
 
+    gp.txn_result_pending = false;
+
+    // if transaction is internal, don't return currently pending response
+    if (gp.txn_is_internal) {
+        gp.txn_is_internal = false;
+
+        return false;
+    }
+
     *rsp = &gp.txn;
 
-    gp.txn_result_pending = false;
     return true;
 }
 
@@ -198,9 +228,14 @@ GPHeartbeatStatus gp_heartbeat_status()
 			&& last_set_request.cmd_id == GOPRO_COMMAND_SHUTTER
 			&& last_set_request.value == 1) {
 			heartbeat_status = GP_HEARTBEAT_RECORDING;
-    } else */if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
-		heartbeat_status = GP_HEARTBEAT_CONNECTED;
-	} else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && GP_VON) {
+    } else */
+    if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
+        if (gp_is_recording()) {
+            heartbeat_status = GP_HEARTBEAT_RECORDING;
+        } else {
+            heartbeat_status = GP_HEARTBEAT_CONNECTED;
+        }
+    } else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && gp_von_is_enabled()) {
 		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
 		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
     } else if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
@@ -238,18 +273,33 @@ bool gp_request_power_off()
     return false;
 }
 
-int gp_get_request(Uint8 cmd_id)
+bool gp_request_capture_mode()
+{
+    if (gp_ready_for_cmd() && !gp_is_recording()) {
+        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, false);                  // not internal since currently there is no other method to notify when the capture mode changes, besides addressing a request
+        return true;
+    }
+
+    return false;
+}
+
+int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
 {
     /*
-     * Called when a CAN msg has been received with a `gopro get request` msg type.
+     * Called when a CAN msg has been received with a `gopro get request` msg type
+     * or an internal transaction is performed.
      *
-     * Fire off the transaction for the requested cmd,
+     * Otherwise, fire off the transaction for the requested cmd,
      * and assume that the CAN layer will pick up the response
-     * via gp_get_last_get_response()
+     * via gp_get_last_get_response(), assuming txn_is_internal is false.
+     *
+     * If tx_is_internal is set to true, CAN layer will not pick up the response.
+     *
      */
 
     gp.txn.reqtype = GP_REQUEST_GET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)cmd_id;
+    gp.txn_is_internal = txn_is_internal;
 
     if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
         switch (gp.model) {
@@ -281,6 +331,7 @@ int gp_set_request(GPSetRequest* request)
 
     gp.txn.reqtype = GP_REQUEST_SET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)request->cmd_id;
+    gp.txn_is_internal = false;     // parameterize if we ever need to send an internal 'SET' command
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
 	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
@@ -308,7 +359,7 @@ GPPowerStatus gp_get_power_status()
     if (gp_control_state == GP_CONTROL_STATE_REQUEST_POWER_ON || gp_control_state == GP_CONTROL_STATE_WAIT_POWER_ON) {
         return GP_POWER_WAIT;
     } else {
-        if (GP_VON == 1) {
+        if (gp_von_is_enabled()) {
             return GP_POWER_ON;
         } else {
             return GP_POWER_OFF;
@@ -344,6 +395,8 @@ void gp_disable_charging()
 // for proper gopro interface operation
 void gp_interface_state_machine()
 {
+    GPPowerStatus new_power_status;
+
     if (gp.waiting_for_i2c) {
         if (gopro_i2c_in_progress()) {
             if (timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
@@ -354,7 +407,15 @@ void gp_interface_state_machine()
 
             if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_GP_DATA_COMPLETE) {
                 // transaction was rx
-                handle_rx_data(rxbuf, i2c_get_rx_len());
+                if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
+                    // if we have data to send, send it over I2C
+                    gp_assert_intr();
+
+                    gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
+                    timeout_counter = 0;
+                } else {
+                    gp_on_txn_complete();
+                }
 
             } else {
                 // transaction was tx
@@ -364,10 +425,7 @@ void gp_interface_state_machine()
                     // sent response, we're all done
                     gp_control_state = GP_CONTROL_STATE_IDLE;
 
-                    // special case, must kick off final step of handshake sequence on hero4
-                    if (gp.model == GP_MODEL_HERO4 && !gp_handshake_complete()) {
-                        gp_h4_finish_handshake(&gp.h4);
-                    }
+                    gp_on_txn_complete();
                 }
             }
         }
@@ -390,10 +448,25 @@ void gp_interface_state_machine()
             break;
     }
 
-    // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
-    // the heartbeat with an incompatible state while it's gccb version is being queried
-    if(!gp_handshake_complete() && !init_timed_out()) {
-        gp.init_timeout_ms++;
+    if (gp_get_power_status() == GP_POWER_ON) {
+        // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
+        // the heartbeat with an incompatible state while it's gccb version is being queried
+        if(!gp_handshake_complete() && !init_timed_out()) {
+            gp.init_timeout_ms++;
+
+            if (init_timed_out()) {
+                // camera is incompatible,
+                // try to avoid freezing it by disabling bacpac detect
+                gp_disable_hb_interface();
+            }
+        }
+
+        // request an update on GoPro's current capture mode, infrequently to avoid freezing the GoPro
+        if (gp.capture_mode_polling_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
+            gp.capture_mode_polling_counter = 0;
+
+            gp_request_capture_mode();
+        }
     }
 
 	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
@@ -402,12 +475,41 @@ void gp_interface_state_machine()
 		heartbeat_counter = 0;
 	}
 
-	// Detect a change in power status to reset some flags when a GoPro is re-connected during operation
-	GPPowerStatus new_power_status = gp_get_power_status();
-    if (previous_power_status != new_power_status) {
+    // Detect a change in power status to reset some flags when a GoPro is re-connected during operation
+    new_power_status = gp_get_power_status();
+    if (gp.power_status != new_power_status) {
         gp_reset();
-	}
-	previous_power_status = new_power_status;
+        gp.power_status = new_power_status;
+
+        if (gp.power_status == GP_POWER_ON) {
+            // camera is up and running, we can let it know we're here
+            gp_enable_hb_interface();
+        } else {
+            // keep bacpac detect disabled by default
+            gp_disable_hb_interface();
+        }
+    }
+}
+
+void gp_on_txn_complete()
+{
+    /*
+     * Called after a HeroBus request/response transaction
+     * has been completed.
+     *
+     */
+
+    switch (gp.model) {
+    case GP_MODEL_HERO3P:
+        // do nothing
+        break;
+    case GP_MODEL_HERO4:
+        gp_h4_on_txn_complete(&gp.h4);
+        break;
+    case GP_MODEL_UNKNOWN:
+    default:
+        break;
+    }
 }
 
 void gp_detect_camera_model(const uint16_t *buf, uint16_t len)
@@ -426,7 +528,7 @@ void gp_detect_camera_model(const uint16_t *buf, uint16_t len)
     }
 }
 
-void handle_rx_data(uint16_t *buf, uint16_t len)
+bool handle_rx_data(uint16_t *buf, uint16_t len)
 {
     /*
      * Called when an i2c rx transaction has completed.
@@ -442,15 +544,24 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
     // handlers can override if they have a response to send
     gp_control_state = GP_CONTROL_STATE_IDLE;
 
-    if (gp.model == GP_MODEL_HERO4) {
+    switch (gp.model) {
+    case GP_MODEL_HERO3P:{
+        bool from_camera;
+        if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
+            if (gp_h3p_handle_rx(&gp.h3p, buf, from_camera, txbuf)) {
+                return true;
+            }
+        }
+        break;
+    }
+    case GP_MODEL_HERO4:
         if (gp_h4_rx_data_is_valid(buf, len)) {
-
             // XXX: avoid all this copying
 
             gp_h4_pkt_t pkt;
             gp_h4_pkt_t rsp;
 
-            int i;
+            uint16_t i;
             for (i = 0; i < GP_COMMAND_RECEIVE_BUFFER_SIZE; ++i) {
                 pkt.bytes[i] = buf[i];
             }
@@ -461,46 +572,32 @@ void handle_rx_data(uint16_t *buf, uint16_t len)
                     txbuf[i] = rsp.bytes[i];
                 }
 
-                gp_assert_intr();
-
-                gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
-                timeout_counter = 0;
+                return true;
             }
         }
-        return;
+        break;
+
+    default:
+        // error in data rx, return to idle
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        gp_control_state = GP_CONTROL_STATE_IDLE;
+        break;
     }
 
-    if (gp.model == GP_MODEL_HERO3P) {
-        bool from_camera;
-        if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
-
-            if (gp_h3p_handle_rx(&gp.h3p, buf, len, from_camera, txbuf)) {
-
-                gp_assert_intr();
-
-                gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
-                timeout_counter = 0;
-            }
-
-        }
-        return;
-    }
-
-    // error in data rx, return to idle
-    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-    gp_control_state = GP_CONTROL_STATE_IDLE;
+    return false;
 }
 
 void gp_write_eeprom()
 {
-	if(GP_VON != 1)
+    // Data to write into EEPROM
+    uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
+    uint8_t i;
+
+    if (!gp_von_is_enabled())
 		return;
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
 	gp_disable_hb_interface();
-
-	// Data to write into EEPROM
-	uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
 
 	// Init I2C peripheral
 	I2caRegs.I2CMDR.all = 0x0000;
@@ -527,7 +624,6 @@ void gp_write_eeprom()
 	// Start, stop, no rm, reset i2c
 	I2caRegs.I2CMDR.all = 0x6E20;
 
-	uint8_t i;
 	for(i = 0; i < GP_I2C_EEPROM_NUMBYTES; i++){
 		// Setup I2C Master Write
 		I2caRegs.I2CMDR.all = 0x6E20;
@@ -611,3 +707,63 @@ void gp_timeout()
 
     gp_control_state = GP_CONTROL_STATE_IDLE;
 }
+
+GPCaptureMode gp_capture_mode()
+{
+    return gp.capture_mode;
+}
+
+bool gp_is_valid_capture_mode(Uint8 capture_mode) {
+    return (capture_mode == GP_CAPTURE_MODE_VIDEO || capture_mode == GP_CAPTURE_MODE_PHOTO || capture_mode == GP_CAPTURE_MODE_BURST);
+}
+
+void gp_latch_pending_capture_mode()
+{
+    if (gp.pending_capture_mode != GP_CAPTURE_MODE_UNKNOWN) {
+        gp_set_capture_mode(gp.pending_capture_mode);
+    }
+}
+
+bool gp_pend_capture_mode(Uint8 capture_mode)
+{
+    /*
+     * Called when a 'SET capture mode' cmd, which contains the new capture
+     * mode, is received from the CAN/MAVLink layer. The new capture mode is
+     * then pended until we have confirmation that the I2C 'SET capture mode'
+     * transaction has completed successfully, at which point the new
+     * capture mode state will be set.
+     *
+     * The process described above is implemented because the response to the
+     * 'SET' I2C cmd does not contain information about the new capture mode.
+     *
+     */
+
+    if (gp_is_valid_capture_mode(capture_mode)) {
+        gp.pending_capture_mode = (GPCaptureMode)capture_mode;
+        return true;
+    }
+
+    return false;
+}
+
+bool gp_set_capture_mode(Uint8 capture_mode)
+{
+    if (gp_is_valid_capture_mode(capture_mode)) {
+        gp.capture_mode = (GPCaptureMode)capture_mode;
+        gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+        return true;
+    }
+
+    return false;
+}
+
+void gp_set_recording_state(bool recording_state)
+{
+    gp.recording = recording_state;
+}
+
+bool gp_is_recording()
+{
+    return gp.recording;
+}
+

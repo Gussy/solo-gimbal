@@ -13,20 +13,20 @@
 
 #include <string.h>
 
-static const LED_RGBA rgba_red = {0xff, 0, 0, 0xff};
+static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
 
 static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set);
 
 CommutationCalibrationParms cc_parms = {
-    COMMUTATION_CALIBRATION_STATE_INIT,     // Commutation calibration state
-    0,                                      // Current iteration
-    0,                                      // Current electrical cycle
-    0,                                      // Current electrical sub-cycle
-    0,                                      // Current direction
-    0,                                      // Settling timer
-    0,
-    RMPCNTL_DEFAULTS,                       // Ramp control parameters
-    {0}                                     // Calibration data
+    .calibration_state = COMMUTATION_CALIBRATION_STATE_INIT,
+    .current_iteration = 0,
+    .current_elec_cycle = 0,
+    .current_elec_sub_cycle = 0,
+    .current_dir = 0,
+    .settling_timer = 0,
+    .ezero_step = 0,
+    .ramp_cntl = RMPCNTL_DEFAULTS,
+    .calibration_data = {0}
 };
 
 void MotorDriveStateMachine(AxisParms* axis_parms,
@@ -136,8 +136,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 				AxisCalibrationSlopes[my_axis] = flash_params.commutation_slope[my_axis];
 				AxisCalibrationIntercepts[my_axis] = flash_params.commutation_icept[my_axis];
 
-				// If this is the elevation axis, we also need to load rate loop PID gains
-				if (my_axis == EL) {
+				// If this is the elevation axis, we also need to load rate loop PID gains,
+				// if the param "GMB_CUST_GAINS" is set to 1.0
+				if (my_axis == EL && flash_params.use_custom_gains == 1.0) {
 					rate_pid_loop_float[AZ].gainP = flash_params.rate_pid_p[AZ];
 					rate_pid_loop_float[AZ].gainI = flash_params.rate_pid_i[AZ];
 					rate_pid_loop_float[AZ].gainD = flash_params.rate_pid_d[AZ];
@@ -224,7 +225,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                     // If any axes require calibration, go to the wait for axis calibration command state, where we'll send a periodic
                     // status message and wait for a command to calibrate
                     md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
-                    CANUpdateBeaconState(LED_MODE_SOLID, rgba_red, 0);
+                    CANUpdateBeaconState(LED_MODE_BREATHING, rgba_red, 0);
                 } else {
                     cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_CALIBRATE_AXES);
                     md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
@@ -357,7 +358,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_UNRECOVERABLE_FAULT:
-            axis_parms->blink_state = BLINK_ERROR;
+            axis_parms->blink_state = BLINK_ERROR_UNRECOVERABLE;
             // Set park transformation angle to 0
             md_parms->park_xform_parms.Angle = 0;
 

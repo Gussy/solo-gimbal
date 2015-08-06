@@ -129,3 +129,6 @@ class validationUI(object):
 
         self.ui.btnValidationRunTests.setEnabled(True)
         self.ui.btnValidationSetDefaults.setEnabled(True)
+
+        # Cycle the connection since the gimbal rebooted
+        self.connection.cycleConnection()

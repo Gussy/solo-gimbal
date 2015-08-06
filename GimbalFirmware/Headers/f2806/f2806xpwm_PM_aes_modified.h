@@ -75,7 +75,7 @@ Initialization constant for the F280X Trip Zone Control Register
 	Define the structure of the PWM Driver Object 
 -----------------------------------------------------------------------------*/
 typedef struct {   
-        Uint16 PeriodMax;     // Parameter: PWM Half-Period in CPU clock cycles (Q0)
+        int16 PeriodMax;      // Parameter: PWM Half-Period in CPU clock cycles (Q0)
         int16 MfuncPeriod;    // Input: Period scaler (Q15) 
         int16 MfuncC1;        // Input: EPWM1 A&B Duty cycle ratio (Q15)
         int16 MfuncC2;        // Input: EPWM2 A&B Duty cycle ratio (Q15) 

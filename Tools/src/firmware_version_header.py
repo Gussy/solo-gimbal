@@ -5,8 +5,11 @@ Utility for generating a version header file
 
 """
 
-import argparse
+import argparse, struct
 from firmware_git_tools import osGitCommand, gitIdentity, gitBranch
+
+def bytes4_to_float(b1, b2, b3, b4):
+	return struct.unpack('>f', struct.pack('4b', b1, b2, b3, b4))
 
 # Parse commandline arguments
 parser = argparse.ArgumentParser(description="Utility for generating a version header file")
@@ -15,17 +18,12 @@ args = parser.parse_args()
 
 os_git_command = osGitCommand()
 git_identity = gitIdentity(os_git_command)
-git_branch = gitBranch(os_git_command)
 
 git_tag = git_identity.split('-')[0]
 git_semver = git_tag[1:].split('.')
+version_float = bytes4_to_float(int(git_semver[0]), int(git_semver[1]), int(git_semver[2]), 0)[0]
 
 # Write the header file
 with open(args.output, 'w') as f:
 	f.write("#define GitVersionString \"%s\"\n" % git_identity)
-	f.write("#define GitBranch \"%s\"\n" % git_branch)
-	f.write("#define GitTag \"%s\"\n" % git_tag)
-	f.write("#define GitCommit \"%s\"\n" % git_identity.split('-')[2])
-	f.write("#define GitVersionMajor \"%s\"\n" % git_semver[0])
-	f.write("#define GitVersionMinor \"%s\"\n" % git_semver[1])
-	f.write("#define GitVersionRevision \"%s\"\n" % git_semver[2])
+	f.write("#define GitVersionFloat %s\n" % version_float)

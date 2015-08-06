@@ -1,0 +1,6 @@
+#ifndef SHARED_HEADERS_FLASH_FLASH_MIGRATIONS_H_
+#define SHARED_HEADERS_FLASH_FLASH_MIGRATIONS_H_
+
+void flash_migration_run(Uint16 from_rev);
+
+#endif /* SHARED_HEADERS_FLASH_FLASH_MIGRATIONS_H_ */

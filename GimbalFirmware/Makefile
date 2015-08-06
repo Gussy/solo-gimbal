@@ -27,6 +27,7 @@ HEX     := $(TI_ROOT)/bin/hex2000
 
 RELEASE_GEN         := python $(PROJ_PYTHON_ROOT)/firmware_release.py
 VERSION_HEADER_GEN  := python $(PROJ_PYTHON_ROOT)/firmware_version_header.py
+SIZE_INFO           := python $(PROJ_PYTHON_ROOT)/firmware_size_info.py
 SETUP_TOOL      	:= python $(PROJ_PYTHON_ROOT)/setup.py
 
 VERSION_HEADER      := $(PROJ_ROOT)/Headers/version_git.h
@@ -38,6 +39,7 @@ VERSION_HEADER      := $(PROJ_ROOT)/Headers/version_git.h
 #       appear irrelevant for linking
 
 COMMFLAGS += -v28 -ml --float_support=fpu32 -O4 --opt_for_speed=2 -g -D=_DEBUG -D=LARGE_MODEL -D=FLOATING_MATH
+COMMFLAGS += -DMAVLINK_COMM_NUM_BUFFERS=1
 
 
 ###############################################################################
@@ -46,6 +48,7 @@ COMMFLAGS += -v28 -ml --float_support=fpu32 -O4 --opt_for_speed=2 -g -D=_DEBUG -
 CFLAGS  += -v28 -ml --float_support=fpu32
 CFLAGS  += --emit_warnings_as_errors
 CFLAGS  += --quiet --diag_warning=225 --preproc_with_compile --preproc_dependency=$(@:.o=.pp)
+CFLAGS  += --c99 --issue_remarks
 
 
 ###############################################################################
@@ -89,6 +92,7 @@ flash:
 
 $(PROJ).ax: $(PROJ).out $(PROJ).hex
 	$(RELEASE_GEN) --image=$(PROJ).hex --outdir=$(PROJ_ROOT)
+	$(SIZE_INFO) $(PROJ).map --project=$(PROJ)
 
 $(PROJ).out: $(VERSION_HEADER) $(OBJS) $(LDSCRIPTS)
 	$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@

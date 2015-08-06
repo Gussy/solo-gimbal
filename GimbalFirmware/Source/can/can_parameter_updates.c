@@ -11,7 +11,7 @@
 int16 rate_cmds_received[3];
 Uint32 debug_output_decimation_count = 0;
 
-void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data,  EncoderParms* encoder_parms)
+void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data)
 {
     IntOrFloat float_converter;
     // Check for updated rate loop PID params
@@ -183,12 +183,13 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
 
             // If any of the rate commands have been updated, run the kinematics transform and update the transformed rate commands
             // (NOTE: in practice, all 3 rate commands should be updated at the same time, since the parameter updates come in the same message)
-            do_gyro_correction(rate_cmds_received, cb_parms->encoder_readings, cb_parms->rate_cmd_inject);
+            update_joint_ang_trig(cb_parms->encoder_readings); // TODO: determine where to run this such that it only updates as often as necessary
+            transform_ang_vel_to_joint_rate(rate_cmds_received, cb_parms->rate_cmd_inject);
         }
 
         // Check for any new GoPro get requests
         if (*(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) == TRUE) {
-            gp_get_request((Uint8)param_set[CAND_PID_GOPRO_GET_REQUEST].param);
+            gp_get_request((Uint8)param_set[CAND_PID_GOPRO_GET_REQUEST].param, false);
             *(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) = FALSE;
         }
 

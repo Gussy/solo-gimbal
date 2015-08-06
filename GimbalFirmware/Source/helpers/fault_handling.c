@@ -6,7 +6,7 @@
 #include "motor/motor_drive_state_machine.h"
 #include "PM_Sensorless.h"
 
-void AxisFault(CAND_FaultCode fault_code, CAND_FaultType fault_type, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, AxisParms* axis_parms)
+void AxisFault(CAND_FaultCode fault_code, CAND_FaultType fault_type, ControlBoardParms* cb_parms, MotorDriveParms* md_parms)
 {
     // Remember our own last fault code
     cb_parms->last_axis_fault[GetBoardHWID()] = fault_code;

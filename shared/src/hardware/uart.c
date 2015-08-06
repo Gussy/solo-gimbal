@@ -98,13 +98,14 @@ void uart_printf(const char* format, ...)
 {
     // Format the string into the format buffer
     static char buffer[UART_STRING_LIMIT + 1];
+    int string_len;
     va_list ap;
     va_start(ap, format);
     vsnprintf(buffer, UART_STRING_LIMIT, format, ap);
     va_end(ap);
 
     // Transmit the formatted string
-    int string_len = strlen(buffer);
+    string_len = strlen(buffer);
     uart_send_data((Uint8*)buffer, string_len);
 
     return;

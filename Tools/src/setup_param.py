@@ -8,6 +8,12 @@ import time
 from pymavlink.mavparm import MAVParmDict
 from pymavlink.dialects.v10.ardupilotmega import MAV_PARAM_TYPE_REAL32
 from pymavlink.rotmat import Vector3
+import setup_mavlink
+
+try:
+    import setup_factory_private
+except ImportError:
+    setup_factory_private = None
 
 def fetch_param(link, param, timeout=2):
     for i in range(timeout):
@@ -21,7 +27,7 @@ def set_param(link, param_name, param_value):
     parameters = MAVParmDict()
     parameters.mavset(link.file, param_name, param_value, 3);
 
-def commit_to_flash(link):    
+def commit_to_flash(link):
     # Commit the zeroed out calibration parameters to flash
     link.param_set_send(link.target_sysid, 0, "GMB_FLASH", 69.0, MAV_PARAM_TYPE_REAL32)
     # Sleep for two seconds as immedietly following commands will fail (while the C2000 is writing flash)
@@ -59,15 +65,6 @@ def get_offsets(link, kind, timeout=2):
         return None
     else:
         return Vector3(x=x.param_value, y=y.param_value, z=z.param_value)
-
-def get_gains(link, kind):
-    P = fetch_param(link, "GMB_" + kind + "_P")
-    I = fetch_param(link, "GMB_" + kind + "_I")
-    D = fetch_param(link, "GMB_" + kind + "_D")
-    if P == None or I == None or D == None:
-        return None
-    else:
-        return P.param_value, I.param_value, D.param_value
 
 def getAxisCalibrationParam(link, axis_enum):
     icept = fetch_param(link, "GMB_" + axis_enum + "_ICEPT")
@@ -115,3 +112,79 @@ def pos_hold_enable(link):
 def pos_hold_disable(link):
     parameters = MAVParmDict()
     parameters.mavset(link.file, "GMB_POS_HOLD", 0, 3)
+
+def set_use_custom_gains(link, value):
+    current_param = fetch_param(link, "GMB_CUST_GAINS")
+    new_value = float(value)
+    if current_param:
+        if current_param.param_value != new_value:
+            set_param(link, "GMB_CUST_GAINS", new_value)
+            commit_to_flash(link)
+            print("The gimbal must be restarted after changing GMB_CUST_GAINS")
+        else:
+            print("GMB_CUST_GAINS is already set to %0.1f" % new_value)
+
+def enable_torques_message(link, enabled=True):
+    if enabled:
+        value = 1.0
+    else:
+        value = 0.0
+    set_param(link, "GMB_SND_TORQUE", value)
+
+def low_torque_mode(link, enabled=True):
+    if enabled:
+        value = 5000
+    else:
+        value = 0.0
+    set_param(link, "GMB_MAX_TORQUE", value)
+
+def charging(link, enabled=True):
+    if enabled:
+        value = 1.0
+    else:
+        value = 0.0
+    set_param(link, "GMB_GP_CHARGE", value)
+    commit_to_flash(link)
+
+def restore_params(link, params):
+    parameters = MAVParmDict()
+
+    # Accel params
+    parameters.mavset(link.file, "GMB_OFF_ACC_X", params['accel']['offset']['x'], 3)
+    parameters.mavset(link.file, "GMB_OFF_ACC_Y", params['accel']['offset']['y'], 3)
+    parameters.mavset(link.file, "GMB_OFF_ACC_Z", params['accel']['offset']['z'], 3)
+    parameters.mavset(link.file, "GMB_GN_ACC_X", params['accel']['gain']['x'], 3)
+    parameters.mavset(link.file, "GMB_GN_ACC_Y", params['accel']['gain']['y'], 3)
+    parameters.mavset(link.file, "GMB_GN_ACC_Z", params['accel']['gain']['z'], 3)
+    parameters.mavset(link.file, "GMB_ALN_ACC_X", params['accel']['alignment']['x'], 3)
+    parameters.mavset(link.file, "GMB_ALN_ACC_Y", params['accel']['alignment']['y'], 3)
+    parameters.mavset(link.file, "GMB_ALN_ACC_Z", params['accel']['alignment']['z'], 3)
+
+    # Commutation params
+    parameters.mavset(link.file, "GMB_YAW_SLOPE", params['yaw']['slope'], 3)
+    parameters.mavset(link.file, "GMB_YAW_ICEPT", params['yaw']['icept'], 3)
+    parameters.mavset(link.file, "GMB_ROLL_SLOPE", params['roll']['slope'], 3)
+    parameters.mavset(link.file, "GMB_ROLL_ICEPT", params['roll']['icept'], 3)
+    parameters.mavset(link.file, "GMB_PITCH_SLOPE", params['pitch']['slope'], 3)
+    parameters.mavset(link.file, "GMB_PITCH_ICEPT", params['pitch']['icept'], 3)
+
+    # Gyro
+    parameters.mavset(link.file, "GMB_OFF_GYRO_X", params['gyro']['x'], 3)
+    parameters.mavset(link.file, "GMB_OFF_GYRO_Y", params['gyro']['y'], 3)
+    parameters.mavset(link.file, "GMB_OFF_GYRO_Z", params['gyro']['z'], 3)
+
+    # Joint
+    parameters.mavset(link.file, "GMB_OFF_JNT_X", params['gyro']['x'], 3)
+    parameters.mavset(link.file, "GMB_OFF_JNT_Y", params['gyro']['y'], 3)
+    parameters.mavset(link.file, "GMB_OFF_JNT_Z", params['gyro']['z'], 3)
+
+    # Serial Number and Assembly Time
+    if setup_factory_private:
+        setup_factory_private.set_serial_number(link, params['serial_number'], commit=False)
+        set_param(link, "GMB_ASM_TIME", setup_factory_private.uint32_to_float(params['assembly_time']))
+
+    # Save the values
+    commit_to_flash(link)
+
+    # Reset the gimbal
+    setup_mavlink.reset_gimbal(link)

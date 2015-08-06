@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>3DRGimbalFirmware</name>
+	<name>GimbalFirmware</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -94,16 +94,16 @@
 	</linkedResources>
 	<filteredResources>
 		<filter>
-			<id>1435372086494</id>
+			<id>1437378486128</id>
 			<name></name>
 			<type>22</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
-				<arguments>1.0-name-matches-false-true-.*\.(o|pp|hex|out)</arguments>
+				<arguments>1.0-name-matches-false-true-.*\.(o|pp|hex|out|ax)</arguments>
 			</matcher>
 		</filter>
 		<filter>
-			<id>1435372086499</id>
+			<id>1437378486135</id>
 			<name></name>
 			<type>6</type>
 			<matcher>

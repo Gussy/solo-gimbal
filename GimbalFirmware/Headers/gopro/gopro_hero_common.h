@@ -61,8 +61,8 @@ typedef struct {
 
 // TODO: the use of this struct might change based on pending changes to how information is passed through MAVLink
 typedef enum {
-    GP_STOP_RECORDING,
-    GP_START_RECORDING,
+    GP_RECORDING_STOP,
+    GP_RECORDING_START,
 } GPRecording;
 
 #endif

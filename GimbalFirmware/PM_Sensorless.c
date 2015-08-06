@@ -11,6 +11,7 @@
 #include "control/PID.h"
 #include "control/average_power_filter.h"
 #include "control/running_average_filter.h"
+#include "control/filt2p.h"
 #include "hardware/uart.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "can/can_message_processor.h"
@@ -317,7 +318,7 @@ void main(void)
 	        // Rough approximation of 1-second of busy waiting, doesn't need to be super accurate
 	        if (++can_init_fault_message_resend_counter >= 0x7B124) {
 	            can_init_fault_message_resend_counter = 0;
-	            AxisFault(CAND_FAULT_UNKNOWN_AXIS_ID, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+	            AxisFault(CAND_FAULT_UNKNOWN_AXIS_ID, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms);
 	        }
 	    }
 	}
@@ -378,8 +379,6 @@ void main(void)
 
         // Initialize the beacon LED
         init_led();
-        //const LED_RGBA rgba_green = {0, 0xff, 0, 0xff};
-        //led_set_mode(LED_MODE_FADE_IN_BLINK_3, rgba_green, 0);
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication
@@ -421,17 +420,6 @@ void main(void)
 	TempSlope = getTempSlope();
 
 	if (board_hw_id == AZ) {
-	    // Parse version
-        Uint32 version_number = 0x00000000;
-        version_number |= (((Uint32)atoi(GitVersionMajor) << 24) & 0xFF000000);
-        version_number |= (((Uint32)atoi(GitVersionMinor) << 16) & 0x00FF0000);
-        version_number |= (((Uint32)atoi(GitVersionRevision) << 8) & 0x0000FF00);
-        version_number |= ((Uint32)atoi(GitCommit) & 0x0000007F);
-        version_number |= strstr(GitVersionString, "dirty") ? (0x1 << 7) : 0x00;
-        IntOrFloat float_converter;
-        float_converter.uint32_val = version_number;
-        flash_params.sys_swver = float_converter.float_val;
-
 	    axis_parms.enable_flag = TRUE;
 	}
 
@@ -461,12 +449,12 @@ void main(void)
 
 		// Process and respond to any waiting CAN messages
 		if (EnableCAN) {
-		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, &encoder_parms, param_set, &load_ap_state_info);
+		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, param_set, &load_ap_state_info);
 		}
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
 		if (board_hw_id == AZ) {
-		    mavlink_state_machine(&mavlink_gimbal_info, &control_board_parms, &motor_drive_parms, &encoder_parms, &load_ap_state_info);
+		    mavlink_state_machine(&mavlink_gimbal_info, &motor_drive_parms);
 		}
 
 		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
@@ -516,7 +504,7 @@ void main(void)
         }
 
         // Update any parameters that have changed due to CAN messages
-        ProcessParamUpdates(param_set, &control_board_parms, &debug_data, &encoder_parms);
+        ProcessParamUpdates(param_set, &control_board_parms, &debug_data);
 
 		// Measure total main work timing
 		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;
@@ -758,6 +746,15 @@ void B3(void) //  SPARE
 //	C - TASKS (executed in every 50 msec)
 //=================================================================================
 
+//--------------------------------- USER ------------------------------------------
+
+static uint16_t beacon_startup_counter = 0;
+static const uint16_t beacon_startup_delay_cycles = 14;
+static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
+static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
+static const LED_RGBA rgba_green = {.red = 0, .green = 0xff, .blue = 0, .alpha = 0xff};
+static const LED_RGBA rgba_blue = {.red = 0, .green = 0, .blue = 0xff, .alpha = 0xff};
+
 //----------------------------------------
 void C1(void) // Update Status LEDs
 //----------------------------------------
@@ -780,14 +777,19 @@ void C1(void) // Update Status LEDs
                 break;
 
             case BLINK_READY:
+                //led_set_mode(LED_MODE_BLINK, rgba_green, 4);
                 break;
 
             case BLINK_RUNNING:
-                led_set_mode(LED_MODE_BLINK, rgba_green, 4);
+                led_set_mode(LED_MODE_BREATHING, rgba_green, 0);
                 break;
 
             case BLINK_ERROR:
                 led_set_mode(LED_MODE_BLINK_FOREVER, rgba_red, 0);
+                break;
+
+            case BLINK_ERROR_UNRECOVERABLE:
+                led_set_mode(LED_MODE_SOLID, rgba_red, 0);
                 break;
 
             case BLINK_CALIBRATING:
@@ -801,51 +803,6 @@ void C1(void) // Update Status LEDs
 
         last_axis_state = axis_parms.blink_state;
     }
-
-    // Handle individual board LED (remove after PVT release)
-    switch (axis_parms.blink_state) {
-        case BLINK_NO_COMM:
-            // fast, 3Hz
-            if(led_cnt % 2) {
-                led_status_on();
-            } else {
-                led_status_off();
-            }
-            break;
-
-        case BLINK_INIT:
-            // slow, .8Hz, dudy cycle of 20%
-            if((led_cnt%10) < 2) {
-                led_status_on();
-            } else {
-                led_status_off();
-            }
-            break;
-
-        case BLINK_READY:
-            // slow, .5Hz , dudy cycle of 90%
-            if((led_cnt % 10) < 9) {
-                led_status_on();
-            } else {
-                led_status_off();
-            }
-            break;
-
-        case BLINK_RUNNING:
-            led_status_on();
-            break;
-
-        case BLINK_ERROR:
-            // fast, 3Hz, pause after 3 cycles
-            if((led_cnt % 2) && (led_cnt % 12) <= 6) {
-                led_status_on();
-            } else {
-                led_status_off();
-            }
-            break;
-    }
-
-	led_cnt++;
 
 	// Periodically call Gimbal Beacon state machine
 	if (board_hw_id == EL) {
@@ -949,7 +906,7 @@ interrupt void GyroIntISR(void)
 interrupt void MotorDriverFaultIntISR()
 {
     // Process the motor drive fault
-    AxisFault(CAND_FAULT_MOTOR_DRIVER_FAULT, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms, &axis_parms);
+    AxisFault(CAND_FAULT_MOTOR_DRIVER_FAULT, CAND_FAULT_TYPE_UNRECOVERABLE, &control_board_parms, &motor_drive_parms);
 
     // TODO: May want to have some sort of recovery code here
     // Some motor driver faults need the motor driver chip to be

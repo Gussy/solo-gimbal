@@ -15,12 +15,15 @@
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
 #define GP_PROTOCOL_VERSION 0x00
 #define GP_MAVLINK_HEARTBEAT_INTERVAL 1000
+#define GP_CAPTURE_MODE_POLLING_INTERVAL 1000
 #define GP_I2C_EEPROM_NUMBYTES 16
 
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
 #define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
 
-#define GP_VON (GpioDataRegs.GPADAT.bit.GPIO6)
+inline bool gp_von_is_enabled() {
+    return GpioDataRegs.GPADAT.bit.GPIO6;
+}
 
 typedef enum {
     GP_CONTROL_STATE_IDLE,
@@ -57,6 +60,14 @@ typedef enum{
     GP_MODEL_UNKNOWN
 } GPModel;
 
+typedef enum{
+    GP_CAPTURE_MODE_VIDEO,  // would like to start at 0x00 since this is consistent with spec but could be troublesome if mode enums begin to differ in the future
+    GP_CAPTURE_MODE_PHOTO,
+    GP_CAPTURE_MODE_BURST,
+    // GP_MODE_TIME_LAPSE // TODO: do we want to make these GP-specific? maybe do it at the i2c layer and keep this as the superset? GPMode in general?
+    GP_CAPTURE_MODE_UNKNOWN //= 99
+} GPCaptureMode;
+
 // XXX: what should this actually be?
 #define GP_MAX_RESP_LEN     32
 
@@ -74,6 +85,7 @@ void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
 bool gp_request_power_on();
 bool gp_request_power_off();
+bool gp_request_capture_mode();
 bool gp_send_command(const GPCmd* cmd);
 bool gp_send_cmd(const uint16_t* cmd, uint16_t len);
 bool gp_ready_for_cmd();
@@ -82,6 +94,7 @@ void gp_write_eeprom();
 void gp_on_slave_address(bool addressed_as_tx);
 
 uint16_t gp_transaction_cmd();
+GPRequestType gp_transaction_direction();
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
 bool gp_transaction_result_available();
 bool gp_get_completed_transaction(gp_transaction_t **rsp);
@@ -96,7 +109,7 @@ inline void gp_deassert_intr(void) {
 
 bool gp_new_heartbeat_available();
 
-int gp_get_request(Uint8 cmd_id);
+int gp_get_request(Uint8 cmd_id, bool txn_is_internal);
 int gp_set_request(GPSetRequest* request);
 
 GPHeartbeatStatus gp_heartbeat_status();
@@ -105,5 +118,14 @@ void gp_enable_hb_interface();
 void gp_disable_hb_interface();
 void gp_enable_charging();
 void gp_disable_charging();
+
+GPCaptureMode gp_capture_mode();
+bool gp_handshake_complete();
+bool gp_is_valid_capture_mode(Uint8 capture_mode);
+void gp_latch_pending_capture_mode();
+bool gp_pend_capture_mode(Uint8 capture_mode);
+bool gp_set_capture_mode(Uint8 capture_mode);
+void gp_set_recording_state(bool recording_state);
+bool gp_is_recording();
 
 #endif /* GOPRO_INTERFACE_H_ */

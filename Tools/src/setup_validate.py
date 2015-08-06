@@ -1,5 +1,5 @@
 import setup_comutation
-import setup_factory
+import setup_factory_pub
 import setup_param
 from distutils.version import LooseVersion
 from pymavlink.mavparm import MAVParmDict
@@ -13,19 +13,19 @@ EXPECTED_SERIAL_NUMBER_START = 'GB11A'
 EXPETED_ASSEMBLY_DATE_MIN = 1434778800 # Sat Jun 20 02:40:00 BRT 2015
 
 EXPECTED_PITCH_ICEPT_MAX = 0.30
-EXPECTED_PITCH_ICEPT_MIN = 0.10
+EXPECTED_PITCH_ICEPT_MIN = 0.09
 EXPECTED_PITCH_SLOPE_MAX = 0.14
 EXPECTED_PITCH_SLOPE_MIN = 0.12
 EXPECTED_ROLL_ICEPT_MIN = 0.35
 EXPECTED_ROLL_ICEPT_MAX = 0.53
-EXPECTED_ROLL_SLOPE_MAX = 0.14
+EXPECTED_ROLL_SLOPE_MAX = 0.15
 EXPECTED_ROLL_SLOPE_MIN = 0.11
 EXPECTED_YAW_ICEPT_MAX = 0.54
 EXPECTED_YAW_ICEPT_MIN = 0.40
 EXPECTED_YAW_SLOPE_MAX = 0.12
 EXPECTED_YAW_SLOPE_MIN = 0.10
 
-EXPECTED_JOINT_X_MAX = 0.12
+EXPECTED_JOINT_X_MAX = 0.16
 EXPECTED_JOINT_X_MIN = -0.02
 EXPECTED_JOINT_Y_MAX = 0.15
 EXPECTED_JOINT_Y_MIN = -0.07
@@ -49,30 +49,18 @@ EXPECTED_ACC_OFFSET_Y_MAX = 2.0
 EXPECTED_ACC_OFFSET_Z_MIN = -2.0
 EXPECTED_ACC_OFFSET_Z_MAX = 2.0
 
-EXPECTED_GYRO = 0.05
-
-GAIN_TOLERANCE = 1e-6
-EXPECTED_PITCH_P = 1.250000
-EXPECTED_PITCH_I = 0.250000
-EXPECTED_PITCH_D = 0.000000
-EXPECTED_ROLL_P = 8.000000
-EXPECTED_ROLL_I = 0.350000
-EXPECTED_ROLL_D = 0.000000
-EXPECTED_YAW_P = 4.500000
-EXPECTED_YAW_I = 0.500000
-EXPECTED_YAW_D = 0.000000
-EXPECTED_K_RATE = 10.0
+EXPECTED_GYRO = 0.07
 
 class Results:
     Pass, Fail, Error = 'pass', 'fail', 'error'
 
 def show(link):
-    swver = setup_factory.read_software_version(link, timeout=2)
+    swver = setup_factory_pub.read_software_version(link, timeout=2)
     if swver != None:
         major, minor, rev = int(swver[0]), int(swver[1]), int(swver[2])
         if major >= 0 and minor >= 18:
-            serial_number = setup_factory.get_serial_number(link)
-            assembly_time = setup_factory.get_assembly_time(link)
+            serial_number = setup_factory_pub.get_serial_number(link)
+            assembly_time = setup_factory_pub.get_assembly_time(link)
         else:
             serial_number = ''
             assembly_time = ''
@@ -147,7 +135,7 @@ def show(link):
 
 def validate_version(link, swver=None):
     if not swver:
-        swver = setup_factory.read_software_version(link, timeout=2)
+        swver = setup_factory_pub.read_software_version(link, timeout=2)
     if not swver:
         return Results.Error
     ver = LooseVersion("%i.%i.%i" % (swver[0], swver[1], swver[2]))
@@ -171,7 +159,6 @@ def validate_comutation_axis_value(axis, values):
         return Results.Pass
     else:
         return Results.Fail
-    
 
 def validate_comutation_axis(link, axis, i_max, i_min, s_max, s_min):
     icept = axis[0]
@@ -241,37 +228,18 @@ def validate_accelerometers(link, offset=None, gain=None, alignment=None):
     else:
         return Results.Fail
 
-def validate_gain_axis(link, axis, p_e, i_e, d_e):
-    p, i, d = setup_param.get_gains(link, axis)
-    if p == None or i == None or d == None:
-        return None
-    return (abs(p - p_e) < GAIN_TOLERANCE and
-            abs(i - i_e) < GAIN_TOLERANCE and
-            abs(d - d_e) < GAIN_TOLERANCE)
-
-def validate_k_rate(link, value):
-    k_rate = setup_param.fetch_param(link, "GMB_K_RATE")
-    if k_rate:
-        return (abs(k_rate.param_value - value) < GAIN_TOLERANCE)
-    else:
-        return None
-
 def validate_gains(link):
-    pitch = validate_gain_axis(link, 'PITCH', EXPECTED_PITCH_P, EXPECTED_PITCH_I, EXPECTED_PITCH_D)
-    roll = validate_gain_axis(link, 'ROLL',  EXPECTED_ROLL_P, EXPECTED_ROLL_I, EXPECTED_ROLL_D)
-    yaw = validate_gain_axis(link, 'YAW',   EXPECTED_YAW_P, EXPECTED_YAW_I, EXPECTED_YAW_D)
-    krate = validate_k_rate(link, EXPECTED_K_RATE)
-    if pitch == True and roll == True and yaw == True and krate == True:
-        return Results.Pass
-    elif pitch == False or roll == False or yaw == False or krate == False:
-        return Results.Fail
-    else:
+    custom_gains = setup_param.fetch_param(link, "GMB_CUST_GAINS")
+    if custom_gains is None:
         return Results.Error
-
+    elif custom_gains.param_value == 0.0:
+        return Results.Pass
+    else:
+        return Results.Fail
 
 def validate_date(link, assembly_time=None):
     if assembly_time == None:
-        assembly_time = setup_factory.get_assembly_time(link)
+        assembly_time = setup_factory_pub.get_assembly_time(link)
     if assembly_time == None:
         return Results.Error
     elif assembly_time > EXPETED_ASSEMBLY_DATE_MIN:
@@ -279,10 +247,9 @@ def validate_date(link, assembly_time=None):
     else:
         return Results.Fail
 
-
 def validate_serial_number(link, serial_number=None):
     if serial_number == None:
-        serial_number = setup_factory.get_serial_number(link)
+        serial_number = setup_factory_pub.get_serial_number(link)
     if serial_number == None:
         return Results.Error
     elif serial_number.startswith(EXPECTED_SERIAL_NUMBER_START):
@@ -305,16 +272,7 @@ def validate(link):
 
 def restore_defaults(link):
     parameters = MAVParmDict()
-    parameters.mavset(link.file, "GMB_PITCH_P", EXPECTED_PITCH_P);
-    parameters.mavset(link.file, "GMB_PITCH_I", EXPECTED_PITCH_I);
-    parameters.mavset(link.file, "GMB_PITCH_D", EXPECTED_PITCH_D);
-    parameters.mavset(link.file, "GMB_ROLL_P", EXPECTED_ROLL_P);
-    parameters.mavset(link.file, "GMB_ROLL_I", EXPECTED_ROLL_I);
-    parameters.mavset(link.file, "GMB_ROLL_D", EXPECTED_ROLL_D);
-    parameters.mavset(link.file, "GMB_YAW_P", EXPECTED_YAW_P);
-    parameters.mavset(link.file, "GMB_YAW_I", EXPECTED_YAW_I);
-    parameters.mavset(link.file, "GMB_YAW_D", EXPECTED_YAW_D);
-    parameters.mavset(link.file, "GMB_K_RATE", EXPECTED_K_RATE);   
+    parameters.mavset(link.file, "GMB_CUST_GAINS", 0.0); # do not use custom gains for default values   
     setup_param.commit_to_flash(link)
     setup_mavlink.reset_gimbal(link)
     return True

@@ -1,17 +1,66 @@
 #include "control/PID.h"
 
 #include <stdlib.h>
+
 PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
-    // These get loaded over CAN at boot, so they are initialized to zero
-    // (Except overall gain and d-term alpha, which are hardcoded)
-    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.24, 0.0, 0.0 }
+    // These get loaded over CAN at boot and are hard-coded with the default PID values
+    // The hardcoded PID gains can be overriden by the parameteres stored in flash, by
+    //  setting the GMB_CUST_GAINS parameter from 0.0 to 1.0
+
+    // Elevation
+    {
+            .gainP = 1.850000,
+            .gainI = 0.200000,
+            .gainD = 0.000000,
+            .integralMax = 32768.0,
+            .integralMin = -32768.0,
+            .gainTotal = 1.0,
+            .integralCumulative = 0.0,
+            .dTermAlpha = 0.24,
+            .processVarPrevious = 0.0,
+            .deltaPvFilt = 0.0
+    },
+
+    // Azimuth
+    {
+            .gainP = 2.700000,
+            .gainI = 0.500000,
+            .gainD = 0.000000,
+            .integralMax = 32768.0,
+            .integralMin = -32768.0,
+            .gainTotal = 1.0,
+            .integralCumulative = 0.0,
+            .dTermAlpha = 0.24,
+            .processVarPrevious = 0.0,
+            .deltaPvFilt = 0.0
+    },
+
+    // Roll
+    {
+            .gainP = 7.000000,
+            .gainI = 0.500000,
+            .gainD = 0.000000,
+            .integralMax = 32768.0,
+            .integralMin = -32768.0,
+            .gainTotal = 1.0,
+            .integralCumulative = 0.0,
+            .dTermAlpha = 0.24,
+            .processVarPrevious = 0.0,
+            .deltaPvFilt = 0.0
+    }
 };
 
-float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float p_detune_ratio, float i_detune_ratio, float d_detune_ratio)
+float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float output_limit, float gain, float ff)
 {
-    float pTerm, dTerm, iTerm, result;
+    /*
+     * This function implements a modified PID controller (D term on process
+     * variable only) with support for integrator windup protection and injection
+     * of a feedforward term which is added to the output.
+     *
+     * The gain term in the function parameters scales the P, I, and D gains,
+     * providing a way to implement gain scheduling.
+     */
+    float pTerm, dTerm;
     float deltaPv;
     float output;
     float error = setpoint - process_var;
@@ -22,41 +71,32 @@ float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float 
     PIDInfo = &rate_pid_loop_float[axis];
 
     // Calcuate proportional gain, gain * current error
-    pTerm = (PIDInfo->gainP * p_detune_ratio) * error;
-
-    // Calculate integral gain, gain * accumulation of historical error
-    PIDInfo->integralCumulative += error;
-
-    // Limit accumulated integral error to windup limits
-    if (PIDInfo->integralCumulative > PIDInfo->integralMax) {
-        PIDInfo->integralCumulative = PIDInfo->integralMax;
-    } else if (PIDInfo->integralCumulative < PIDInfo->integralMin) {
-        PIDInfo->integralCumulative = PIDInfo->integralMin;
-    }
-
-    iTerm = (PIDInfo->gainI * i_detune_ratio) * PIDInfo->integralCumulative;
+    pTerm = PIDInfo->gainP * error;
 
     // Calculate derivative gain, gain * difference in error
-    if(PIDInfo->gainD) {
+    if(PIDInfo->gainD != 0.0f) {
         deltaPv = process_var - PIDInfo->processVarPrevious;
         PIDInfo->deltaPvFilt += (deltaPv-PIDInfo->deltaPvFilt) * PIDInfo->dTermAlpha;
 
-        dTerm = -deltaPv * (PIDInfo->gainD * d_detune_ratio);
+        dTerm = -PIDInfo->deltaPvFilt * PIDInfo->gainD;
     } else  {
         dTerm = 0;
     }
     PIDInfo->processVarPrevious = process_var;
 
-    // Calculate result, sum of three individual gain terms
-    result = (pTerm + iTerm + dTerm);
+    output = (pTerm + dTerm) * gain + PIDInfo->integralCumulative + ff;
+
+    if((output <= output_limit && output >= -output_limit) || (output > output_limit && error < 0) || (output < -output_limit && error > 0)) {
+        float i_increment = error * PIDInfo->gainI * gain;
+        PIDInfo->integralCumulative += i_increment;
+        output += i_increment;
+    }
 
     // Limit output
-    if (result > OUTPUT_LIMIT_UPPER_FLOAT) {
-        output = OUTPUT_LIMIT_UPPER_FLOAT;
-    } else if (result < OUTPUT_LIMIT_LOWER_FLOAT) {
-        output = OUTPUT_LIMIT_LOWER_FLOAT;
-    } else {
-        output = result;
+    if (output > output_limit) {
+        output = output_limit;
+    } else if (output < -output_limit) {
+        output = -output_limit;
     }
 
     return(output);

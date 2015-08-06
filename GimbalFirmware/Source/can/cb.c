@@ -47,6 +47,7 @@ void MDBSendTorques(int16 az, int16 roll)
 {
     Uint32 combined[2];
     int id, packed_id;
+    CAND_ParameterID pid = CAND_PID_TORQUE;
 
     for (id = 0, packed_id = 0; packed_id < (AXIS_CNT - 1); id++) {
         if (id == CAND_ID_AZ) {
@@ -58,19 +59,18 @@ void MDBSendTorques(int16 az, int16 roll)
         }
     }
 
-    CAND_ParameterID pid = CAND_PID_TORQUE;
-
     cand_tx_multi_param(CAND_ID_ALL_AXES, &pid, combined, 1);
 }
 
 void SendDebug1ToAz(int16 debug_1, int16 debug_2, int16 debug_3)
 {
     CAND_ParameterID pids[3];
+    Uint32 params[3];
+
     pids[0] = CAND_PID_DEBUG_1;
     pids[1] = CAND_PID_DEBUG_2;
     pids[2] = CAND_PID_DEBUG_3;
 
-    Uint32 params[3];
     params[0] = debug_1;
     params[1] = debug_2;
     params[2] = debug_3;
@@ -81,6 +81,7 @@ void SendDebug1ToAz(int16 debug_1, int16 debug_2, int16 debug_3)
 void MDBRequestBIT(CAND_DestinationID did)
 {
     CAND_SID sid;
+    Uint8 payload = CAND_PID_BIT;
 
     sid.sidWord = 0;
     sid.all.m_id = CAND_MID_PARAMETER_QUERY;
@@ -88,8 +89,6 @@ void MDBRequestBIT(CAND_DestinationID did)
     sid.param_query.s_id = CAND_GetSenderID();
     sid.param_query.dir = CAND_DIR_QUERY;
     sid.param_query.repeat = 1;
-
-    Uint8 payload = CAND_PID_BIT;
 
     cand_tx(sid, &payload, 1);
 }

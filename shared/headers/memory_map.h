@@ -33,5 +33,8 @@ A		0x3F4000	0x3F7FFF	Bootloader
 #define APP_START		SECTOR_G_START
 #define APP_END			SECTOR_B_END
 
+#define PARAMS_START     SECTOR_H_START
+#define PARAM_END       SECTOR_H_END
+
 
 #endif /* MEMORY_MAP_H_ */

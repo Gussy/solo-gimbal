@@ -17,19 +17,19 @@
 #include "hardware/encoder.h"
 
 #include <stdio.h>
+#include <stdint.h>
 
-static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
+static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms);
 static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal();
 static void handle_full_reset_gimbal(void);
 static void handle_request_axis_calibration(MotorDriveParms* md_parms);
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
-static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms);
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
 void send_cmd_long_ack(uint16_t cmd_id, uint8_t result);
 
-mavlink_system_t mavlink_system;
-uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
+static uint8_t message_buffer[MAVLINK_MAX_PACKET_LEN];
 
 unsigned char gimbal_sysid = 0;
 
@@ -44,6 +44,10 @@ Uint16 telem_received = 0;
 
 int last_parameter_sent = 0;
 
+extern float send_torques;
+
+#define DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC  0x42AA5542
+
 void init_mavlink() {
 	// Reset the gimbal's communication channel so the parse state machine starts out in a known state
 	mavlink_reset_channel_status(MAVLINK_COMM_0);
@@ -57,10 +61,10 @@ void update_mavlink_sysid(Uint8 new_sysid)
 	gimbal_sysid = new_sysid;
 }
 
-void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
+void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms) {
 	switch (mavlink_info->mavlink_processing_state) {
 	case MAVLINK_STATE_PARSE_INPUT:
-		process_mavlink_input(mavlink_info, cb_parms, md_parms, encoder_parms, load_ap_state_info);
+		process_mavlink_input(mavlink_info, md_parms);
 		break;
 
 	case MAVLINK_STATE_SEND_PARAM_LIST:
@@ -74,8 +78,10 @@ void mavlink_state_machine(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* c
 
 static void handle_data_transmission_handshake(mavlink_message_t *msg)
 {
+    uint32_t size_magic = mavlink_msg_data_transmission_handshake_get_size(msg);
+
 	/* does this need to be a state machine? */
-	if (msg->compid == MAV_COMP_ID_GIMBAL) {
+	if (msg->compid == MAV_COMP_ID_GIMBAL && size_magic == DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC) {
 		// make sure this message is for us
 		// stop this axis
 		power_down_motor();
@@ -91,7 +97,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 	}
 }
 
-static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info) {
+static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDriveParms* md_parms) {
 	static mavlink_message_t received_msg;
 	mavlink_status_t parse_status;
 
@@ -132,19 +138,19 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, ControlBoardP
 				break;
 
 			case MAVLINK_MSG_ID_GIMBAL_CONTROL:
-			    handle_gimbal_control(&received_msg, mavlink_info, cb_parms);
+			    handle_gimbal_control(&received_msg, mavlink_info);
 			    break;
 
 
 			case MAVLINK_MSG_ID_COMMAND_LONG:
 			    switch(mavlink_msg_command_long_get_command(&received_msg)){
-			    case 42501:
+			    case MAV_CMD_GIMBAL_RESET:
 			    	handle_reset_gimbal();
 			    	break;
-			    case 42503:
+			    case MAV_CMD_GIMBAL_REQUEST_AXIS_CALIBRATION:
 			    	handle_request_axis_calibration(md_parms);
 			    	break;
-			    case 42505:
+			    case MAV_CMD_GIMBAL_FULL_RESET:
 			        // Check all the params have the right keys
 			        if(mavlink_msg_command_long_get_param1(&received_msg) == 42.0 &&
 			                mavlink_msg_command_long_get_param2(&received_msg) == 49.0 &&
@@ -184,7 +190,9 @@ void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_enco
 
 void receive_torque_cmd_telemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd)
 {
-	send_mavlink_torque_cmd_feedback(az_torque_cmd, el_torque_cmd, rl_torque_cmd);
+    if(send_torques == 1.0) {
+	    send_mavlink_torque_cmd_feedback(az_torque_cmd, el_torque_cmd, rl_torque_cmd);
+    }
 }
 
 void receive_gyro_az_telemetry(int32 az_gyro)
@@ -291,7 +299,7 @@ static void handle_gopro_set_request(mavlink_message_t* received_msg)
     }
 }
 
-static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info, ControlBoardParms* cb_parms)
+static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info)
 {
     mavlink_gimbal_control_t decoded_msg;
     mavlink_msg_gimbal_control_decode(received_msg, &decoded_msg);
@@ -326,7 +334,7 @@ static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbal
 
 static void handle_reset_gimbal()
 {
-		send_cmd_long_ack(42501, MAV_CMD_ACK_OK);
+		send_cmd_long_ack(MAV_CMD_GIMBAL_RESET, MAV_CMD_ACK_OK);
 
         // stop this axis
         RelaxAZAxis();
@@ -366,7 +374,7 @@ static void handle_request_axis_calibration(MotorDriveParms* md_parms)
 }
 
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
-    static mavlink_message_t heartbeat_msg;
+    mavlink_message_t heartbeat_msg;
     mavlink_msg_heartbeat_pack(gimbal_sysid,
                                 MAV_COMP_ID_GIMBAL,
                                 &heartbeat_msg,
@@ -379,7 +387,7 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
 }
 
 void send_mavlink_gimbal_feedback() {
-	static mavlink_message_t feedback_msg;
+    mavlink_message_t feedback_msg;
 
 	// Copter mapping is X roll, Y el, Z az
 	mavlink_msg_gimbal_report_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL,
@@ -400,7 +408,7 @@ void send_mavlink_gimbal_feedback() {
 }
 
 void send_mavlink_torque_cmd_feedback(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd) {
-	static mavlink_message_t torque_cmd_fb_msg;
+    mavlink_message_t torque_cmd_fb_msg;
 
 	mavlink_msg_gimbal_torque_cmd_report_pack(gimbal_sysid,
 		MAV_COMP_ID_GIMBAL,
@@ -416,7 +424,7 @@ void send_mavlink_torque_cmd_feedback(int16 az_torque_cmd, int16 el_torque_cmd, 
 
 void send_cmd_long_ack(uint16_t cmd_id, uint8_t result)
 {
-    static mavlink_message_t msg;
+    mavlink_message_t msg;
     mavlink_msg_command_ack_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &msg,
@@ -427,7 +435,7 @@ void send_cmd_long_ack(uint16_t cmd_id, uint8_t result)
 
 void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status)
 {
-    static mavlink_message_t gopro_heartbeat_msg;
+    mavlink_message_t gopro_heartbeat_msg;
     mavlink_msg_gopro_heartbeat_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_heartbeat_msg,
@@ -437,7 +445,7 @@ void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status)
 
 void send_mavlink_gopro_get_response(GPGetResponse response)
 {
-    static mavlink_message_t gopro_get_response_msg;
+    mavlink_message_t gopro_get_response_msg;
     mavlink_msg_gopro_get_response_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_get_response_msg,
@@ -448,7 +456,7 @@ void send_mavlink_gopro_get_response(GPGetResponse response)
 
 void send_mavlink_gopro_set_response(GPSetResponse response)
 {
-    static mavlink_message_t gopro_set_response_msg;
+    mavlink_message_t gopro_set_response_msg;
     mavlink_msg_gopro_set_response_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_set_response_msg,
@@ -458,7 +466,7 @@ void send_mavlink_gopro_set_response(GPSetResponse response)
 }
 
 void send_mavlink_debug_data(DebugData* debug_data) {
-	static mavlink_message_t debug_msg;
+    mavlink_message_t debug_msg;
 	mavlink_msg_debug_vect_pack(gimbal_sysid,
 	        MAV_COMP_ID_GIMBAL,
 			&debug_msg,
@@ -473,6 +481,10 @@ void send_mavlink_debug_data(DebugData* debug_data) {
 void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code, CAND_FaultType fault_type)
 {
     char* axis_str = "Unknown";
+    char* fault_str = "None";
+    MAV_SEVERITY severity = MAV_SEVERITY_ENUM_END;
+    char error_msg[100];
+
     switch (axis) {
         case CAND_ID_AZ:
             axis_str = "Yaw";
@@ -486,8 +498,6 @@ void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code,
             axis_str = "Roll";
             break;
     }
-
-    char* fault_str = "None";
 
     switch (fault_code) {
         case CAND_FAULT_CALIBRATING_POT:
@@ -517,9 +527,12 @@ void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code,
         case CAND_FAULT_MOTOR_DRIVER_FAULT:
             fault_str = "Motor driver fault";
             break;
+
+        case CAND_FAULT_CURRENT_SENSOR_FAULT:
+            fault_str = "Current sensor fault";
+            break;
     }
 
-    MAV_SEVERITY severity = MAV_SEVERITY_ENUM_END;
     switch (fault_type) {
         case CAND_FAULT_TYPE_INFO:
             severity = MAV_SEVERITY_INFO;
@@ -534,14 +547,13 @@ void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code,
             break;
     }
 
-    char error_msg[100];
     snprintf(error_msg, 100, "Axis %s indicated fault: %s", axis_str, fault_str);
     send_mavlink_statustext(error_msg, severity);
 }
 
 void send_mavlink_statustext(char* message, MAV_SEVERITY severity)
 {
-    static mavlink_message_t status_msg;
+    mavlink_message_t status_msg;
     mavlink_msg_statustext_pack(gimbal_sysid,
             MAV_COMP_ID_GIMBAL,
             &status_msg,
@@ -553,9 +565,9 @@ void send_mavlink_statustext(char* message, MAV_SEVERITY severity)
 
 void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis,
 		GIMBAL_AXIS_CALIBRATION_STATUS calibration_status) {
-	static mavlink_message_t msg;
+    mavlink_message_t msg;
 	mavlink_msg_command_long_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &msg, 0, 0,
-			42502, 0, (float) axis, (float) progress,
+			MAV_CMD_GIMBAL_AXIS_CALIBRATION_STATUS, 0, (float) axis, (float) progress,
 			(float) calibration_status, 0, 0, 0, 0);
 	send_mavlink_message(&msg);
 }

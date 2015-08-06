@@ -10,6 +10,8 @@ Uint32 TorqueLoopEndTime = 0;
 Uint32 TorqueLoopElapsedTime = 0;
 Uint32 MaxTorqueLoopElapsedTime = 0;
 
+#define ADC_MIN_REASONABLE_VALUE 50
+
 void MotorCommutationLoop(ControlBoardParms* cb_parms,
         AxisParms* axis_parms,
         MotorDriveParms* md_parms,
@@ -35,23 +37,24 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
                 power_filter_parms,
                 load_ap_state_info);
 
+        // If both Ia and Ib currents are at their minimum values (-2.75A), the current sensor has probably lost it's +5V supply
+        if(AdcResult.ADCRESULT1 < ADC_MIN_REASONABLE_VALUE && AdcResult.ADCRESULT3 < ADC_MIN_REASONABLE_VALUE) {
+            AxisFault(CAND_FAULT_CURRENT_SENSOR_FAULT, CAND_FAULT_TYPE_UNRECOVERABLE, cb_parms, md_parms);
+        } else {
+            //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).
+            //  Connect inputs of the CLARKE module and call the clarke transformation macro
+            md_parms->clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-md_parms->cal_offset_A)*2); // Phase A curr.
+            md_parms->clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-md_parms->cal_offset_B)*2); // Phase B curr.
 
-
-        // ------------------------------------------------------------------------------
-        //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).
-        //  Connect inputs of the CLARKE module and call the clarke transformation macro
-        // ------------------------------------------------------------------------------
-        md_parms->clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-md_parms->cal_offset_A)*2); // Phase A curr.
-        md_parms->clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-md_parms->cal_offset_B)*2); // Phase B curr.
-
-        // Run an iteration of the average power filter
-        // Scale -1 to +1 current to +/- full scale current, since power filter expects current in amps
-        run_average_power_filter(power_filter_parms, md_parms->pid_iq.term.Ref * MAX_CURRENT);
+            // Run an iteration of the average power filter
+            // Scale -1 to +1 current to +/- full scale current, since power filter expects current in amps
+            run_average_power_filter(power_filter_parms, md_parms->pid_iq.term.Ref * MAX_CURRENT);
+        }
 
         // If the average power has exceeded the preset limit on either phase a or b, error out this axis
         if (check_average_power_over_limit(power_filter_parms)) {
             reset_average_power_filter(power_filter_parms);
-            AxisFault(CAND_FAULT_OVER_CURRENT, CAND_FAULT_TYPE_RECOVERABLE, cb_parms, md_parms, axis_parms);
+            AxisFault(CAND_FAULT_OVER_CURRENT, CAND_FAULT_TYPE_RECOVERABLE, cb_parms, md_parms);
         }
 
         CLARKE_MACRO(md_parms->clarke_xform_parms)

@@ -6,6 +6,7 @@ from PySide.QtCore import QThread, Slot
 from qtasync import AsyncTask, coroutine
 import gui_ui, gui_utils, gui_connection, gui_validation, gui_firmware, gui_calibration, gui_tests
 from gui_utils import waitCursor
+import firmware_git_tools
 
 class ControlMainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -36,6 +37,12 @@ class ControlMainWindow(QtGui.QMainWindow):
         # Setup tests UI
         self.testsUI = gui_tests.testsUI(self)
 
+        # Add the git identity to the window name if possible
+        os_git_command = firmware_git_tools.osGitCommand()
+        git_identity = firmware_git_tools.gitIdentity(os_git_command)
+        if git_identity:
+            self.setWindowTitle("%s - %s" % (self.windowTitle(), git_identity.split('-')[0]))
+
     def resetUI(self, isCycling):
         self.validationUI.clearValidationResults()
         self.firmwareUI.resetDidBootload()
@@ -47,7 +54,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.firmwareUI.loadFirmwareFile(filename)  
 
     def autoConnect(self):
-        self.ui.btnConnect.clicked.emit()  
+        self.ui.btnConnect.clicked.emit()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

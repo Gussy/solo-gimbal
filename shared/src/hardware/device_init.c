@@ -5,8 +5,6 @@
 #include "hardware/watchdog.h"
 #include "hardware/interrupts.h"
 
-#define Device_cal (void   (*)(void))0x3D7C80
-
 static void calibrate_adc();
 static void init_xtal();
 static void init_peripheral_clocks();

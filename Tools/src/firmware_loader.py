@@ -9,11 +9,14 @@ import sys
 
 from firmware_helper import append_checksum, load_firmware
 import setup_mavlink
+import setup_validate
 
 bootloaderVersionHandler = None
 progressHandler = None
 
 MAVLINK_ENCAPSULATED_DATA_LENGTH = 253
+
+DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_WIDTH = 0xFFFF
 
 class Results:
     Success, NoResponse, Timeout, InBoot, Restarting = 'Success', 'NoResponse', 'Timeout', 'InBoot', 'Restarting'
@@ -82,13 +85,15 @@ def upload_data(link, binary):
     # Loop until we are finished
     end_idx = 0
     retries = 0
+    MAX_RETRIES = 10 # Seconds
     while end_idx < len(binary):
         msg = setup_mavlink.wait_handshake(link)
-        if msg == None:
-            retries += 1
-            continue
-        if retries > 20:
-            return Results.NoResponse
+        if msg is None:
+            if retries > MAX_RETRIES:
+                return Results.NoResponse
+            else:
+                retries += 1
+                continue
         retries = 0
 
         end_idx = send_block(link, binary, msg)
@@ -104,12 +109,17 @@ def upload_data(link, binary):
 def finish_upload(link):
     """Send an "end of transmission" signal to the target, to cause a target reset""" 
     while True:
-        setup_mavlink.reset_into_bootloader(link)
+        setup_mavlink.exit_bootloader(link)
         msg = setup_mavlink.wait_handshake(link)
         if msg == None:
             return Results.Timeout
-        if msg.width == 0xFFFF:
-            return Results.Success
+        if msg.width == DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_WIDTH:
+            break
+        
+    if setup_mavlink.wait_for_heartbeat(link, retries=5) == None:
+        return Results.Timeout
+    else:
+        return Results.Success
 
 def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None):
     global bootloaderVersionHandler, progressHandler

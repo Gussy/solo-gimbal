@@ -21,7 +21,6 @@
 void Process_CAN_Messages(AxisParms* axis_parms,
 		MotorDriveParms* md_parms,
 		ControlBoardParms* cb_parms,
-		EncoderParms* encoder_parms,
 		ParamSet* param_set,
 		LoadAxisParmsStateInfo* load_ap_state_info)
 {
@@ -114,7 +113,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
         	break;
 
         default:
-            AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
+            AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms);
             break;
         }
         cmd_cnt++;
@@ -246,21 +245,22 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                         break;
 
                     case CAND_EPID_BEACON_CONTROL:
-                    	// Only makes sense to do this on elevation (since that's where the beacon is)
-                    	// Protect against errant messages to the wrong axis
-                    	if (GetBoardHWID() == EL) {
-							if (msg.extended_param_length == 6) {
-							    axis_parms->blink_state = BLINK_OVERRIDE;
-								LED_MODE mode = (LED_MODE)(msg.extended_param[0]);
-								LED_RGBA color;
-								color.red = msg.extended_param[1];
-								color.green = msg.extended_param[2];
-								color.blue = msg.extended_param[3];
-								color.alpha = msg.extended_param[4];
-								Uint8 duration = msg.extended_param[5];
-								led_set_mode(mode, color, duration);
-							}
-                    	}
+                        {
+                            LED_RGBA color;
+
+                            // Only makes sense to do this on elevation (since that's where the beacon is)
+                            // Protect against errant messages to the wrong axis
+                            if (GetBoardHWID() == EL) {
+                                if (msg.extended_param_length == 6) {
+                                    axis_parms->blink_state = BLINK_OVERRIDE;
+                                    color.red = msg.extended_param[1];
+                                    color.green = msg.extended_param[2];
+                                    color.blue = msg.extended_param[3];
+                                    color.alpha = msg.extended_param[4];
+                                    led_set_mode((LED_MODE)(msg.extended_param[0]), color, msg.extended_param[5]);
+                                }
+                            }
+                        }
                     	break;
 
                     case CAND_EPID_MAX_TORQUE:
@@ -271,6 +271,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
 
                     case CAND_EPID_PARAMS_LOAD:
                     	if (GetBoardHWID() == AZ) {
+                    	    Uint8 i;
                     		// This means the parameter was a request, so load up the necessary data and broadcast it to the other two boards
                     		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF);
                     		CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[2];
@@ -280,7 +281,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     		params[0] = msg.extended_param[0];
                     		params[1] = msg.extended_param[1];
                     		params[2] = words_to_send;
-                    		int i;
                     		// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
                     		for (i = 0; i < words_to_send; i++) {
                     			params[(2 * i) + 3] = ((((Uint16*)(&flash_params))[start_offset + i]) >> 8) & 0x00FF;
@@ -292,9 +292,9 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     		// First make sure this isn't data we've already received, and if not, load it into our copy of the flash params struct
                     		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
                     		Uint8 words_received = msg.extended_param[2];
-                    		if (load_ap_state_info->current_load_offset == start_offset) {
+                    		if (load_ap_state_info->current_load_offset == start_offset && (start_offset + words_received) <= sizeof(flash_params)) {
                     			// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
-                    			int i;
+                    		    Uint8 i;
                     			for (i = 0; i < words_received; i++) {
                     				Uint16 received_word = ((((Uint16)msg.extended_param[(2 * i) + 3]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[(2 * i) + 4]) & 0x00FF);
                     				((Uint16*)(&flash_params))[start_offset + i] = received_word;
@@ -377,7 +377,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                 break;
 
             default:
-                AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER, CAND_FAULT_TYPE_INFO, cb_parms, md_parms, axis_parms);
+                AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER, CAND_FAULT_TYPE_INFO, cb_parms, md_parms);
                 break;
             }
             msg.param_request_cnt--;

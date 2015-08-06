@@ -1,18 +1,16 @@
-F2806x_RAM/
-FLASH/
-Debug/
+/*/F2806x_RAM/
+/*/FLASH/
+/*/Debug/
 *.graphProp
 *.ini_initial
 *.prefs
 project.log
-.launches/
-.settings/
+/**/.launches/
+/*/.settings/
 version_git.h
-data.h
-data.hh
 *.bin
 *.ax
-Tools/3DRGimbalFactoryApplication/build-*/
+/Tools/3DRGimbalFactoryApplication/build-*/
 *.user
 *.exe
 *.db
@@ -32,4 +30,4 @@ Tools/3DRGimbalFactoryApplication/build-*/
 .vagrant
 *.csv
 
-Tools/src/logs/
+/Tools/src/logs/

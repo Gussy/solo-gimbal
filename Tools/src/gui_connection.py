@@ -2,7 +2,7 @@ import time, datetime
 from PySide import QtCore, QtGui
 from PySide.QtCore import Slot
 from qtasync import AsyncTask, coroutine
-import setup_mavlink, setup_factory
+import setup_mavlink, setup_factory_pub, setup_factory_private, setup_param
 import gui_utils
 
 class connectionUI(object):
@@ -137,18 +137,30 @@ class connectionUI(object):
         return setup_mavlink.wait_for_heartbeat(self.link)
 
     @gui_utils.waitCursor
+    def getGimbalMessage(self):
+        return setup_mavlink.get_gimbal_message(self.link)
+
+    @gui_utils.waitCursor
+    def enableTorquesMessages(self, enabled):
+        return setup_param.enable_torques_message(self.link, enabled)
+
+    @gui_utils.waitCursor
+    def disablePositionHoldMode(self):
+        return setup_param.pos_hold_disable(self.link)
+
+    @gui_utils.waitCursor
     def getGimbalParameters(self):
         # Delay to allow the gimbal to start up if we're cycling and auto-updating
         timeout = 1
         if self.isCycling and self.parent.autoUpdate:
             timeout = 5
 
-        version = setup_factory.read_software_version(self.link, timeout=timeout)
+        version = setup_factory_pub.read_software_version(self.link, timeout=timeout)
         if version != None:
             major, minor, rev = int(version[0]), int(version[1]), int(version[2])
             if major >= 0 and minor >= 18:
-                serial_number = setup_factory.get_serial_number(self.link)
-                assembly_time = setup_factory.get_assembly_time(self.link)
+                serial_number = setup_factory_pub.get_serial_number(self.link)
+                assembly_time = setup_factory_pub.get_assembly_time(self.link)
             else:
                 serial_number = None
                 assembly_time = None
@@ -157,7 +169,7 @@ class connectionUI(object):
 
     @gui_utils.waitCursor
     def writeSerialNumber(self, serialNumber):
-        serialNumber, assemblyTime = setup_factory.set_serial_number_with_time(self.link, serialNumber)
+        serialNumber, assemblyTime = setup_factory_private.set_serial_number_with_time(self.link, serialNumber)
         return serialNumber, assemblyTime
 
     @coroutine
@@ -179,7 +191,15 @@ class connectionUI(object):
             self.ui.tabWidget.setEnabled(False)
         else:
             self.setConnectionStatusBanner('connected')
-            softwareVersion, serialNumber, assemblyTime = yield AsyncTask(self.getGimbalParameters)
+
+            # Check if we're connected to a gimbal in bootloader
+            gimbalMsg = yield AsyncTask(self.getGimbalMessage)
+            if gimbalMsg:
+                _ = yield AsyncTask(self.enableTorquesMessages, False)
+                _ = yield AsyncTask(self.disablePositionHoldMode)
+                softwareVersion, serialNumber, assemblyTime = yield AsyncTask(self.getGimbalParameters)
+            else:
+                softwareVersion, serialNumber, assemblyTime = None, None, None
 
             # Prompt a for the serial number if the gimbal is factory fresh
             if serialNumber == '' or assemblyTime == 0:

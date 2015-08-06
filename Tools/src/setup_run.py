@@ -4,7 +4,7 @@ import os, sys, time, threading
 from math import sin, cos, radians
 import math
 from pymavlink.rotmat import Matrix3, Vector3
-import setup_mavlink, setup_param, setup_factory, setup_validate
+import setup_mavlink, setup_param, setup_factory_pub, setup_validate
 import fixtureWobble
 
 #import visual.graph
@@ -26,7 +26,7 @@ class Log:
 
         self.logTimestamp = time.time()
         
-        self.logSerialNumber = setup_factory.get_serial_number(link)
+        self.logSerialNumber = setup_factory_pub.get_serial_number(link)
         if self.logSerialNumber == None:
             self.logSerialNumber = 'unknown'
 
@@ -227,6 +227,11 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     target = Vector3()
     log = None
 
+    # Disable position hold mode, low-torque mode and torque messages
+    setup_param.pos_hold_disable(link)
+    setup_param.enable_torques_message(link, False)
+    setup_param.low_torque_mode(link, False)
+
     start_time = time.time()
     if timeout is not None:
         timeout = timeout + WOBBLE_TEST_ALIGNMENT_TIME
@@ -238,19 +243,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     # For wobble test
     if test == 'wobble':
         pointing_gain = 2
-        gyro_offsets_raw = setup_param.get_offsets(link, 'GYRO', timeout=4)
-        # Detect old gyro offsets
-        if (gyro_offsets_raw.x < setup_validate.EXPECTED_GYRO / 100 and
-            gyro_offsets_raw.y < setup_validate.EXPECTED_GYRO / 100 and
-            gyro_offsets_raw.z < setup_validate.EXPECTED_GYRO / 100):
-            msg = "Old gyro calibration detected, re-calibration required"
-            if eventCallback:
-                eventCallback(msg, fault=True)
-            else:
-                print(msg)
-            stopTestLoop = True
-            return
-        gyro_offsets = gyro_offsets_raw / 100 # gyro offsets in rad/s
+        gyro_offsets = setup_param.get_offsets(link, 'GYRO', timeout=4)
         error_integral = Vector3()
         if rpm:
             tag = '_%irpm' % rpm
@@ -278,9 +271,6 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         else:
             _wobble = wobble
 
-    # Disable position hold mode
-    setup_param.pos_hold_disable(link)
-
     lastCycle = time.time()
     lastReport = time.time()
     commsLost = False
@@ -303,6 +293,10 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
                     log.writeEvent('gimbal connected')
                 if eventCallback:
                     eventCallback('gimbal connected')
+
+                setup_param.pos_hold_disable(link)
+                setup_param.enable_torques_message(link, False)
+                setup_param.low_torque_mode(link, False)
         elif report.get_type() == 'STATUSTEXT':
             if log:
                 log.writeEvent(report.text)
@@ -320,7 +314,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
 
         if test == 'wobble':
             measured_rate = Vector3(report.delta_angle_x/report.delta_time , report.delta_angle_y/report.delta_time , report.delta_angle_z/report.delta_time)
-            measured_rate_corrected = measured_rate - gyro_offsets/report.delta_time
+            measured_rate_corrected = measured_rate - gyro_offsets * 0.010 # gyro offsets are in rad/s, mesurements are in rad ( delta_angle)
             measured_joint = Vector3(report.joint_roll,report.joint_el,report.joint_az)
             measured_joint_corrected = measured_joint - joint_offsets
 
@@ -352,7 +346,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
             #if reportCallback:
             #    reportCallback(report.joint_roll, report.joint_el, report.joint_az)
         elif test == 'wobble':
-            setup_mavlink.send_gimbal_control(link, rate+gyro_offsets/report.delta_time)
+            setup_mavlink.send_gimbal_control(link, rate+gyro_offsets)
             #print 'demanded '+csvVector(rate) +'\t measured '+ csvVector(measured_rate_corrected)+'\t joint '+ csvVector(measured_joint_corrected)
 
             # Wait for the gimbal t stabilise before starting the fixture motor
@@ -406,8 +400,11 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         current_angle = Vector3(*Tvg.to_euler312())
         lastCycle = time.time()
 
-    # Re-enable position hold mode
-    setup_param.pos_hold_enable(link)
+    # Re-enable low-torque mode
+    setup_param.low_torque_mode(link, True)
+    # XXX: Disabled for now, since it causes problems with the GUI after running a test
+    # setup_param.pos_hold_enable(link)
+    # setup_param.enable_torques_message(link, True)
 
     if log:
         if test == 'wobble':

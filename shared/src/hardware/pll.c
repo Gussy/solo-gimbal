@@ -1,3 +1,4 @@
+#include "hardware/pll.h"
 #include "hardware/device_init.h"
 #include "hardware/watchdog.h"
 
@@ -23,10 +24,10 @@ void PLLset(Uint16 val)
    // DIVSEL MUST be 0 before PLLCR can be changed from
    // 0x0000. It is set to 0 by an external reset XRSn
    // This puts us in 1/4
-   if (SysCtrlRegs.PLLSTS.bit.DIVSEL != 0)
+   if (SysCtrlRegs.PLLSTS.bit.DIVSEL != DIVSEL_BY_4)
    {
        EALLOW;
-       SysCtrlRegs.PLLSTS.bit.DIVSEL = 0;
+       SysCtrlRegs.PLLSTS.bit.DIVSEL = DIVSEL_BY_4;
        EDIS;
    }
 
@@ -68,6 +69,6 @@ void PLLset(Uint16 val)
 
 	  //divide down SysClk by 2 to increase stability
 	  EALLOW;
-      SysCtrlRegs.PLLSTS.bit.DIVSEL = 2;
+      SysCtrlRegs.PLLSTS.bit.DIVSEL = DIVSEL_BY_2;
       EDIS;
 }

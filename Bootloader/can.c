@@ -1,12 +1,18 @@
-#include "boot/Boot.h"
+#include "can.h"
+#include "checksum.h"
+#include "firmware_data.h"
 #include "hardware/led.h"
 #include "hardware/device_init.h"
-#include "hardware/HWSpecific.h"
 
-Uint32 words_received;
-const LED_RGBA rgba_amber = {255, 160, 0, 0xff};
+// GetWordData is a pointer to the function that interfaces to the peripheral.
+// Each loader assigns this pointer to it's particular GetWordData function.
+uint16fptr GetWordData;
 
-void CAN_Init()
+// Used for ROLL and EL axes
+static Uint32 words_received;
+static const LED_RGBA rgba_amber = {.red=255, .green=160, .blue=0, .alpha=0xff};
+
+void CAN_Init(GimbalAxis axis)
 {
 
 /* Create a shadow register structure for the CAN control registers. This is
@@ -100,33 +106,49 @@ void CAN_Init()
 
 /* Disable all Mailboxes  */
 
-   ECanaRegs.CANME.all = 0;     // Required before writing the MSGIDs
+    ECanaRegs.CANME.all = 0;     // Required before writing the MSGIDs
 
-/* Assign MSGID to MBOX1 */
 
-   ECanaRegs.CANTRR.bit.TRR1 = 1;
-   while ( ECanaRegs.CANTRS.bit.TRS1 == 1);
-   ECanaMboxes.MBOX1.MSGID.all = 0x00000000;	// Standard ID of 1, Acceptance mask disabled
-   ECanaMboxes.MBOX1.MSGID.bit.STDMSGID = 0xFF;//0b00111111111;
-   ECanaMboxes.MBOX2.MSGID.bit.STDMSGID = 0xFE;//0b00111111110;
-   ECanaMboxes.MBOX1.MSGCTRL.bit.DLC = 2;
-   ECanaMboxes.MBOX2.MSGCTRL.bit.DLC = 2;
 
-/* Configure MBOX1 to be a send MBOX */
+    ECanaRegs.CANTRR.bit.TRR1 = 1;
+    while ( ECanaRegs.CANTRS.bit.TRS1 == 1);
 
-   ECanaRegs.CANMD.all = 0x0002;
+    if(axis == AZ) {
+        /* Assign MSGID to MBOX1 */
+        ECanaMboxes.MBOX1.MSGID.all = 0x00040000;	// Standard ID of 1, Acceptance mask disabled
+        //ECanaMboxes.MBOX1.MSGID.bit.STDMSGID = 0x3FF;
+        ECanaMboxes.MBOX1.MSGID.bit.STDMSGID = 0x0FF;
+        ECanaMboxes.MBOX1.MSGCTRL.bit.DLC = 2;
 
-/* Enable MBOX1 and MBOX2 */
+        /* Configure MBOX1 to be a send MBOX */
+        {
+            volatile Uint16 i;
+            ECanaRegs.CANMD.all = 0x0000;
+            // delay here for a bit to allow the other two boards to come up
+            for (i = 0; i < 0x4000; i++) {}
+        }
 
-   ECanaRegs.CANME.all = 0x0006;
+        /* Enable MBOX1 */
+        ECanaRegs.CANME.all = 0x0002;
+    } else {
+        ECanaMboxes.MBOX1.MSGID.all = 0x00000000;    // Standard ID of 1, Acceptance mask disabled
+        ECanaMboxes.MBOX1.MSGID.bit.STDMSGID = 0xFF;//0b00111111111;
+        ECanaMboxes.MBOX2.MSGID.bit.STDMSGID = 0xFE;//0b00111111110;
+        ECanaMboxes.MBOX1.MSGCTRL.bit.DLC = 2;
+        ECanaMboxes.MBOX2.MSGCTRL.bit.DLC = 2;
 
-   EDIS;
+        /* Configure MBOX1 to be a send MBOX */
+        ECanaRegs.CANMD.all = 0x0002;
 
-   words_received = 0;
-   return;
+        /* Enable MBOX1 and MBOX2 */
+        ECanaRegs.CANME.all = 0x0006;
+
+        words_received = 0;
+    }
+
+    EDIS;
+    return;
 }
-
-
 
 //#################################################
 // Uint16 CAN_GetWordData(void)
@@ -152,32 +174,31 @@ Uint16 CAN_GetWordData()
 // Fetch the LSB
    while(ECanaRegs.CANRMP.bit.RMP1 == 0)
    {
-	   // waiting for boot message
-	   if (words_received == 0) {
-		   if (wait_time++ >= 0xC4EA) {
-			   wait_time = 0;
-			   if (tenths_of_seconds++ >= 10) {
-				   tenths_of_seconds = 0;
-				   ECanaMboxes.MBOX2.MDL.byte.BYTE0 = 0x00;   // LS byte
-				   ECanaMboxes.MBOX2.MDL.byte.BYTE1 = 0x01;   // MS byte
-				   ECanaRegs.CANTRS.all = (1ul<<2);	// "writing 0 has no effect", previously queued boxes will stay queued
-				   ECanaRegs.CANTA.all = (1ul<<2);		// "writing 0 has no effect", clears pending interrupt, open for our tx
+       // waiting for boot message
+       if (words_received == 0) {
+           if (wait_time++ >= 0xC4EA) {
+               wait_time = 0;
+               if (tenths_of_seconds++ >= 10) {
+                   tenths_of_seconds = 0;
+                   ECanaMboxes.MBOX2.MDL.byte.BYTE0 = 0x00;   // LS byte
+                   ECanaMboxes.MBOX2.MDL.byte.BYTE1 = 0x01;   // MS byte
+                   ECanaRegs.CANTRS.all = (1ul<<2); // "writing 0 has no effect", previously queued boxes will stay queued
+                   ECanaRegs.CANTA.all = (1ul<<2);      // "writing 0 has no effect", clears pending interrupt, open for our tx
 
-				   // Toggle the LED in here to show that we're doing something
-				   if (blink_state == 0) {
-					   GpioDataRegs.GPACLEAR.bit.GPIO7 = 1;
-					   if(GetBoardHWID() == EL)
-						   led_set_mode(LED_MODE_SOLID, rgba_amber, 0);
-					   blink_state = 1;
-				   } else {
-					   GpioDataRegs.GPASET.bit.GPIO7 = 1;
-					   if(GetBoardHWID() == EL)
-						   led_set_mode(LED_MODE_OFF, rgba_amber, 0);
-					   blink_state = 0;
-				   }
-			   }
-		   }
-	   }
+                   // Toggle the LED in here to show that we're doing something
+                   if (blink_state == 0) {
+                       if(GetBoardHWID() == EL)
+                           led_set_mode(LED_MODE_SOLID, rgba_amber, 0);
+                       blink_state = 1;
+                   } else {
+                       if(GetBoardHWID() == EL)
+                           led_set_mode(LED_MODE_OFF, rgba_amber, 0);
+                       blink_state = 0;
+                   }
+                   led_status_toggle();
+               }
+           }
+       }
    }
    wordData =  (Uint16) ECanaMboxes.MBOX1.MDL.byte.BYTE0;   // LS byte
 
@@ -194,3 +215,68 @@ Uint16 CAN_GetWordData()
 
    return wordData;
 }
+
+//#################################################
+// Uint32 GetLongData(void)
+//-----------------------------------------------------
+// This routine fetches a 32-bit value from the peripheral
+// input stream.
+//-----------------------------------------------------
+
+Uint32 CAN_GetLongData()
+{
+    Uint32 longData;
+
+    // Fetch the upper 1/2 of the 32-bit value
+    longData = ((Uint32)(*GetWordData)() << 16);
+
+    // Fetch the lower 1/2 of the 32-bit value
+    longData |= (Uint32)(*GetWordData)();
+
+    return longData;
+}
+
+#define CAN_SEND_WORD_LED_TIMEOUT_1 500000
+#define CAN_SEND_WORD_LED_TIMEOUT_2 50000
+
+Uint16 CAN_SendWordData(Uint16 data)
+{
+   struct ECAN_REGS ECanaShadow;
+   Uint32 timeout = 0;
+   Uint32 timeout_max = CAN_SEND_WORD_LED_TIMEOUT_1;
+
+   ECanaMboxes.MBOX1.MDL.byte.BYTE0 = (data&0xFF);   // LS byte
+
+   // Fetch the MSB
+   ECanaMboxes.MBOX1.MDL.byte.BYTE1 = ((data >> 8)&0xFF);    // MS byte
+
+   ECanaRegs.CANTRS.all = (1ul<<1);	// "writing 0 has no effect", previously queued boxes will stay queued
+   ECanaRegs.CANTA.all = (1ul<<1);		// "writing 0 has no effect", clears pending interrupt, open for our tx
+
+   // wait for it to be sent
+   ECanaShadow.CANTRS.all = ECanaRegs.CANTRS.all;
+
+   while ((ECanaShadow.CANTRS.bit.TRS1 == 1)) {
+       while ((ECanaShadow.CANTRS.bit.TRS1 == 1) && (timeout++ < timeout_max)) {
+           ECanaShadow.CANTRS.all = ECanaRegs.CANTRS.all;
+       }
+       // Blink the status LED to show that we're doing something
+       timeout = 0;
+       if (timeout_max == CAN_SEND_WORD_LED_TIMEOUT_1) {
+           timeout_max = CAN_SEND_WORD_LED_TIMEOUT_2;
+       } else {
+           timeout_max = CAN_SEND_WORD_LED_TIMEOUT_1;
+       }
+       led_status_toggle();
+   }
+
+   return data;
+}
+
+Uint16 CAN_GetWordDataAndSend()
+{
+    Uint16 retval = read_firmware_data();
+    CAN_SendWordData(retval); // This will block until the send is successful
+    return retval;
+}
+
