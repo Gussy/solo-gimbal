@@ -90,7 +90,7 @@ static void flash_migration_from_0006(void) {
     flash_params.ser_num_3 = flash_params_0006.ser_num_3;
     flash_params.assy_time = flash_params_0006.assy_time;
     flash_params.k_rate = flash_params_0006.k_rate;
-    flash_params.gopro_charging_enabled = flash_params_0006.gopro_charging_enabled;
+    flash_params.gopro_charging_enabled = 1.0;
     flash_params.use_custom_gains = flash_params_0006.use_custom_gains;
 
     // Copy arrays
@@ -130,7 +130,7 @@ static void flash_migration_from_0005(void) {
     flash_params.ser_num_3 = flash_params_0005.ser_num_3;
     flash_params.assy_time = flash_params_0005.assy_time;
     flash_params.k_rate = flash_params_0005.k_rate;
-    flash_params.gopro_charging_enabled = flash_params_0005.gopro_charging_enabled;
+    flash_params.gopro_charging_enabled = 1.0;
     flash_params.use_custom_gains = flash_params_0005.use_custom_gains;
 
     // Copy arrays
@@ -168,7 +168,7 @@ static void flash_migration_from_0004(void) {
     flash_params.ser_num_3 = flash_params_0004.ser_num_3;
     flash_params.assy_time = flash_params_0004.assy_time;
     flash_params.k_rate = flash_params_0004.k_rate;
-    flash_params.gopro_charging_enabled = flash_params_0004.gopro_charging_enabled;
+    flash_params.gopro_charging_enabled = 1.0;
 
     // Copy arrays
     memcpy(flash_params.commutation_slope, flash_params_0004.commutation_slope, sizeof(flash_params_0004.commutation_slope));
@@ -205,7 +205,7 @@ static void flash_migration_from_0003(void) {
     flash_params.ser_num_3 = flash_params_0003.ser_num_3;
     flash_params.assy_time = flash_params_0003.assy_time;
     flash_params.k_rate = flash_params_0003.k_rate;
-    flash_params.gopro_charging_enabled = flash_params_0003.gopro_charging_enabled;
+    flash_params.gopro_charging_enabled = 1.0;
 
     // Copy arrays
     memcpy(flash_params.commutation_slope, flash_params_0003.commutation_slope, sizeof(flash_params_0003.commutation_slope));
