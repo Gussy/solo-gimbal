@@ -45,15 +45,14 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
         *(param_set[CAND_PID_RATE_EL_D].sema) = FALSE;
     }
 
-    if (*(param_set[CAND_PID_RATE_EL_WINDUP].sema) == TRUE) {
+    if (*(param_set[CAND_PID_RATE_EL_D_A].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[EL].integralCumulative = 0.0;
         rate_pid_loop_float[EL].processVarPrevious = 0.0;
         // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_WINDUP].param;
-        rate_pid_loop_float[EL].integralMax = float_converter.float_val;
-        rate_pid_loop_float[EL].integralMin = -float_converter.float_val;
-        *(param_set[CAND_PID_RATE_EL_WINDUP].sema) = FALSE;
+        float_converter.uint32_val = param_set[CAND_PID_RATE_EL_D_A].param;
+        rate_pid_loop_float[EL].dTermAlpha = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_EL_D_A].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_RATE_AZ_P].sema) == TRUE) {
@@ -86,15 +85,14 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
         *(param_set[CAND_PID_RATE_AZ_D].sema) = FALSE;
     }
 
-    if (*(param_set[CAND_PID_RATE_AZ_WINDUP].sema) == TRUE) {
+    if (*(param_set[CAND_PID_RATE_AZ_D_A].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[AZ].integralCumulative = 0.0;
         rate_pid_loop_float[AZ].processVarPrevious = 0.0;
         // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_WINDUP].param;
-        rate_pid_loop_float[AZ].integralMax = float_converter.float_val;
-        rate_pid_loop_float[AZ].integralMin = -float_converter.float_val;
-        *(param_set[CAND_PID_RATE_AZ_WINDUP].sema) = FALSE;
+        float_converter.uint32_val = param_set[CAND_PID_RATE_AZ_D_A].param;
+        rate_pid_loop_float[AZ].dTermAlpha = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_AZ_D_A].sema) = FALSE;
     }
 
     if (*(param_set[CAND_PID_RATE_RL_P].sema) == TRUE) {
@@ -127,15 +125,14 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
         *(param_set[CAND_PID_RATE_RL_D].sema) = FALSE;
     }
 
-    if (*(param_set[CAND_PID_RATE_RL_WINDUP].sema) == TRUE) {
+    if (*(param_set[CAND_PID_RATE_RL_D_A].sema) == TRUE) {
         // Dump the integrator and differentiator
         rate_pid_loop_float[ROLL].integralCumulative = 0.0;
         rate_pid_loop_float[ROLL].processVarPrevious = 0.0;
         // Load the new gain
-        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_WINDUP].param;
-        rate_pid_loop_float[ROLL].integralMax = float_converter.float_val;
-        rate_pid_loop_float[ROLL].integralMin = -float_converter.float_val;
-        *(param_set[CAND_PID_RATE_RL_WINDUP].sema) = FALSE;
+        float_converter.uint32_val = param_set[CAND_PID_RATE_RL_D_A].param;
+        rate_pid_loop_float[ROLL].dTermAlpha = float_converter.float_val;
+        *(param_set[CAND_PID_RATE_RL_D_A].sema) = FALSE;
     }
 
     if ((*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE)) {
