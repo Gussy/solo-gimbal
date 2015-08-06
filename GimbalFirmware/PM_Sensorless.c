@@ -713,7 +713,6 @@ void B3(void) //  SPARE
 
 //--------------------------------- USER ------------------------------------------
 
-static int led_cnt = 0;
 static uint16_t beacon_startup_counter = 0;
 static const uint16_t beacon_startup_delay_cycles = 14;
 static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
@@ -765,51 +764,6 @@ void C1(void) // Update Status LEDs
 
         last_axis_state = axis_parms.blink_state;
     }
-
-    // Handle individual board LED (remove after PVT release)
-    switch (axis_parms.blink_state) {
-        case BLINK_NO_COMM:
-            // fast, 3Hz
-            if(led_cnt % 2) {
-                led_status_on();
-            } else {
-                led_status_off();
-            }
-            break;
-
-        case BLINK_INIT:
-            // slow, .8Hz, dudy cycle of 20%
-            if((led_cnt%10) < 2) {
-                led_status_on();
-            } else {
-                led_status_off();
-            }
-            break;
-
-        case BLINK_READY:
-            // slow, .5Hz , dudy cycle of 90%
-            if((led_cnt % 10) < 9) {
-                led_status_on();
-            } else {
-                led_status_off();
-            }
-            break;
-
-        case BLINK_RUNNING:
-            led_status_on();
-            break;
-
-        case BLINK_ERROR:
-            // fast, 3Hz, pause after 3 cycles
-            if((led_cnt % 2) && (led_cnt % 12) <= 6) {
-                led_status_on();
-            } else {
-                led_status_off();
-            }
-            break;
-    }
-
-	led_cnt++;
 
 	// Periodically call Gimbal Beacon state machine
 	if (board_hw_id == EL) {
