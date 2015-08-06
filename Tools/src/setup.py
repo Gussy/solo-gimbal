@@ -252,8 +252,13 @@ def command_interface():
         return
 
     if args.eraseapp:
-        start_bootloader(link)
-        print("Application erased")
+        result = start_bootloader(link)
+        if result == loader_results.NoResponse:
+            print("No response from gimbal, exiting.")
+        elif result == loader_results.InBoot:
+            print("Application already erased")
+        elif result == loader_results.Restarting:
+            print("Application erased")
         return
 
     if args.calibrate:
