@@ -80,17 +80,16 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg)
 {
     uint32_t size_magic = mavlink_msg_data_transmission_handshake_get_size(msg);
 
-	/* does this need to be a state machine? */
+    // make sure this message is for us
 	if (msg->compid == MAV_COMP_ID_GIMBAL && size_magic == DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC) {
-		// make sure this message is for us
 		// stop this axis
 		power_down_motor();
+
 		// reset other axis
-		cand_tx_command(CAND_ID_ALL_AXES,CAND_CMD_RESET);
-		// erase our flash
-		if (erase_our_flash() < 0) {
-			// something went wrong... but what do I do?
-		}
+		cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
+
+		// erase application flash
+		erase_app_flash();
 
 		// reset now
 		watchdog_immediate_reset();
@@ -355,7 +354,7 @@ static void handle_full_reset_gimbal(void)
     cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
 
     // erase program and param flash
-    erase_our_flash();
+    erase_app_flash();
     erase_param_flash();
 
     // reset now

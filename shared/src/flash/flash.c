@@ -13,6 +13,8 @@ static FLASH_ST FlashStatus;
 #define  WORDS_IN_FLASH_BUFFER 0x100
 static Uint16  Buffer[WORDS_IN_FLASH_BUFFER];
 
+static int erase_flash(Uint16 SectorMask);
+
 static int verify_checksum(Uint16 *start_addr)
 {
 	Uint16 i;
@@ -35,36 +37,20 @@ static void make_checksum(Uint16 *start_addr)
 }
 
 
-int erase_our_flash()
+int erase_app_flash()
 {
-	Uint16  Status;
-	Uint16  VersionHex;     // Version of the API in decimal encoded hex
-	EALLOW;
-	Flash_CPUScaleFactor = SCALE_FACTOR;
-	EDIS;
-
-	VersionHex = Flash_APIVersionHex();
-	if(VersionHex != 0x0100)
-	{
-	    // Unexpected API version
-	    // Make a decision based on this info.
-	    asm("    ESTOP0");
-	}
-
-	flash_csm_unlock();
-	/* only need to erase B, everything else will be erased again later. */
-	Status = Flash_Erase(SECTORB, &FlashStatus);
-	Status = Flash_Erase(SECTORG, &FlashStatus);
-	if (Status != STATUS_SUCCESS) {
-		return -1;
-	}
-	return 1;
+    return erase_flash(SECTORG);
 }
 
 int erase_param_flash()
 {
-    Uint16  Status;
-    Uint16  VersionHex;     // Version of the API in decimal encoded hex
+    return erase_flash(SECTORH);
+}
+
+static int erase_flash(Uint16 SectorMask)
+{
+    Uint16 Status;
+    Uint16 VersionHex;     // Version of the API in decimal encoded hex
     EALLOW;
     Flash_CPUScaleFactor = SCALE_FACTOR;
     EDIS;
@@ -77,7 +63,8 @@ int erase_param_flash()
     }
 
     flash_csm_unlock();
-    Status = Flash_Erase(SECTORH, &FlashStatus);
+
+    Status = Flash_Erase(SectorMask, &FlashStatus);
     if (Status != STATUS_SUCCESS) {
         return -1;
     }

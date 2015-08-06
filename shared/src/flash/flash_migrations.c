@@ -72,7 +72,7 @@ void flash_migration_run(const Uint16 from_rev) {
 }
 
 static void flash_migration_not_possible(void) {
-    erase_our_flash();
+    erase_app_flash();
 
     // Reset other axes then ourselves
     cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_RESET);
