@@ -142,20 +142,17 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 					rate_pid_loop_float[AZ].gainP = flash_params.rate_pid_p[AZ];
 					rate_pid_loop_float[AZ].gainI = flash_params.rate_pid_i[AZ];
 					rate_pid_loop_float[AZ].gainD = flash_params.rate_pid_d[AZ];
-					rate_pid_loop_float[AZ].integralMax = flash_params.rate_pid_windup[AZ];
-					rate_pid_loop_float[AZ].integralMin = -flash_params.rate_pid_windup[AZ];
+					rate_pid_loop_float[AZ].dTermAlpha = flash_params.rate_pid_d_alpha[AZ];
 
 					rate_pid_loop_float[EL].gainP = flash_params.rate_pid_p[EL];
 					rate_pid_loop_float[EL].gainI = flash_params.rate_pid_i[EL];
 					rate_pid_loop_float[EL].gainD = flash_params.rate_pid_d[EL];
-					rate_pid_loop_float[EL].integralMax = flash_params.rate_pid_windup[EL];
-					rate_pid_loop_float[EL].integralMin = -flash_params.rate_pid_windup[EL];
+					rate_pid_loop_float[EL].dTermAlpha = flash_params.rate_pid_d_alpha[EL];
 
 					rate_pid_loop_float[ROLL].gainP = flash_params.rate_pid_p[ROLL];
 					rate_pid_loop_float[ROLL].gainI = flash_params.rate_pid_i[ROLL];
 					rate_pid_loop_float[ROLL].gainD = flash_params.rate_pid_d[ROLL];
-					rate_pid_loop_float[ROLL].integralMax = flash_params.rate_pid_windup[ROLL];
-					rate_pid_loop_float[ROLL].integralMin = -flash_params.rate_pid_windup[ROLL];
+					rate_pid_loop_float[ROLL].dTermAlpha = flash_params.rate_pid_d_alpha[ROLL];
 				}
 
                 axis_parms->all_init_params_recvd = TRUE;

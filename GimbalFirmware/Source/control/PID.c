@@ -4,8 +4,8 @@
 
 PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     // These get loaded over CAN at boot and are hard-coded with the default PID values
-    // The hardcoded PID gains can be overriden by the parameteres stored in flash, by
-    //  setting the GMB_CUST_GAINS parameter from 0.0 to 1.0
+    // The hardcoded PID gains and dTermAlpha can be overriden by the parameteres stored
+    //  in flash, by setting the GMB_CUST_GAINS parameter from 0.0 to 1.0
 
     // Elevation
     {

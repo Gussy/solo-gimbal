@@ -28,7 +28,7 @@ struct CURRENT_FLASH_PARAM_STRUCT flash_params =
         .rate_pid_p = { 0.0, 0.0, 0.0 },
         .rate_pid_i = { 0.0, 0.0, 0.0 },
         .rate_pid_d = { 0.0, 0.0, 0.0 },
-        .rate_pid_windup = { 32768.0, 32768.0, 32768.0 },
+        .rate_pid_d_alpha = { 0.0, 0.0, 0.0 },
 
         //  { X, Y, Z }
         .offset_joint = { 0.0, 0.0, 0.0 },
@@ -37,6 +37,6 @@ struct CURRENT_FLASH_PARAM_STRUCT flash_params =
         .gain_accelerometer = { 0.0, 0.0, 0.0 },
         .alignment_accelerometer = { 0.0, 0.0, 0.0 },
 
-        .gopro_charging_enabled = 0.0,
+        .gopro_charging_enabled = 1.0,
         .use_custom_gains = 0.0
 };
