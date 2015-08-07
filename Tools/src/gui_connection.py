@@ -71,10 +71,12 @@ class connectionUI(object):
                 "border-radius: 20px;")
 
     def setStatusInfo(self, softwareVersion=None, serialNumber=None, assemblyTime=None):
-        if softwareVersion != None:
+        if isinstance(softwareVersion, str):
+            self.ui.lblSoftwareVersion.setText(softwareVersion)
+        elif isinstance(softwareVersion, tuple) and len(softwareVersion) == 3:
             self.ui.lblSoftwareVersion.setText("v%i.%i.%i" % (softwareVersion[0], softwareVersion[1], softwareVersion[2]))
         elif softwareVersion != '':
-            self.ui.lblSoftwareVersion.setText("Unknown")
+            self.ui.lblSoftwareVersion.setText("")
 
         if serialNumber != None:
             if serialNumber == '':
@@ -82,7 +84,7 @@ class connectionUI(object):
             else:
                 self.ui.lblSerialNumber.setText(str(serialNumber))
         else:
-            self.ui.lblSerialNumber.setText("Unknown")
+            self.ui.lblSerialNumber.setText("")
 
         if assemblyTime != None:
             if assemblyTime == 0:
@@ -91,7 +93,7 @@ class connectionUI(object):
                 strTime = datetime.datetime.fromtimestamp(assemblyTime).strftime('%d/%m/%Y %H:%M:%S')
                 self.ui.lblAssemblyTime.setText(strTime)
         else:
-            self.ui.lblAssemblyTime.setText("Unknown")
+            self.ui.lblAssemblyTime.setText("")
 
     def setConnectionState(self, connected):
         if connected:
@@ -133,8 +135,8 @@ class connectionUI(object):
         return setup_mavlink.open_comm(port, baudrate)
 
     @gui_utils.waitCursor
-    def waitForHeartbeatWorker(self):
-        return setup_mavlink.wait_for_heartbeat(self.link)
+    def waitForAnyGimbalMessageWorker(self):
+        return setup_mavlink.wait_for_any_gimbal_message(self.link)
 
     @gui_utils.waitCursor
     def getGimbalMessage(self):
@@ -185,13 +187,11 @@ class connectionUI(object):
             baudrate = gui_utils.getComboboxSelection(self.ui.cbBaudrate)
             self.mavport, self.link = yield AsyncTask(self.serialConnectionWorker, port, baudrate)
 
-        heartbeat = yield AsyncTask(self.waitForHeartbeatWorker)
-        if heartbeat == None:
+        message = yield AsyncTask(self.waitForAnyGimbalMessageWorker)
+        if message is None:
             self.setConnectionState(False)
             self.ui.tabWidget.setEnabled(False)
         else:
-            self.setConnectionStatusBanner('connected')
-
             # Check if we're connected to a gimbal in bootloader
             gimbalMsg = yield AsyncTask(self.getGimbalMessage)
             if gimbalMsg:
@@ -199,14 +199,16 @@ class connectionUI(object):
                 _ = yield AsyncTask(self.disablePositionHoldMode)
                 softwareVersion, serialNumber, assemblyTime = yield AsyncTask(self.getGimbalParameters)
             else:
-                softwareVersion, serialNumber, assemblyTime = None, None, None
+                softwareVersion, serialNumber, assemblyTime = "(Bootloader)", None, None
 
             # Prompt a for the serial number if the gimbal is factory fresh
             if serialNumber == '' or assemblyTime == 0:
                 text, ok = QtGui.QInputDialog.getText(self.parent, '3DR Gimbal', 'Serial Number:')
                 if ok and text != '' and softwareVersion[0] >= 0 and softwareVersion[1] >= 18:
                     serialNumber, assemblyTime = yield AsyncTask(self.writeSerialNumber, text.upper())
+
             # Update the status display
+            self.setConnectionStatusBanner('connected')
             self.setStatusInfo(
                 softwareVersion=softwareVersion,
                 serialNumber=serialNumber,

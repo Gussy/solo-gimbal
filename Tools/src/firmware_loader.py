@@ -29,23 +29,23 @@ def decode_bootloader_version(msg):
 
 def start_bootloader(link):
     """Check if target is in booloader, if not reset into bootloader mode"""
-    msg = setup_mavlink.wait_handshake(link, timeout=4)
-    if msg != None:
+    msg = setup_mavlink.get_any_gimbal_message(link)
+    if msg and setup_mavlink.is_bootloader_message(msg):
         return Results.InBoot
     
-    timeout_counter = 0;
-    while True:
-        # Signal the target to reset into bootloader mode
-        setup_mavlink.reset_into_bootloader(link)
+    # Signal the target to reset into bootloader mode
+    setup_mavlink.reset_into_bootloader(link)
+
+    # Wait for the bootloader to send a handshake
+    timeout_counter = 0
+    while timeout_counter < 5:
         msg = setup_mavlink.wait_handshake(link)
-        timeout_counter += 1
-        
-        if msg == None:
-            if timeout_counter > 20:
-                return Results.NoResponse
+        if msg is None:
+            setup_mavlink.reset_into_bootloader(link)
+            timeout_counter += 1
         else:
-            break
-    return Results.Restarting
+            return Results.Restarting
+    return Results.NoResponse
 
 def send_block(link, binary, msg):
     sequence_number = msg.width
@@ -115,11 +115,11 @@ def finish_upload(link):
             return Results.Timeout
         if msg.width == DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_WIDTH:
             break
-        
-    if setup_mavlink.wait_for_heartbeat(link, retries=5) == None:
-        return Results.Timeout
-    else:
+
+    if setup_mavlink.wait_for_gimbal_message(link, timeout=5):
         return Results.Success
+    else:
+        return Results.Timeout
 
 def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=None):
     global bootloaderVersionHandler, progressHandler

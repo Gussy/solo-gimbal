@@ -59,7 +59,7 @@ class MAVLinkConn(object):
         return True
 
     def is_gimbal_connected(self):
-        if setup_mavlink.wait_for_heartbeat(self.link) == None:
+        if setup_mavlink.wait_for_any_gimbal_message(self.link) is None:
             print("[MAVLinkConn] Failed to communicate to gimbal")
             return False
         

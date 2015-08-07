@@ -4,15 +4,13 @@
 Command-line utility to handle comms to gimbal 
 '''
 import time, os, sys, argparse, time, json
-import setup_factory_pub
-from setup_mavlink import open_comm, wait_for_heartbeat
+import setup_mavlink, setup_factory_pub
 
 from firmware_helper import load_firmware, append_checksum
 from firmware_loader import load_binary, start_bootloader
 from firmware_loader import Results as loader_results
-import setup_comutation, setup_mavlink
+import setup_validate, setup_param, setup_comutation
 from setup_comutation import Results as calibration_results
-import setup_validate, setup_param
 
 # Optional imports
 try:
@@ -25,14 +23,6 @@ except ImportError:
     setup_home = None
     setup_factory_private = None
     firmware_git_tools = None
-
-def loaderProgressCallback(uploaded_kb, total_kb, percentage):
-    sys.stdout.write("\rUpload %2.2fkB of %2.2fkB - %d%%     " % (uploaded_kb, total_kb, percentage))
-    # The flush is required to refresh the screen on Ubuntu
-    sys.stdout.flush()
-
-def bootloaderVersionCallback(major, minor):
-    print('Bootloader Ver %i.%i' % (major, minor))
 
 def handle_file(args, link):
     fileExtension = str(args.file).split(".")[-1].lower()
@@ -58,7 +48,18 @@ def handle_file(args, link):
         elif result == loader_results.InBoot:
             print('Target already in bootloader mode')
         elif result == loader_results.Restarting:
-            print("Restarting target in bootloader mode")
+            print("Restarted target in bootloader mode")
+
+        def loaderProgressCallback(uploaded_kb, total_kb, percentage):
+            if percentage == 0:
+                sys.stdout.write("\rErasing flash...")
+            else:
+                sys.stdout.write("\rUploading %2.2fkB of %2.2fkB - %d%%" % (uploaded_kb, total_kb, percentage))
+            # The flush is required to refresh the screen on Ubuntu
+            sys.stdout.flush()
+
+        def bootloaderVersionCallback(major, minor):
+            print('Bootloader Ver %i.%i' % (major, minor))
 
         # Load the binary using the bootloader
         result = load_binary(binary, link, bootloaderVersionCallback=bootloaderVersionCallback, progressCallback=loaderProgressCallback)
@@ -234,7 +235,7 @@ def command_interface():
     args = parser.parse_args()
 
     # Open the serial port
-    port, link = open_comm(args.port)
+    port, link = setup_mavlink.open_comm(args.port)
     print("Connecting via port %s" % port)
 
     # Send a heartbeat first to wake up the interface, because mavlink
@@ -254,8 +255,13 @@ def command_interface():
         return
 
     if args.eraseapp:
-        start_bootloader(link)
-        print("Application erased")
+        result = start_bootloader(link)
+        if result == loader_results.NoResponse:
+            print("No response from gimbal, exiting.")
+        elif result == loader_results.InBoot:
+            print("Application already erased")
+        elif result == loader_results.Restarting:
+            print("Application erased")
         return
 
     if args.calibrate:
@@ -264,7 +270,6 @@ def command_interface():
     
     if args.forcecal:
         eraseCalibration(link)
-        wait_for_heartbeat(link)
         # TODO: Check if this timeout is necessary
         time.sleep(5)
         runCalibration(link)
@@ -411,8 +416,7 @@ def command_interface():
     if ver != None:
         major, minor, rev = ver[0], ver[1], ver[2]
         print("Software version: v%i.%i.%i" % (major, minor, rev))
-        
-        asm_time = setup_factory_pub.get_assembly_time(link)
+
         serial_number = setup_factory_pub.get_serial_number(link)
         if serial_number != None:
             if serial_number == '':
@@ -422,6 +426,7 @@ def command_interface():
         else:
             print("Serial number: unknown")
 
+        asm_time = setup_factory_pub.get_assembly_time(link)
         if asm_time != None:
             if asm_time > 0:
                 print("Assembled time: " + time.ctime(asm_time))
