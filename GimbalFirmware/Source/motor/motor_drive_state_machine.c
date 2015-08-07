@@ -273,7 +273,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
                 md_parms->md_initialized = TRUE;
                 axis_parms->enable_flag = TRUE;
-                md_parms->motor_drive_state = STATE_RUNNING;
+                md_parms->motor_drive_state = md_parms->motor_drive_state_after_initialisation;
             }
             break;
 
@@ -301,7 +301,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 cb_parms->enabled = TRUE;
                 md_parms->md_initialized = TRUE;
                 axis_parms->enable_flag = TRUE;
-                md_parms->motor_drive_state = STATE_RUNNING;
+                md_parms->motor_drive_state = md_parms->motor_drive_state_after_initialisation;
             } else {
                 // Send a zero torque command to the other axes to generate an encoder response
                 // (we update our own encoder value in a different place)
@@ -325,7 +325,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_DISABLED:
-            axis_parms->blink_state = BLINK_READY;
+            axis_parms->blink_state = BLINK_RUNNING;
             // Set park transformation angle to currently measured rotor electrical angle
             md_parms->park_xform_parms.Angle = encoder_parms->elec_theta;
 

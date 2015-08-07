@@ -197,15 +197,15 @@ if __name__ == '__main__':
     # Send a heartbeat first to wake up the interface
     link.heartbeat_send(0, 0, 0, 0, 0)
 
+    while True:
+        print get_any_message(link)
+
     # while True:
-    #     print get_any_message(link)
+    #     print time.time(), get_gimbal_message(link)
 
-    while True:
-        print time.time(), get_any_gimbal_message(link)
-
-    while True:
-        msg = get_all(link)
-        if msg is not None:
-            print time.time(), msg
-        else:
-            print('.')
+    # while True:
+    #     msg = get_all(link)
+    #     if msg is not None:
+    #         print time.time(), msg
+    #     else:
+    #         print('.')
