@@ -10,41 +10,41 @@ PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     // Elevation
     {
             .gainP = 1.850000,
-            .gainI = 0.200000,
+            .gainI = 0.270000,
             .gainD = 0.000000,
             .integralMax = 32768.0,
             .integralMin = -32768.0,
             .gainTotal = 1.0,
             .integralCumulative = 0.0,
-            .dTermAlpha = 0.24,
+            .dTermAlpha = 0.5,
             .processVarPrevious = 0.0,
             .deltaPvFilt = 0.0
     },
 
     // Azimuth
     {
-            .gainP = 2.700000,
-            .gainI = 0.500000,
+            .gainP = 11.000000,
+            .gainI = 0.200000,
             .gainD = 0.000000,
             .integralMax = 32768.0,
             .integralMin = -32768.0,
             .gainTotal = 1.0,
             .integralCumulative = 0.0,
-            .dTermAlpha = 0.24,
+            .dTermAlpha = 0.5,
             .processVarPrevious = 0.0,
             .deltaPvFilt = 0.0
     },
 
     // Roll
     {
-            .gainP = 7.000000,
+            .gainP = 6.000000,
             .gainI = 0.500000,
             .gainD = 0.000000,
             .integralMax = 32768.0,
             .integralMin = -32768.0,
             .gainTotal = 1.0,
             .integralCumulative = 0.0,
-            .dTermAlpha = 0.24,
+            .dTermAlpha = 0.5,
             .processVarPrevious = 0.0,
             .deltaPvFilt = 0.0
     }

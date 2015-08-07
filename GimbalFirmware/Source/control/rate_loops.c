@@ -45,6 +45,42 @@ struct Filt2p_State roll_torque_filt_state[2] = {
     {0.0f,0.0f}
 };
 
+struct Filt2p_Params yaw_torque_filt_params[15] = {
+    {.b0 = 1.0000000e+00, .b1 = -7.3542713e-01, .b2 =-1.9299735e-01, .a1 = -1.7388109e+00, .a2 = 7.4980146e-01},
+    {.b0 = 1.0000000e+00, .b1 =  3.2678289e-01, .b2 = 5.8842620e-01, .a1 =  3.5948752e-01, .a2 = 1.2650177e-01},
+    {.b0 = 1.0000000e+00, .b1 = -1.7539535e+00, .b2 = 8.6200577e-01, .a1 = -8.1533733e-01, .a2 = 3.0022995e-01},
+    {.b0 = 1.0000000e+00, .b1 =  1.0515024e+00, .b2 = 4.8771217e-01, .a1 =  1.1265305e+00, .a2 = 5.3646564e-01},
+    {.b0 = 1.0000000e+00, .b1 =  6.8367022e-01, .b2 = 7.2154894e-01, .a1 =  6.1943367e-01, .a2 = 6.3847124e-01},
+    {.b0 = 1.0000000e+00, .b1 =  5.5930643e-02, .b2 = 7.4294074e-01, .a1 =  7.3010623e-02, .a2 = 6.4699304e-01},
+    {.b0 = 1.0000000e+00, .b1 =  1.3880131e+00, .b2 = 7.4044322e-01, .a1 =  1.3986707e+00, .a2 = 7.5164554e-01},
+    {.b0 = 1.0000000e+00, .b1 = -1.1231375e+00, .b2 = 7.6660438e-01, .a1 = -1.1241789e+00, .a2 = 7.6629407e-01},
+    {.b0 = 1.0000000e+00, .b1 = -1.5849777e+00, .b2 = 8.3072920e-01, .a1 = -1.4733546e+00, .a2 = 8.8562184e-01},
+    {.b0 = 1.0000000e+00, .b1 = -1.9055593e-03, .b2 = 9.0286857e-01, .a1 = -7.9853347e-04, .a2 = 8.8725974e-01},
+    {.b0 = 1.0000000e+00, .b1 =  8.0700640e-01, .b2 = 8.9916944e-01, .a1 =  8.0252498e-01, .a2 = 8.8851668e-01},
+    {.b0 = 1.0000000e+00, .b1 =  1.5266242e+00, .b2 = 8.9435428e-01, .a1 =  1.5290569e+00, .a2 = 8.9738000e-01},
+    {.b0 = 1.0000000e+00, .b1 = -1.2851239e+00, .b2 = 9.0371718e-01, .a1 = -1.2867601e+00, .a2 = 8.9779926e-01},
+    {.b0 = 1.0000000e+00, .b1 = -1.6334517e+00, .b2 = 9.4783350e-01, .a1 = -1.5869781e+00, .a2 = 9.1400400e-01},
+    {.b0 = 1.0000000e+00*6.7277909e-01, .b1 = -1.8090775e+00*6.7277909e-01, .b2 = 8.9795981e-01*6.7277909e-01, .a1 = -1.8604519e+00, .a2 = 9.3232719e-01}
+};
+
+struct Filt2p_State yaw_torque_filt_state[15] = {
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f},
+    {0.0f,0.0f}
+};
+
 Uint16 telemetry_decimation_count = 0;
 Uint16 torque_cmd_telemetry_decimation_count = 5; // Start this at 5 so it's staggered with respect to the rest of the telemetry
 
@@ -182,16 +218,29 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 			cb_parms->rate_loop_pass = TORQUE_OUT_PASS;
             break;
 
-        case TORQUE_OUT_PASS:
+        case TORQUE_OUT_PASS: {
             // Run PID rate loops
 
             // Compute the new motor torque commands
             torque_out[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], torque_limit, 1.0f, 0.0f);
-            torque_out[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], torque_limit, cos_phi*cos_phi, torque_out[EL]*sin_phi);
+            torque_out[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], torque_limit, cos_phi*cos_phi, 0.0f);
             torque_out[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], torque_limit, 1.0f, 0.0f);
 
             torque_out[ROLL] = update_filt2p(&(roll_torque_filt_params[0]), &(roll_torque_filt_state[0]), torque_out[ROLL]);
             torque_out[ROLL] = update_filt2p(&(roll_torque_filt_params[1]), &(roll_torque_filt_state[1]), torque_out[ROLL]);
+
+            Uint8 i;
+            for(i=0; i<15; i++) {
+                torque_out[AZ] = update_filt2p(&(yaw_torque_filt_params[i]), &(yaw_torque_filt_state[i]), torque_out[AZ]);
+            }
+
+            torque_out[AZ]+=torque_out[EL]*sin_phi;
+
+            if (torque_out[AZ]>torque_limit) {
+                torque_out[AZ] = torque_limit;
+            } else if (torque_out[AZ]<-torque_limit) {
+                torque_out[AZ] = -torque_limit;
+            }
 
             cb_parms->motor_torques[EL] = torque_out[EL] * TorqueSignMap[EL];
             cb_parms->motor_torques[AZ] = torque_out[AZ] * TorqueSignMap[AZ];
@@ -254,6 +303,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             // We've completed one full rate loop iteration, so on the next pass go back to the beginning
             cb_parms->rate_loop_pass = READ_GYRO_PASS;
             break;
+        }
     }
 }
 
