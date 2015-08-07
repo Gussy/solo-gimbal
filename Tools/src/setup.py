@@ -24,14 +24,6 @@ except ImportError:
     setup_factory_private = None
     firmware_git_tools = None
 
-def loaderProgressCallback(uploaded_kb, total_kb, percentage):
-    sys.stdout.write("\rUpload %2.2fkB of %2.2fkB - %d%%     " % (uploaded_kb, total_kb, percentage))
-    # The flush is required to refresh the screen on Ubuntu
-    sys.stdout.flush()
-
-def bootloaderVersionCallback(major, minor):
-    print('Bootloader Ver %i.%i' % (major, minor))
-
 def handle_file(args, link):
     fileExtension = str(args.file).split(".")[-1].lower()
     if fileExtension == 'param':
@@ -57,6 +49,17 @@ def handle_file(args, link):
             print('Target already in bootloader mode')
         elif result == loader_results.Restarting:
             print("Restarted target in bootloader mode")
+
+        def loaderProgressCallback(uploaded_kb, total_kb, percentage):
+            if percentage == 0:
+                sys.stdout.write("\rErasing flash...")
+            else:
+                sys.stdout.write("\rUploading %2.2fkB of %2.2fkB - %d%%" % (uploaded_kb, total_kb, percentage))
+            # The flush is required to refresh the screen on Ubuntu
+            sys.stdout.flush()
+
+        def bootloaderVersionCallback(major, minor):
+            print('Bootloader Ver %i.%i' % (major, minor))
 
         # Load the binary using the bootloader
         result = load_binary(binary, link, bootloaderVersionCallback=bootloaderVersionCallback, progressCallback=loaderProgressCallback)
@@ -413,8 +416,7 @@ def command_interface():
     if ver != None:
         major, minor, rev = ver[0], ver[1], ver[2]
         print("Software version: v%i.%i.%i" % (major, minor, rev))
-        
-        asm_time = setup_factory_pub.get_assembly_time(link)
+
         serial_number = setup_factory_pub.get_serial_number(link)
         if serial_number != None:
             if serial_number == '':
@@ -424,6 +426,7 @@ def command_interface():
         else:
             print("Serial number: unknown")
 
+        asm_time = setup_factory_pub.get_assembly_time(link)
         if asm_time != None:
             if asm_time > 0:
                 print("Assembled time: " + time.ctime(asm_time))
