@@ -1,12 +1,11 @@
 """
 """
-import math
+import math, os, time
 import numpy as np
 import setup_accelcal
-import os
 
-from setup_mavlink import get_current_joint_angles, get_current_delta_angles, get_current_delta_velocity
-from setup_param import set_offsets, set_param, commit_to_flash, set_accel_params, enable_torques_message
+from setup_mavlink import get_current_joint_angles, get_current_delta_angles, get_current_delta_velocity, reset_gimbal
+from setup_param import set_offsets, set_param, commit_to_flash, set_accel_params, enable_torques_message, pos_hold_disable
 from setup_factory_pub import get_serial_number
 from pymavlink.rotmat import Vector3
 from math import degrees
@@ -30,6 +29,13 @@ def getAverage(link, get_variable, sample_count=NUMBER_OF_SAMPLES, progressCallb
     return offset
 
 def calibrate_joints(link, progressCallback=None):
+    # Zero the offsets on the gimbal first since the feedback message undoes the
+    #  joint angles set on power-up. Then reset the gimbal so they take effect
+    set_offsets(link, 'JNT', Vector3())
+    reset_gimbal(link)
+    enable_torques_message(link, enabled=False)
+    pos_hold_disable(link)
+    time.sleep(2)
     average = getAverage(link, get_current_joint_angles, progressCallback=progressCallback)
     if average:
         set_offsets(link, 'JNT', average)
