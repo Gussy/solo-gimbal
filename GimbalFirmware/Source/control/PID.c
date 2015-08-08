@@ -1,54 +1,105 @@
 #include "control/PID.h"
-
+#include "control/config.h"
 #include <stdlib.h>
 
-PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
-    // These get loaded over CAN at boot and are hard-coded with the default PID values
-    // The hardcoded PID gains and dTermAlpha can be overriden by the parameteres stored
-    //  in flash, by setting the GMB_CUST_GAINS parameter from 0.0 to 1.0
+// TUNE_REVISION is set in Headers/control/config.h
+#if TUNE_REVISION == 1
+    PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
+        // These get loaded over CAN at boot and are hard-coded with the default PID values
+        // The hardcoded PID gains and dTermAlpha can be overriden by the parameteres stored
+        //  in flash, by setting the GMB_CUST_GAINS parameter from 0.0 to 1.0
 
-    // Elevation
-    {
-            .gainP = 1.850000,
+        // Elevation
+        {
+            .gainP = 2.400000,
             .gainI = 0.200000,
             .gainD = 0.000000,
             .integralMax = 32768.0,
             .integralMin = -32768.0,
             .gainTotal = 1.0,
             .integralCumulative = 0.0,
-            .dTermAlpha = 0.24,
+            .dTermAlpha = 0.5,
             .processVarPrevious = 0.0,
             .deltaPvFilt = 0.0
-    },
+        },
 
-    // Azimuth
-    {
-            .gainP = 2.700000,
+        // Azimuth
+        {
+            .gainP = 6.000000,
+            .gainI = 0.400000,
+            .gainD = 0.000000,
+            .integralMax = 32768.0,
+            .integralMin = -32768.0,
+            .gainTotal = 1.0,
+            .integralCumulative = 0.0,
+            .dTermAlpha = 0.5,
+            .processVarPrevious = 0.0,
+            .deltaPvFilt = 0.0
+        },
+
+        // Roll
+        {
+            .gainP = 6.000000,
             .gainI = 0.500000,
             .gainD = 0.000000,
             .integralMax = 32768.0,
             .integralMin = -32768.0,
             .gainTotal = 1.0,
             .integralCumulative = 0.0,
-            .dTermAlpha = 0.24,
+            .dTermAlpha = 0.5,
             .processVarPrevious = 0.0,
             .deltaPvFilt = 0.0
-    },
+        }
+    };
+#elif TUNE_REVISION == 2
+    PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
+        // These get loaded over CAN at boot and are hard-coded with the default PID values
+        // The hardcoded PID gains and dTermAlpha can be overriden by the parameteres stored
+        //  in flash, by setting the GMB_CUST_GAINS parameter from 0.0 to 1.0
 
-    // Roll
-    {
-            .gainP = 7.000000,
-            .gainI = 0.500000,
-            .gainD = 0.000000,
-            .integralMax = 32768.0,
-            .integralMin = -32768.0,
-            .gainTotal = 1.0,
-            .integralCumulative = 0.0,
-            .dTermAlpha = 0.24,
-            .processVarPrevious = 0.0,
-            .deltaPvFilt = 0.0
-    }
-};
+        // Elevation
+        {
+                .gainP = 2.400000,
+                .gainI = 0.400000,
+                .gainD = 0.000000,
+                .integralMax = 32768.0,
+                .integralMin = -32768.0,
+                .gainTotal = 1.0,
+                .integralCumulative = 0.0,
+                .dTermAlpha = 0.5,
+                .processVarPrevious = 0.0,
+                .deltaPvFilt = 0.0
+        },
+
+        // Azimuth
+        {
+                .gainP = 10.000000,
+                .gainI = 0.500000,
+                .gainD = 0.000000,
+                .integralMax = 32768.0,
+                .integralMin = -32768.0,
+                .gainTotal = 1.0,
+                .integralCumulative = 0.0,
+                .dTermAlpha = 0.5,
+                .processVarPrevious = 0.0,
+                .deltaPvFilt = 0.0
+        },
+
+        // Roll
+        {
+                .gainP = 6.000000,
+                .gainI = 0.500000,
+                .gainD = 0.000000,
+                .integralMax = 32768.0,
+                .integralMin = -32768.0,
+                .gainTotal = 1.0,
+                .integralCumulative = 0.0,
+                .dTermAlpha = 0.5,
+                .processVarPrevious = 0.0,
+                .deltaPvFilt = 0.0
+        }
+    };
+#endif
 
 float UpdatePID_Float(GimbalAxis axis, float setpoint, float process_var, float output_limit, float gain, float ff)
 {
