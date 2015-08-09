@@ -38,11 +38,6 @@ void CBSendEncoder( Uint16 enc )
 	cand_tx_response(CAND_ID_EL, CAND_PID_POSITION, enc); // EL axis is control board
 }
 
-void CBSendVoltage( float v )
-{
-	cand_tx_response( CAND_ID_EL, CAND_PID_VOLTAGE, (Uint8) (v*255)); // EL axis is control board
-}
-
 void MDBSendTorques(int16 az, int16 roll)
 {
     Uint32 combined[2];

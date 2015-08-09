@@ -32,34 +32,18 @@ typedef CAND_DestinationID CAND_SenderID;
  * Parameter IDs
  */
 typedef enum  {
-    CAND_PID_INVALID =                                  0,
+    CAND_PID_INVALID,
 
     // Four Byte Parameters
-    CAND_PID_RATE_EL_P =                                1,
-    CAND_PID_RATE_EL_I,
-    CAND_PID_RATE_EL_D,
-    CAND_PID_RATE_EL_D_A,
-    CAND_PID_RATE_AZ_P,
-    CAND_PID_RATE_AZ_I,
-    CAND_PID_RATE_AZ_D,
-    CAND_PID_RATE_AZ_D_A,
-    CAND_PID_RATE_RL_P,
-    CAND_PID_RATE_RL_I,
-    CAND_PID_RATE_RL_D,
-    CAND_PID_RATE_RL_D_A,
     CAND_PID_COMMUTATION_CALIBRATION_SLOPE,
     CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT,
-    CAND_PID_TORQUE_KP,
-    CAND_PID_TORQUE_KI,
-    CAND_PID_TORQUE_KD,
 	CAND_PID_GOPRO_GET_RESPONSE,
 	CAND_PID_GOPRO_SET_REQUEST,
 	CAND_PID_GOPRO_SET_RESPONSE,
 	CAND_PID_GOPRO_GET_REQUEST,
 
     // Two Byte Parameters
-    CAND_PID_4_BYTE_CUTOFF =                            22,
-    CAND_PID_COMMUTATION_CALIBRATION_HOME_OFFSET,
+    CAND_PID_4_BYTE_CUTOFF,
     CAND_PID_CORETEMP,
     CAND_PID_TORQUE,
     CAND_PID_POSITION,
@@ -71,17 +55,12 @@ typedef enum  {
     CAND_PID_DEBUG_3,
 
     // One Byte Parameters
-    CAND_PID_2_BYTE_CUTOFF =                            33,
+    CAND_PID_2_BYTE_CUTOFF,
     CAND_PID_BIT,
-    CAND_PID_VOLTAGE,
-    CAND_PID_USER_CONTROL_FLAGS,
-    CAND_PID_UNUSED_1, // Former beacon mode, left here to preserve order
-    CAND_PID_UNUSED_2, // Former beacon brightness, left here to preserve order
-    CAND_PID_VERSION,
 	CAND_PID_GOPRO_HEARTBEAT,
     CAND_PID_EXTENDED,
 
-    CAND_PID_LAST =                                     42
+    CAND_PID_LAST
 } CAND_ParameterID;
 
 typedef enum {
@@ -102,7 +81,8 @@ typedef enum {
 	CAND_EPID_MAX_TORQUE,
 	CAND_EPID_PARAMS_LOAD,
 	CAND_EPID_PARAMS_CHECKSUM,
-	CAND_EPID_TORQUE_CMD_TELEMETRY
+	CAND_EPID_TORQUE_CMD_TELEMETRY,
+	CAND_EPID_MAVLINK_PARAM,
 } CAND_ExtendedParameterID;
 
 #define CAND_DIR_RESPONSE   0

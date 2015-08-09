@@ -122,38 +122,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // If we've completed requesting and receiving the params from AZ,
             // we can continue with our init sequence
             if (load_ap_state_info->axis_parms_load_complete) {
-            	// Copy the parameters we need from our local copy of the flash params struct
-            	// into the runtime locations they need to be at
-            	GimbalAxis my_axis = (GimbalAxis)GetBoardHWID();
-            	md_parms->pid_id.param.Kp = flash_params.torque_pid_kp[my_axis];
-				md_parms->pid_id.param.Ki = flash_params.torque_pid_ki[my_axis];
-				md_parms->pid_id.param.Kd = flash_params.torque_pid_kd[my_axis];
-
-				md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp[my_axis];
-				md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[my_axis];
-				md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[my_axis];
-
-				AxisCalibrationSlopes[my_axis] = flash_params.commutation_slope[my_axis];
-				AxisCalibrationIntercepts[my_axis] = flash_params.commutation_icept[my_axis];
-
-				// If this is the elevation axis, we also need to load rate loop PID gains,
-				// if the param "GMB_CUST_GAINS" is set to 1.0
-				if (my_axis == EL && flash_params.use_custom_gains == 1.0) {
-					rate_pid_loop_float[AZ].gainP = flash_params.rate_pid_p[AZ];
-					rate_pid_loop_float[AZ].gainI = flash_params.rate_pid_i[AZ];
-					rate_pid_loop_float[AZ].gainD = flash_params.rate_pid_d[AZ];
-					rate_pid_loop_float[AZ].dTermAlpha = flash_params.rate_pid_d_alpha[AZ];
-
-					rate_pid_loop_float[EL].gainP = flash_params.rate_pid_p[EL];
-					rate_pid_loop_float[EL].gainI = flash_params.rate_pid_i[EL];
-					rate_pid_loop_float[EL].gainD = flash_params.rate_pid_d[EL];
-					rate_pid_loop_float[EL].dTermAlpha = flash_params.rate_pid_d_alpha[EL];
-
-					rate_pid_loop_float[ROLL].gainP = flash_params.rate_pid_p[ROLL];
-					rate_pid_loop_float[ROLL].gainI = flash_params.rate_pid_i[ROLL];
-					rate_pid_loop_float[ROLL].gainD = flash_params.rate_pid_d[ROLL];
-					rate_pid_loop_float[ROLL].dTermAlpha = flash_params.rate_pid_d_alpha[ROLL];
-				}
+            	update_local_params_from_flash(md_parms);
 
                 axis_parms->all_init_params_recvd = TRUE;
                 md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
@@ -385,4 +354,41 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
 
     md_parms->iq_ref = ((int16) param_set[CAND_PID_TORQUE].param) / 32767.0;
     *param_set[CAND_PID_TORQUE].sema = FALSE;
+}
+
+void update_local_params_from_flash(MotorDriveParms* md_parms)
+{
+    // Copy the parameters we need from our local copy of the flash params struct
+    // into the runtime locations they need to be at
+    GimbalAxis my_axis = (GimbalAxis)GetBoardHWID();
+    md_parms->pid_id.param.Kp = flash_params.torque_pid_kp[my_axis];
+    md_parms->pid_id.param.Ki = flash_params.torque_pid_ki[my_axis];
+    md_parms->pid_id.param.Kd = flash_params.torque_pid_kd[my_axis];
+
+    md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp[my_axis];
+    md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[my_axis];
+    md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[my_axis];
+
+    // TODO: Use the flash_params version everywhere
+    AxisCalibrationSlopes[my_axis] = flash_params.commutation_slope[my_axis];
+    AxisCalibrationIntercepts[my_axis] = flash_params.commutation_icept[my_axis];
+
+    // If this is the elevation axis, we also need to load rate loop PID gains,
+    // if the param "GMB_CUST_GAINS" is set to 1.0
+    if (my_axis == EL && flash_params.use_custom_gains == 1.0) {
+        rate_pid_loop_float[AZ].gainP = flash_params.rate_pid_p[AZ];
+        rate_pid_loop_float[AZ].gainI = flash_params.rate_pid_i[AZ];
+        rate_pid_loop_float[AZ].gainD = flash_params.rate_pid_d[AZ];
+        rate_pid_loop_float[AZ].dTermAlpha = flash_params.rate_pid_d_alpha[AZ];
+
+        rate_pid_loop_float[EL].gainP = flash_params.rate_pid_p[EL];
+        rate_pid_loop_float[EL].gainI = flash_params.rate_pid_i[EL];
+        rate_pid_loop_float[EL].gainD = flash_params.rate_pid_d[EL];
+        rate_pid_loop_float[EL].dTermAlpha = flash_params.rate_pid_d_alpha[EL];
+
+        rate_pid_loop_float[ROLL].gainP = flash_params.rate_pid_p[ROLL];
+        rate_pid_loop_float[ROLL].gainI = flash_params.rate_pid_i[ROLL];
+        rate_pid_loop_float[ROLL].gainD = flash_params.rate_pid_d[ROLL];
+        rate_pid_loop_float[ROLL].dTermAlpha = flash_params.rate_pid_d_alpha[ROLL];
+    }
 }

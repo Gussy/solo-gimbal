@@ -9,11 +9,13 @@
 #include "control/PID.h"
 #include "gopro/gopro_interface.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
+#include "parameters/mavlink_parameter_interface.h"
 #include "helpers/fault_handling.h"
 #include "hardware/watchdog.h"
 #include "flash/flash.h"
 #include "hardware/watchdog.h"
 #include "hardware/led.h"
+#include "motor/motor_drive_state_machine.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -338,6 +340,22 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     		}
                     	}
                     	break;
+
+                    case CAND_EPID_MAVLINK_PARAM:
+                        if (msg.extended_param_length == 5 && GetBoardHWID() != AZ) {
+                            GimbalMavlinkParameterID param_id = (GimbalMavlinkParameterID)msg.extended_param[0];
+
+                            Uint32 value = 0;
+                            value |= ((Uint32)msg.extended_param[1] << 24) & 0xFF000000;
+                            value |= ((Uint32)msg.extended_param[2] << 16) & 0x00FF0000;
+                            value |= ((Uint32)msg.extended_param[3] <<  8) & 0x0000FF00;
+                            value |= ((Uint32)msg.extended_param[4] <<  0) & 0x000000FF;
+
+                            // Update the parameter in flash_params then copy it to the local values
+                            gimbal_param_update(param_id, value);
+                            update_local_params_from_flash(md_parms);
+                        }
+                        break;
                 }
             } else {
                 // Not an extended parameter, parse normally
@@ -357,16 +375,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
             // Query messages can contain up to 8 parameter requests, for now, handle
             // one at a time. (can can send multiple later if this becomes an issue)
             switch (msg.param_request_id[msg.param_request_cnt-1]) {
-            case CAND_PID_CORETEMP:
-                //cand_tx_response(msg.sender_id, CAND_PID_CORETEMP, DegreesC);
-                // TODO: Implement
-                break;
-
-            case CAND_PID_VOLTAGE:
-                //CBSendVoltage(DcBusVoltage);
-                // TODO: Implement
-                break;
-
             case CAND_PID_BIT:
                 if (msg.param_repeat) {
                     axis_parms->BIT_heartbeat_enable = TRUE;
@@ -375,11 +383,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     CBSendStatus();
                     axis_parms->BIT_heartbeat_enable = FALSE;
                 }
-                break;
-
-            case CAND_PID_VERSION:
-                //IFBSendVersionV2(&our_version);
-                //TODO: Implement
                 break;
 
             default:
