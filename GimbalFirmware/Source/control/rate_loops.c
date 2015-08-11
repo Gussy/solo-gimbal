@@ -129,13 +129,11 @@ Uint16 torque_cmd_telemetry_decimation_count = 5; // Start this at 5 so it's sta
 #define POS_LOOP_GAIN_2_LIMIT 278
 #define POS_LOOP_GAIN_3_LIMIT 417
 
+static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
+static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
+
 void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 {
-    static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
-    static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
-    float torque_limit = cb_parms->max_allowed_torque != 0?cb_parms->max_allowed_torque : 32767.0;
-    float torque_out[AXIS_CNT];
-
     switch (cb_parms->rate_loop_pass) {
         case READ_GYRO_PASS:
             ReadGyro(&(raw_gyro_readings[GyroAxisMap[X_AXIS]]), &(raw_gyro_readings[GyroAxisMap[Y_AXIS]]), &(raw_gyro_readings[GyroAxisMap[Z_AXIS]]));
@@ -166,11 +164,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             // Do gyro kinematics correction
             transform_ang_vel_to_joint_rate(cb_parms->gyro_readings, cb_parms->corrected_gyro_readings);
 
-            // Set up the next rate loop pass to be the az error computation pass
-            cb_parms->rate_loop_pass = ERROR_PASS;
-            break;
-
-        case ERROR_PASS:
         	if (cb_parms->control_type == CONTROL_TYPE_POS) {
         		int16 encoder_error_az = CorrectEncoderError(-cb_parms->encoder_readings[AZ]);
         		Uint16 pos_gain_az = CalculatePosHoldGain(encoder_error_az);
@@ -209,6 +202,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 
         case TORQUE_OUT_PASS: {
             // Run PID rate loops
+            float torque_limit = cb_parms->max_allowed_torque != 0?cb_parms->max_allowed_torque : 32767.0;
+            float torque_out[AXIS_CNT];
             Uint8 i;
 
             // Compute the new motor torque commands

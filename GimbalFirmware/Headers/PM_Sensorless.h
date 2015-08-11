@@ -40,7 +40,6 @@ typedef enum {
     READ_GYRO_PASS,
     READ_ACCEL_PASS,
     KINEMATICS_PASS,
-    ERROR_PASS,
     TORQUE_OUT_PASS,
     TELEM_OUT_PASS
 } RateLoopPass;
