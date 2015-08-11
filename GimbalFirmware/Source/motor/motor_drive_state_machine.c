@@ -376,8 +376,9 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
     if (GetBoardHWID() == EL) {
         cb_parms->encoder_readings[EL] = encoder_value;
         cb_parms->encoder_value_received[EL] = TRUE;
+        update_joint_ang_trig(cb_parms->encoder_readings);
     } else {
-		CBSendEncoder(encoder_value);
+		cand_tx_response(CAND_ID_EL, CAND_PID_POSITION, encoder_value);
     }
     // Reset the encoder accumulator and accumulator sample counter
     encoder_parms->virtual_counts_accumulator = 0;
