@@ -365,7 +365,6 @@ void handle_param_set(mavlink_message_t* received_msg)
                     if (decoded_msg.param_type == MAV_PARAM_TYPE_REAL32) {
                         *(param->float_data_ptr) = decoded_msg.param_value;
                     } else if (decoded_msg.param_type == MAV_PARAM_TYPE_UINT32) {
-                        IntOrFloat float_converter;
                         float_converter.float_val = decoded_msg.param_value;
                         *(param->uint32_data_ptr) = float_converter.uint32_val;
                     }
