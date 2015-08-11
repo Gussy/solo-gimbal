@@ -248,17 +248,22 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             param_set[CAND_PID_TORQUE].param = cb_parms->motor_torques[EL];
             *param_set[CAND_PID_TORQUE].sema = TRUE;
 
+            cb_parms->rate_loop_pass = TELEM_OUT_PASS;
+            break;
+        }
+
+        case TELEM_OUT_PASS:
             // Send encoder, gyro, and accelerometer telemetry at a decimated rate of 100Hz
             if (++telemetry_decimation_count >= TELEMETRY_DECIMATION_LIMIT) {
-            	SendEncoderTelemetry(cb_parms->encoder_readings[AZ],
-					cb_parms->encoder_readings[EL],
-					cb_parms->encoder_readings[ROLL]);
+                SendEncoderTelemetry(cb_parms->encoder_readings[AZ],
+                    cb_parms->encoder_readings[EL],
+                    cb_parms->encoder_readings[ROLL]);
                 SendGyroTelemetry(cb_parms->integrated_raw_gyro_readings[AZ],
-					cb_parms->integrated_raw_gyro_readings[EL],
-					cb_parms->integrated_raw_gyro_readings[ROLL]);
+                    cb_parms->integrated_raw_gyro_readings[EL],
+                    cb_parms->integrated_raw_gyro_readings[ROLL]);
                 SendAccelTelemetry(cb_parms->integrated_raw_accel_readings[AZ],
-					cb_parms->integrated_raw_accel_readings[EL],
-					cb_parms->integrated_raw_accel_readings[ROLL]);
+                    cb_parms->integrated_raw_accel_readings[EL],
+                    cb_parms->integrated_raw_accel_readings[ROLL]);
 
                 // Zero out the gyro integrators for the next cycle
                 cb_parms->integrated_raw_gyro_readings[AZ] = 0;
@@ -276,23 +281,22 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             // Send torque command telemetry at a rate of 100Hz.
             // This is staggered with respect to the encoder, gyro, and accelerometer telemetry so that we don't saturate the CAN bus
             if (++torque_cmd_telemetry_decimation_count >= TELEMETRY_DECIMATION_LIMIT) {
-            	SendTorqueCmdTelemetry(cb_parms->accumulated_torque_cmds[AZ] / cb_parms->num_torque_cmds_accumulated,
-					cb_parms->accumulated_torque_cmds[EL] / cb_parms->num_torque_cmds_accumulated,
-					cb_parms->accumulated_torque_cmds[ROLL] / cb_parms->num_torque_cmds_accumulated);
+                SendTorqueCmdTelemetry(cb_parms->accumulated_torque_cmds[AZ] / cb_parms->num_torque_cmds_accumulated,
+                    cb_parms->accumulated_torque_cmds[EL] / cb_parms->num_torque_cmds_accumulated,
+                    cb_parms->accumulated_torque_cmds[ROLL] / cb_parms->num_torque_cmds_accumulated);
 
-            	// Zero out the torque cmd accumulators for the next cycle
-				cb_parms->accumulated_torque_cmds[AZ] = 0;
-				cb_parms->accumulated_torque_cmds[EL] = 0;
-				cb_parms->accumulated_torque_cmds[ROLL] = 0;
-				cb_parms->num_torque_cmds_accumulated = 0;
+                // Zero out the torque cmd accumulators for the next cycle
+                cb_parms->accumulated_torque_cmds[AZ] = 0;
+                cb_parms->accumulated_torque_cmds[EL] = 0;
+                cb_parms->accumulated_torque_cmds[ROLL] = 0;
+                cb_parms->num_torque_cmds_accumulated = 0;
 
-				torque_cmd_telemetry_decimation_count = 0;
+                torque_cmd_telemetry_decimation_count = 0;
             }
 
             // We've completed one full rate loop iteration, so on the next pass go back to the beginning
             cb_parms->rate_loop_pass = READ_GYRO_PASS;
             break;
-        }
     }
 }
 
