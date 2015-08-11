@@ -40,10 +40,8 @@ typedef enum {
     READ_GYRO_PASS,
     READ_ACCEL_PASS,
     KINEMATICS_PASS,
-    ERROR_AZ_PASS,
-    ERROR_EL_PASS,
-    ERROR_ROLL_PASS,
-    TORQUE_OUT_PASS
+    TORQUE_OUT_PASS,
+    TELEM_OUT_PASS
 } RateLoopPass;
 
 typedef enum {
@@ -133,7 +131,6 @@ int GetIndexTimeOut(void);
 int GetAxisHomed(void);
 Uint16 GetEnableFlag(void);
 Uint16 GetAxisParmsLoaded(void);
-int16 CorrectEncoderError(int16 raw_error);
 void power_down_motor(void);
 void EnableAZAxis(void);
 void RelaxAZAxis(void);

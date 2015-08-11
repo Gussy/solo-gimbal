@@ -7,7 +7,6 @@
 #define VERSION_RESYNC  0xff
 
 void CBSendStatus( void );
-void CBSendEncoder( Uint16 enc );
 void CBSendVoltage( float v );
 void MDBSendTorques(int16 az, int16 roll);
 void MDBRequestBIT(CAND_DestinationID did);

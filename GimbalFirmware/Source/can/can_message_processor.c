@@ -402,6 +402,12 @@ void Process_CAN_Messages(AxisParms* axis_parms,
 
                     cb_parms->encoder_readings[msg.sender_id] = encoder_value;
                     cb_parms->encoder_value_received[msg.sender_id] = TRUE;
+
+                    // Only roll and elevation are used in update_joint_ang_trig,
+                    // and elevation is not received on CAN
+                    if(msg.sender_id == ROLL) {
+                        update_joint_ang_trig(cb_parms->encoder_readings);
+                    }
                 }
                 break;
 

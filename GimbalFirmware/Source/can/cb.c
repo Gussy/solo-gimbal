@@ -33,11 +33,6 @@ void CBSendStatus( void )
 	cand_tx_multi_response(CAND_ID_ALL_AXES, pids, vals, 2);
 }
 
-void CBSendEncoder( Uint16 enc )
-{
-	cand_tx_response(CAND_ID_EL, CAND_PID_POSITION, enc); // EL axis is control board
-}
-
 void CBSendVoltage( float v )
 {
 	cand_tx_response( CAND_ID_EL, CAND_PID_VOLTAGE, (Uint8) (v*255)); // EL axis is control board

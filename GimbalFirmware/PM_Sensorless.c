@@ -286,6 +286,9 @@ Uint32 MissedInterrupts = 0;
 
 Uint32 can_init_fault_message_resend_counter = 0;
 
+#define DEBUG_ON    {GpioDataRegs.GPASET.bit.GPIO29 = 1;}
+#define DEBUG_OFF   {GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;}
+
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
@@ -411,6 +414,8 @@ void main(void)
 
     InitInterrupts();
 
+    DEBUG_OFF;
+
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
 	{
@@ -472,7 +477,9 @@ void main(void)
 
                 RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
 
+                DEBUG_ON;
                 RunRateLoops(&control_board_parms, param_set);
+                DEBUG_OFF;
 
                 // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
                 if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
@@ -898,17 +905,6 @@ void power_down_motor()
     EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
     EPwm2Regs.CMPA.half.CMPA=0; // PWM 2A - PhaseB
     EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
-}
-
-int16 CorrectEncoderError(int16 raw_error)
-{
-    if (raw_error < -(ENCODER_COUNTS_PER_REV / 2)) {
-        return raw_error + ENCODER_COUNTS_PER_REV;
-    } else if (raw_error > (ENCODER_COUNTS_PER_REV / 2)) {
-        return raw_error - ENCODER_COUNTS_PER_REV;
-    } else {
-        return raw_error;
-    }
 }
 
 int GetIndexTimeOut(void)
