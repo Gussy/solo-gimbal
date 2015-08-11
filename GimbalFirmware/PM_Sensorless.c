@@ -419,7 +419,6 @@ void main(void)
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
 	{
-	    DEBUG_ON;
 		// State machine entry & exit point
 		//===========================================================
 		(*Alpha_State_Ptr)();	// jump to an Alpha state (A0,B0,...)
@@ -478,7 +477,9 @@ void main(void)
 
                 RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
 
+                DEBUG_ON;
                 RunRateLoops(&control_board_parms, param_set);
+                DEBUG_OFF;
 
                 // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
                 if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
@@ -510,8 +511,6 @@ void main(void)
         if (MainWorkElapsedTime > MaxMainWorkElapsedTime) {
             MaxMainWorkElapsedTime = MainWorkElapsedTime;
         }
-
-        DEBUG_OFF;
 	}
 } //END MAIN CODE
 
