@@ -22,8 +22,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
 {
     TorqueLoopStartTime = CpuTimer2Regs.TIM.all;
 
-    GpioDataRegs.GPASET.bit.GPIO29 = 1;
-
     if (axis_parms->run_motor) {
         // Do the encoder calculations no matter what state we're in (we care in a bunch of states, so no reason to duplicate the work)
         UpdateEncoderReadings(encoder_parms, cb_parms);
@@ -162,6 +160,4 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
     if (TorqueLoopElapsedTime > MaxTorqueLoopElapsedTime) {
         MaxTorqueLoopElapsedTime = TorqueLoopElapsedTime;
     }
-
-    GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
 }
