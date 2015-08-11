@@ -900,17 +900,6 @@ void power_down_motor()
     EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
 }
 
-int16 CorrectEncoderError(int16 raw_error)
-{
-    if (raw_error < -(ENCODER_COUNTS_PER_REV / 2)) {
-        return raw_error + ENCODER_COUNTS_PER_REV;
-    } else if (raw_error > (ENCODER_COUNTS_PER_REV / 2)) {
-        return raw_error - ENCODER_COUNTS_PER_REV;
-    } else {
-        return raw_error;
-    }
-}
-
 int GetIndexTimeOut(void)
 {
     return IndexTimeOut;
