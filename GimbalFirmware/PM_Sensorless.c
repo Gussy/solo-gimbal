@@ -288,12 +288,7 @@ void main(void)
 
 	// Initialize flash (must be after CAN, in case the migration fails and resets all axes)
 	if (board_hw_id == AZ) {
-        int i;
         init_flash();
-        for ( i = 0; i < AXIS_CNT; i++) {
-            AxisCalibrationSlopes[i] = flash_params.commutation_slope[i];
-            AxisCalibrationIntercepts[i] = flash_params.commutation_icept[i];
-        }
     }
 
 	init_param_set();

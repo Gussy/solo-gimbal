@@ -93,18 +93,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_LOAD_OWN_INIT_PARAMS:
-            // This state is only run on the AZ board to load commutation calibration parameters and torque loop PID gains
+            // This state is only run on the AZ board to load torque loop PID gains
             // The rate loop PID gains are only needed on the EL board, so these are loaded over CAN
-            md_parms->pid_id.param.Kp = flash_params.torque_pid_kp[AZ];
-            md_parms->pid_id.param.Ki = flash_params.torque_pid_ki[AZ];
-            md_parms->pid_id.param.Kd = flash_params.torque_pid_kd[AZ];
-
-            md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp[AZ];
-            md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[AZ];
-            md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[AZ];
-
-            AxisCalibrationSlopes[AZ] = flash_params.commutation_slope[AZ];
-            AxisCalibrationIntercepts[AZ] = flash_params.commutation_icept[AZ];
+            update_local_params_from_flash(md_parms);
 
             // After we've loaded our own init parameters, make a note of it, so we can continue later when we're waiting for
             // all axes to have received their init parameters
@@ -158,7 +149,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_CHECK_AXIS_CALIBRATION:
-            if (AxisCalibrationSlopes[GetBoardHWID()] == 0.0) {
+            if (flash_params.commutation_slope[GetBoardHWID()] == 0.0) {
                 // If our commutation calibration slope is 0, then our axis needs calibrating
                 if (GetBoardHWID() == AZ) {
                     cb_parms->calibration_status[AZ] = GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE;
@@ -217,8 +208,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
         case STATE_HOMING:
             // Load the runtime values from the stored calibration values
-            encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
-            encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
+            encoder_parms->calibration_slope = flash_params.commutation_slope[GetBoardHWID()];
+            encoder_parms->calibration_intercept = flash_params.commutation_icept[GetBoardHWID()];
 
             cb_parms->axes_homed[GetBoardHWID()] = TRUE;
             if (GetBoardHWID() == EL) {
@@ -368,10 +359,6 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
     md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp[my_axis];
     md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[my_axis];
     md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[my_axis];
-
-    // TODO: Use the flash_params version everywhere
-    AxisCalibrationSlopes[my_axis] = flash_params.commutation_slope[my_axis];
-    AxisCalibrationIntercepts[my_axis] = flash_params.commutation_icept[my_axis];
 
     // If this is the elevation axis, we also need to load rate loop PID gains,
     // if the param "GMB_CUST_GAINS" is set to 1.0
