@@ -209,6 +209,7 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 
         case TORQUE_OUT_PASS: {
             // Run PID rate loops
+            Uint8 i;
 
             // Compute the new motor torque commands
             torque_out[EL] = UpdatePID_Float(EL, cb_parms->setpoints[EL], cb_parms->process_vars[EL], torque_limit, 1.0f, 0.0f);
@@ -218,7 +219,6 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             torque_out[ROLL] = update_filt2p(&(roll_torque_filt_params[0]), &(roll_torque_filt_state[0]), torque_out[ROLL]);
             torque_out[ROLL] = update_filt2p(&(roll_torque_filt_params[1]), &(roll_torque_filt_state[1]), torque_out[ROLL]);
 
-            Uint8 i;
             for(i=0; i<YAW_FILTER_NUM_SECTIONS; i++) {
                 torque_out[AZ] = update_filt2p(&(yaw_torque_filt_params[i]), &(yaw_torque_filt_state[i]), torque_out[AZ]);
             }
