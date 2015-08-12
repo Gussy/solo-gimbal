@@ -312,32 +312,6 @@ void handle_param_set(mavlink_message_t* received_msg)
 
             		send_gimbal_param(param_found);
             	}
-            } else if (param_found == MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE) {
-            	// Special case max allowed torque, since we need to bounds limit it and need to send it to the EL
-            	// board over CAN
-            	if (decoded_msg.param_value > 32767.0) {
-            		*(param->float_data_ptr) = 32767.0;
-            	} else if (decoded_msg.param_value < 0) {
-            		*(param->float_data_ptr) = 0.0;
-            	} else {
-            		*(param->float_data_ptr) = floor(decoded_msg.param_value);
-            	}
-
-            	CANUpdateMaxTorque((int16)(*(param->float_data_ptr)));
-            	send_gimbal_param(param_found);
-            } else if (param_found == MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE) {
-            	// Special case gopro charge control, since we need to validate it
-            	// and need to send CAN commands to EL board
-            	if ((decoded_msg.param_value == 1.0) || (decoded_msg.param_value == 0.0)) {
-            		*(param->float_data_ptr) = decoded_msg.param_value;
-            		if (*(param->float_data_ptr) == 0) {
-            			cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_DISABLE);
-            		} else {
-            			cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_ENABLE);
-            		}
-
-            		send_gimbal_param(param_found);
-            	}
             } else if (param_found == MAVLINK_GIMBAL_PARAM_GMB_SYSID) {
             	// Special case sysid configuration, since it has to be range limited to an unsigned byte,
 				// and floored to an integer
@@ -439,13 +413,13 @@ void send_gimbal_param(int param_num)
     send_mavlink_message(&param_msg);
 }
 
-void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value)
+void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value, ControlBoardParms *cb_parms)
 {
+    IntOrFloat float_converter;
     GimbalMavlinkParameter* param = &(gimbal_params[param_id]);
 
     // Update the flash_param field with the new value
     if(param->param_type == MAV_PARAM_TYPE_REAL32) {
-        IntOrFloat float_converter;
         float_converter.uint32_val = value;
         *(param->float_data_ptr) = float_converter.float_val;
     } else {
@@ -464,7 +438,22 @@ void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value)
         } else if(param_id >= MAVLINK_GIMBAL_PARAM_PID_ROLL_P && param_id <= MAVLINK_GIMBAL_PARAM_PID_ROLL_D_A) {
             rate_pid_loop_float[ROLL].integralCumulative = 0.0;
             rate_pid_loop_float[ROLL].processVarPrevious = 0.0;
+        } else if(param_id == MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE) {
+            // Special case max allowed torque, since we need to bounds limit it
+            if (float_converter.float_val > 32767.0) {
+                cb_parms->max_allowed_torque = 32767;
+            } else if (float_converter.float_val < 0) {
+                cb_parms->max_allowed_torque = 0;
+            } else {
+                cb_parms->max_allowed_torque = (int16)floor(float_converter.float_val);
+            }
+        } else if(param_id == MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE) {
+            // Special case gopro charge control, since we need to validate it
+            if (float_converter.float_val == 1.0) {
+                gp_enable_charging();
+            } else if (float_converter.float_val == 0.0) {
+                gp_disable_charging();
+            }
         }
     }
-
 }

@@ -219,15 +219,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AXES_HOME;
                 axis_parms->blink_state = BLINK_INIT;
             } else {
-            	if (GetBoardHWID() == AZ) {
-					// Turn HeroBus charging on or off based on setting in flash
-					if (flash_params.gopro_charging_enabled == 0.0) {
-						cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_DISABLE);
-					} else {
-						cand_tx_command(CAND_ID_EL, CAND_CMD_GP_CHARGE_ENABLE);
-					}
-            	}
-
                 md_parms->md_initialized = TRUE;
                 axis_parms->enable_flag = TRUE;
                 md_parms->motor_drive_state = md_parms->motor_drive_state_after_initialisation;
@@ -361,22 +352,31 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
     md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[my_axis];
     md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[my_axis];
 
-    // If this is the elevation axis, we also need to load rate loop PID gains,
-    // if the param "GMB_CUST_GAINS" is set to 1.0
-    if (my_axis == EL && flash_params.use_custom_gains == 1.0) {
-        rate_pid_loop_float[AZ].gainP = flash_params.rate_pid_p[AZ];
-        rate_pid_loop_float[AZ].gainI = flash_params.rate_pid_i[AZ];
-        rate_pid_loop_float[AZ].gainD = flash_params.rate_pid_d[AZ];
-        rate_pid_loop_float[AZ].dTermAlpha = flash_params.rate_pid_d_alpha[AZ];
+    if (my_axis == EL) {
+        // Turn HeroBus charging on or off based on setting in flash
+        if (flash_params.gopro_charging_enabled == 0.0) {
+            gp_disable_charging();
+        } else {
+            gp_enable_charging();
+        }
 
-        rate_pid_loop_float[EL].gainP = flash_params.rate_pid_p[EL];
-        rate_pid_loop_float[EL].gainI = flash_params.rate_pid_i[EL];
-        rate_pid_loop_float[EL].gainD = flash_params.rate_pid_d[EL];
-        rate_pid_loop_float[EL].dTermAlpha = flash_params.rate_pid_d_alpha[EL];
+        // If this is the elevation axis, we also need to load rate loop PID gains,
+        // if the param "GMB_CUST_GAINS" is set to 1.0
+        if (flash_params.use_custom_gains == 1.0) {
+            rate_pid_loop_float[AZ].gainP = flash_params.rate_pid_p[AZ];
+            rate_pid_loop_float[AZ].gainI = flash_params.rate_pid_i[AZ];
+            rate_pid_loop_float[AZ].gainD = flash_params.rate_pid_d[AZ];
+            rate_pid_loop_float[AZ].dTermAlpha = flash_params.rate_pid_d_alpha[AZ];
 
-        rate_pid_loop_float[ROLL].gainP = flash_params.rate_pid_p[ROLL];
-        rate_pid_loop_float[ROLL].gainI = flash_params.rate_pid_i[ROLL];
-        rate_pid_loop_float[ROLL].gainD = flash_params.rate_pid_d[ROLL];
-        rate_pid_loop_float[ROLL].dTermAlpha = flash_params.rate_pid_d_alpha[ROLL];
+            rate_pid_loop_float[EL].gainP = flash_params.rate_pid_p[EL];
+            rate_pid_loop_float[EL].gainI = flash_params.rate_pid_i[EL];
+            rate_pid_loop_float[EL].gainD = flash_params.rate_pid_d[EL];
+            rate_pid_loop_float[EL].dTermAlpha = flash_params.rate_pid_d_alpha[EL];
+
+            rate_pid_loop_float[ROLL].gainP = flash_params.rate_pid_p[ROLL];
+            rate_pid_loop_float[ROLL].gainI = flash_params.rate_pid_i[ROLL];
+            rate_pid_loop_float[ROLL].gainD = flash_params.rate_pid_d[ROLL];
+            rate_pid_loop_float[ROLL].dTermAlpha = flash_params.rate_pid_d_alpha[ROLL];
+        }
     }
 }

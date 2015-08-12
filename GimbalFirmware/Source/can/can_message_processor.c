@@ -112,14 +112,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
         	cb_parms->control_type = CONTROL_TYPE_RATE;
         	break;
 
-        case CAND_CMD_GP_CHARGE_DISABLE:
-        	gp_disable_charging();
-        	break;
-
-        case CAND_CMD_GP_CHARGE_ENABLE:
-        	gp_enable_charging();
-        	break;
-
         default:
             AxisFault(CAND_FAULT_UNSUPPORTED_COMMAND, CAND_FAULT_TYPE_INFO, cb_parms, md_parms);
             break;
@@ -271,12 +263,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                         }
                     	break;
 
-                    case CAND_EPID_MAX_TORQUE:
-                    	if (msg.extended_param_length == 2) {
-                    		int16 max_torque = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
-                    		cb_parms->max_allowed_torque = max_torque;
-                    	}
-
                     case CAND_EPID_PARAMS_LOAD:
                     	if (GetBoardHWID() == AZ) {
                     	    Uint8 i;
@@ -352,7 +338,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                             value |= ((Uint32)msg.extended_param[4] <<  0) & 0x000000FF;
 
                             // Update the parameter in flash_params then copy it to the local values
-                            gimbal_param_update(param_id, value);
+                            gimbal_param_update(param_id, value, cb_parms);
                             update_local_params_from_flash(md_parms);
                         }
                         break;

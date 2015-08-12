@@ -121,12 +121,3 @@ void CANUpdateBeaconState(LED_MODE mode, LED_RGBA color, Uint8 duration)
 
 	cand_tx_extended_param(CAND_ID_EL, CAND_EPID_BEACON_CONTROL, params, 6);
 }
-
-void CANUpdateMaxTorque(int16 new_max_torque)
-{
-	Uint8 params[2];
-	params[0] = ((((Uint16)new_max_torque) >> 8) & 0x00FF);
-	params[1] = (((Uint16)new_max_torque) & 0x00FF);
-
-	cand_tx_extended_param(CAND_ID_EL, CAND_EPID_MAX_TORQUE, params, 2);
-}

@@ -79,7 +79,7 @@ void init_default_mavlink_params();
 void handle_param_set(mavlink_message_t* received_msg);
 void handle_param_read(mavlink_message_t* received_msg);
 void send_gimbal_param(int param_num);
-void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value);
+void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value, ControlBoardParms *cb_parms);
 
 extern float send_torques;
 
