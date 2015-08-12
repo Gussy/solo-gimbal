@@ -142,7 +142,6 @@ ControlBoardParms control_board_parms = {
 	.num_torque_cmds_accumulated = 0,
     .encoder_readings = {0, 0, 0},
     .motor_torques = {0, 0, 0},
-    .axis_errors = {0, 0, 0},
 	.setpoints = {0, 0, 0},
 	.process_vars = {0, 0, 0},
     .last_axis_fault = {CAND_FAULT_NONE, CAND_FAULT_NONE, CAND_FAULT_NONE},
@@ -153,7 +152,6 @@ ControlBoardParms control_board_parms = {
         GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN,
         GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN
     },
-    .tuning_rate_inject = {0, 0, 0},
     .rate_cmd_inject = {0, 0, 0},
     .rate_cmd_inject_filtered = {0, 0, 0},
     .rate_loop_pass = READ_GYRO_PASS,

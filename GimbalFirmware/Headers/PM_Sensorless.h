@@ -79,24 +79,22 @@ typedef struct {
 } AxisParms;
 
 typedef struct {
-    int16 gyro_readings[AXIS_CNT];
-    int16 corrected_gyro_readings[AXIS_CNT];
+    float gyro_readings[AXIS_CNT];
+    float corrected_gyro_readings[AXIS_CNT];
     int32 integrated_raw_gyro_readings[AXIS_CNT];
     int32 integrated_raw_accel_readings[AXIS_CNT];
     int32 accumulated_torque_cmds[AXIS_CNT];
     Uint16 num_torque_cmds_accumulated;
     int16 encoder_readings[AXIS_CNT];
     int16 motor_torques[AXIS_CNT];
-    int16 axis_errors[AXIS_CNT];
-    int16 setpoints[AXIS_CNT];
-    int16 process_vars[AXIS_CNT];
+    float setpoints[AXIS_CNT];
+    float process_vars[AXIS_CNT];
     CAND_FaultCode last_axis_fault[AXIS_CNT];
     Uint8 encoder_value_received[AXIS_CNT];
     Uint16 axes_homed[AXIS_CNT];
     GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_status[AXIS_CNT];
-    int16 tuning_rate_inject[AXIS_CNT];
-    int16 rate_cmd_inject[AXIS_CNT];
-    int16 rate_cmd_inject_filtered[AXIS_CNT];
+    float rate_cmd_inject[AXIS_CNT];
+    float rate_cmd_inject_filtered[AXIS_CNT];
     RateLoopPass rate_loop_pass;
     ControlType control_type;
     // As a special case, a value of 0 in max allowed torque means unlimited allowed torque
