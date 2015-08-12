@@ -162,6 +162,7 @@ ControlBoardParms control_board_parms = {
 	.max_allowed_torque = LOW_TORQUE_MODE_MAX,
     .initialized = FALSE,
     .enabled = FALSE,
+    .param_set = {0}
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
@@ -225,8 +226,6 @@ MotorDriveParms motor_drive_parms = {
     .md_initialized = FALSE
 };
 
-ParamSet param_set[CAND_PID_LAST];
-
 Uint32 MissedInterrupts = 0;
 
 Uint32 can_init_fault_message_resend_counter = 0;
@@ -262,7 +261,7 @@ void main(void)
         init_flash();
     }
 
-	init_param_set(param_set);
+	init_param_set(control_board_parms.param_set);
 
 	// Only El and Roll load parameters over CAN
 	if ((board_hw_id == EL) || (board_hw_id == ROLL)) {
@@ -384,7 +383,7 @@ void main(void)
 
 		// Process and respond to any waiting CAN messages
 		if (EnableCAN) {
-		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, param_set, &load_ap_state_info);
+		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, &load_ap_state_info);
 		}
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
@@ -409,7 +408,6 @@ void main(void)
                     &axis_parms,
                     &motor_drive_parms,
                     &encoder_parms,
-                    param_set,
                     &power_filter_parms,
                     &load_ap_state_info);
         }
@@ -422,7 +420,7 @@ void main(void)
                 RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
 
                 DEBUG_ON;
-                RunRateLoops(&control_board_parms, param_set);
+                RunRateLoops(&control_board_parms);
                 DEBUG_OFF;
 
                 // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
@@ -441,7 +439,7 @@ void main(void)
         }
 
         // Update any parameters that have changed due to CAN messages
-        ProcessParamUpdates(param_set, &control_board_parms, &debug_data);
+        ProcessParamUpdates(&control_board_parms, &debug_data);
 
 		// Measure total main work timing
 		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;

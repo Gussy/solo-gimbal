@@ -103,6 +103,7 @@ typedef struct {
     int16 max_allowed_torque;
     Uint8 initialized;
     Uint8 enabled;
+    ParamSet param_set[CAND_PID_LAST];
 } ControlBoardParms;
 
 typedef struct {
