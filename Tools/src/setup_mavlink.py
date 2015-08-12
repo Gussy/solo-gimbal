@@ -185,9 +185,12 @@ def is_bootloader_message(msg):
     return False
 
 if __name__ == '__main__':
-    import argparse
+    import argparse, setup_home, setup_param
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading", default=None)
+    parser.add_argument("--jointstest", help="Run a number of joint calibrations", action='store_true')
+    parser.add_argument("--printjoints", help="Print out joint angles", action='store_true')
+    parser.add_argument("--printall", help="Print out all mavlink messages", action='store_true')
     args = parser.parse_args()
 
     # Open the serial port
@@ -197,15 +200,21 @@ if __name__ == '__main__':
     # Send a heartbeat first to wake up the interface
     link.heartbeat_send(0, 0, 0, 0, 0)
 
-    while True:
-        print get_any_message(link)
+    if args.jointstest:
+        print("Power On")
+        setup_param.enable_torques_message(link, enabled=False)
+        for i in range(5):
+            print setup_home.calibrate_joints(link)
 
-    # while True:
-    #     print time.time(), get_gimbal_message(link)
+    elif args.printjoints:
+        while True:
+            msg = get_gimbal_report(link)
+            print msg.joint_az, msg.joint_roll, msg.joint_el
 
-    # while True:
-    #     msg = get_all(link)
-    #     if msg is not None:
-    #         print time.time(), msg
-    #     else:
-    #         print('.')
+    elif args.printall:
+        while True:
+            print get_any_message(link)
+
+    else:
+        while True:
+            print time.time(), get_gimbal_message(link)
