@@ -447,13 +447,6 @@ void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value, Contro
             } else {
                 cb_parms->max_allowed_torque = (int16)floor(float_converter.float_val);
             }
-        } else if(param_id == MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE) {
-            // Special case gopro charge control, since we need to validate it
-            if (float_converter.float_val == 1.0) {
-                gp_enable_charging();
-            } else if (float_converter.float_val == 0.0) {
-                gp_disable_charging();
-            }
         }
     }
 }
