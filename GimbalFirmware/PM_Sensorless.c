@@ -225,39 +225,7 @@ MotorDriveParms motor_drive_parms = {
     .md_initialized = FALSE
 };
 
-Uint8 unused = FALSE;
-Uint8 current_flag = FALSE;
-Uint8 debug_1_flag = FALSE;
-Uint8 debug_2_flag = FALSE;
-Uint8 debug_3_flag = FALSE;
-Uint8 rate_cmd_az_flag = FALSE;
-Uint8 rate_cmd_el_flag = FALSE;
-Uint8 rate_cmd_rl_flag = FALSE;
-Uint8 gopro_get_request_flag = FALSE;
-Uint8 gopro_set_request_flag = FALSE;
-
 ParamSet param_set[CAND_PID_LAST];
-
-void init_param_set(void)
-{
-	int i;
-	// Initialize parameter set to be empty
-	for (i = 0; i < CAND_PID_LAST; i++) {
-		param_set[i].param = 0;
-		param_set[i].sema = &unused;
-	}
-
-	// Set up parameters we're using
-	param_set[CAND_PID_TORQUE].sema = &current_flag;
-	param_set[CAND_PID_DEBUG_1].sema = &debug_1_flag;
-	param_set[CAND_PID_DEBUG_2].sema = &debug_2_flag;
-	param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
-	param_set[CAND_PID_RATE_CMD_AZ].sema = &rate_cmd_az_flag;
-	param_set[CAND_PID_RATE_CMD_EL].sema = &rate_cmd_el_flag;
-	param_set[CAND_PID_RATE_CMD_RL].sema = &rate_cmd_rl_flag;
-	param_set[CAND_PID_GOPRO_GET_REQUEST].sema = &gopro_get_request_flag;
-	param_set[CAND_PID_GOPRO_SET_REQUEST].sema = &gopro_set_request_flag;
-}
 
 Uint32 MissedInterrupts = 0;
 
@@ -294,7 +262,7 @@ void main(void)
         init_flash();
     }
 
-	init_param_set();
+	init_param_set(param_set);
 
 	// Only El and Roll load parameters over CAN
 	if ((board_hw_id == EL) || (board_hw_id == ROLL)) {

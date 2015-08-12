@@ -348,7 +348,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                 while(msg.param_cnt) {
                     if (msg.param_id[msg.param_cnt-1] < CAND_PID_LAST) {
                         param_set[msg.param_id[msg.param_cnt-1]].param = msg.param[msg.param_cnt-1];
-                        *(param_set[msg.param_id[msg.param_cnt-1]].sema) = TRUE;
+                        param_set[msg.param_id[msg.param_cnt-1]].sema = TRUE;
                     }
                     msg.param_cnt--;
                 }

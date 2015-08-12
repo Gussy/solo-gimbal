@@ -267,7 +267,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.term.Ref = md_parms->iq_ref;
 
             // If new current command from CAN bus get it.
-            if (*param_set[CAND_PID_TORQUE].sema) {
+            if (param_set[CAND_PID_TORQUE].sema) {
                 update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms, param_set);
             }
             break;
@@ -283,7 +283,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // If we're disabled, we should still send out our encoder values if we get a torque command.  We ignore the actual torque command,
             // but other things still expect to get updated encoder readings if they send torque commands
-            if (*param_set[CAND_PID_TORQUE].sema) {
+            if (param_set[CAND_PID_TORQUE].sema) {
                 update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms, param_set);
             }
             break;
@@ -336,7 +336,7 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
     encoder_parms->virtual_counts_accumulated = 0;
 
     md_parms->iq_ref = ((int16) param_set[CAND_PID_TORQUE].param) / 32767.0;
-    *param_set[CAND_PID_TORQUE].sema = FALSE;
+    param_set[CAND_PID_TORQUE].sema = FALSE;
 }
 
 void update_local_params_from_flash(MotorDriveParms* md_parms)

@@ -11,22 +11,32 @@
 int16 rate_cmds_received[3];
 Uint32 debug_output_decimation_count = 0;
 
+void init_param_set(ParamSet *param_set)
+{
+    // Initialize parameter set to be empty
+    Uint8 i;
+    for (i = 0; i < CAND_PID_LAST; i++) {
+        param_set[i].param = 0;
+        param_set[i].sema = FALSE;
+    }
+}
+
 void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data)
 {
-    if ((*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) || (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE)) {
-        if (*(param_set[CAND_PID_DEBUG_1].sema) == TRUE) {
+    if ((param_set[CAND_PID_DEBUG_1].sema == TRUE) || (param_set[CAND_PID_DEBUG_2].sema == TRUE) || (param_set[CAND_PID_DEBUG_3].sema == TRUE)) {
+        if (param_set[CAND_PID_DEBUG_1].sema == TRUE) {
             debug_data->debug_1 = param_set[CAND_PID_DEBUG_1].param;
-            *(param_set[CAND_PID_DEBUG_1].sema) = FALSE;
+            param_set[CAND_PID_DEBUG_1].sema = FALSE;
         }
 
-        if (*(param_set[CAND_PID_DEBUG_2].sema) == TRUE) {
+        if (param_set[CAND_PID_DEBUG_2].sema == TRUE) {
             debug_data->debug_2 = param_set[CAND_PID_DEBUG_2].param;
-            *(param_set[CAND_PID_DEBUG_2].sema) = FALSE;
+            param_set[CAND_PID_DEBUG_2].sema = FALSE;
         }
 
-        if (*(param_set[CAND_PID_DEBUG_3].sema) == TRUE) {
+        if (param_set[CAND_PID_DEBUG_3].sema == TRUE) {
             debug_data->debug_3 = param_set[CAND_PID_DEBUG_3].param;
-            *(param_set[CAND_PID_DEBUG_3].sema) = FALSE;
+            param_set[CAND_PID_DEBUG_3].sema = FALSE;
         }
 
         // If any of the debug data changed, send the debug mavlink message
@@ -40,20 +50,20 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
     // such as rate commands, gyro offsets, and gopro commands
     if (GetBoardHWID() == EL) {
         // Check for new rate commands from the copter
-        if ((*(param_set[CAND_PID_RATE_CMD_AZ].sema) == TRUE) || (*(param_set[CAND_PID_RATE_CMD_EL].sema) == TRUE) || (*(param_set[CAND_PID_RATE_CMD_RL].sema) == TRUE)) {
-            if (*(param_set[CAND_PID_RATE_CMD_AZ].sema) == TRUE) {
+        if ((param_set[CAND_PID_RATE_CMD_AZ].sema == TRUE) || (param_set[CAND_PID_RATE_CMD_EL].sema == TRUE) || (param_set[CAND_PID_RATE_CMD_RL].sema == TRUE)) {
+            if (param_set[CAND_PID_RATE_CMD_AZ].sema == TRUE) {
                 rate_cmds_received[AZ] = (int16)param_set[CAND_PID_RATE_CMD_AZ].param;
-                *(param_set[CAND_PID_RATE_CMD_AZ].sema) = FALSE;
+                param_set[CAND_PID_RATE_CMD_AZ].sema = FALSE;
             }
 
-            if (*(param_set[CAND_PID_RATE_CMD_EL].sema) == TRUE) {
+            if (param_set[CAND_PID_RATE_CMD_EL].sema == TRUE) {
                 rate_cmds_received[EL] = (int16)param_set[CAND_PID_RATE_CMD_EL].param;
-                *(param_set[CAND_PID_RATE_CMD_EL].sema) = FALSE;
+                param_set[CAND_PID_RATE_CMD_EL].sema = FALSE;
             }
 
-            if (*(param_set[CAND_PID_RATE_CMD_RL].sema) == TRUE) {
+            if (param_set[CAND_PID_RATE_CMD_RL].sema == TRUE) {
                 rate_cmds_received[ROLL] = (int16)param_set[CAND_PID_RATE_CMD_RL].param;
-                *(param_set[CAND_PID_RATE_CMD_RL].sema) = FALSE;
+                param_set[CAND_PID_RATE_CMD_RL].sema = FALSE;
             }
 
             // If any of the rate commands have been updated, run the kinematics transform and update the transformed rate commands
@@ -62,19 +72,19 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
         }
 
         // Check for any new GoPro get requests
-        if (*(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) == TRUE) {
+        if (param_set[CAND_PID_GOPRO_GET_REQUEST].sema == TRUE) {
             gp_get_request((Uint8)param_set[CAND_PID_GOPRO_GET_REQUEST].param, false);
-            *(param_set[CAND_PID_GOPRO_GET_REQUEST].sema) = FALSE;
+            param_set[CAND_PID_GOPRO_GET_REQUEST].sema = FALSE;
         }
 
         // Check for any new GoPro set requests
-        if (*(param_set[CAND_PID_GOPRO_SET_REQUEST].sema) == TRUE) {
+        if (param_set[CAND_PID_GOPRO_SET_REQUEST].sema == TRUE) {
             // Extract the GoPro set request command id and value from the CAN parameter
             GPSetRequest set_request;
             set_request.cmd_id = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 8) & 0x000000FF;
             set_request.value = (param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 0) & 0x000000FF;
             gp_set_request(&set_request);
-            *(param_set[CAND_PID_GOPRO_SET_REQUEST].sema) = FALSE;
+            param_set[CAND_PID_GOPRO_SET_REQUEST].sema = FALSE;
         }
     }
 }

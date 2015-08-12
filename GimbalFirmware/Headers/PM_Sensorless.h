@@ -51,7 +51,7 @@ typedef enum {
 
 typedef struct {
     Uint32 param;
-    Uint8 *sema;
+    Uint8 sema;
 } ParamSet;
 
 typedef struct {
