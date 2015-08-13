@@ -33,11 +33,6 @@ void CBSendStatus( void )
 	cand_tx_multi_response(CAND_ID_ALL_AXES, pids, vals, 2);
 }
 
-void CBSendVoltage( float v )
-{
-	cand_tx_response( CAND_ID_EL, CAND_PID_VOLTAGE, (Uint8) (v*255)); // EL axis is control board
-}
-
 void MDBSendTorques(int16 az, int16 roll)
 {
     Uint32 combined[2];
@@ -125,13 +120,4 @@ void CANUpdateBeaconState(LED_MODE mode, LED_RGBA color, Uint8 duration)
 	params[5] = duration;
 
 	cand_tx_extended_param(CAND_ID_EL, CAND_EPID_BEACON_CONTROL, params, 6);
-}
-
-void CANUpdateMaxTorque(int16 new_max_torque)
-{
-	Uint8 params[2];
-	params[0] = ((((Uint16)new_max_torque) >> 8) & 0x00FF);
-	params[1] = (((Uint16)new_max_torque) & 0x00FF);
-
-	cand_tx_extended_param(CAND_ID_EL, CAND_EPID_MAX_TORQUE, params, 2);
 }

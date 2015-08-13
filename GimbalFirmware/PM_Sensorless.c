@@ -2,33 +2,34 @@
 #include "PM_Sensorless-Settings.h"
 #include "PeripheralHeaderIncludes.h"
 #include "hardware/device_init.h"
+#include "hardware/HWSpecific.h"
+#include "hardware/encoder.h"
+#include "hardware/led.h"
+#include "hardware/uart.h"
+#include "hardware/interrupts.h"
+#include "hardware/gyro.h"
 #include "can/cand_BitFields.h"
 #include "can/cand.h"
 #include "can/cb.h"
-#include "hardware/gyro.h"
-#include "hardware/HWSpecific.h"
+#include "can/can_message_processor.h"
+#include "can/can_parameter_updates.h"
 #include "control/gyro_kinematics_correction.h"
 #include "control/PID.h"
 #include "control/average_power_filter.h"
 #include "control/running_average_filter.h"
 #include "control/filt2p.h"
-#include "hardware/uart.h"
-#include "mavlink_interface/mavlink_gimbal_interface.h"
-#include "can/can_message_processor.h"
-#include "version_git.h"
-#include "gopro/gopro_interface.h"
-#include "parameters/flash_params.h"
 #include "motor/motor_drive_state_machine.h"
-#include "control/rate_loops.h"
-#include "parameters/load_axis_parms_state_machine.h"
-#include "helpers/fault_handling.h"
 #include "motor/motor_commutation.h"
-#include "can/can_parameter_updates.h"
-#include "hardware/encoder.h"
-#include "hardware/led.h"
+#include "parameters/flash_params.h"
+#include "parameters/load_axis_parms_state_machine.h"
+#include "parameters/mavlink_parameter_interface.h"
 #include "flash/flash.h"
 #include "flash/flash_init.h"
-#include "hardware/interrupts.h"
+#include "control/rate_loops.h"
+#include "mavlink_interface/mavlink_gimbal_interface.h"
+#include "gopro/gopro_interface.h"
+#include "helpers/fault_handling.h"
+#include "version_git.h"
 
 #include <math.h>
 #include <string.h>
@@ -226,18 +227,6 @@ MotorDriveParms motor_drive_parms = {
 
 Uint8 unused = FALSE;
 Uint8 current_flag = FALSE;
-Uint8 rate_pid_el_p_flag = FALSE;
-Uint8 rate_pid_el_i_flag = FALSE;
-Uint8 rate_pid_el_d_flag = FALSE;
-Uint8 rate_pid_el_d_a_flag = FALSE;
-Uint8 rate_pid_az_p_flag = FALSE;
-Uint8 rate_pid_az_i_flag = FALSE;
-Uint8 rate_pid_az_d_flag = FALSE;
-Uint8 rate_pid_az_d_a_flag = FALSE;
-Uint8 rate_pid_rl_p_flag = FALSE;
-Uint8 rate_pid_rl_i_flag = FALSE;
-Uint8 rate_pid_rl_d_flag = FALSE;
-Uint8 rate_pid_rl_d_a_flag = FALSE;
 Uint8 debug_1_flag = FALSE;
 Uint8 debug_2_flag = FALSE;
 Uint8 debug_3_flag = FALSE;
@@ -260,18 +249,6 @@ void init_param_set(void)
 
 	// Set up parameters we're using
 	param_set[CAND_PID_TORQUE].sema = &current_flag;
-	param_set[CAND_PID_RATE_EL_P].sema = &rate_pid_el_p_flag;
-	param_set[CAND_PID_RATE_EL_I].sema = &rate_pid_el_i_flag;
-	param_set[CAND_PID_RATE_EL_D].sema = &rate_pid_el_d_flag;
-	param_set[CAND_PID_RATE_EL_D_A].sema = &rate_pid_el_d_a_flag;
-	param_set[CAND_PID_RATE_AZ_P].sema = &rate_pid_az_p_flag;
-	param_set[CAND_PID_RATE_AZ_I].sema = &rate_pid_az_i_flag;
-	param_set[CAND_PID_RATE_AZ_D].sema = &rate_pid_az_d_flag;
-	param_set[CAND_PID_RATE_AZ_D_A].sema = &rate_pid_az_d_a_flag;
-	param_set[CAND_PID_RATE_RL_P].sema = &rate_pid_rl_p_flag;
-	param_set[CAND_PID_RATE_RL_I].sema = &rate_pid_rl_i_flag;
-	param_set[CAND_PID_RATE_RL_D].sema = &rate_pid_rl_d_flag;
-	param_set[CAND_PID_RATE_RL_D_A].sema = &rate_pid_rl_d_a_flag;
 	param_set[CAND_PID_DEBUG_1].sema = &debug_1_flag;
 	param_set[CAND_PID_DEBUG_2].sema = &debug_2_flag;
 	param_set[CAND_PID_DEBUG_3].sema = &debug_3_flag;
@@ -314,12 +291,7 @@ void main(void)
 
 	// Initialize flash (must be after CAN, in case the migration fails and resets all axes)
 	if (board_hw_id == AZ) {
-        int i;
         init_flash();
-        for ( i = 0; i < AXIS_CNT; i++) {
-            AxisCalibrationSlopes[i] = flash_params.commutation_slope[i];
-            AxisCalibrationIntercepts[i] = flash_params.commutation_icept[i];
-        }
     }
 
 	init_param_set();
@@ -375,6 +347,10 @@ void main(void)
     if (board_hw_id == AZ) {
         init_uart();
         init_mavlink();
+    } else {
+        // Initialise the mavlink param data-structure so we can
+        // translate incoming mavlink params to flash params
+        init_default_mavlink_params();
     }
 
     // Initialize the average power filter

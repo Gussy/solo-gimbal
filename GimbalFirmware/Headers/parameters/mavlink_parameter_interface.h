@@ -71,8 +71,6 @@ typedef struct {
     uint8_t param_type;
     float* float_data_ptr;
     uint32_t* uint32_data_ptr;
-    CAND_ParameterID can_parameter_id;
-    CAND_DestinationID can_parameter_destination_axis;
     GimbalParameterAccessType access_type;
     char param_id[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1];
 } GimbalMavlinkParameter;
@@ -81,6 +79,7 @@ void init_default_mavlink_params();
 void handle_param_set(mavlink_message_t* received_msg);
 void handle_param_read(mavlink_message_t* received_msg);
 void send_gimbal_param(int param_num);
+void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value, ControlBoardParms *cb_parms);
 
 extern float send_torques;
 
