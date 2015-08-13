@@ -43,7 +43,7 @@ struct Filt2p_Params roll_torque_filt_params[ROLL_FILTER_NUM_SECTIONS] = {
     {.b0= 0.2600345100000000, .b1= 0.2427056873942225, .b2= 0.2600345100000003, .a1=-0.0446326229788293, .a2= 0.1414793891043662},
     {.b0= 1.0000000000000000, .b1=-0.7176845003927455, .b2= 1.0000000000000009, .a1=-0.8191282670211697, .a2= 0.7108825577823754}
 };
-static struct Filt2p_State roll_torque_filt_state[ROLL_FILTER_NUM_SECTIONS];
+struct Filt2p_State roll_torque_filt_state[ROLL_FILTER_NUM_SECTIONS];
 
 #define YAW_FILTER_NUM_SECTIONS 10
 struct Filt2p_Params yaw_torque_filt_params[YAW_FILTER_NUM_SECTIONS] = {
@@ -58,7 +58,7 @@ struct Filt2p_Params yaw_torque_filt_params[YAW_FILTER_NUM_SECTIONS] = {
     {.b0 = 1, .b1 = -1.81473946965913,  .b2=0.937102507769830, .a1=-1.80184762288135 , .a2=0.887972394896855},
     {.b0 = 1*0.724094261930275, .b1 = -1.65856685103887*0.724094261930275,  .b2=0.957234397860325*0.724094261930275, .a1=-1.61078498581705 , .a2=0.906192363385310}
 };
-static struct Filt2p_State yaw_torque_filt_state[YAW_FILTER_NUM_SECTIONS];
+struct Filt2p_State yaw_torque_filt_state[YAW_FILTER_NUM_SECTIONS];
 
 Uint16 telemetry_decimation_count = 0;
 Uint16 torque_cmd_telemetry_decimation_count = 5; // Start this at 5 so it's staggered with respect to the rest of the telemetry
@@ -73,6 +73,20 @@ Uint16 torque_cmd_telemetry_decimation_count = 5; // Start this at 5 so it's sta
 
 static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
 static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
+
+void InitRateLoops()
+{
+#ifdef ROLL_FILTER_NUM_SECTIONS
+    memset(&roll_torque_filt_state, 0, sizeof(roll_torque_filt_state));
+#endif
+#ifdef PITCH_FILTER_NUM_SECTIONS
+    memset(&pitch_torque_filt_state, 0, sizeof(pitch_torque_filt_state));
+#endif
+#ifdef YAW_FILTER_NUM_SECTIONS
+    memset(&yaw_torque_filt_state, 0, sizeof(yaw_torque_filt_state));
+#endif
+
+}
 
 void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 {

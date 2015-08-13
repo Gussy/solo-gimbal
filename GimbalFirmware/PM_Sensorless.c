@@ -366,6 +366,8 @@ void main(void)
 
         // Initialize the beacon LED
         init_led();
+
+        InitRateLoops();
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication
