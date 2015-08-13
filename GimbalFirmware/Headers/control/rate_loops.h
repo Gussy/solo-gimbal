@@ -8,6 +8,7 @@
 // The rate loops run at 1kHz, and we want to output telemetry at 100Hz, so we decimate by 10
 #define TELEMETRY_DECIMATION_LIMIT 10
 
+void InitRateLoops(void);
 void RunRateLoops(ControlBoardParms* cb_parms);
 
 #define DEG_TO_ENC_COUNTS(x) (((long)(x) * 10000L) / 360L)

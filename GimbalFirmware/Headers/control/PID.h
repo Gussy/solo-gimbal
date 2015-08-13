@@ -9,9 +9,6 @@ typedef struct {
     float   gainP;
     float   gainI;
     float   gainD;
-    float   integralMax;
-    float   integralMin;
-    float   gainTotal;
     float   integralCumulative;
     float	dTermAlpha;
     float   processVarPrevious;
