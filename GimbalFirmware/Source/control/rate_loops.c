@@ -63,18 +63,10 @@ struct Filt2p_State yaw_torque_filt_state[YAW_FILTER_NUM_SECTIONS];
 Uint16 telemetry_decimation_count = 0;
 Uint16 torque_cmd_telemetry_decimation_count = 5; // Start this at 5 so it's staggered with respect to the rest of the telemetry
 
-#define POS_LOOP_GAIN_1 1
-#define POS_LOOP_GAIN_2 2
-#define POS_LOOP_GAIN_3 4
-#define POS_LOOP_GAIN_4 8
-#define POS_LOOP_GAIN_1_LIMIT 139
-#define POS_LOOP_GAIN_2_LIMIT 278
-#define POS_LOOP_GAIN_3_LIMIT 417
-
 static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
 static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
 
-void InitRateLoops()
+void InitRateLoops(void)
 {
 #ifdef ROLL_FILTER_NUM_SECTIONS
     memset(&roll_torque_filt_state, 0, sizeof(roll_torque_filt_state));
@@ -363,7 +355,7 @@ static float CorrectEncoderError(float raw_error)
 
 static float CalculatePosHoldGain(float encoder_error)
 {
-    float ret = 1.0 + .00004 * encoder_error*encoder_error;
+    float ret = 1.0f + 0.00004f * encoder_error*encoder_error;
     if (ret > 8) {
         ret = 8;
     }
