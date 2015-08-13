@@ -33,8 +33,8 @@ static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_en
 static void SendGyroTelemetry(int32 az_gyro, int32 el_gyro, int32 rl_gyro);
 static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
 static void SendTorqueCmdTelemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);
-static int16 CorrectEncoderError(int16 raw_error);
-static Uint16 CalculatePosHoldGain(int16 encoder_error);
+static float CorrectEncoderError(float raw_error);
+static float CalculatePosHoldGain(float encoder_error);
 
 // structural mode at ~240hz on roll arm->camera carriage connection
 // 180hz 12dB chebyshev type 2 4th-order low pass
@@ -107,18 +107,18 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             transform_ang_vel_to_joint_rate(cb_parms->gyro_readings, cb_parms->corrected_gyro_readings);
 
         	if (cb_parms->control_type == CONTROL_TYPE_POS) {
-        		int16 encoder_error_az = CorrectEncoderError(-cb_parms->encoder_readings[AZ]);
-        		Uint16 pos_gain_az = CalculatePosHoldGain(encoder_error_az);
+        		float encoder_error_az = CorrectEncoderError(-cb_parms->encoder_readings[AZ]);
+        		float pos_gain_az = CalculatePosHoldGain(encoder_error_az);
         		cb_parms->setpoints[AZ] = (pos_gain_az * encoder_error_az);
         		cb_parms->process_vars[AZ] = cb_parms->corrected_gyro_readings[AZ];
 
-        		int16 encoder_error_el = CorrectEncoderError(-cb_parms->encoder_readings[EL]);
-                Uint16 pos_gain_el = CalculatePosHoldGain(encoder_error_el);
+        		float encoder_error_el = CorrectEncoderError(-cb_parms->encoder_readings[EL]);
+                float pos_gain_el = CalculatePosHoldGain(encoder_error_el);
                 cb_parms->setpoints[EL] = (pos_gain_el * encoder_error_el);
                 cb_parms->process_vars[EL] = cb_parms->corrected_gyro_readings[EL];
 
-                int16 encoder_error_roll = CorrectEncoderError(-cb_parms->encoder_readings[ROLL]);
-                Uint16 pos_gain_roll = CalculatePosHoldGain(encoder_error_roll);
+                float encoder_error_roll = CorrectEncoderError(-cb_parms->encoder_readings[ROLL]);
+                float pos_gain_roll = CalculatePosHoldGain(encoder_error_roll);
                 cb_parms->setpoints[ROLL] = (pos_gain_roll * encoder_error_roll);
                 cb_parms->process_vars[ROLL] = cb_parms->corrected_gyro_readings[ROLL];
         	} else {
@@ -336,7 +336,7 @@ static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel)
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ACCEL_RL_TELEMETRY, accel_rl_readings, 4);
 }
 
-static int16 CorrectEncoderError(int16 raw_error)
+static float CorrectEncoderError(float raw_error)
 {
     if (raw_error < -(ENCODER_COUNTS_PER_REV / 2)) {
         return raw_error + ENCODER_COUNTS_PER_REV;
@@ -347,15 +347,11 @@ static int16 CorrectEncoderError(int16 raw_error)
     }
 }
 
-static Uint16 CalculatePosHoldGain(int16 encoder_error)
+static float CalculatePosHoldGain(float encoder_error)
 {
-    if ((encoder_error <= -POS_LOOP_GAIN_3_LIMIT) || (encoder_error >= POS_LOOP_GAIN_3_LIMIT)) {
-        return POS_LOOP_GAIN_4;
-    } else if ((encoder_error <= -POS_LOOP_GAIN_2_LIMIT) || (encoder_error >= POS_LOOP_GAIN_2_LIMIT)) {
-        return POS_LOOP_GAIN_3;
-    } else if ((encoder_error <= -POS_LOOP_GAIN_1_LIMIT) || (encoder_error >= POS_LOOP_GAIN_1_LIMIT)) {
-        return POS_LOOP_GAIN_2;
-    } else {
-        return POS_LOOP_GAIN_1;
+    float ret = 1.0 + .00004 * encoder_error*encoder_error;
+    if (ret > 8) {
+        ret = 8;
     }
+    return ret;
 }
