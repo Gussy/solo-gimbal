@@ -50,8 +50,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         case COMMUTATION_CALIBRATION_STATE_INIT:
         {
             Uint16 dataIndex;
-		    encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
-		    encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
+		    encoder_parms->calibration_slope = flash_params.commutation_slope[GetBoardHWID()];
+		    encoder_parms->calibration_intercept = flash_params.commutation_icept[GetBoardHWID()];
         	// don't calibrate if we got slope set already
         	if (encoder_parms->calibration_slope != 0) {
     		    md_parms->motor_drive_state = STATE_HOMING;
@@ -198,7 +198,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 	hardstop++;
                 	if ((hardstop > 1) || (cc_parms->current_iteration >= COMMUTATION_ARRAY_SIZE)) {
                 		if (cc_parms->current_iteration > 16) {
-                			calc_slope_intercept(cc_parms,2,cc_parms->current_iteration-3, &AxisCalibrationSlopes[GetBoardHWID()], &AxisCalibrationIntercepts[GetBoardHWID()]);
+                			calc_slope_intercept(cc_parms,2,cc_parms->current_iteration-3, &flash_params.commutation_slope[GetBoardHWID()], &flash_params.commutation_icept[GetBoardHWID()]);
     						cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_TEST;
 
     						calibration_progress = 90;
@@ -257,8 +257,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         	break;
 
         case COMMUTATION_CALIBRATION_STATE_COMPLETE:
-		    encoder_parms->calibration_slope = AxisCalibrationSlopes[GetBoardHWID()];
-		    encoder_parms->calibration_intercept = AxisCalibrationIntercepts[GetBoardHWID()];
+		    encoder_parms->calibration_slope = flash_params.commutation_slope[GetBoardHWID()];
+		    encoder_parms->calibration_intercept = flash_params.commutation_icept[GetBoardHWID()];
 		    md_parms->motor_drive_state = STATE_HOMING;
 		    if (GetBoardHWID() != AZ) {
                 IntOrFloat float_converter;
