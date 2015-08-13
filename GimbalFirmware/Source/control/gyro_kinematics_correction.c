@@ -21,7 +21,7 @@ void update_joint_ang_trig(int16* encoder_in)
     cos_phi = cosf(phi);
 }
 
-void transform_ang_vel_to_joint_rate(int16* gyro_in, int16* gyro_out)
+void transform_ang_vel_to_joint_rate(float* gyro_in, float* gyro_out)
 {
     float sec_phi = 1.0f/cos_phi;
     float tan_phi = sin_phi/cos_phi;

@@ -7,7 +7,6 @@
 #include "control/filt2p.h"
 #include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
-#include "control/config.h"
 
 static const int TorqueSignMap[AXIS_CNT] = {
         1, // EL
@@ -34,103 +33,52 @@ static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_en
 static void SendGyroTelemetry(int32 az_gyro, int32 el_gyro, int32 rl_gyro);
 static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel);
 static void SendTorqueCmdTelemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);
-static int16 CorrectEncoderError(int16 raw_error);
-static Uint16 CalculatePosHoldGain(int16 encoder_error);
+static float CorrectEncoderError(float raw_error);
+static float CalculatePosHoldGain(float encoder_error);
 
 // structural mode at ~240hz on roll arm->camera carriage connection
 // 180hz 12dB chebyshev type 2 4th-order low pass
-struct Filt2p_Params roll_torque_filt_params[2] = {
+#define ROLL_FILTER_NUM_SECTIONS 2
+struct Filt2p_Params roll_torque_filt_params[ROLL_FILTER_NUM_SECTIONS] = {
     {.b0= 0.2600345100000000, .b1= 0.2427056873942225, .b2= 0.2600345100000003, .a1=-0.0446326229788293, .a2= 0.1414793891043662},
     {.b0= 1.0000000000000000, .b1=-0.7176845003927455, .b2= 1.0000000000000009, .a1=-0.8191282670211697, .a2= 0.7108825577823754}
 };
+struct Filt2p_State roll_torque_filt_state[ROLL_FILTER_NUM_SECTIONS];
 
-struct Filt2p_State roll_torque_filt_state[2] = {
-    {0.0f,0.0f},
-    {0.0f,0.0f}
+#define YAW_FILTER_NUM_SECTIONS 10
+struct Filt2p_Params yaw_torque_filt_params[YAW_FILTER_NUM_SECTIONS] = {
+    {.b0 = 1, .b1 = 0.225529040556968,  .b2=0.576675671830002, .a1=-0.298288222856009, .a2=0.253745603180684},
+    {.b0 = 1, .b1 = 0.742834969121970,  .b2=0.491861412716521, .a1=0.898730782721131 , .a2=0.504159809676648},
+    {.b0 = 1, .b1 = 1.16806049846683,   .b2=0.641170929188255, .a1=1.19810337939554  , .a2=0.649042183987252},
+    {.b0 = 1, .b1 = 0.760277827677753,  .b2=0.823618104853667, .a1=0.744184129421869 , .a2=0.777640277180757},
+    {.b0 = 1, .b1 = 0.0157023472943767, .b2=0.843770835560726, .a1=0.0186116292713203, .a2=0.790517395894700},
+    {.b0 = 1, .b1 = -1.70128682157733,  .b2=0.912955206806351, .a1=-1.23965743943720 , .a2=0.845778550407367},
+    {.b0 = 1, .b1 = 1.46488744115071,   .b2=0.840203249235700, .a1=1.47282070398360  , .a2=0.847236562244339},
+    {.b0 = 1, .b1 = -1.24300053658244,  .b2=0.859866627637780, .a1=-1.45073725525697 , .a2=0.857457565144410},
+    {.b0 = 1, .b1 = -1.81473946965913,  .b2=0.937102507769830, .a1=-1.80184762288135 , .a2=0.887972394896855},
+    {.b0 = 1*0.724094261930275, .b1 = -1.65856685103887*0.724094261930275,  .b2=0.957234397860325*0.724094261930275, .a1=-1.61078498581705 , .a2=0.906192363385310}
 };
-
-// TUNE_REVISION is set in Headers/control/config.h
-#if TUNE_REVISION == 1
-    #define YAW_FILTER_NUM_SECTIONS 10
-    struct Filt2p_Params yaw_torque_filt_params[YAW_FILTER_NUM_SECTIONS] = {
-        {.b0 = 1, .b1 = 0.225529040556968,  .b2=0.576675671830002, .a1=-0.298288222856009, .a2=0.253745603180684},
-        {.b0 = 1, .b1 = 0.742834969121970,  .b2=0.491861412716521, .a1=0.898730782721131 , .a2=0.504159809676648},
-        {.b0 = 1, .b1 = 1.16806049846683,   .b2=0.641170929188255, .a1=1.19810337939554  , .a2=0.649042183987252},
-        {.b0 = 1, .b1 = 0.760277827677753,  .b2=0.823618104853667, .a1=0.744184129421869 , .a2=0.777640277180757},
-        {.b0 = 1, .b1 = 0.0157023472943767, .b2=0.843770835560726, .a1=0.0186116292713203, .a2=0.790517395894700},
-        {.b0 = 1, .b1 = -1.70128682157733,  .b2=0.912955206806351, .a1=-1.23965743943720 , .a2=0.845778550407367},
-        {.b0 = 1, .b1 = 1.46488744115071,   .b2=0.840203249235700, .a1=1.47282070398360  , .a2=0.847236562244339},
-        {.b0 = 1, .b1 = -1.24300053658244,  .b2=0.859866627637780, .a1=-1.45073725525697 , .a2=0.857457565144410},
-        {.b0 = 1, .b1 = -1.81473946965913,  .b2=0.937102507769830, .a1=-1.80184762288135 , .a2=0.887972394896855},
-        {.b0 = 1*0.724094261930275, .b1 = -1.65856685103887*0.724094261930275,  .b2=0.957234397860325*0.724094261930275, .a1=-1.61078498581705 , .a2=0.906192363385310}
-    };
-#elif TUNE_REVISION == 2
-    #define YAW_FILTER_NUM_SECTIONS 15
-    struct Filt2p_Params yaw_torque_filt_params[YAW_FILTER_NUM_SECTIONS] = {
-        {.b0 = 1.0000000e+00, .b1 = -7.3542713e-01, .b2 =-1.9299735e-01, .a1 = -1.7388109e+00, .a2 = 7.4980146e-01},
-        {.b0 = 1.0000000e+00, .b1 =  3.2678289e-01, .b2 = 5.8842620e-01, .a1 =  3.5948752e-01, .a2 = 1.2650177e-01},
-        {.b0 = 1.0000000e+00, .b1 = -1.7539535e+00, .b2 = 8.6200577e-01, .a1 = -8.1533733e-01, .a2 = 3.0022995e-01},
-        {.b0 = 1.0000000e+00, .b1 =  1.0515024e+00, .b2 = 4.8771217e-01, .a1 =  1.1265305e+00, .a2 = 5.3646564e-01},
-        {.b0 = 1.0000000e+00, .b1 =  6.8367022e-01, .b2 = 7.2154894e-01, .a1 =  6.1943367e-01, .a2 = 6.3847124e-01},
-        {.b0 = 1.0000000e+00, .b1 =  5.5930643e-02, .b2 = 7.4294074e-01, .a1 =  7.3010623e-02, .a2 = 6.4699304e-01},
-        {.b0 = 1.0000000e+00, .b1 =  1.3880131e+00, .b2 = 7.4044322e-01, .a1 =  1.3986707e+00, .a2 = 7.5164554e-01},
-        {.b0 = 1.0000000e+00, .b1 = -1.1231375e+00, .b2 = 7.6660438e-01, .a1 = -1.1241789e+00, .a2 = 7.6629407e-01},
-        {.b0 = 1.0000000e+00, .b1 = -1.5849777e+00, .b2 = 8.3072920e-01, .a1 = -1.4733546e+00, .a2 = 8.8562184e-01},
-        {.b0 = 1.0000000e+00, .b1 = -1.9055593e-03, .b2 = 9.0286857e-01, .a1 = -7.9853347e-04, .a2 = 8.8725974e-01},
-        {.b0 = 1.0000000e+00, .b1 =  8.0700640e-01, .b2 = 8.9916944e-01, .a1 =  8.0252498e-01, .a2 = 8.8851668e-01},
-        {.b0 = 1.0000000e+00, .b1 =  1.5266242e+00, .b2 = 8.9435428e-01, .a1 =  1.5290569e+00, .a2 = 8.9738000e-01},
-        {.b0 = 1.0000000e+00, .b1 = -1.2851239e+00, .b2 = 9.0371718e-01, .a1 = -1.2867601e+00, .a2 = 8.9779926e-01},
-        {.b0 = 1.0000000e+00, .b1 = -1.6334517e+00, .b2 = 9.4783350e-01, .a1 = -1.5869781e+00, .a2 = 9.1400400e-01},
-        {.b0 = 1.0000000e+00*6.7277909e-01, .b1 = -1.8090775e+00*6.7277909e-01, .b2 = 8.9795981e-01*6.7277909e-01, .a1 = -1.8604519e+00, .a2 = 9.3232719e-01}
-    };
-#endif
-
-#if YAW_FILTER_NUM_SECTIONS == 15
-struct Filt2p_State yaw_torque_filt_state[YAW_FILTER_NUM_SECTIONS] = {
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f}
-};
-#elif YAW_FILTER_NUM_SECTIONS == 10
-struct Filt2p_State yaw_torque_filt_state[YAW_FILTER_NUM_SECTIONS] = {
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f},
-    {0.0f,0.0f}
-};
-#endif
+struct Filt2p_State yaw_torque_filt_state[YAW_FILTER_NUM_SECTIONS];
 
 Uint16 telemetry_decimation_count = 0;
 Uint16 torque_cmd_telemetry_decimation_count = 5; // Start this at 5 so it's staggered with respect to the rest of the telemetry
 
-#define POS_LOOP_GAIN_1 1
-#define POS_LOOP_GAIN_2 2
-#define POS_LOOP_GAIN_3 4
-#define POS_LOOP_GAIN_4 8
-#define POS_LOOP_GAIN_1_LIMIT 139
-#define POS_LOOP_GAIN_2_LIMIT 278
-#define POS_LOOP_GAIN_3_LIMIT 417
-
 static int16 raw_gyro_readings[AXIS_CNT] = {0, 0, 0};
 static int16 raw_accel_readings[AXIS_CNT] = {0, 0, 0};
+
+void InitRateLoops(void)
+{
+#ifdef ROLL_FILTER_NUM_SECTIONS
+    memset(&roll_torque_filt_state, 0, sizeof(roll_torque_filt_state));
+#endif
+#ifdef PITCH_FILTER_NUM_SECTIONS
+    memset(&pitch_torque_filt_state, 0, sizeof(pitch_torque_filt_state));
+#endif
+#ifdef YAW_FILTER_NUM_SECTIONS
+    memset(&yaw_torque_filt_state, 0, sizeof(yaw_torque_filt_state));
+#endif
+
+}
 
 void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
 {
@@ -165,18 +113,18 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             transform_ang_vel_to_joint_rate(cb_parms->gyro_readings, cb_parms->corrected_gyro_readings);
 
         	if (cb_parms->control_type == CONTROL_TYPE_POS) {
-        		int16 encoder_error_az = CorrectEncoderError(-cb_parms->encoder_readings[AZ]);
-        		Uint16 pos_gain_az = CalculatePosHoldGain(encoder_error_az);
+        		float encoder_error_az = CorrectEncoderError(-cb_parms->encoder_readings[AZ]);
+        		float pos_gain_az = CalculatePosHoldGain(encoder_error_az);
         		cb_parms->setpoints[AZ] = (pos_gain_az * encoder_error_az);
         		cb_parms->process_vars[AZ] = cb_parms->corrected_gyro_readings[AZ];
 
-        		int16 encoder_error_el = CorrectEncoderError(-cb_parms->encoder_readings[EL]);
-                Uint16 pos_gain_el = CalculatePosHoldGain(encoder_error_el);
+        		float encoder_error_el = CorrectEncoderError(-cb_parms->encoder_readings[EL]);
+                float pos_gain_el = CalculatePosHoldGain(encoder_error_el);
                 cb_parms->setpoints[EL] = (pos_gain_el * encoder_error_el);
                 cb_parms->process_vars[EL] = cb_parms->corrected_gyro_readings[EL];
 
-                int16 encoder_error_roll = CorrectEncoderError(-cb_parms->encoder_readings[ROLL]);
-                Uint16 pos_gain_roll = CalculatePosHoldGain(encoder_error_roll);
+                float encoder_error_roll = CorrectEncoderError(-cb_parms->encoder_readings[ROLL]);
+                float pos_gain_roll = CalculatePosHoldGain(encoder_error_roll);
                 cb_parms->setpoints[ROLL] = (pos_gain_roll * encoder_error_roll);
                 cb_parms->process_vars[ROLL] = cb_parms->corrected_gyro_readings[ROLL];
         	} else {
@@ -211,15 +159,36 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             torque_out[AZ] = UpdatePID_Float(AZ, cb_parms->setpoints[AZ], cb_parms->process_vars[AZ], torque_limit, cos_phi*cos_phi, 0.0f);
             torque_out[ROLL] = UpdatePID_Float(ROLL, cb_parms->setpoints[ROLL], cb_parms->process_vars[ROLL], torque_limit, 1.0f, 0.0f);
 
-            torque_out[ROLL] = update_filt2p(&(roll_torque_filt_params[0]), &(roll_torque_filt_state[0]), torque_out[ROLL]);
-            torque_out[ROLL] = update_filt2p(&(roll_torque_filt_params[1]), &(roll_torque_filt_state[1]), torque_out[ROLL]);
+#ifdef PITCH_FILTER_NUM_SECTIONS
+            for(i=0; i<PITCH_FILTER_NUM_SECTIONS; i++) {
+                torque_out[EL] = update_filt2p(&(pitch_torque_filt_params[i]), &(pitch_torque_filt_state[i]), torque_out[EL]);
+            }
+#endif
 
+#ifdef ROLL_FILTER_NUM_SECTIONS
+            for(i=0; i<ROLL_FILTER_NUM_SECTIONS; i++) {
+                torque_out[ROLL] = update_filt2p(&(roll_torque_filt_params[i]), &(roll_torque_filt_state[i]), torque_out[ROLL]);
+            }
+#endif
+
+#ifdef YAW_FILTER_NUM_SECTIONS
             for(i=0; i<YAW_FILTER_NUM_SECTIONS; i++) {
                 torque_out[AZ] = update_filt2p(&(yaw_torque_filt_params[i]), &(yaw_torque_filt_state[i]), torque_out[AZ]);
             }
+#endif
 
             torque_out[AZ]+=torque_out[EL]*sin_phi;
 
+            if (torque_out[EL]>torque_limit) {
+                torque_out[EL] = torque_limit;
+            } else if (torque_out[EL]<-torque_limit) {
+                torque_out[EL] = -torque_limit;
+            }
+            if (torque_out[ROLL]>torque_limit) {
+                torque_out[ROLL] = torque_limit;
+            } else if (torque_out[ROLL]<-torque_limit) {
+                torque_out[ROLL] = -torque_limit;
+            }
             if (torque_out[AZ]>torque_limit) {
                 torque_out[AZ] = torque_limit;
             } else if (torque_out[AZ]<-torque_limit) {
@@ -373,7 +342,7 @@ static void SendAccelTelemetry(int32 az_accel, int32 el_accel, int32 rl_accel)
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ACCEL_RL_TELEMETRY, accel_rl_readings, 4);
 }
 
-static int16 CorrectEncoderError(int16 raw_error)
+static float CorrectEncoderError(float raw_error)
 {
     if (raw_error < -(ENCODER_COUNTS_PER_REV / 2)) {
         return raw_error + ENCODER_COUNTS_PER_REV;
@@ -384,15 +353,11 @@ static int16 CorrectEncoderError(int16 raw_error)
     }
 }
 
-static Uint16 CalculatePosHoldGain(int16 encoder_error)
+static float CalculatePosHoldGain(float encoder_error)
 {
-    if ((encoder_error <= -POS_LOOP_GAIN_3_LIMIT) || (encoder_error >= POS_LOOP_GAIN_3_LIMIT)) {
-        return POS_LOOP_GAIN_4;
-    } else if ((encoder_error <= -POS_LOOP_GAIN_2_LIMIT) || (encoder_error >= POS_LOOP_GAIN_2_LIMIT)) {
-        return POS_LOOP_GAIN_3;
-    } else if ((encoder_error <= -POS_LOOP_GAIN_1_LIMIT) || (encoder_error >= POS_LOOP_GAIN_1_LIMIT)) {
-        return POS_LOOP_GAIN_2;
-    } else {
-        return POS_LOOP_GAIN_1;
+    float ret = 1.0f + 0.00004f * encoder_error*encoder_error;
+    if (ret > 8) {
+        ret = 8;
     }
+    return ret;
 }

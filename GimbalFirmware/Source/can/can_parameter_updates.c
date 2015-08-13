@@ -8,7 +8,7 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "can/can_parameter_updates.h"
 
-int16 rate_cmds_received[3];
+float rate_cmds_received[3];
 Uint32 debug_output_decimation_count = 0;
 
 void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, DebugData* debug_data)
@@ -42,17 +42,17 @@ void ProcessParamUpdates(ParamSet* param_set, ControlBoardParms* cb_parms, Debug
         // Check for new rate commands from the copter
         if ((*(param_set[CAND_PID_RATE_CMD_AZ].sema) == TRUE) || (*(param_set[CAND_PID_RATE_CMD_EL].sema) == TRUE) || (*(param_set[CAND_PID_RATE_CMD_RL].sema) == TRUE)) {
             if (*(param_set[CAND_PID_RATE_CMD_AZ].sema) == TRUE) {
-                rate_cmds_received[AZ] = (int16)param_set[CAND_PID_RATE_CMD_AZ].param;
+                rate_cmds_received[AZ] = (float)((int16)param_set[CAND_PID_RATE_CMD_AZ].param);
                 *(param_set[CAND_PID_RATE_CMD_AZ].sema) = FALSE;
             }
 
             if (*(param_set[CAND_PID_RATE_CMD_EL].sema) == TRUE) {
-                rate_cmds_received[EL] = (int16)param_set[CAND_PID_RATE_CMD_EL].param;
+                rate_cmds_received[EL] = (float)((int16)param_set[CAND_PID_RATE_CMD_EL].param);
                 *(param_set[CAND_PID_RATE_CMD_EL].sema) = FALSE;
             }
 
             if (*(param_set[CAND_PID_RATE_CMD_RL].sema) == TRUE) {
-                rate_cmds_received[ROLL] = (int16)param_set[CAND_PID_RATE_CMD_RL].param;
+                rate_cmds_received[ROLL] = (float)((int16)param_set[CAND_PID_RATE_CMD_RL].param);
                 *(param_set[CAND_PID_RATE_CMD_RL].sema) = FALSE;
             }
 
