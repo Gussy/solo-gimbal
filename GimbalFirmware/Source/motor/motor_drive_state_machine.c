@@ -325,7 +325,7 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
     // If we're the EL board, we update our own encoder readings.  Else, we send them over CAN
     if (GetBoardHWID() == EL) {
         cb_parms->encoder_readings[EL] = encoder_value;
-        cb_parms->encoder_value_received[EL] = TRUE;
+        cb_parms->encoder_value_received[EL] = true;
         update_joint_ang_trig(cb_parms->encoder_readings);
     } else {
 		cand_tx_response(CAND_ID_EL, CAND_PID_POSITION, encoder_value);
@@ -335,7 +335,7 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
     encoder_parms->virtual_counts_accumulated = 0;
 
     md_parms->iq_ref = ((int16)cb_parms->param_set[CAND_PID_TORQUE].param) / 32767.0;
-    cb_parms->param_set[CAND_PID_TORQUE].sema = FALSE;
+    cb_parms->param_set[CAND_PID_TORQUE].sema = false;
 }
 
 void update_local_params_from_flash(MotorDriveParms* md_parms)

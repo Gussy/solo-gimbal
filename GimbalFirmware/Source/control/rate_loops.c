@@ -209,7 +209,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
 
             // Also update our own torque (fake like we got a value over CAN)
             cb_parms->param_set[CAND_PID_TORQUE].param = cb_parms->motor_torques[EL];
-            cb_parms->param_set[CAND_PID_TORQUE].sema = TRUE;
+            cb_parms->param_set[CAND_PID_TORQUE].sema = true;
 
             cb_parms->rate_loop_pass = TELEM_OUT_PASS;
             break;
