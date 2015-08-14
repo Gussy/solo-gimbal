@@ -144,8 +144,8 @@ void RunRateLoops(ControlBoardParms* cb_parms)
         	}
 
 			// Set up the next rate loop pass to be the torque command output pass
+        	// Don't break, drop straight into the next case block
 			cb_parms->rate_loop_pass = TORQUE_OUT_PASS;
-            break;
 
         case TORQUE_OUT_PASS: {
             // Run PID rate loops
