@@ -15,7 +15,7 @@
 
 static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
 
-static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set);
+static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms);
 
 CommutationCalibrationParms cc_parms = {
     .calibration_state = COMMUTATION_CALIBRATION_STATE_INIT,
@@ -33,7 +33,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         ControlBoardParms* cb_parms,
         MotorDriveParms* md_parms,
         EncoderParms* encoder_parms,
-        ParamSet* param_set,
         AveragePowerFilterParms* pf_parms,
         LoadAxisParmsStateInfo* load_ap_state_info)
 {
@@ -267,8 +266,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.term.Ref = md_parms->iq_ref;
 
             // If new current command from CAN bus get it.
-            if (*param_set[CAND_PID_TORQUE].sema) {
-                update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms, param_set);
+            if (cb_parms->param_set[CAND_PID_TORQUE].sema) {
+                update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms);
             }
             break;
 
@@ -283,8 +282,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // If we're disabled, we should still send out our encoder values if we get a torque command.  We ignore the actual torque command,
             // but other things still expect to get updated encoder readings if they send torque commands
-            if (*param_set[CAND_PID_TORQUE].sema) {
-                update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms, param_set);
+            if (cb_parms->param_set[CAND_PID_TORQUE].sema) {
+                update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms);
             }
             break;
 
@@ -316,7 +315,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         }
 }
 
-static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, ParamSet* param_set)
+static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms)
 {
 
     // We're accumulating encoder readings at 10kHz, and sending them out at 1kHz, so we divide by 10
@@ -326,7 +325,7 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
     // If we're the EL board, we update our own encoder readings.  Else, we send them over CAN
     if (GetBoardHWID() == EL) {
         cb_parms->encoder_readings[EL] = encoder_value;
-        cb_parms->encoder_value_received[EL] = TRUE;
+        cb_parms->encoder_value_received[EL] = true;
         update_joint_ang_trig(cb_parms->encoder_readings);
     } else {
 		cand_tx_response(CAND_ID_EL, CAND_PID_POSITION, encoder_value);
@@ -335,8 +334,8 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
     encoder_parms->virtual_counts_accumulator = 0;
     encoder_parms->virtual_counts_accumulated = 0;
 
-    md_parms->iq_ref = ((int16) param_set[CAND_PID_TORQUE].param) / 32767.0;
-    *param_set[CAND_PID_TORQUE].sema = FALSE;
+    md_parms->iq_ref = ((int16)cb_parms->param_set[CAND_PID_TORQUE].param) / 32767.0;
+    cb_parms->param_set[CAND_PID_TORQUE].sema = false;
 }
 
 void update_local_params_from_flash(MotorDriveParms* md_parms)

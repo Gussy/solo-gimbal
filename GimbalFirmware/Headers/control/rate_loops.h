@@ -9,7 +9,7 @@
 #define TELEMETRY_DECIMATION_LIMIT 10
 
 void InitRateLoops(void);
-void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set);
+void RunRateLoops(ControlBoardParms* cb_parms);
 
 #define DEG_TO_ENC_COUNTS(x) (((long)(x) * 10000L) / 360L)
 

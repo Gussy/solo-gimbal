@@ -23,6 +23,8 @@
 #include "hardware/HWSpecific.h"
 #include "ardupilotmega/mavlink.h"
 
+#include <stdbool.h>
+
 // Units are 11915/Amp (+/-32767 counts full scale over +/-2.75A full scale)
 #define LOW_TORQUE_MODE_MAX (5000.0)
 
@@ -51,7 +53,7 @@ typedef enum {
 
 typedef struct {
     Uint32 param;
-    Uint8 *sema;
+    bool sema;
 } ParamSet;
 
 typedef struct {
@@ -101,6 +103,7 @@ typedef struct {
     int16 max_allowed_torque;
     Uint8 initialized;
     Uint8 enabled;
+    ParamSet param_set[CAND_PID_LAST];
 } ControlBoardParms;
 
 typedef struct {

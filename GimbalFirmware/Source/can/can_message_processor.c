@@ -23,7 +23,6 @@
 void Process_CAN_Messages(AxisParms* axis_parms,
 		MotorDriveParms* md_parms,
 		ControlBoardParms* cb_parms,
-		ParamSet* param_set,
 		LoadAxisParmsStateInfo* load_ap_state_info)
 {
     static int fault_cnt = 0;
@@ -347,8 +346,8 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                 // Not an extended parameter, parse normally
                 while(msg.param_cnt) {
                     if (msg.param_id[msg.param_cnt-1] < CAND_PID_LAST) {
-                        param_set[msg.param_id[msg.param_cnt-1]].param = msg.param[msg.param_cnt-1];
-                        *(param_set[msg.param_id[msg.param_cnt-1]].sema) = TRUE;
+                        cb_parms->param_set[msg.param_id[msg.param_cnt-1]].param = msg.param[msg.param_cnt-1];
+                        cb_parms->param_set[msg.param_id[msg.param_cnt-1]].sema = true;
                     }
                     msg.param_cnt--;
                 }

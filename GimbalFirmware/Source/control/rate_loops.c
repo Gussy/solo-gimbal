@@ -77,10 +77,9 @@ void InitRateLoops(void)
 #ifdef YAW_FILTER_NUM_SECTIONS
     memset(&yaw_torque_filt_state, 0, sizeof(yaw_torque_filt_state));
 #endif
-
 }
 
-void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
+void RunRateLoops(ControlBoardParms* cb_parms)
 {
     switch (cb_parms->rate_loop_pass) {
         case READ_GYRO_PASS:
@@ -209,8 +208,8 @@ void RunRateLoops(ControlBoardParms* cb_parms, ParamSet* param_set)
             MDBSendTorques(cb_parms->motor_torques[AZ], cb_parms->motor_torques[ROLL]);
 
             // Also update our own torque (fake like we got a value over CAN)
-            param_set[CAND_PID_TORQUE].param = cb_parms->motor_torques[EL];
-            *param_set[CAND_PID_TORQUE].sema = TRUE;
+            cb_parms->param_set[CAND_PID_TORQUE].param = cb_parms->motor_torques[EL];
+            cb_parms->param_set[CAND_PID_TORQUE].sema = true;
 
             cb_parms->rate_loop_pass = TELEM_OUT_PASS;
             break;
