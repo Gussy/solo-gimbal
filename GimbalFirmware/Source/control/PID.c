@@ -8,9 +8,9 @@ PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
 
     // Elevation
     {
-        .gainP = 2.400000,
-        .gainI = 0.400000,
-        .gainD = 0.000000,
+        .gainP = 1.650000,
+        .gainI = 0.288000,
+        .gainD = 0.212000,
         .integralCumulative = 0.0,
         .dTermAlpha = 0.5,
         .processVarPrevious = 0.0,
