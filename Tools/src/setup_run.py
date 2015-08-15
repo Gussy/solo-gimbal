@@ -233,7 +233,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     setup_param.low_torque_mode(link, False)
 
     start_time = time.time()
-    if timeout is not None:
+    if timeout is not None and test == 'wobble':
         timeout = timeout + WOBBLE_TEST_ALIGNMENT_TIME
 
     # For align and wobble tests
