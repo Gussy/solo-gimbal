@@ -50,7 +50,7 @@ void InitGyro()
     DELAY_US(INTER_COMMAND_DELAY);
 
     // Disable the fsync pin, configure the highest bandwidth filter
-    SpiWriteReg8Bit(&gyro_spi_desc, MPU_CONFIG_REG, FSYNC_DISABLED | LPF_0);
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_CONFIG_REG, FSYNC_DISABLED | 0x07);
 
     DELAY_US(INTER_COMMAND_DELAY);
 
