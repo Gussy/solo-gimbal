@@ -84,15 +84,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
     switch (cb_parms->rate_loop_pass) {
         case READ_GYRO_PASS:
             ReadGyro(&(raw_gyro_readings[GyroAxisMap[X_AXIS]]), &(raw_gyro_readings[GyroAxisMap[Y_AXIS]]), &(raw_gyro_readings[GyroAxisMap[Z_AXIS]]));
-            cb_parms->rate_loop_pass = READ_ACCEL_PASS;
-            break;
 
-        case READ_ACCEL_PASS:
-            ReadAccel(&(raw_accel_readings[GyroAxisMap[X_AXIS]]), &(raw_accel_readings[GyroAxisMap[Y_AXIS]]), &(raw_accel_readings[GyroAxisMap[Z_AXIS]]));
-            cb_parms->rate_loop_pass = KINEMATICS_PASS;
-            break;
-
-        case KINEMATICS_PASS:
             // Unpack the gyro data into the correct axes, and apply the gyro offsets, Do gyro sign correction
             cb_parms->gyro_readings[AZ] = (raw_gyro_readings[AZ] * GyroSignMap[AZ]);
             cb_parms->gyro_readings[EL] = (raw_gyro_readings[EL] * GyroSignMap[EL]);
@@ -103,11 +95,10 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             cb_parms->integrated_raw_gyro_readings[EL] += cb_parms->gyro_readings[EL];
             cb_parms->integrated_raw_gyro_readings[ROLL] += cb_parms->gyro_readings[ROLL];
 
-            // Do the 10-cycle integration of the raw accelerometer readings for the 100Hz accelerometer telemetry
-            cb_parms->integrated_raw_accel_readings[AZ] += raw_accel_readings[AZ];
-            cb_parms->integrated_raw_accel_readings[EL] += raw_accel_readings[EL];
-            cb_parms->integrated_raw_accel_readings[ROLL] += raw_accel_readings[ROLL];
+            cb_parms->rate_loop_pass = KINEMATICS_PASS;
+            break;
 
+        case KINEMATICS_PASS:
             // Do gyro kinematics correction
             transform_ang_vel_to_joint_rate(cb_parms->gyro_readings, cb_parms->corrected_gyro_readings);
 
@@ -176,21 +167,21 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             }
 #endif
 
-            torque_out[AZ]+=torque_out[EL]*sin_phi;
+            torque_out[AZ] += torque_out[EL] * sin_phi;
 
-            if (torque_out[EL]>torque_limit) {
+            if (torque_out[EL] > torque_limit) {
                 torque_out[EL] = torque_limit;
-            } else if (torque_out[EL]<-torque_limit) {
+            } else if (torque_out[EL] < -torque_limit) {
                 torque_out[EL] = -torque_limit;
             }
-            if (torque_out[ROLL]>torque_limit) {
+            if (torque_out[ROLL] > torque_limit) {
                 torque_out[ROLL] = torque_limit;
-            } else if (torque_out[ROLL]<-torque_limit) {
+            } else if (torque_out[ROLL] < -torque_limit) {
                 torque_out[ROLL] = -torque_limit;
             }
-            if (torque_out[AZ]>torque_limit) {
+            if (torque_out[AZ] > torque_limit) {
                 torque_out[AZ] = torque_limit;
-            } else if (torque_out[AZ]<-torque_limit) {
+            } else if (torque_out[AZ] < -torque_limit) {
                 torque_out[AZ] = -torque_limit;
             }
 
@@ -211,9 +202,20 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             cb_parms->param_set[CAND_PID_TORQUE].param = cb_parms->motor_torques[EL];
             cb_parms->param_set[CAND_PID_TORQUE].sema = true;
 
-            cb_parms->rate_loop_pass = TELEM_OUT_PASS;
+            cb_parms->rate_loop_pass = READ_ACCEL_PASS;
             break;
         }
+
+        case READ_ACCEL_PASS:
+            ReadAccel(&(raw_accel_readings[GyroAxisMap[X_AXIS]]), &(raw_accel_readings[GyroAxisMap[Y_AXIS]]), &(raw_accel_readings[GyroAxisMap[Z_AXIS]]));
+
+            // Do the 10-cycle integration of the raw accelerometer readings for the 100Hz accelerometer telemetry
+            cb_parms->integrated_raw_accel_readings[AZ] += raw_accel_readings[AZ];
+            cb_parms->integrated_raw_accel_readings[EL] += raw_accel_readings[EL];
+            cb_parms->integrated_raw_accel_readings[ROLL] += raw_accel_readings[ROLL];
+
+            cb_parms->rate_loop_pass = TELEM_OUT_PASS;
+            break;
 
         case TELEM_OUT_PASS:
             // Send encoder, gyro, and accelerometer telemetry at a decimated rate of 100Hz
