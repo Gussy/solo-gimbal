@@ -25,7 +25,7 @@ void run_average_power_filter(AveragePowerFilterParms* filter_parms, float iq_re
 {
     // Alpha input equation by CW per 5/1/15 email
     float alpha_input = 0.0;
-    if (iq_request < 0.44) {
+    if (fabs(iq_request) < 0.44) {
         alpha_input = iq_request * iq_request;
     } else {
         float intermediate = iq_request * (1.0 + (2.9 * fabs(iq_request - 0.44)));
