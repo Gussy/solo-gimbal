@@ -4,6 +4,8 @@
 #include "can/cand_BitFields.h"
 #include "mavlink_interface/gimbal_mavlink.h"
 #include "PM_Sensorless-Settings.h"
+#include "motor/motor_drive_state_machine.h"
+
 
 typedef enum {
     MAVLINK_GIMBAL_PARAM_PID_YAW_P = 0,
@@ -52,6 +54,13 @@ typedef enum {
 	MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE,
 	MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS,
 	MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE,
+    MAVLINK_GIMBAL_PARAM_GMB_TRQ_P,
+    MAVLINK_GIMBAL_PARAM_GMB_TRQ_I,
+    MAVLINK_GIMBAL_PARAM_GMB_TRQ_D,
+    MAVLINK_GIMBAL_PARAM_GMB_TRQ_R,
+    MAVLINK_GIMBAL_PARAM_GMB_TRQ_M,
+    MAVLINK_GIMBAL_PARAM_GMB_TRQ_C1,
+    MAVLINK_GIMBAL_PARAM_GMB_TRQ_C2,
     MAVLINK_GIMBAL_PARAM_MAX
 } GimbalMavlinkParameterID;
 
@@ -76,7 +85,7 @@ typedef struct {
 } GimbalMavlinkParameter;
 
 void init_default_mavlink_params();
-void handle_param_set(mavlink_message_t* received_msg);
+void handle_param_set(mavlink_message_t* received_msg, MotorDriveParms* md_parms);
 void handle_param_read(mavlink_message_t* received_msg);
 void send_gimbal_param(int param_num);
 void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value, ControlBoardParms *cb_parms);

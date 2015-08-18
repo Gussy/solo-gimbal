@@ -343,13 +343,21 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
     // Copy the parameters we need from our local copy of the flash params struct
     // into the runtime locations they need to be at
     GimbalAxis my_axis = (GimbalAxis)GetBoardHWID();
-    md_parms->pid_id.param.Kp = flash_params.torque_pid_kp[my_axis];
-    md_parms->pid_id.param.Ki = flash_params.torque_pid_ki[my_axis];
-    md_parms->pid_id.param.Kd = flash_params.torque_pid_kd[my_axis];
+    md_parms->pid_id.param.Kp = flash_params.torque_pid_kp;
+    md_parms->pid_id.param.Ki = flash_params.torque_pid_ki;
+    md_parms->pid_id.param.Kd = flash_params.torque_pid_kd;
+    md_parms->pid_id.param.Kr = flash_params.torque_pid_kr;
+    md_parms->pid_id.param.Km = flash_params.torque_pid_km;
+    md_parms->pid_id.term.c1 = _IQ(flash_params.torque_pid_c1);
+    md_parms->pid_id.term.c2 = _IQ(flash_params.torque_pid_c2);
 
-    md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp[my_axis];
-    md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki[my_axis];
-    md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd[my_axis];
+    md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp;
+    md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki;
+    md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd;
+    md_parms->pid_iq.param.Kr = flash_params.torque_pid_kr;
+    md_parms->pid_iq.param.Km = flash_params.torque_pid_km;
+    md_parms->pid_iq.term.c1 = _IQ(flash_params.torque_pid_c1);
+    md_parms->pid_iq.term.c2 = _IQ(flash_params.torque_pid_c2);
 
     if (my_axis == EL) {
         // Turn HeroBus charging on or off based on setting in flash

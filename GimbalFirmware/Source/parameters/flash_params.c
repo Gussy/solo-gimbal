@@ -7,7 +7,7 @@
 
 struct CURRENT_FLASH_PARAM_STRUCT flash_params =
 {
-        .flash_struct_id = CURRENT_FLASH_PARAM_STRUCT_VERSION,
+        .flash_struct_id = PPCAT(1,CURRENT_FLASH_PARAM_STRUCT_VERSION) - 10000,
         .assy_time = 0.0,   // Unix timestamp (seconds since Jan 01 1970 UTC)
         .ser_num_1 = 0.0,   // Serial number part 1 (part code, design, language/country)
         .ser_num_2 = 0.0,   // Serial number part 2 (option, year, month)
@@ -20,9 +20,13 @@ struct CURRENT_FLASH_PARAM_STRUCT flash_params =
         .commutation_icept = { 0.0, 0.0, 0.0 },
 
         //  {EL, AZ, ROLL}
-        .torque_pid_kp = { 0.80, 0.80, 0.80 },
-        .torque_pid_ki = { 0.75, 0.75, 0.75 },
-        .torque_pid_kd = { 0.00, 0.00, 0.00 },
+        .torque_pid_kp = 0.80,
+        .torque_pid_ki = 0.75,
+        .torque_pid_kd = 0.00,
+        .torque_pid_kr = 1.00,
+        .torque_pid_km = 1.00,
+        .torque_pid_c1 = 1.00,
+        .torque_pid_c2 = 0.00,
 
         //  {EL, AZ, ROLL}
         .rate_pid_p = { 0.0, 0.0, 0.0 },
