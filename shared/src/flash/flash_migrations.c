@@ -8,6 +8,7 @@
 #include "can/cand.h"
 #include "can/cb.h"
 
+static void flash_migration_from_0007(void);
 static void flash_migration_from_0006(void);
 static void flash_migration_from_0005(void);
 static void flash_migration_from_0004(void);
@@ -25,6 +26,11 @@ void flash_migration_run(const Uint16 from_rev) {
 
     // Handle flash param migrations *from* the id stored in flash *to* this version of the compiled firmware
     switch(from_rev) {
+        // Last seen in v1.0.1
+        case 0x0007:
+            flash_migration_from_0007();
+            break;
+
         // Last seen in v0.28.1
         case 0x0006:
             flash_migration_from_0006();
@@ -79,6 +85,46 @@ static void flash_migration_not_possible(void) {
     watchdog_reset();
 }
 
+static void flash_migration_from_0007(void) {
+    // Load the struct from flash into the old struct layout
+    struct flash_param_struct_0007 flash_params_0007 = {0};
+    memcpy(&flash_params_0007, (Uint16 *)PARAMS_START, sizeof(flash_params_0007));
+
+    // Copy floats
+    flash_params.ser_num_1 = flash_params_0007.ser_num_1;
+    flash_params.ser_num_2 = flash_params_0007.ser_num_2;
+    flash_params.ser_num_3 = flash_params_0007.ser_num_3;
+    flash_params.assy_time = flash_params_0007.assy_time;
+    flash_params.k_rate = flash_params_0007.k_rate;
+    flash_params.gopro_charging_enabled = flash_params_0007.gopro_charging_enabled;
+    flash_params.use_custom_gains = flash_params_0007.use_custom_gains;
+
+    // Copy arrays
+    memcpy(flash_params.commutation_slope, flash_params_0007.commutation_slope, sizeof(flash_params_0007.commutation_slope));
+    memcpy(flash_params.commutation_icept, flash_params_0007.commutation_icept, sizeof(flash_params_0007.commutation_icept));
+
+    flash_params.torque_pid_kp = flash_params_0007.torque_pid_kp[0];
+    flash_params.torque_pid_ki = flash_params_0007.torque_pid_ki[0];
+    flash_params.torque_pid_kd = flash_params_0007.torque_pid_kd[0];
+
+    memcpy(flash_params.rate_pid_p, flash_params_0007.rate_pid_p, sizeof(flash_params_0007.rate_pid_p));
+    memcpy(flash_params.rate_pid_i, flash_params_0007.rate_pid_i, sizeof(flash_params_0007.rate_pid_i));
+    memcpy(flash_params.rate_pid_d, flash_params_0007.rate_pid_d, sizeof(flash_params_0007.rate_pid_d));
+
+    memcpy(flash_params.offset_joint, flash_params_0007.offset_joint, sizeof(flash_params_0007.offset_joint));
+    memcpy(flash_params.offset_gyro, flash_params_0007.offset_gyro, sizeof(flash_params_0007.offset_gyro));
+
+    memcpy(flash_params.offset_accelerometer, flash_params_0007.offset_accelerometer, sizeof(flash_params_0007.offset_accelerometer));
+    memcpy(flash_params.gain_accelerometer, flash_params_0007.gain_accelerometer, sizeof(flash_params_0007.gain_accelerometer));
+    memcpy(flash_params.alignment_accelerometer, flash_params_0007.alignment_accelerometer, sizeof(flash_params_0007.alignment_accelerometer));
+
+    /* Removed parameters:
+     *  rate_pid_windup
+     * Added parameters:
+     *  rate_pid_d_alpha
+     */
+}
+
 static void flash_migration_from_0006(void) {
     // Load the struct from flash into the old struct layout
     struct flash_param_struct_0006 flash_params_0006 = {0};
@@ -97,9 +143,9 @@ static void flash_migration_from_0006(void) {
     memcpy(flash_params.commutation_slope, flash_params_0006.commutation_slope, sizeof(flash_params_0006.commutation_slope));
     memcpy(flash_params.commutation_icept, flash_params_0006.commutation_icept, sizeof(flash_params_0006.commutation_icept));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0006.torque_pid_kp, sizeof(flash_params_0006.torque_pid_kp));
-    memcpy(flash_params.torque_pid_ki, flash_params_0006.torque_pid_ki, sizeof(flash_params_0006.torque_pid_ki));
-    memcpy(flash_params.torque_pid_kd, flash_params_0006.torque_pid_kd, sizeof(flash_params_0006.torque_pid_kd));
+    flash_params.torque_pid_kp = flash_params_0006.torque_pid_kp[0];
+    flash_params.torque_pid_ki = flash_params_0006.torque_pid_ki[0];
+    flash_params.torque_pid_kd = flash_params_0006.torque_pid_kd[0];
 
     memcpy(flash_params.rate_pid_p, flash_params_0006.rate_pid_p, sizeof(flash_params_0006.rate_pid_p));
     memcpy(flash_params.rate_pid_i, flash_params_0006.rate_pid_i, sizeof(flash_params_0006.rate_pid_i));
@@ -137,9 +183,9 @@ static void flash_migration_from_0005(void) {
     memcpy(flash_params.commutation_slope, flash_params_0005.commutation_slope, sizeof(flash_params_0005.commutation_slope));
     memcpy(flash_params.commutation_icept, flash_params_0005.commutation_icept, sizeof(flash_params_0005.commutation_icept));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0005.torque_pid_kp, sizeof(flash_params_0005.torque_pid_kp));
-    memcpy(flash_params.torque_pid_ki, flash_params_0005.torque_pid_ki, sizeof(flash_params_0005.torque_pid_ki));
-    memcpy(flash_params.torque_pid_kd, flash_params_0005.torque_pid_kd, sizeof(flash_params_0005.torque_pid_kd));
+    flash_params.torque_pid_kp = flash_params_0005.torque_pid_kp[0];
+    flash_params.torque_pid_ki = flash_params_0005.torque_pid_ki[0];
+    flash_params.torque_pid_kd = flash_params_0005.torque_pid_kd[0];
 
     memcpy(flash_params.rate_pid_p, flash_params_0005.rate_pid_p, sizeof(flash_params_0005.rate_pid_p));
     memcpy(flash_params.rate_pid_i, flash_params_0005.rate_pid_i, sizeof(flash_params_0005.rate_pid_i));
@@ -174,9 +220,9 @@ static void flash_migration_from_0004(void) {
     memcpy(flash_params.commutation_slope, flash_params_0004.commutation_slope, sizeof(flash_params_0004.commutation_slope));
     memcpy(flash_params.commutation_icept, flash_params_0004.commutation_icept, sizeof(flash_params_0004.commutation_icept));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0004.torque_pid_kp, sizeof(flash_params_0004.torque_pid_kp));
-    memcpy(flash_params.torque_pid_ki, flash_params_0004.torque_pid_ki, sizeof(flash_params_0004.torque_pid_ki));
-    memcpy(flash_params.torque_pid_kd, flash_params_0004.torque_pid_kd, sizeof(flash_params_0004.torque_pid_kd));
+    flash_params.torque_pid_kp = flash_params_0004.torque_pid_kp[0];
+    flash_params.torque_pid_ki = flash_params_0004.torque_pid_ki[0];
+    flash_params.torque_pid_kd = flash_params_0004.torque_pid_kd[0];
 
     memcpy(flash_params.rate_pid_p, flash_params_0004.rate_pid_p, sizeof(flash_params_0004.rate_pid_p));
     memcpy(flash_params.rate_pid_i, flash_params_0004.rate_pid_i, sizeof(flash_params_0004.rate_pid_i));
@@ -211,9 +257,9 @@ static void flash_migration_from_0003(void) {
     memcpy(flash_params.commutation_slope, flash_params_0003.commutation_slope, sizeof(flash_params_0003.commutation_slope));
     memcpy(flash_params.commutation_icept, flash_params_0003.commutation_icept, sizeof(flash_params_0003.commutation_icept));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0003.torque_pid_kp, sizeof(flash_params_0003.torque_pid_kp));
-    memcpy(flash_params.torque_pid_ki, flash_params_0003.torque_pid_ki, sizeof(flash_params_0003.torque_pid_ki));
-    memcpy(flash_params.torque_pid_kd, flash_params_0003.torque_pid_kd, sizeof(flash_params_0003.torque_pid_kd));
+    flash_params.torque_pid_kp = flash_params_0003.torque_pid_kp[0];
+    flash_params.torque_pid_ki = flash_params_0003.torque_pid_ki[0];
+    flash_params.torque_pid_kd = flash_params_0003.torque_pid_kd[0];
 
     memcpy(flash_params.rate_pid_p, flash_params_0003.rate_pid_p, sizeof(flash_params_0003.rate_pid_p));
     memcpy(flash_params.rate_pid_i, flash_params_0003.rate_pid_i, sizeof(flash_params_0003.rate_pid_i));
@@ -247,9 +293,9 @@ static void flash_migration_from_0002(void) {
     memcpy(flash_params.commutation_slope, flash_params_0002.commutation_slope, sizeof(flash_params_0002.commutation_slope));
     memcpy(flash_params.commutation_icept, flash_params_0002.commutation_icept, sizeof(flash_params_0002.commutation_icept));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0002.torque_pid_kp, sizeof(flash_params_0002.torque_pid_kp));
-    memcpy(flash_params.torque_pid_ki, flash_params_0002.torque_pid_ki, sizeof(flash_params_0002.torque_pid_ki));
-    memcpy(flash_params.torque_pid_kd, flash_params_0002.torque_pid_kd, sizeof(flash_params_0002.torque_pid_kd));
+    flash_params.torque_pid_kp = flash_params_0002.torque_pid_kp[0];
+    flash_params.torque_pid_ki = flash_params_0002.torque_pid_ki[0];
+    flash_params.torque_pid_kd = flash_params_0002.torque_pid_kd[0];
 
     memcpy(flash_params.rate_pid_p, flash_params_0002.rate_pid_p, sizeof(flash_params_0002.rate_pid_p));
     memcpy(flash_params.rate_pid_i, flash_params_0002.rate_pid_i, sizeof(flash_params_0002.rate_pid_i));
@@ -283,9 +329,9 @@ static void flash_migration_from_0001(void) {
     memcpy(flash_params.commutation_slope, flash_params_0001.commutation_slope, sizeof(flash_params_0001.commutation_slope));
     memcpy(flash_params.commutation_icept, flash_params_0001.commutation_icept, sizeof(flash_params_0001.commutation_icept));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0001.torque_pid_kp, sizeof(flash_params_0001.torque_pid_kp));
-    memcpy(flash_params.torque_pid_ki, flash_params_0001.torque_pid_ki, sizeof(flash_params_0001.torque_pid_ki));
-    memcpy(flash_params.torque_pid_kd, flash_params_0001.torque_pid_kd, sizeof(flash_params_0001.torque_pid_kd));
+    flash_params.torque_pid_kp = flash_params_0001.torque_pid_kp[0];
+    flash_params.torque_pid_ki = flash_params_0001.torque_pid_ki[0];
+    flash_params.torque_pid_kd = flash_params_0001.torque_pid_kd[0];
 
     memcpy(flash_params.rate_pid_p, flash_params_0001.rate_pid_p, sizeof(flash_params_0001.rate_pid_p));
     memcpy(flash_params.rate_pid_i, flash_params_0001.rate_pid_i, sizeof(flash_params_0001.rate_pid_i));
@@ -328,9 +374,9 @@ static void flash_migration_from_0000(void) {
     memcpy(flash_params.commutation_slope, flash_params_0000.AxisCalibrationSlopes, sizeof(flash_params_0000.AxisCalibrationSlopes));
     memcpy(flash_params.commutation_icept, flash_params_0000.AxisCalibrationIntercepts, sizeof(flash_params_0000.AxisCalibrationIntercepts));
 
-    memcpy(flash_params.torque_pid_kp, flash_params_0000.torque_pid_kp, sizeof(flash_params_0000.torque_pid_kp));
-    memcpy(flash_params.torque_pid_ki, flash_params_0000.torque_pid_ki, sizeof(flash_params_0000.torque_pid_ki));
-    memcpy(flash_params.torque_pid_kd, flash_params_0000.torque_pid_kd, sizeof(flash_params_0000.torque_pid_kd));
+    flash_params.torque_pid_kp = flash_params_0000.torque_pid_kp[0];
+    flash_params.torque_pid_ki = flash_params_0000.torque_pid_ki[0];
+    flash_params.torque_pid_kd = flash_params_0000.torque_pid_kd[0];
 
     memcpy(flash_params.rate_pid_p, flash_params_0000.rate_pid_p, sizeof(flash_params_0000.rate_pid_p));
     memcpy(flash_params.rate_pid_i, flash_params_0000.rate_pid_i, sizeof(flash_params_0000.rate_pid_i));

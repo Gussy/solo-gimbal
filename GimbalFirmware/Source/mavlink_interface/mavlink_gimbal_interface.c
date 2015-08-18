@@ -122,7 +122,7 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDrivePar
 			    break;
 
 			case MAVLINK_MSG_ID_PARAM_SET:
-				handle_param_set(&received_msg);
+                handle_param_set(&received_msg,md_parms);
 				break;
 
 			case MAVLINK_MSG_ID_GOPRO_GET_REQUEST:

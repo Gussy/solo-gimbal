@@ -118,6 +118,41 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].float_data_ptr = &(flash_params.commutation_icept[ROLL]);
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].access_type = GIMBAL_PARAM_READ_WRITE;
 
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_P].param_id, "GMB_TRQ_P", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_P].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_P].float_data_ptr = &(flash_params.torque_pid_kp);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_P].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].param_id, "GMB_TRQ_I", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].float_data_ptr = &(flash_params.torque_pid_ki);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_D].param_id, "GMB_TRQ_D", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_D].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_D].float_data_ptr = &(flash_params.torque_pid_kd);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_D].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].param_id, "GMB_TRQ_R", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].float_data_ptr = &(flash_params.torque_pid_kr);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_M].param_id, "GMB_TRQ_M", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_M].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_M].float_data_ptr = &(flash_params.torque_pid_km);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_M].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C1].param_id, "GMB_TRQ_C1", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C1].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C1].float_data_ptr = &(flash_params.torque_pid_c1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C1].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C2].param_id, "GMB_TRQ_C2", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C2].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C2].float_data_ptr = &(flash_params.torque_pid_c2);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C2].access_type = GIMBAL_PARAM_READ_WRITE;
+
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_id, "GMB_SWVER", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_type = MAV_PARAM_TYPE_REAL32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].float_data_ptr = &sys_swver;
@@ -260,7 +295,7 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].access_type = GIMBAL_PARAM_READ_WRITE;
 }
 
-void handle_param_set(mavlink_message_t* received_msg)
+void handle_param_set(mavlink_message_t* received_msg, MotorDriveParms* md_parms)
 {
     int param_found = -1;
     int i;
@@ -356,6 +391,8 @@ void handle_param_set(mavlink_message_t* received_msg)
                     payload[3] = (float_converter.uint32_val >>  8) & 0x000000FF;
                     payload[4] = (float_converter.uint32_val >>  0) & 0x000000FF;
                     cand_tx_extended_param(CAND_ID_ALL_AXES, CAND_EPID_MAVLINK_PARAM, payload, sizeof(payload));
+
+                    update_local_params_from_flash(md_parms);
 
                     // Echo the new value of the param back to acknowledge receipt of the param
                     send_gimbal_param(param_found);
