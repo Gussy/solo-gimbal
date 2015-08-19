@@ -28,6 +28,9 @@
 // Units are 11915/Amp (+/-32767 counts full scale over +/-2.75A full scale)
 #define LOW_TORQUE_MODE_MAX (5000.0)
 
+// Voltagte divider R1=51k, R2=5.1K, Multiplier ratio is: (5100 + 51000) / 5100 = 11
+#define VBUS_DIV_MULTIPLIER 11.0f
+
 typedef enum {
     BLINK_NO_COMM,
     BLINK_INIT,
