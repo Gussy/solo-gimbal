@@ -81,7 +81,7 @@ int16 DegreesC;
 int16 TempOffset;
 int16 TempSlope;
 Uint8 board_hw_id = 0;
-int16 DcBusVoltage;
+float DcBusVoltage = 0.0f;
 
 // Global timestamp counter.  Counts up by 1 every 100uS
 Uint32 global_timestamp_counter = 0;
@@ -757,9 +757,8 @@ int mavlink_heartbeat_counter = 0;
 void C3(void) // Read temperature and handle stopping motor on receipt of fault messages
 //-----------------------------------------
 {
+    DcBusVoltage = (((float)AdcResult.ADCRESULT14 / 4096.0f) * 3.30f) * VBUS_DIV_MULTIPLIER; // DC Bus voltage meas.
 	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset) * (long)TempSlope))>>14) + 1)>>1;
-
-	DcBusVoltage = AdcResult.ADCRESULT14; // DC Bus voltage meas.
 
 	// software start of conversion for temperature measurement and Bus Voltage Measurement
 	AdcRegs.ADCSOCFRC1.bit.SOC14 = 1;
@@ -770,6 +769,11 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 		if (++mavlink_heartbeat_counter > MAVLINK_HEARTBEAT_PERIOD) {
 			send_mavlink_heartbeat(mavlink_gimbal_info.mav_state, mavlink_gimbal_info.mav_mode);
 			mavlink_heartbeat_counter = 0;
+
+		    /* Useful for debugging temperature anhd voltage calculations
+		    char msg[30];
+		    snprintf(msg, sizeof(msg), "DegC %i Vbus %i", DegreesC, (uint16_t)(DcBusVoltage*100));
+		    send_mavlink_statustext(msg, MAV_SEVERITY_ALERT);*/
 		}
 	}
 
