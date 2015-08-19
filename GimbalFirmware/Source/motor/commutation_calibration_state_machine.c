@@ -78,8 +78,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
         case COMMUTATION_CALIBRATION_STATE_RAMP_ID:
             RC_MACRO(cc_parms->ramp_cntl)
-            md_parms->pid_id.term.Ref = cc_parms->ramp_cntl.SetpointValue;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = cc_parms->ramp_cntl.SetpointValue;
+            md_parms->pid_iq.param.Idem = 0;
             md_parms->park_xform_parms.Angle = 0;//cc_parms->ramp_cntl.TargetValue =
 
             // Once we've ramped ID up to its commutation calibration level,
@@ -96,8 +96,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
         case COMMUTATION_CALIBRATION_STATE_MOVE_TO_HARDSTOP:
             RC_MACRO(cc_parms->ramp_cntl)
-            md_parms->pid_id.term.Ref = IdRefLockCommutationCalibration;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = IdRefLockCommutationCalibration;
+            md_parms->pid_iq.param.Idem = 0;
 
             md_parms->park_xform_parms.Angle = cc_parms->ramp_cntl.SetpointValue;
 
@@ -108,7 +108,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
             }
 
             // Wait at current setpoint for settling time
-            if (cc_parms->settling_timer++ > (((Uint32)ISR_FREQUENCY) * ((Uint32)COMMUTATION_CALIBRATION_HARDSTOP_SETTLING_TIME_MS))) {
+            if (cc_parms->settling_timer++ > (COMMUTATION_FREQUENCY_HZ*COMMUTATION_CALIBRATION_HARDSTOP_SETTLING_TIME_MS)/1000) {
                 float new_mech_theta;
                 cc_parms->settling_timer = 0;
 
@@ -165,8 +165,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
         case COMMUTATION_CALIBRATION_STATE_MOVE_UP_FROM_HARDSTOP:
             RC_MACRO(cc_parms->ramp_cntl)
-            md_parms->pid_id.term.Ref = IdRefLockCommutationCalibration;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = IdRefLockCommutationCalibration;
+            md_parms->pid_iq.param.Idem = 0;
 
             md_parms->park_xform_parms.Angle = cc_parms->ramp_cntl.SetpointValue;
 
@@ -174,7 +174,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
             	break;
             }
 
-            if (cc_parms->settling_timer++ > (((Uint32)ISR_FREQUENCY) * ((Uint32)AXIS_CALIBRATION_SETTLING_TIME_MS[GetBoardHWID()]))) {
+            if (cc_parms->settling_timer++ > (COMMUTATION_FREQUENCY_HZ*AXIS_CALIBRATION_SETTLING_TIME_MS[GetBoardHWID()])/1000) {
                 float new_mech_theta;
                 cc_parms->settling_timer = 0;
 
@@ -242,8 +242,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
         case COMMUTATION_CALIBRATION_STATE_TEST_MOVE:
             RC_MACRO(cc_parms->ramp_cntl)
-            md_parms->pid_id.term.Ref = IdRefLockCommutationCalibration;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = IdRefLockCommutationCalibration;
+            md_parms->pid_iq.param.Idem = 0;
 
             md_parms->park_xform_parms.Angle = cc_parms->ramp_cntl.SetpointValue;
 

@@ -37,14 +37,14 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         if(AdcResult.ADCRESULT1 < ADC_MIN_REASONABLE_VALUE && AdcResult.ADCRESULT3 < ADC_MIN_REASONABLE_VALUE) {
             AxisFault(CAND_FAULT_CURRENT_SENSOR_FAULT, CAND_FAULT_TYPE_UNRECOVERABLE, cb_parms, md_parms);
         } else {
-            //  Measure phase currents, subtract the offset and normalize from (-0.5,+0.5) to (-1,+1).
+            //  Measure phase currents, subtract the offset and scale to amps
             //  Connect inputs of the CLARKE module and call the clarke transformation macro
-            md_parms->clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-md_parms->cal_offset_A)*2); // Phase A curr.
-            md_parms->clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-md_parms->cal_offset_B)*2); // Phase B curr.
+            md_parms->clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-md_parms->cal_offset_A)*2*MAX_CURRENT); // Phase A curr.
+            md_parms->clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-md_parms->cal_offset_B)*2*MAX_CURRENT); // Phase B curr.
 
             // Run an iteration of the average power filter
             // Scale -1 to +1 current to +/- full scale current, since power filter expects current in amps
-            run_average_power_filter(power_filter_parms, md_parms->pid_iq.term.Ref * MAX_CURRENT);
+            run_average_power_filter(power_filter_parms, md_parms->pid_iq.param.Idem);
         }
 
         // If the average power has exceeded the preset limit on either phase a or b, error out this axis
@@ -70,21 +70,21 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         //    Connect inputs of the id PID controller and call the PID controller macro
         // ------------------------------------------------------------------------------
         // Limit the requested current to prevent burning up the motor
-        md_parms->pid_id.term.Fbk = md_parms->park_xform_parms.Ds;
-        PID_GR_MACRO(md_parms->pid_id)
+        md_parms->pid_id.param.I = md_parms->park_xform_parms.Ds;
+        run_current_controller(&(md_parms->pid_id));
 
         // ------------------------------------------------------------------------------
         //    Connect inputs of the iq PID controller and call the PID controller macro
         // ------------------------------------------------------------------------------
         // Limit the requested current to prevent burning up the motor
-        md_parms->pid_iq.term.Fbk = md_parms->park_xform_parms.Qs;
-        PID_GR_MACRO(md_parms->pid_iq)
+        md_parms->pid_iq.param.I = md_parms->park_xform_parms.Qs;
+        run_current_controller(&(md_parms->pid_iq));
 
         // ------------------------------------------------------------------------------
         //  Connect inputs of the INV_PARK module and call the inverse park trans. macro
         // ------------------------------------------------------------------------------
-        md_parms->ipark_xform_parms.Qs = md_parms->pid_iq.term.Out;
-        md_parms->ipark_xform_parms.Ds = md_parms->pid_id.term.Out;
+        md_parms->ipark_xform_parms.Qs = _IQ(md_parms->pid_iq.state.output);
+        md_parms->ipark_xform_parms.Ds = _IQ(md_parms->pid_id.state.output);
         md_parms->ipark_xform_parms.Sine = md_parms->park_xform_parms.Sine;
         md_parms->ipark_xform_parms.Cosine = md_parms->park_xform_parms.Cosine;
         IPARK_MACRO(md_parms->ipark_xform_parms)
