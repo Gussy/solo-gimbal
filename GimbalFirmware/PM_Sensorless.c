@@ -8,6 +8,7 @@
 #include "hardware/uart.h"
 #include "hardware/interrupts.h"
 #include "hardware/gyro.h"
+#include "hardware/timing.h"
 #include "can/cand_BitFields.h"
 #include "can/cand.h"
 #include "can/cb.h"
