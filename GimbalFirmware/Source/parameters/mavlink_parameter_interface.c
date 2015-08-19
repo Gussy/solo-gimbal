@@ -128,30 +128,10 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].float_data_ptr = &(flash_params.torque_pid_ki);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].access_type = GIMBAL_PARAM_READ_WRITE;
 
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_D].param_id, "GMB_TRQ_D", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_D].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_D].float_data_ptr = &(flash_params.torque_pid_kd);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_D].access_type = GIMBAL_PARAM_READ_WRITE;
-
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].param_id, "GMB_TRQ_R", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].param_type = MAV_PARAM_TYPE_REAL32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].float_data_ptr = &(flash_params.torque_pid_kr);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].access_type = GIMBAL_PARAM_READ_WRITE;
-
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_M].param_id, "GMB_TRQ_M", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_M].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_M].float_data_ptr = &(flash_params.torque_pid_km);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_M].access_type = GIMBAL_PARAM_READ_WRITE;
-
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C1].param_id, "GMB_TRQ_C1", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C1].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C1].float_data_ptr = &(flash_params.torque_pid_c1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C1].access_type = GIMBAL_PARAM_READ_WRITE;
-
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C2].param_id, "GMB_TRQ_C2", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C2].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C2].float_data_ptr = &(flash_params.torque_pid_c2);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_C2].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_id, "GMB_SWVER", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_type = MAV_PARAM_TYPE_REAL32;

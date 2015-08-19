@@ -86,8 +86,6 @@ int16 DcBusVoltage;
 // Global timestamp counter.  Counts up by 1 every 100uS
 Uint32 global_timestamp_counter = 0;
 
-#define T (0.001/ISR_FREQUENCY)    // Samping period (sec), see parameter.h
-
 Uint8 feedback_decimator;
 
 Uint32 IsrTicker = 0;
@@ -202,23 +200,50 @@ MotorDriveParms motor_drive_parms = {
     .clarke_xform_parms = CLARKE_DEFAULTS,
     .ipark_xform_parms = IPARK_DEFAULTS,
     .pid_id = {
-        PID_TERM_DEFAULTS,
-        PID_PARAM_DEFAULTS,
-        PID_DATA_DEFAULTS,
+        .param = {
+            .Kp = 3.5,
+            .Ki = 1600,
+            .R = 7,
+            .V = 16.8,
+            .Vmin = 12,
+            .V_filt_tc = 1.0,
+            .Idem = 0,
+            .I = 0,
+            .max_dt = 2.0*COMMUTATION_PERIOD_SEC
+        },
+        .state = {
+            .V_filtered = 16.8,
+            .integrator = 0,
+            .last_run_us = 0,
+            .output = 0
+        }
     },
     // IQ PID controller parameters
     .pid_iq = {
-        PID_TERM_DEFAULTS,
-        PID_PARAM_DEFAULTS,
-        PID_DATA_DEFAULTS
+        .param = {
+            .Kp = 3.5,
+            .Ki = 1600,
+            .R = 7,
+            .V = 16.8,
+            .Vmin = 12,
+            .V_filt_tc = 1.0,
+            .Idem = 0,
+            .I = 0,
+            .max_dt = 2.0*COMMUTATION_PERIOD_SEC
+        },
+        .state = {
+            .V_filtered = 16.8,
+            .integrator = 0,
+            .last_run_us = 0,
+            .output = 0
+        }
     },
     .svgen_parms = SVGENDQ_DEFAULTS,
     .pwm_gen_parms = PWMGEN_DEFAULTS,
-    .rg1 = RAMPGEN_DEFAULTS,
     .cal_offset_A = _IQ15(0.5),
     .cal_offset_B = _IQ15(0.5),
-    .cal_filt_gain = _IQ15(T/(T+TC_CAL)),
-    .iq_ref = _IQ(0.0),
+    .cal_filt_gain = _IQ15(COMMUTATION_PERIOD_SEC/(COMMUTATION_PERIOD_SEC+TC_CAL)),
+    .Idem = 0.0,
     .current_cal_timer = 0,
     .pre_init_timer = 0,
     .fault_revive_counter = 0,
@@ -281,18 +306,18 @@ void main(void)
 
     // Initialize PWM module
 	//add 1 as math in pwm macro does math and truncates
-    motor_drive_parms.pwm_gen_parms.PeriodMax = SYSTEM_FREQUENCY*1000000*T/2.5/2 + 1;  // Prescaler X1 (T1), ISR period = T x 1
+    motor_drive_parms.pwm_gen_parms.PeriodMax = SYSTEM_FREQUENCY_HZ*COMMUTATION_PERIOD_SEC/2.5/2 + 1;  // Prescaler X1 (T1), ISR period = T x 1
 	PWM_INIT_MACRO(motor_drive_parms.pwm_gen_parms);
 
     // Initialize ECAP Module for use as a timer
-    ECap1Regs.CAP3 = SYSTEM_FREQUENCY*1000000*T;  //Set Period Value, Main ISR
+    ECap1Regs.CAP3 = SYSTEM_FREQUENCY_HZ*COMMUTATION_PERIOD_SEC;  //Set Period Value, Main ISR
 	ECap1Regs.CTRPHS = 0x0;  //Set Phase to 0
 	ECap1Regs.ECCTL2.bit.CAP_APWM = 0x1;  //Set APWM Mode
 	ECap1Regs.ECCTL2.bit.APWMPOL = 0x0;  //Set Polarity Active HI
 	ECap1Regs.ECCTL2.bit.SYNCI_EN = 0x0;  //Disable Sync In
 	ECap1Regs.ECCTL2.bit.SYNCO_SEL = 0x3;  //Disable Sync Out
 	ECap1Regs.ECCTL2.bit.TSCTRSTOP = 0x1;  //Set to free run Mode
-	ECap1Regs.CAP4 = SYSTEM_FREQUENCY*1000000*T/2;  //  Set Compare Value
+	ECap1Regs.CAP4 = SYSTEM_FREQUENCY_HZ*COMMUTATION_PERIOD_SEC/2;  //  Set Compare Value
 
     // Initialize ADC module
 	init_adc();
@@ -325,28 +350,7 @@ void main(void)
     // Current sample frequency is frequency of main ISR
     // Tau = 840 seconds per CW's calculations on 5/1/15
     // Current limit = 0.2 Amps^2 per CW's calculations on 5/1/15
-    init_average_power_filter(&power_filter_parms, (ISR_FREQUENCY * 1000), 840, 0.2);
-
-    // Initialize the RAMPGEN module
-    motor_drive_parms.rg1.StepAngleMax = _IQ(BASE_FREQ*T);
-
-    // Initialize the PID_GRANDO_CONTROLLER module for Id
-    motor_drive_parms.pid_id.param.Kp = AxisTorqueLoopKp[board_hw_id];
-    motor_drive_parms.pid_id.param.Kr = _IQ(1.0);
-    motor_drive_parms.pid_id.param.Ki = AxisTorqueLoopKi[board_hw_id];
-    motor_drive_parms.pid_id.param.Kd = AxisTorqueLoopKd[board_hw_id];
-    motor_drive_parms.pid_id.param.Km = _IQ(1.0);
-    motor_drive_parms.pid_id.param.Umax = _IQ(1.0);
-    motor_drive_parms.pid_id.param.Umin = _IQ(-1.0);
-
-// Initialize the PID_GRANDO_CONTROLLER module for Iq 
-    motor_drive_parms.pid_iq.param.Kp = AxisTorqueLoopKp[board_hw_id];
-    motor_drive_parms.pid_iq.param.Kr = _IQ(1.0);
-    motor_drive_parms.pid_iq.param.Ki = AxisTorqueLoopKi[board_hw_id];
-    motor_drive_parms.pid_iq.param.Kd = AxisTorqueLoopKd[board_hw_id];
-    motor_drive_parms.pid_iq.param.Km = _IQ(1.0);
-    motor_drive_parms.pid_iq.param.Umax = _IQ(1.0);
-    motor_drive_parms.pid_iq.param.Umin = _IQ(-1.0);
+    init_average_power_filter(&power_filter_parms, COMMUTATION_FREQUENCY_HZ, 840, 0.2);
 	
 	// Get temp sensor calibration coefficients
 	TempOffset = getTempOffset();
@@ -531,31 +535,11 @@ void A1(void) // Used to enable and disable the motor
 		EPwm3Regs.TZFRC.bit.OST=1;
 	 	EDIS;
 	} else if ((axis_parms.enable_flag == TRUE) && (axis_parms.run_motor == FALSE)) {
-	    // Reset rampgen state
-        motor_drive_parms.rg1.Freq=0;
-        motor_drive_parms.rg1.Out=0;
-        motor_drive_parms.rg1.Angle=0;
-
         // Reset ID and IQ pid controller state
-        motor_drive_parms.pid_id.data.d1 = 0;
-        motor_drive_parms.pid_id.data.d2 = 0;
-        motor_drive_parms.pid_id.data.i1 = 0;
-        motor_drive_parms.pid_id.data.ud = 0;
-        motor_drive_parms.pid_id.data.ui = 0;
-        motor_drive_parms.pid_id.data.up = 0;
-        motor_drive_parms.pid_id.data.v1 = 0;
-        motor_drive_parms.pid_id.data.w1 = 0;
-        motor_drive_parms.pid_id.term.Out = 0;
-
-        motor_drive_parms.pid_iq.data.d1 = 0;
-        motor_drive_parms.pid_iq.data.d2 = 0;
-        motor_drive_parms.pid_iq.data.i1 = 0;
-        motor_drive_parms.pid_iq.data.ud = 0;
-        motor_drive_parms.pid_iq.data.ui = 0;
-        motor_drive_parms.pid_iq.data.up = 0;
-        motor_drive_parms.pid_iq.data.v1 = 0;
-        motor_drive_parms.pid_iq.data.w1 = 0;
-        motor_drive_parms.pid_iq.term.Out = 0;
+        memset(&(motor_drive_parms.pid_id.state), 0, sizeof(motor_drive_parms.pid_id.state));
+        memset(&(motor_drive_parms.pid_iq.state), 0, sizeof(motor_drive_parms.pid_iq.state));
+        motor_drive_parms.pid_id.state.V_filtered = motor_drive_parms.pid_id.param.V;
+        motor_drive_parms.pid_iq.state.V_filtered = motor_drive_parms.pid_iq.param.V;
 
         // Enable the motor driver
         GpioDataRegs.GPBSET.bit.GPIO39 = 1;

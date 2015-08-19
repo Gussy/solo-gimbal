@@ -39,15 +39,14 @@ typedef struct {
     PARK park_xform_parms;
     CLARKE clarke_xform_parms;
     IPARK ipark_xform_parms;
-    PID_GRANDO_CONTROLLER pid_id;
-    PID_GRANDO_CONTROLLER pid_iq;
+    struct current_controller_t pid_id;
+    struct current_controller_t pid_iq;
     SVGENDQ svgen_parms;
     PWMGEN pwm_gen_parms;
-    RAMPGEN rg1;
     _iq cal_offset_A;
     _iq cal_offset_B;
     _iq cal_filt_gain;
-    _iq iq_ref;
+    float Idem;
     Uint32 current_cal_timer;
     Uint32 pre_init_timer;
     Uint32 fault_revive_counter;

@@ -47,8 +47,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->park_xform_parms.Angle = 0;
 
             // Drive id and iq to 0 (not driving the motor)
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = 0;
+            md_parms->pid_iq.param.Idem = 0;
 
             // Enable periodic transmission of the BIT CAN message
             axis_parms->BIT_heartbeat_enable = TRUE;
@@ -58,8 +58,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
                 axis_parms->other_axis_hb_recvd[AZ] = TRUE;
             }
-
-            md_parms->rg1.Freq = 10;
 
             if (GetBoardHWID() == AZ) {
                 // If we're the AZ board, we first have to wait to hear from the other axes, then load our own parameters from flash,
@@ -137,12 +135,12 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->park_xform_parms.Angle = 0;
 
             // Drive id and iq to 0 (not driving the motor)
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = 0;
+            md_parms->pid_iq.param.Idem = 0;
 
             // Time out the calibration time.  After it has expired, transition to the next state
             md_parms->current_cal_timer++;
-            if (md_parms->current_cal_timer > (((Uint32)ISR_FREQUENCY) * ((Uint32)CURRENT_CALIBRATION_TIME_MS))) {
+            if (md_parms->current_cal_timer > (COMMUTATION_FREQUENCY_HZ * CURRENT_CALIBRATION_TIME_MS)/1000) {
                 md_parms->motor_drive_state = STATE_CHECK_AXIS_CALIBRATION;
             }
             break;
@@ -229,8 +227,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->park_xform_parms.Angle = 0;
 
             // Drive id and iq to 0
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = 0;
+            md_parms->pid_iq.param.Idem = 0;
 
             if ((cb_parms->axes_homed[AZ] == TRUE) && (cb_parms->axes_homed[EL] == TRUE) && (cb_parms->axes_homed[ROLL] == TRUE)) {
                 md_parms->motor_drive_state = STATE_INITIALIZE_POSITION_LOOPS;
@@ -262,8 +260,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->park_xform_parms.Angle = encoder_parms->elec_theta;
 
             // Drive id to 0, iq to requested torque from rate loop (to commutate motor at requested torque)
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = md_parms->iq_ref;
+            md_parms->pid_id.param.Idem = 0;
+            md_parms->pid_iq.param.Idem = md_parms->Idem;
 
             // If new current command from CAN bus get it.
             if (cb_parms->param_set[CAND_PID_TORQUE].sema) {
@@ -277,8 +275,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->park_xform_parms.Angle = encoder_parms->elec_theta;
 
             // Request 0 current on both id and iq
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = 0;
+            md_parms->pid_iq.param.Idem = 0;
 
             // If we're disabled, we should still send out our encoder values if we get a torque command.  We ignore the actual torque command,
             // but other things still expect to get updated encoder readings if they send torque commands
@@ -293,10 +291,10 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->park_xform_parms.Angle = encoder_parms->elec_theta;
 
             // Request 0 current on both id and iq
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = 0;
+            md_parms->pid_iq.param.Idem = 0;
 
-            if (md_parms->fault_revive_counter++ > (((Uint32)ISR_FREQUENCY) * ((Uint32)FAULT_REVIVE_TIME_MS))) {
+            if (md_parms->fault_revive_counter++ > (COMMUTATION_FREQUENCY_HZ * FAULT_REVIVE_TIME_MS)/1000) {
                 md_parms->fault_revive_counter = 0;
                 reset_average_power_filter(pf_parms);
                 md_parms->motor_drive_state = STATE_RUNNING;
@@ -309,8 +307,8 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->park_xform_parms.Angle = 0;
 
             // Request 0 current on both id and iq
-            md_parms->pid_id.term.Ref = 0;
-            md_parms->pid_iq.term.Ref = 0;
+            md_parms->pid_id.param.Idem = 0;
+            md_parms->pid_iq.param.Idem = 0;
             break;
         }
 }
@@ -334,7 +332,7 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
     encoder_parms->virtual_counts_accumulator = 0;
     encoder_parms->virtual_counts_accumulated = 0;
 
-    md_parms->iq_ref = ((int16)cb_parms->param_set[CAND_PID_TORQUE].param) / 32767.0;
+    md_parms->Idem = MAX_CURRENT * ((int16)cb_parms->param_set[CAND_PID_TORQUE].param) / 32767.0;
     cb_parms->param_set[CAND_PID_TORQUE].sema = false;
 }
 
@@ -345,19 +343,11 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
     GimbalAxis my_axis = (GimbalAxis)GetBoardHWID();
     md_parms->pid_id.param.Kp = flash_params.torque_pid_kp;
     md_parms->pid_id.param.Ki = flash_params.torque_pid_ki;
-    md_parms->pid_id.param.Kd = flash_params.torque_pid_kd;
-    md_parms->pid_id.param.Kr = flash_params.torque_pid_kr;
-    md_parms->pid_id.param.Km = flash_params.torque_pid_km;
-    md_parms->pid_id.term.c1 = _IQ(flash_params.torque_pid_c1);
-    md_parms->pid_id.term.c2 = _IQ(flash_params.torque_pid_c2);
+    md_parms->pid_id.param.R = flash_params.torque_pid_kr;
 
     md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp;
     md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki;
-    md_parms->pid_iq.param.Kd = flash_params.torque_pid_kd;
-    md_parms->pid_iq.param.Kr = flash_params.torque_pid_kr;
-    md_parms->pid_iq.param.Km = flash_params.torque_pid_km;
-    md_parms->pid_iq.term.c1 = _IQ(flash_params.torque_pid_c1);
-    md_parms->pid_iq.term.c2 = _IQ(flash_params.torque_pid_c2);
+    md_parms->pid_iq.param.R = flash_params.torque_pid_kr;
 
     if (my_axis == EL) {
         // Turn HeroBus charging on or off based on setting in flash

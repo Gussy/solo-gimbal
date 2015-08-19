@@ -10,7 +10,7 @@
 
 #include "park.h"                           // Include header for the PARK object
 #include "ipark.h"                          // Include header for the IPARK object
-#include "control/pid_grando_aes_modified.h"        // Include header for the PID_GRANDO_CONTROLLER object.  Using an AES modified version of this header to fix several bugs in the original implementation
+#include "control/current_controller.h"
 #include "clarke.h"                         // Include header for the CLARKE object
 #include "control/svgen_dq_aes_modified.h"          // Include header for the SVGENDQ object.  Using an AES modified version of this header to fix an issue with global variables in the original header
 #include "rampgen.h"                        // Include header for the RAMPGEN object

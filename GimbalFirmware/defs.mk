@@ -31,6 +31,7 @@ OBJS = \
     $(PROJ_ROOT)/Source/control/filt2p.o 												\
     $(PROJ_ROOT)/Source/control/rate_loops.o 											\
     $(PROJ_ROOT)/Source/control/running_average_filter.o 								\
+    $(PROJ_ROOT)/Source/control/current_controller.o 								\
     $(SHARED_ROOT)/src/flash/flash_csm_keys.o											\
     $(SHARED_ROOT)/src/flash/flash.o 													\
     $(SHARED_ROOT)/src/flash/flash_helpers.o											\

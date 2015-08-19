@@ -5,11 +5,12 @@
 #define TRUE  1
 #endif
 
-// Define the system frequency (MHz)
-#define SYSTEM_FREQUENCY 80
+// Define the system frequency
+#define SYSTEM_FREQUENCY_HZ 80000000U
 
-// Define the ISR frequency (kHz)
-#define ISR_FREQUENCY 10
+// Define the commutation loop frequency
+#define COMMUTATION_FREQUENCY_HZ 8000U
+#define COMMUTATION_PERIOD_SEC (1.0/COMMUTATION_FREQUENCY_HZ)
 
 // Define the current measurement limits of the current sense circuit (full scale current is +/- this value)
 #define MAX_CURRENT 2.75
