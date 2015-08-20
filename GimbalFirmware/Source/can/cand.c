@@ -82,6 +82,11 @@ void ECanInit(void)        // Initialize eCAN-A module
 		lam->all = 0x1FFFFFFF;
 	}
 
+	// Setup torque command specific mailbox
+    ECanaMboxes.MBOX31.MSGID.bit.STDMSGID = 0x581; // 0x581 is the SID signature of the torque command message
+    ECanaLAMRegs.LAM31.all = 0x0003FFFF; // 11 Message ID bits must match exactly
+	ECanaRegs.CANOPC.bit.OPC31 = 0; // Disable over-write protection
+
 	// TAn, RMPn, GIFn bits are all zero upon reset and are cleared again
 	//  as a matter of precaution.
 
