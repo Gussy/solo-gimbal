@@ -15,6 +15,7 @@ static void ECanTx(struct MBOX* outbox);
 static int ECanRx(struct MBOX* inbox);
 
 #define CAN_TX_MBOX_CNT 16
+#define CAN_RX_MBOX_CNT 16
 
 static uint8_t can_tx_mbox = 0;
 static CAND_ParameterID immediate_pid_lookup_buffer[6] = {
@@ -68,7 +69,7 @@ void ECanInit(void)        // Initialize eCAN-A module
 	ECanaRegs.CANOPC.all = 0xFFFFFFFF << CAN_TX_MBOX_CNT; // 1 = overwrite protection
 
 	// Setup Rx Mailboxes
-	for(i = CAN_TX_MBOX_CNT; i < 32; i++) {
+	for(i = CAN_TX_MBOX_CNT; i < (CAN_TX_MBOX_CNT + CAN_RX_MBOX_CNT); i++) {
 		// CTRL reg needs cleared, setting ID to default value for testing
 		mbox = &ECanaMboxes.MBOX0 + i;
 		mbox->MSGCTRL.all = 0x00000000;
@@ -183,6 +184,7 @@ static void ECanTx(struct MBOX* outbox)
     ECanaRegs.CANTRS.all = (1ul << can_tx_mbox);	// "writing 0 has no effect", previously queued boxes will stay queued
     ECanaRegs.CANTA.all = (1ul << can_tx_mbox);		// "writing 0 has no effect", clears pending interrupt, open for our tx
 
+    // Reset the round-robin counter
     if (++can_tx_mbox >= CAN_TX_MBOX_CNT) {
         can_tx_mbox = 0;
     }
@@ -200,7 +202,7 @@ static int ECanRx(struct MBOX* inbox)
 	if (ECanaRegs.CANRMP.all) {
 		Uint32 b, f;
 
-		for (f = 0x80000000, b = 31; ; f >>= 1, b--){
+		for (f = 0x80000000, b = ((CAN_TX_MBOX_CNT + CAN_RX_MBOX_CNT) - 1); ; f >>= 1, b--){
 			if (ECanaRegs.CANRMP.all & f) {
 
 				mptr = &ECanaMboxes.MBOX0 + b;
