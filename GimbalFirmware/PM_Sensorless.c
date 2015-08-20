@@ -245,9 +245,6 @@ Uint32 MissedInterrupts = 0;
 
 Uint32 can_init_fault_message_resend_counter = 0;
 
-#define DEBUG_ON    {GpioDataRegs.GPASET.bit.GPIO29 = 1;}
-#define DEBUG_OFF   {GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;}
-
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
