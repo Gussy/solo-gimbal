@@ -416,6 +416,9 @@ void main(void)
                                      &power_filter_parms,
                                      &load_ap_state_info);
             }
+
+            // Ensure that MainISR is disabled.
+            ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = 0;
         } else {
             // If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
             static Uint32 OldIsrTicker = 0;
@@ -432,6 +435,9 @@ void main(void)
                         &power_filter_parms,
                         &load_ap_state_info);
             }
+
+            // Ensure that MainISR is enabled.
+            ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = 1;
         }
 
         // Update any parameters that have changed due to CAN messages
