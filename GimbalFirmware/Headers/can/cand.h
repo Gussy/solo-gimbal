@@ -44,7 +44,7 @@ typedef union {
     	struct {
     		unsigned param:6;     ///< Parameter ID or Flags
 			unsigned addr_mode:1; ///< Address Mode = b0 (Immediate Address in following 5 bits) or b1 (Parameter ID in following 5 bits))
-			unsigned d_id:2;      ///< Destination ID = bXXX see enum CAND_destination_id
+			unsigned d_id:2;      ///< Destination ID = bXX see enum CAND_destination_id
 			unsigned m_id:2;      ///< Message ID = b10
 			unsigned :16;
 			unsigned :5;
