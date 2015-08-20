@@ -143,37 +143,6 @@ void ECanInit(void)        // Initialize eCAN-A module
     EDIS;
 }
 
-interrupt void eCAN0INT_ISR(void)
-{
-    //volatile struct ECAN_REGS ECanaShadow;
-
-    int16_t mailbox = ECanaRegs.CANGIF0.bit.MIV0;
-    if(ECanaRegs.CANGIF0.bit.GMIF0 == 1) {
-        // Mailbox interrupt
-        if(mailbox == 31) {
-            DEBUG_ON;
-            DELAY_US(1);
-            DEBUG_OFF;
-        }
-
-    } else {
-        // System interrupt
-    }
-
-    // Clear MIV0 flag bit..
-    //ECanaShadow.CANRMP.all = ((Uint32)1 << mailbox);
-    //ECanaRegs.CANRMP.all = ECanaShadow.CANRMP.all;
-
-    /*ECanaShadow.CANGIF0.all = ECanaRegs.CANGIF0.all;
-    ECanaShadow.CANGIF0.bit.MIV0 = 0;
-    ECanaRegs.CANGIF0.all = ECanaShadow.CANGIF0.all;*/
-
-    // Reenable core interrupts and CAN int from PIE module
-    PieCtrlRegs.PIEACK.bit.ACK9 = 1; // Enables PIE to drive a pulse into the CPU
-    IER |= M_INT9; // Enable INT9
-    EINT;
-}
-
 static void ECanInitGpio(void)
 {
    EALLOW;
