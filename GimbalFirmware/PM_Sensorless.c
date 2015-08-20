@@ -101,6 +101,7 @@ Uint16 DRV_RESET = 0;
 
 volatile Uint16 EnableCAN = FALSE;
 volatile Uint8 GyroDataReadyFlag = FALSE;
+volatile Uint8 TorqueDemandAvailableFlag = FALSE;
 Uint8 GyroDataOverflowLatch = FALSE;
 Uint32 GyroDataOverflowCount = 0;
 
@@ -419,11 +420,12 @@ void main(void)
         } else {
             // If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
             static Uint32 OldIsrTicker = 0;
-            if (OldIsrTicker != IsrTicker) {
-                if (OldIsrTicker != (IsrTicker-1)) {
+            if (OldIsrTicker != IsrTicker || TorqueDemandAvailableFlag) {
+                if (OldIsrTicker != IsrTicker && OldIsrTicker != (IsrTicker-1)) {
                     MissedInterrupts++;
                 }
                 OldIsrTicker = IsrTicker;
+                TorqueDemandAvailableFlag = FALSE;
 
                 MotorCommutationLoop(&control_board_parms,
                         &axis_parms,
@@ -827,6 +829,19 @@ interrupt void MainISR(void)
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
 #endif
 
+}
+
+interrupt void eCAN0INT_ISR(void)
+{
+    int16_t mailbox = ECanaRegs.CANGIF0.bit.MIV0;
+    if(ECanaRegs.CANGIF0.bit.GMIF0 == 1 && mailbox == 31) {
+        TorqueDemandAvailableFlag = TRUE;
+    }
+
+    // Reenable core interrupts and CAN int from PIE module
+    PieCtrlRegs.PIEACK.bit.ACK9 = 1; // Enables PIE to drive a pulse into the CPU
+    IER |= M_INT9; // Enable INT9
+    EINT;
 }
 
 void power_down_motor()
