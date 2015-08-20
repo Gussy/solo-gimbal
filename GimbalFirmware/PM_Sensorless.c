@@ -760,6 +760,10 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
     DcBusVoltage = (((float)AdcResult.ADCRESULT14 / 4096.0f) * 3.30f) * VBUS_DIV_MULTIPLIER; // DC Bus voltage meas.
 	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset) * (long)TempSlope))>>14) + 1)>>1;
 
+    // update the current control loop
+    motor_drive_parms.pid_iq.param.V = DcBusVoltage;
+    motor_drive_parms.pid_id.param.V = DcBusVoltage;
+
 	// software start of conversion for temperature measurement and Bus Voltage Measurement
 	AdcRegs.ADCSOCFRC1.bit.SOC14 = 1;
 	AdcRegs.ADCSOCFRC1.bit.SOC15 = 1;
