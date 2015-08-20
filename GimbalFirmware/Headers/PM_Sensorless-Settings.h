@@ -12,6 +12,9 @@
 #define COMMUTATION_FREQUENCY_HZ 8000U
 #define COMMUTATION_PERIOD_SEC (1.0/COMMUTATION_FREQUENCY_HZ)
 
+// Define the rate loop frequency
+#define RATE_LOOP_FREQUENCY_HZ 8000U
+
 // Define the current measurement limits of the current sense circuit (full scale current is +/- this value)
 #define MAX_CURRENT 2.75
 

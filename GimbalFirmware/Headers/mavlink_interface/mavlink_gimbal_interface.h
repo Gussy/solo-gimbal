@@ -36,21 +36,13 @@ typedef struct {
 
 #define ALL_TELEM_RECEIVED 0x007F
 
-#define GYRO_FULL_SCALE_DEG_S (500.0)
-#define ACCEL_FULL_SCALE_G (4.0)
 #define ENCODER_FULL_SCALE (5000.0)
 
 #define DEG_TO_RAD(deg) ((deg) * (M_PI / 180.0))
 #define RAD_TO_DEG(rad) ((rad) * (180.0 / M_PI))
-#define G_TO_M_S_S(g) ((g) * 9.80665)
 
 #define ENCODER_FORMAT_TO_RAD(encoder) (M_PI * (float)(encoder) / ENCODER_FULL_SCALE)
 #define RAD_TO_ENCODER_FORMAT(angle) ((int16) (ENCODER_FULL_SCALE * angle / M_PI))
-
-#define GYRO_FORMAT_TO_RAD_S(gyro) DEG_TO_RAD((((float)(gyro) / (float)INT_MAX) * GYRO_FULL_SCALE_DEG_S))
-#define RAD_S_TO_GYRO_FORMAT(rad) (RAD_TO_DEG((float)rad) * (((float)INT_MAX) / GYRO_FULL_SCALE_DEG_S))
-
-#define ACCEL_FORMAT_TO_M_S_S(accel) G_TO_M_S_S(((((float)(accel)) / (float)INT_MAX) * ACCEL_FULL_SCALE_G))
 
 // This is defined in terms of 150ms periods, so 6 is the closest we can get to a 1Hz heartbeat
 #define MAVLINK_HEARTBEAT_PERIOD 6
@@ -73,11 +65,11 @@ void update_mavlink_sysid(Uint8 new_sysid);
 
 void receive_encoder_telemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);
 void receive_torque_cmd_telemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);
-void receive_gyro_az_telemetry(int32 az_gyro);
-void receive_gyro_el_telemetry(int32 el_gyro);
-void receive_gyro_rl_telemetry(int32 rl_gyro);
-void receive_accel_az_telemetry(int32 az_accel);
-void receive_accel_el_telemetry(int32 el_accel);
-void receive_accel_rl_telemetry(int32 rl_accel);
+void receive_del_ang_az_telemetry(float az_del_ang);
+void receive_del_ang_el_telemetry(float el_del_ang);
+void receive_del_ang_rl_telemetry(float rl_del_ang);
+void receive_del_vel_az_telemetry(float az_del_vel);
+void receive_del_vel_el_telemetry(float el_del_vel);
+void receive_del_vel_rl_telemetry(float rl_del_vel);
 
 #endif /* MAVLINK_INTERFACE_H_ */

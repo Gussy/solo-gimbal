@@ -4,6 +4,19 @@
 #include "PeripheralHeaderIncludes.h"
 #include "spi.h"
 
+#define DEG_TO_RAD(deg) ((deg) * (M_PI / 180.0))
+
+#define GYRO_FULL_SCALE_DEG_S (500)
+#define GYRO_FULL_SCALE_RAD_S DEG_TO_RAD(GYRO_FULL_SCALE_DEG_S)
+
+#define GRAVITY_MSS 9.80655
+#define ACCEL_FULL_SCALE_G (4.0)
+#define ACCEL_FULL_SCALE_MSS (ACCEL_FULL_SCALE_G*GRAVITY_MSS)
+
+#define ACCEL_FORMAT_TO_MSS(accel) ((float)accel*ACCEL_FULL_SCALE_G/(float)INT_MAX)
+#define GYRO_FORMAT_TO_RAD_S(gyro) ((float)gyro*GYRO_FULL_SCALE_RAD_S/(float)INT_MAX)
+#define RAD_S_TO_GYRO_FORMAT(rads) ((float)rads*(float)INT_MAX/GYRO_FULL_SCALE_RAD_S)
+
 void InitGyro();
 void ReadGyro(int16* gyro_x, int16* gyro_y, int16* gyro_z);
 void ReadAccel(int16* accel_x, int16* accel_y, int16* accel_z);

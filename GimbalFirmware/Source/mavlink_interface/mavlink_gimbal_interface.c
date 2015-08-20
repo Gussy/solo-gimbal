@@ -15,6 +15,8 @@
 #include "version_git.h"
 #include "hardware/watchdog.h"
 #include "hardware/encoder.h"
+#include "hardware/timing.h"
+#include "hardware/gyro.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -38,8 +40,8 @@ int heartbeats_received = 0;
 
 // Encoder, Gyro, and Accelerometer telemetry
 float latest_encoder_telemetry[3] = {0, 0, 0};
-float latest_gyro_telemetry[3] = {0, 0, 0};
-float latest_accel_telemetry[3] = {0, 0, 0};
+float latest_del_ang_telemetry[3] = {0, 0, 0};
+float latest_del_vel_telemetry[3] = {0, 0, 0};
 Uint16 telem_received = 0;
 
 int last_parameter_sent = 0;
@@ -195,9 +197,9 @@ void receive_torque_cmd_telemetry(int16 az_torque_cmd, int16 el_torque_cmd, int1
     }
 }
 
-void receive_gyro_az_telemetry(int32 az_gyro)
+void receive_del_ang_az_telemetry(float az_del_ang)
 {
-    latest_gyro_telemetry[AZ] = GYRO_FORMAT_TO_RAD_S(az_gyro) / 1000.0;
+    latest_del_ang_telemetry[AZ] = az_del_ang;
 
     telem_received |= GYRO_AZ_TELEM_RECEIVED;
 
@@ -208,9 +210,9 @@ void receive_gyro_az_telemetry(int32 az_gyro)
     }
 }
 
-void receive_gyro_el_telemetry(int32 el_gyro)
+void receive_del_ang_el_telemetry(float el_del_ang)
 {
-    latest_gyro_telemetry[EL] = GYRO_FORMAT_TO_RAD_S(el_gyro) / 1000.0;
+    latest_del_ang_telemetry[EL] = el_del_ang;
 
     telem_received |= GYRO_EL_TELEM_RECEIVED;
 
@@ -221,9 +223,9 @@ void receive_gyro_el_telemetry(int32 el_gyro)
     }
 }
 
-void receive_gyro_rl_telemetry(int32 rl_gyro)
+void receive_del_ang_rl_telemetry(float rl_del_ang)
 {
-    latest_gyro_telemetry[ROLL] = GYRO_FORMAT_TO_RAD_S(rl_gyro) / 1000.0;
+    latest_del_ang_telemetry[ROLL] = rl_del_ang;
 
     telem_received |= GYRO_RL_TELEM_RECEIVED;
 
@@ -234,9 +236,9 @@ void receive_gyro_rl_telemetry(int32 rl_gyro)
     }
 }
 
-void receive_accel_az_telemetry(int32 az_accel)
+void receive_del_vel_az_telemetry(float az_del_vel)
 {
-    latest_accel_telemetry[AZ] = ACCEL_FORMAT_TO_M_S_S(az_accel) / 1000.0;
+    latest_del_vel_telemetry[AZ] = az_del_vel;
 
     telem_received |= ACCEL_AZ_TELEM_RECEIVED;
 
@@ -247,9 +249,9 @@ void receive_accel_az_telemetry(int32 az_accel)
     }
 }
 
-void receive_accel_el_telemetry(int32 el_accel)
+void receive_del_vel_el_telemetry(float el_del_vel)
 {
-    latest_accel_telemetry[EL] = ACCEL_FORMAT_TO_M_S_S(el_accel) / 1000.0;
+    latest_del_vel_telemetry[EL] = el_del_vel;
 
     telem_received |= ACCEL_EL_TELEM_RECEIVED;
 
@@ -260,9 +262,9 @@ void receive_accel_el_telemetry(int32 el_accel)
     }
 }
 
-void receive_accel_rl_telemetry(int32 rl_accel)
+void receive_del_vel_rl_telemetry(float rl_del_vel)
 {
-    latest_accel_telemetry[ROLL] = ACCEL_FORMAT_TO_M_S_S(rl_accel) / 1000.0;
+    latest_del_vel_telemetry[ROLL] = rl_del_vel;
 
     telem_received |= ACCEL_RL_TELEM_RECEIVED;
 
@@ -394,12 +396,12 @@ void send_mavlink_gimbal_feedback() {
 			gimbal_sysid, // We assume the system we're talking to has the same sysid as us (or we're broadcasting)
 			0,
 			0.01f,
-			latest_gyro_telemetry[ROLL],
-			latest_gyro_telemetry[EL],
-			latest_gyro_telemetry[AZ],
-			-latest_accel_telemetry[ROLL],
-			latest_accel_telemetry[EL],
-			latest_accel_telemetry[AZ],
+			latest_del_ang_telemetry[ROLL],
+			latest_del_ang_telemetry[EL],
+			latest_del_ang_telemetry[AZ],
+			latest_del_vel_telemetry[ROLL],
+			latest_del_vel_telemetry[EL],
+			latest_del_vel_telemetry[AZ],
 			latest_encoder_telemetry[ROLL],
 			latest_encoder_telemetry[EL],
 			latest_encoder_telemetry[AZ]);
@@ -470,7 +472,7 @@ void send_mavlink_debug_data(DebugData* debug_data) {
 	        MAV_COMP_ID_GIMBAL,
 			&debug_msg,
 			"Debug 1",
-			global_timestamp_counter * 100, // Global timestamp counter is in units of 100us
+			micros(), // Global timestamp counter is in units of 100us
 			(float) debug_data->debug_1,
 			(float) debug_data->debug_2,
 			(float) debug_data->debug_3);
