@@ -16,4 +16,6 @@ struct Filt2p_State {
 
 float update_filt2p(struct Filt2p_Params* filt_params, struct Filt2p_State* filt_state, float sample);
 
+void calc_butter2p(float sample_freq, float cutoff_freq, struct Filt2p_Params* ret);
+
 #endif
