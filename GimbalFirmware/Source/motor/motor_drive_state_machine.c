@@ -256,17 +256,17 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
         case STATE_RUNNING:
             axis_parms->blink_state = BLINK_RUNNING;
+            // If new current command from CAN bus get it.
+            if (cb_parms->param_set[CAND_PID_TORQUE].sema) {
+                update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms);
+            }
+
             // Set park transformation angle to currently measured rotor electrical angle
             md_parms->park_xform_parms.Angle = encoder_parms->elec_theta;
 
             // Drive id to 0, iq to requested torque from rate loop (to commutate motor at requested torque)
             md_parms->pid_id.param.Idem = 0;
             md_parms->pid_iq.param.Idem = md_parms->Idem;
-
-            // If new current command from CAN bus get it.
-            if (cb_parms->param_set[CAND_PID_TORQUE].sema) {
-                update_torque_cmd_send_encoders(cb_parms, md_parms, encoder_parms);
-            }
             break;
 
         case STATE_DISABLED:
