@@ -140,7 +140,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // Time out the calibration time.  After it has expired, transition to the next state
             md_parms->current_cal_timer++;
-            if (md_parms->current_cal_timer > (COMMUTATION_FREQUENCY_HZ * CURRENT_CALIBRATION_TIME_MS)/1000) {
+            if (md_parms->current_cal_timer > (((Uint32)COMMUTATION_FREQUENCY_HZ * (Uint32)CURRENT_CALIBRATION_TIME_MS)/1000)) {
                 md_parms->motor_drive_state = STATE_CHECK_AXIS_CALIBRATION;
             }
             break;
@@ -294,7 +294,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_id.param.Idem = 0;
             md_parms->pid_iq.param.Idem = 0;
 
-            if (md_parms->fault_revive_counter++ > (COMMUTATION_FREQUENCY_HZ * FAULT_REVIVE_TIME_MS)/1000) {
+            if (md_parms->fault_revive_counter++ > (((Uint32)COMMUTATION_FREQUENCY_HZ * (Uint32)FAULT_REVIVE_TIME_MS)/1000)) {
                 md_parms->fault_revive_counter = 0;
                 reset_average_power_filter(pf_parms);
                 md_parms->motor_drive_state = STATE_RUNNING;

@@ -108,7 +108,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
             }
 
             // Wait at current setpoint for settling time
-            if (cc_parms->settling_timer++ > (COMMUTATION_FREQUENCY_HZ*COMMUTATION_CALIBRATION_HARDSTOP_SETTLING_TIME_MS)/1000) {
+            if (cc_parms->settling_timer++ > (((Uint32)COMMUTATION_FREQUENCY_HZ*(Uint32)COMMUTATION_CALIBRATION_HARDSTOP_SETTLING_TIME_MS)/1000)) {
                 float new_mech_theta;
                 cc_parms->settling_timer = 0;
 
@@ -174,7 +174,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
             	break;
             }
 
-            if (cc_parms->settling_timer++ > (COMMUTATION_FREQUENCY_HZ*AXIS_CALIBRATION_SETTLING_TIME_MS[GetBoardHWID()])/1000) {
+            if (cc_parms->settling_timer++ > (((Uint32)COMMUTATION_FREQUENCY_HZ*(Uint32)AXIS_CALIBRATION_SETTLING_TIME_MS[GetBoardHWID()])/1000)) {
                 float new_mech_theta;
                 cc_parms->settling_timer = 0;
 
