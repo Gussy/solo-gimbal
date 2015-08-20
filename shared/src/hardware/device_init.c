@@ -432,7 +432,7 @@ static void init_gpio(){
 //--------------------------------------------------------------------------------------
 
 	// The GPIO-29 pin is used for system timing analysis on the elevation board (TP10)
-	if(GetBoardHWID() == EL) {
+	if(GetBoardHWID() == EL || GetBoardHWID() == AZ) {
 	    //  GPIO-29 - PIN FUNCTION = UART TX, non-isolated NOTE: Temporary GPIO for debugging
 	    GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
 	    GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
