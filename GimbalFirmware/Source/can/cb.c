@@ -52,22 +52,6 @@ void MDBSendTorques(int16 az, int16 roll)
     cand_tx_multi_param(CAND_ID_ALL_AXES, &pid, combined, 1);
 }
 
-void SendDebug1ToAz(int16 debug_1, int16 debug_2, int16 debug_3)
-{
-    CAND_ParameterID pids[3];
-    Uint32 params[3];
-
-    pids[0] = CAND_PID_DEBUG_1;
-    pids[1] = CAND_PID_DEBUG_2;
-    pids[2] = CAND_PID_DEBUG_3;
-
-    params[0] = debug_1;
-    params[1] = debug_2;
-    params[2] = debug_3;
-
-    cand_tx_multi_param(CAND_ID_AZ, pids, params, 3);
-}
-
 void MDBRequestBIT(CAND_DestinationID did)
 {
     CAND_SID sid;
