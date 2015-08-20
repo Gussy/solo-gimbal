@@ -83,9 +83,6 @@ int16 TempSlope;
 Uint8 board_hw_id = 0;
 float DcBusVoltage = 0.0f;
 
-// Global timestamp counter.  Counts up by 1 every 100uS
-Uint32 global_timestamp_counter = 0;
-
 Uint8 feedback_decimator;
 
 Uint32 IsrTicker = 0;
@@ -135,15 +132,9 @@ AxisParms axis_parms = {
 
 ControlBoardParms control_board_parms = {
     .gyro_readings = {0, 0, 0},
-    .corrected_gyro_readings = {0, 0, 0},
     .integrated_raw_gyro_readings = {0, 0, 0},
     .integrated_raw_accel_readings = {0, 0, 0},
-	.accumulated_torque_cmds = {0, 0, 0},
-	.num_torque_cmds_accumulated = 0,
     .encoder_readings = {0, 0, 0},
-    .motor_torques = {0, 0, 0},
-	.setpoints = {0, 0, 0},
-	.process_vars = {0, 0, 0},
     .last_axis_fault = {CAND_FAULT_NONE, CAND_FAULT_NONE, CAND_FAULT_NONE},
     .encoder_value_received = {FALSE, FALSE, FALSE},
     .axes_homed = {FALSE, FALSE, FALSE},
@@ -154,7 +145,7 @@ ControlBoardParms control_board_parms = {
     },
     .rate_cmd_inject = {0, 0, 0},
     .rate_cmd_inject_filtered = {0, 0, 0},
-    .rate_loop_pass = READ_GYRO_PASS,
+    .rate_loop_step = 0,
 	.control_type = CONTROL_TYPE_POS,
 	.max_allowed_torque = LOW_TORQUE_MODE_MAX,
     .initialized = FALSE,
@@ -398,40 +389,17 @@ void main(void)
 
 		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
 
-		// If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
-        static Uint32 OldIsrTicker = 0;
-        if (OldIsrTicker != IsrTicker) {
-            if (OldIsrTicker != (IsrTicker-1)) {
-                MissedInterrupts++;
-            }
-            OldIsrTicker = IsrTicker;
-
-            // Increment the global timestamp counter
-            global_timestamp_counter++;
-
-            MotorCommutationLoop(&control_board_parms,
-                    &axis_parms,
-                    &motor_drive_parms,
-                    &encoder_parms,
-                    &power_filter_parms,
-                    &load_ap_state_info);
-        }
-
         // If we're the elevation board, check to see if we need to run the rate loops
-        if (board_hw_id == EL) {
+        if (board_hw_id == EL && control_board_parms.enabled) {
             // If there is new gyro data to be processed, and all axes have been homed (the rate loop has been enabled), run the rate loops
-            if ((GyroDataReadyFlag == TRUE) && (control_board_parms.enabled == TRUE)) {
+            if (GyroDataReadyFlag == TRUE) {
+                GyroDataReadyFlag = FALSE;
 
                 RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
 
                 DEBUG_ON;
                 RunRateLoops(&control_board_parms);
                 DEBUG_OFF;
-
-                // Only reset the gyro data ready flag if we've made it through a complete rate loop pipeline cycle
-                if (control_board_parms.rate_loop_pass == READ_GYRO_PASS) {
-                    GyroDataReadyFlag = FALSE;
-                }
 
                 RateLoopEndTimestamp = CpuTimer2Regs.TIM.all;
 
@@ -440,6 +408,29 @@ void main(void)
                 } else {
                     RateLoopElapsedTime = (mSec50 - RateLoopEndTimestamp) + RateLoopStartTimestamp;
                 }
+
+                MotorCommutationLoop(&control_board_parms,
+                                     &axis_parms,
+                                     &motor_drive_parms,
+                                     &encoder_parms,
+                                     &power_filter_parms,
+                                     &load_ap_state_info);
+            }
+        } else {
+            // If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
+            static Uint32 OldIsrTicker = 0;
+            if (OldIsrTicker != IsrTicker) {
+                if (OldIsrTicker != (IsrTicker-1)) {
+                    MissedInterrupts++;
+                }
+                OldIsrTicker = IsrTicker;
+
+                MotorCommutationLoop(&control_board_parms,
+                        &axis_parms,
+                        &motor_drive_parms,
+                        &encoder_parms,
+                        &power_filter_parms,
+                        &load_ap_state_info);
             }
         }
 

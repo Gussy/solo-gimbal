@@ -42,14 +42,6 @@ typedef enum {
 } BlinkState;
 
 typedef enum {
-    READ_GYRO_PASS,
-    READ_ACCEL_PASS,
-    KINEMATICS_PASS,
-    TORQUE_OUT_PASS,
-    TELEM_OUT_PASS
-} RateLoopPass;
-
-typedef enum {
 	CONTROL_TYPE_RATE,
 	CONTROL_TYPE_POS
 } ControlType;
@@ -85,22 +77,16 @@ typedef struct {
 
 typedef struct {
     float gyro_readings[AXIS_CNT];
-    float corrected_gyro_readings[AXIS_CNT];
     int32 integrated_raw_gyro_readings[AXIS_CNT];
     int32 integrated_raw_accel_readings[AXIS_CNT];
-    int32 accumulated_torque_cmds[AXIS_CNT];
-    Uint16 num_torque_cmds_accumulated;
     int16 encoder_readings[AXIS_CNT];
-    int16 motor_torques[AXIS_CNT];
-    float setpoints[AXIS_CNT];
-    float process_vars[AXIS_CNT];
     CAND_FaultCode last_axis_fault[AXIS_CNT];
     Uint8 encoder_value_received[AXIS_CNT];
     Uint16 axes_homed[AXIS_CNT];
     GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_status[AXIS_CNT];
     float rate_cmd_inject[AXIS_CNT];
     float rate_cmd_inject_filtered[AXIS_CNT];
-    RateLoopPass rate_loop_pass;
+    Uint8 rate_loop_step;
     ControlType control_type;
     // As a special case, a value of 0 in max allowed torque means unlimited allowed torque
     int16 max_allowed_torque;
@@ -140,7 +126,5 @@ void EnableAZAxis(void);
 void RelaxAZAxis(void);
 void SetMavlinkGimbalEnabled(void);
 void SetMavlinkGimbalDisabled(void);
-
-extern Uint32 global_timestamp_counter;
 
 #endif
