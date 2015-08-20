@@ -1,4 +1,5 @@
 #include "PeripheralHeaderIncludes.h"
+#include "F2806x_Examples.h" // For DELAY_US
 
 #include "can/cand_BitFields.h"
 #include "can/cand.h"
@@ -85,7 +86,16 @@ void ECanInit(void)        // Initialize eCAN-A module
 	// Setup torque command specific mailbox
     ECanaMboxes.MBOX31.MSGID.bit.STDMSGID = 0x581; // 0x581 is the SID signature of the torque command message
     ECanaLAMRegs.LAM31.all = 0x0003FFFF; // 11 Message ID bits must match exactly
-	ECanaRegs.CANOPC.bit.OPC31 = 0; // Disable over-write protection
+	ECanaRegs.CANOPC.bit.OPC31 = 0; // Disable over-write protection (mbox will hold latest value)
+
+	// Enable interrupts for the torque mailbox
+	ECanaRegs.CANMIM.bit.MIM31 = 1; // Interrupt enable mask (enabled)
+	ECanaRegs.CANMIL.bit.MIL31 = 0; // Interrupt level mask (level 0)
+
+	//ECanaShadow.CANGIM.all = ECanaRegs.CANGIM.all;
+	ECanaRegs.CANGIM.bit.I0EN = 1; // Enable ECAN0INT
+	ECanaRegs.CANGIM.bit.GIL = 1; // Global interrupts trigger ECAN1INT
+	//ECanaRegs.CANGIM.all = ECanaShadow.CANGIM.all;
 
 	// TAn, RMPn, GIFn bits are all zero upon reset and are cleared again
 	//  as a matter of precaution.
@@ -128,10 +138,40 @@ void ECanInit(void)        // Initialize eCAN-A module
       ECanaShadow.CANES.all = ECanaRegs.CANES.all;
     } while(ECanaShadow.CANES.bit.CCE != 0);       // Wait for CCE bit to be  cleared..
 
-	ECanaRegs.CANMIM.all = 0xFFFFFFFF;				///< Enable Interrupt Mask on all Mailboxes
 	ECanaRegs.CANME.all = 0xFFFFFFFF;				///< Enable all Mailboxes
 
     EDIS;
+}
+
+interrupt void eCAN0INT_ISR(void)
+{
+    //volatile struct ECAN_REGS ECanaShadow;
+
+    int16_t mailbox = ECanaRegs.CANGIF0.bit.MIV0;
+    if(ECanaRegs.CANGIF0.bit.GMIF0 == 1) {
+        // Mailbox interrupt
+        if(mailbox == 31) {
+            DEBUG_ON;
+            DELAY_US(1);
+            DEBUG_OFF;
+        }
+
+    } else {
+        // System interrupt
+    }
+
+    // Clear MIV0 flag bit..
+    //ECanaShadow.CANRMP.all = ((Uint32)1 << mailbox);
+    //ECanaRegs.CANRMP.all = ECanaShadow.CANRMP.all;
+
+    /*ECanaShadow.CANGIF0.all = ECanaRegs.CANGIF0.all;
+    ECanaShadow.CANGIF0.bit.MIV0 = 0;
+    ECanaRegs.CANGIF0.all = ECanaShadow.CANGIF0.all;*/
+
+    // Reenable core interrupts and CAN int from PIE module
+    PieCtrlRegs.PIEACK.bit.ACK9 = 1; // Enables PIE to drive a pulse into the CPU
+    IER |= M_INT9; // Enable INT9
+    EINT;
 }
 
 static void ECanInitGpio(void)

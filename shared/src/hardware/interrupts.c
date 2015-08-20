@@ -6,10 +6,13 @@
 #include "hardware/uart.h"
 #include "hardware/i2c.h"
 #include "hardware/led.h"
+#include "can/cand.h"
 
 
 void InitInterrupts()
 {
+    GimbalAxis board_hw_id = (GimbalAxis)GetBoardHWID();
+
     // *******************************************
     // Configure interrupts that apply to all axes
     // *******************************************
@@ -42,7 +45,7 @@ void InitInterrupts()
     // ******************************************
     // Configure interrupts that only apply to AZ
     // ******************************************
-    if (GetBoardHWID() == AZ) {
+    if (board_hw_id == AZ) {
         EALLOW;
         PieVectTable.SCIRXINTB = &uart_rx_isr; // Uart RX ISR is driven from SCI-B receive
         PieVectTable.SCITXINTB = &uart_tx_isr; // Uart TX ISR is driven from SCI-B transmit
@@ -60,7 +63,7 @@ void InitInterrupts()
     // ******************************************
     // Configure interrupts that only apply to EL
     // ******************************************
-    if (GetBoardHWID() == EL) {
+    if (board_hw_id == EL) {
         EALLOW;
         PieVectTable.XINT1 = &GyroIntISR; // Gyro ISR is driven from external interrupt 1
         PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx fifo interrupts are handled by the same ISR
@@ -86,6 +89,20 @@ void InitInterrupts()
 
         // Initialise the Beacon LED specific interrupts
         init_led_interrupts();
+    }
+
+    // For boards that receive the torque commands
+    if(board_hw_id != EL) {
+        // Set the ISR Handler
+        EALLOW;
+        PieVectTable.ECAN0INTA = &eCAN0INT_ISR;
+        EDIS;
+
+        // Enable PIE group 9 interrupt 5 for ECANAINT0
+        PieCtrlRegs.PIEIER9.bit.INTx5 = 1;
+
+        // Enable CPU INT9 for ECANAINT0
+        IER |= M_INT9;
     }
 
     // Enable global Interrupts and higher priority real-time debug events:
