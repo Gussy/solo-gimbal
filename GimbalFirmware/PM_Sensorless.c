@@ -341,7 +341,7 @@ void main(void)
     // Current sample frequency is frequency of main ISR
     // Tau = 840 seconds per CW's calculations on 5/1/15
     // Current limit = 0.2 Amps^2 per CW's calculations on 5/1/15
-    init_average_power_filter(&power_filter_parms, COMMUTATION_FREQUENCY_HZ, 840, 0.2);
+    init_average_power_filter(&power_filter_parms, COMMUTATION_FREQUENCY_HZ, 840, 0.07);
 	
 	// Get temp sensor calibration coefficients
 	TempOffset = getTempOffset();
