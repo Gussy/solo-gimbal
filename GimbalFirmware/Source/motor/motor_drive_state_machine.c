@@ -236,9 +236,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_INITIALIZE_POSITION_LOOPS:
-            if ((cb_parms->encoder_value_received[AZ] == TRUE) &&
+            /*if ((cb_parms->encoder_value_received[AZ] == TRUE) &&
                     (cb_parms->encoder_value_received[EL] == TRUE) &&
-                    (cb_parms->encoder_value_received[ROLL] == TRUE)) {
+                    (cb_parms->encoder_value_received[ROLL] == TRUE)) {*/
 
                 // Now we're ready to move to the running state
             	// We start in position hold mode and don't move to rate
@@ -247,11 +247,11 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 md_parms->md_initialized = TRUE;
                 axis_parms->enable_flag = TRUE;
                 md_parms->motor_drive_state = md_parms->motor_drive_state_after_initialisation;
-            } else {
+            /*} else {
                 // Send a zero torque command to the other axes to generate an encoder response
                 // (we update our own encoder value in a different place)
                 MDBSendTorques(0, 0,0,0);
-            }
+            }*/
             break;
 
         case STATE_RUNNING:
