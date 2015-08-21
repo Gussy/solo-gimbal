@@ -1,5 +1,4 @@
 #include "PeripheralHeaderIncludes.h"
-#include "F2806x_Examples.h" // For DELAY_US
 
 #include "can/cand_BitFields.h"
 #include "can/cand.h"
@@ -10,16 +9,17 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
+#include <stdio.h>
 
-static void ECanInitGpio(void);
-static void ECanTx(struct MBOX* outbox);
-static int ECanRx(struct MBOX* inbox);
+static void ECanInitGpio( void );
+static int ECanTx( struct MBOX* outbox );
+static int ECanRx( struct MBOX* inbox );
 
-#define CAN_RX_MBOX_CNT 16
+#ifndef BOOL
+typedef enum { FALSE = 0, TRUE } BOOL;
+#endif
+
 #define CAN_TX_MBOX_CNT 16
-
-static uint8_t can_tx_mbox = 0;
 static sysid_t sysid = {0},temp_sysid = {0};
 static uint8_t msg_pass=0,torque_pass=0,gyro_pass=0,accel_pass=0;//,pass=0;
 CAND_ParameterID immediate_pid_lookup_buffer[6] = {
@@ -31,7 +31,7 @@ CAND_ParameterID immediate_pid_lookup_buffer[6] = {
     CAND_PID_INVALID
 };
 
-void ECanInit(void)        // Initialize eCAN-A module
+void ECanInit( void )        // Initialize eCAN-A module
 {
 	volatile union CANLAM_REG* lam;
 	volatile struct MBOX* mbox;
@@ -43,6 +43,7 @@ void ECanInit(void)        // Initialize eCAN-A module
      false data. */
 
 	volatile struct ECAN_REGS ECanaShadow;
+
 
 	ECanInitGpio();
 
@@ -67,38 +68,25 @@ void ECanInit(void)        // Initialize eCAN-A module
 	// Disable Mailboxes
 	ECanaRegs.CANME.all = 0;        // Required before writing the MSGIDs
 
-	ECanaRegs.CANMD.all = 0xFFFFFFFF << CAN_TX_MBOX_CNT;	///< Boxes 0-15 are Tx, 16-31 Rx, (1 = rx)
+	ECanaRegs.CANMD.all  = 0xffffffff<<CAN_TX_MBOX_CNT;	///< Boxes 0-15 are Tx, 16-31 Rx, (1 = rx)
+	//ECanaRegs.CANMD.all  = 0xFFFF0000;						///< Boxes 0-15 are Tx, 16-31 Rx, (1 = rx)
 
 	// Configure overwrite protection for all rx mailboxes
 	ECanaRegs.CANOPC.all = 0xFFFFFFFF << CAN_TX_MBOX_CNT; // 1 = overwrite protection
 
 	// Setup Rx Mailboxes
-	for(i = CAN_TX_MBOX_CNT; i < (CAN_TX_MBOX_CNT + CAN_RX_MBOX_CNT); i++) {
+	for( i=16; i<32; i++ ){
 		// CTRL reg needs cleared, setting ID to default value for testing
-		mbox = &ECanaMboxes.MBOX0 + i;
+		mbox = &ECanaMboxes.MBOX0+i;
 		mbox->MSGCTRL.all = 0x00000000;
 		mbox->MSGID.bit.IDE = 0;
-		mbox->MSGID.bit.STDMSGID = 0x7FF;
+		mbox->MSGID.bit.STDMSGID = 0x7ff;
 		mbox->MSGID.bit.AME = 1;
 
 		// All Rx boxes accept all messages
-		lam = &ECanaLAMRegs.LAM0 + i;
-		lam->all = 0x1FFFFFFF;
+		lam = &ECanaLAMRegs.LAM0+i;
+		lam->all = 0x1fffffff;
 	}
-
-	// Setup torque command specific mailbox
-    ECanaMboxes.MBOX31.MSGID.bit.STDMSGID = 0x581; // 0x581 is the SID signature of the torque command message
-    ECanaLAMRegs.LAM31.all = 0x0003FFFF; // 11 Message ID bits must match exactly
-	ECanaRegs.CANOPC.bit.OPC31 = 0; // Disable over-write protection (mbox will hold latest value)
-
-	// Enable interrupts for the torque mailbox
-	ECanaRegs.CANMIM.bit.MIM31 = 1; // Interrupt enable mask (enabled)
-	ECanaRegs.CANMIL.bit.MIL31 = 0; // Interrupt level mask (level 0)
-
-	//ECanaShadow.CANGIM.all = ECanaRegs.CANGIM.all;
-	ECanaRegs.CANGIM.bit.I0EN = 1; // Enable ECAN0INT
-	ECanaRegs.CANGIM.bit.GIL = 1; // Global interrupts trigger ECAN1INT
-	//ECanaRegs.CANGIM.all = ECanaShadow.CANGIM.all;
 
 	// TAn, RMPn, GIFn bits are all zero upon reset and are cleared again
 	//  as a matter of precaution.
@@ -111,14 +99,14 @@ void ECanInit(void)        // Initialize eCAN-A module
     /* Configure bit timing parameters for eCANA*/
 
     ECanaShadow.CANMC.all = ECanaRegs.CANMC.all;
-    ECanaShadow.CANMC.bit.CCR = 1;            // Set CCR = 1
+    ECanaShadow.CANMC.bit.CCR = 1 ;            // Set CCR = 1
     ECanaRegs.CANMC.all = ECanaShadow.CANMC.all;
 
     // Wait until the CPU has been granted permission to change the configuration registers
     do
     {
       ECanaShadow.CANES.all = ECanaRegs.CANES.all;
-    } while(ECanaShadow.CANES.bit.CCE != 1);       // Wait for CCE bit to be set..
+    } while(ECanaShadow.CANES.bit.CCE != 1 );       // Wait for CCE bit to be set..
 
     ECanaShadow.CANBTC.all = 0;
     /* The following block is for 80 MHz SYSCLKOUT. (40 MHz CAN module clock Bit rate = 1 Mbps
@@ -132,15 +120,16 @@ void ECanInit(void)        // Initialize eCAN-A module
     ECanaRegs.CANBTC.all = ECanaShadow.CANBTC.all;
 
     ECanaShadow.CANMC.all = ECanaRegs.CANMC.all;
-    ECanaShadow.CANMC.bit.CCR = 0;            // Set CCR = 0
+    ECanaShadow.CANMC.bit.CCR = 0 ;            // Set CCR = 0
     ECanaRegs.CANMC.all = ECanaShadow.CANMC.all;
 
     // Wait until the CPU no longer has permission to change the configuration registers
     do
     {
       ECanaShadow.CANES.all = ECanaRegs.CANES.all;
-    } while(ECanaShadow.CANES.bit.CCE != 0);       // Wait for CCE bit to be  cleared..
+    } while(ECanaShadow.CANES.bit.CCE != 0 );       // Wait for CCE bit to be  cleared..
 
+	ECanaRegs.CANMIM.all = 0xFFFFFFFF;				///< Enable Interrupt Mask on all Mailboxes
 	ECanaRegs.CANME.all = 0xFFFFFFFF;				///< Enable all Mailboxes
 
     EDIS;
@@ -178,16 +167,18 @@ static void ECanInitGpio(void)
  * a message is already in that slot, it will be overwritten
  * without warning. Flags box for immediate transmission
  */
-static void ECanTx(struct MBOX* outbox)
+static int ECanTx( struct MBOX* outbox )
 {
+	static uint8_t can_tx_mbox = 0;
 	volatile struct MBOX *mptr;
 	unsigned long temp;
 
     //get next output box
-    mptr = &ECanaMboxes.MBOX0 + can_tx_mbox;
+    mptr = &ECanaMboxes.MBOX0+can_tx_mbox;
 
+    //ECanaRegs.CANME.all &= ~((0x00000001ul)<<can_tx_mbox) //didnt work, mmk, then i'll make a shadow?
     temp = ECanaRegs.CANME.all;
-    temp  &= ~((0x00000001ul) << can_tx_mbox);
+    temp  &= ~((0x00000001ul)<<can_tx_mbox);
 
     ECanaRegs.CANME.all = temp;
 
@@ -196,33 +187,34 @@ static void ECanTx(struct MBOX* outbox)
     mptr->MSGCTRL = outbox->MSGCTRL;
     mptr->MSGID = outbox->MSGID;
 
-    temp |= (1ul << can_tx_mbox);
+    temp |= (1ul<<can_tx_mbox);
     ECanaRegs.CANME.all = temp;
-    ECanaRegs.CANTRS.all = (1ul << can_tx_mbox);	// "writing 0 has no effect", previously queued boxes will stay queued
-    ECanaRegs.CANTA.all = (1ul << can_tx_mbox);		// "writing 0 has no effect", clears pending interrupt, open for our tx
+    ECanaRegs.CANTRS.all = (1ul<<can_tx_mbox);	// "writing 0 has no effect", previously queued boxes will stay queued
+    ECanaRegs.CANTA.all = (1ul<<can_tx_mbox);		// "writing 0 has no effect", clears pending interrupt, open for our tx
 
-    // Reset the round-robin counter
     if (++can_tx_mbox >= CAN_TX_MBOX_CNT) {
         can_tx_mbox = 0;
     }
+
+	return 0;
 }
 
 /**
  * Check if any Mailbox is currently pending, if
  * so, copy to inbox
  */
-static int ECanRx(struct MBOX* inbox)
+static int ECanRx( struct MBOX* inbox )
 {
 	volatile struct MBOX *mptr;
 
 	//Check if Rx Message Pending
-	if (ECanaRegs.CANRMP.all) {
+	if ( ECanaRegs.CANRMP.all ) {
 		Uint32 b, f;
 
-		for (f = 0x80000000, b = ((CAN_TX_MBOX_CNT + CAN_RX_MBOX_CNT) - 1); ; f >>= 1, b--){
-			if (ECanaRegs.CANRMP.all & f) {
+		for ( f=0x80000000, b=31; f; f>>=1, b-- ){
+			if (ECanaRegs.CANRMP.all&f) {
 
-				mptr = &ECanaMboxes.MBOX0 + b;
+				mptr = &ECanaMboxes.MBOX0+b;
 				inbox->MDH.all = mptr->MDH.all;
 				inbox->MDL.all = mptr->MDL.all;
 				inbox->MSGCTRL.all = mptr->MSGCTRL.all;
@@ -234,7 +226,6 @@ static int ECanRx(struct MBOX* inbox)
 			}
 		}
 	}
-
 	return 0;
 }
 
@@ -253,36 +244,38 @@ CAND_Result cand_init(void)
 CAND_SenderID CAND_GetSenderID(void)
 {
     switch (GetBoardHWID()) {
-    	case EL:
+    	case 0:
     	    return CAND_ID_EL;
 
-    	case AZ:
+    	case 1:
     	    return CAND_ID_AZ;
 
-    	case ROLL:
+    	case 2:
     	    return CAND_ID_ROLL;
 
+    	case 3:
     	default:
     	    return CAND_ID_ALL_AXES;
     }
 }
 
-bool CAND_InDestinationList(CAND_DestinationID did)
+BOOL CAND_InDestinationList( CAND_DestinationID did )
 {
     CAND_SenderID me = CAND_GetSenderID();
 
     if (did == CAND_ID_ALL_AXES) {
-        return true;
+        return TRUE;
     }
 
-    if (me == did) {
-    	return true;
+    if ( me == did ) {
+    	return TRUE;
     }
 
-    return false;
+    return FALSE;
 }
 
-CAND_Result cand_rx(struct cand_message * msg)
+
+CAND_Result cand_rx( struct cand_message * msg )
 {
 	CAND_Result ret = CAND_RX_EMPTY;
 	struct MBOX mbox;
@@ -308,7 +301,7 @@ CAND_Result cand_rx(struct cand_message * msg)
 
 			case CAND_MID_COMMAND:
 				// Check if we are on the recipient list
-				if (CAND_InDestinationList((CAND_DestinationID)sid.directive.d_id) == false) {
+				if (CAND_InDestinationList((CAND_DestinationID)sid.directive.d_id) == FALSE) {
 					break;
 				}
 				msg->command = (CAND_Command)sid.directive.command;
@@ -317,7 +310,7 @@ CAND_Result cand_rx(struct cand_message * msg)
 
 			case CAND_MID_PARAMETER_SET:
 				// Check if we are on the recipient list
-				if (CAND_InDestinationList((CAND_DestinationID)sid.param_set.all.d_id) == false) {
+				if (CAND_InDestinationList((CAND_DestinationID)sid.param_set.all.d_id) == FALSE) {
 					break;
 				}
 
@@ -338,7 +331,7 @@ CAND_Result cand_rx(struct cand_message * msg)
 					            break;
 					        }
 					    }
-                        uint8_t format_id = SID_FORMAT_MSG,format_size = sizeof(sid_format_t), data_size = sizeof(sysid), data_id = SID_DATA_MSG;
+                        /*uint8_t format_id = SID_FORMAT_MSG,format_size = sizeof(sid_format_t), data_size = sizeof(sysid), data_id = SID_DATA_MSG;
                         uint8_t fmt_name[4]="FMT";
                         uint8_t fmt_fmt[16] = "BBnNZ";
                         uint8_t fmt_labels[64] = "Type,Length,Name,Format,Columns";
@@ -348,14 +341,14 @@ CAND_Result cand_rx(struct cand_message * msg)
 
                         uint8_t data_labels[64] = "seq,torque_axis,roll,el,torque,gy_x,gy_y,gy_z,acc_x,acc_y,acc_z";
                         uint8_t head_bytes[] = {HEAD_BYTE1,HEAD_BYTE2,128};
-                        static uint8_t format_sent = 0;
+                        */static uint8_t format_sent = 0;
                         static uint32_t seq_no = 0;
                         //char tdata[10];
                         //uint8_t tdata_size;
 						switch (CAND_GetSenderID()) {
 							case CAND_ID_AZ:
 								    if(format_sent == 0){
-				                        uart_send_data((Uint8*)&head_bytes,sizeof(head_bytes));
+				                        /*uart_send_data((Uint8*)&head_bytes,sizeof(head_bytes));
 				                        uart_send_data((Uint8*)&format_id,sizeof(format_id));
 				                        uart_send_data((Uint8*)&format_size,sizeof(format_size));
 				                        uart_send_data((Uint8*)fmt_name,sizeof(fmt_name));
@@ -368,7 +361,7 @@ CAND_Result cand_rx(struct cand_message * msg)
 				                        uart_send_data((Uint8*)data_name,sizeof(data_name));
 				                        uart_send_data((Uint8*)data_fmt,sizeof(data_fmt));
 				                        uart_send_data((Uint8*)data_labels,sizeof(data_labels));
-				                        format_sent++;
+				                        */format_sent++;
                                     }
 
 							        switch(mbox.MDL.word.HI_WORD){
@@ -377,7 +370,7 @@ CAND_Result cand_rx(struct cand_message * msg)
 							                    seq_no++;
 							                    msg_pass++;
 							                    //pass++;
-							                    //tdata_size = sprintf(tdata,"0,%d ",msg_pass);
+							                    //tdata_size = sprintf(tdata,"0,%d \n",msg_pass);
 							                    //uart_send_data((Uint8*)tdata,tdata_size);
 							                    if(msg_pass > 1) {
 							                        temp_sysid.seq_no[3] = (seq_no>>24)&0xff;
@@ -488,10 +481,11 @@ CAND_Result cand_rx(struct cand_message * msg)
 							                    
 							                    sysid.accel_z[1] = mbox.MDH.word.LOW_WORD>>8;
 							                    sysid.accel_z[0] = mbox.MDH.word.LOW_WORD&0xff;
+							                    
 
 							                    break;
 							         }
-							         if(millis() <=8000){
+							         if(millis() <= 80000){
 		                                accel_pass = 0;
 		                                gyro_pass = 0;
 		                                torque_pass = 0;
@@ -509,7 +503,7 @@ CAND_Result cand_rx(struct cand_message * msg)
                                         gyro_pass=0;
                                         msg_pass=0;
                                         torque_pass=0;
-		                                if(millis() >=8000){
+		                                if(millis() >=80000){
 		                                    //tdata_size = sprintf(tdata," %ld,%d\n", seq_no,sysid.roll_ang);
                                             //uart_send_data((Uint8*)tdata,tdata_size);
                                             //pass = 0;
@@ -523,10 +517,16 @@ CAND_Result cand_rx(struct cand_message * msg)
                                         torque_pass--;
                                         memcpy(&sysid, &temp_sysid,sizeof(temp_sysid));
                                     }
+			                    
+							            
 							    break;
 
 							case CAND_ID_ROLL:
-							    msg->param[0] = mbox.MDL.word.LOW_WORD;
+							    msg->param_cnt = 0;
+							    if(mbox.MDL.word.HI_WORD == 1) {
+							        msg->param_cnt = 1;
+							        msg->param[0] = mbox.MDL.word.LOW_WORD;
+							    }
 							    break;
 
 							default:
@@ -644,7 +644,7 @@ CAND_Result cand_rx(struct cand_message * msg)
 
 			case CAND_MID_PARAMETER_QUERY:
 				// Check if we are on the recipient list
-				if (CAND_InDestinationList((CAND_DestinationID)sid.param_query.d_id) == false) {
+				if (CAND_InDestinationList((CAND_DestinationID)sid.param_query.d_id) == FALSE) {
 					break;
 				}
 
@@ -756,7 +756,29 @@ CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, U
 
         // when sending to the two axes, it could be a 1x1 byte, 2x1 byte or
         // 1x2 byte params
-        if ((pid[0] < CAND_PID_2_BYTE_CUTOFF) && (pid[0] > CAND_PID_4_BYTE_CUTOFF)) {
+        if (pid[0] == CAND_PID_TORQUE) {
+            Uint8 one_hot_id = 0;
+            int i;
+            for (i = 0; i < 6; i++) {
+                if (immediate_pid_lookup_buffer[i] == pid[0]) {
+                    one_hot_id = 1 << i;
+                    break;
+                }
+            }
+
+            sid.param_set.all.param = one_hot_id;
+
+            payload[0] = (param[0] >> 8) & 0xff;
+            payload[1] = param[0] & 0xff;
+            payload[2] = (param[1] >> 8) & 0xff;
+            payload[3] = param[1] & 0xff;
+            payload[4] = (param[2] >> 8) & 0xff;
+            payload[5] = param[2] & 0xff;
+            payload[6] = (param[3] >> 8) & 0xff;
+            payload[7] = param[3] & 0xff;
+            payload_cnt = 8;
+            sid.param_set.extended.addr_mode = CAND_ADDR_MODE_IMMEDIATE;
+        } else if ((pid[0] < CAND_PID_2_BYTE_CUTOFF) && (pid[0] > CAND_PID_4_BYTE_CUTOFF)) {
             // only 1 param of 2 byte to this destination
 
             Uint8 one_hot_id = 0;
@@ -845,10 +867,10 @@ CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 p
     Uint8 payload[4];
     uint8_t payload_size = 0;
 
-    sid.sidWord = 0;
-    sid.all.m_id = CAND_MID_PARAMETER_SET;
-    sid.param_set.all.d_id = did;
-    sid.param_set.all.param = pid;
+    sid.sidWord               = 0;
+    sid.all.m_id              = CAND_MID_PARAMETER_SET;
+    sid.param_set.all.d_id    = did;
+    sid.param_set.all.param   = pid;
     sid.param_set.extended.addr_mode = CAND_ADDR_MODE_EXTENDED;
 
     if (pid < CAND_PID_4_BYTE_CUTOFF) {
@@ -880,10 +902,10 @@ CAND_Result cand_tx_extended_param(CAND_DestinationID did, CAND_ExtendedParamete
     int payload_length = param_length;
     int i;
 
-    sid.sidWord = 0;
-    sid.all.m_id = CAND_MID_PARAMETER_SET;
-    sid.param_set.all.d_id = did;
-    sid.param_set.all.param = CAND_PID_EXTENDED;
+    sid.sidWord               = 0;
+    sid.all.m_id              = CAND_MID_PARAMETER_SET;
+    sid.param_set.all.d_id    = did;
+    sid.param_set.all.param   = CAND_PID_EXTENDED;
     sid.param_set.extended.addr_mode = CAND_ADDR_MODE_EXTENDED;
 
     // Extended parameter ID is first byte in payload
@@ -1045,11 +1067,11 @@ CAND_Result cand_tx_fault(CAND_FaultCode fault_code, CAND_FaultType fault_type)
 {
 	CAND_SID sid;
 
-	sid.sidWord = 0;
-	sid.all.m_id = CAND_MID_FAULT;     //000 0000 0100
-	sid.fault.s_id = CAND_GetSenderID();
-	sid.fault.fault_code = fault_code;
-	sid.fault.fault_type = fault_type;
+	sid.sidWord             = 0;
+	sid.all.m_id            = CAND_MID_FAULT;     //000 0000 0100
+	sid.fault.s_id 			= CAND_GetSenderID();
+	sid.fault.fault_code    = fault_code;
+	sid.fault.fault_type    = fault_type;
 
 	return cand_tx(sid, NULL, 0);
 }
@@ -1067,11 +1089,11 @@ CAND_Result cand_tx(CAND_SID sid, uint8_t* p_data, uint8_t p_data_size)
 	mbox.MDL.all = 0;
 	mbox.MDH.all = 0;
 
-	for (i = 0; i < p_data_size; i++) {
-		if (i < 4) {
-			mbox.MDL.all |= (Uint32)p_data[i] << (8 * (3 - i));
+	for (i=0; i<p_data_size; i++) {
+		if (i<4) {
+			mbox.MDL.all |= (Uint32) p_data[i]<<(8*(3-i));
 		} else {
-			mbox.MDH.all |= (Uint32)p_data[i] << (8 * ((3 - i) - 4));
+			mbox.MDH.all |= (Uint32) p_data[i]<<(8*((3-i)-4));
 		}
 	}
 

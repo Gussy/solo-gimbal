@@ -43,7 +43,7 @@ static uint8_t roll_ang_cnt =0;
 GimbalAxis torque_type = AZ;
 
 
-static float SpringMassDamperPass(int16_t ang_vel, int16_t abs_ang,float k,float c);
+static float SpringMassDamperPass(float ang_vel, int16_t abs_ang,float k,float c);
 static float ChirpSignalPass(uint16_t Magnitude);
 
 
@@ -121,7 +121,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
     rate_loop_step++;
 
     switch(rate_loop_step) {
-        case 0: MDBSendTorques(0,torque_type, roll_ang[roll_ang_cnt], el_ang[el_ang_cnt]);
+        case 0: //MDBSendTorques(0,torque_type, roll_ang[roll_ang_cnt], el_ang[el_ang_cnt]);
                 break;
         case 1: { // gyro and control loops
             float torque_limit = cb_parms->max_allowed_torque != 0?cb_parms->max_allowed_torque : 32767.0;
@@ -136,8 +136,8 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             roll_ang_in_enc = (roll_ang[roll_ang_cnt]/360.0)*ENCODER_COUNTS_PER_REV;
             switch(torque_type){
                 case AZ:
-                    torque_out[EL] = SpringMassDamperPass(filtered_gyro_measurement_jf[EL], filtered_gyro_measurement_jf[EL]-el_ang_in_enc,2000.0,0.01);
-                    torque_out[ROLL] = SpringMassDamperPass(filtered_gyro_measurement_jf[ROLL], filtered_gyro_measurement_jf[ROLL]-roll_ang_in_enc,5000.0,0.05);
+                    torque_out[EL] = SpringMassDamperPass(filtered_gyro_measurement_jf[EL], cb_parms->encoder_readings[EL]-el_ang_in_enc,2000.0,0.01);
+                    torque_out[ROLL] = SpringMassDamperPass(filtered_gyro_measurement_jf[ROLL], cb_parms->encoder_readings[ROLL]-roll_ang_in_enc,5000.0,0.05);
                     torque_out[AZ] =  ChirpSignalPass(5000);
                     if(num_chirps == MAX_NUM_CHIRPS && el_ang_cnt < (NUM_EL_ANGLES-1)) {
                         num_chirps = 0;
@@ -154,7 +154,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
                     }
                     break;
                 case ROLL:
-                    torque_out[EL] = SpringMassDamperPass(filtered_gyro_measurement_jf[EL], filtered_gyro_measurement_jf[EL] - el_ang_in_enc,2000.0,0.01);
+                    torque_out[EL] = SpringMassDamperPass(filtered_gyro_measurement_jf[EL], cb_parms->encoder_readings[EL] - el_ang_in_enc,2000.0,0.01);
                     torque_out[ROLL] = ChirpSignalPass(5000);
                     torque_out[AZ] =  0;
                     if(num_chirps == MAX_NUM_CHIRPS && el_ang_cnt < (NUM_EL_ANGLES-1)) {
@@ -168,7 +168,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
                     break;
                 case EL:
                     torque_out[EL] = ChirpSignalPass(3000);
-                    torque_out[ROLL] = SpringMassDamperPass(filtered_gyro_measurement_jf[ROLL], filtered_gyro_measurement_jf[ROLL],5000.0,0.05);
+                    torque_out[ROLL] = SpringMassDamperPass(filtered_gyro_measurement_jf[ROLL], cb_parms->encoder_readings[ROLL],5000.0,0.05);
                     torque_out[AZ] =  0;
                     if(num_chirps == MAX_NUM_CHIRPS) {
                         num_chirps = 0;
@@ -201,10 +201,10 @@ void RunRateLoops(ControlBoardParms* cb_parms)
                 raw_accel_measurement[i] *= IMUSignMap[i];
                 summed_raw_accel[i] += raw_accel_measurement[i];
             }
-            MDBSendTorques(3,raw_accel_measurement[GyroAxisMap[X_AXIS]],raw_accel_measurement[GyroAxisMap[Y_AXIS]],raw_accel_measurement[GyroAxisMap[Z_AXIS]]);
+            //MDBSendTorques(3,raw_accel_measurement[GyroAxisMap[X_AXIS]],raw_accel_measurement[GyroAxisMap[Y_AXIS]],raw_accel_measurement[GyroAxisMap[Z_AXIS]]);
             break;
         }
-        case 3:
+        case 3://MDBSendTorques(2,filtered_gyro_measurement_jf[ROLL],filtered_gyro_measurement_jf[EL],filtered_gyro_measurement_jf[AZ]);
         case 8: {
             rate_loop_step = 0;
             break;
@@ -212,14 +212,14 @@ void RunRateLoops(ControlBoardParms* cb_parms)
     };
 }
 
-static float SpringMassDamperPass(int16_t ang_vel, int16_t abs_ang,float k,float c) {
+static float SpringMassDamperPass(float ang_vel, int16_t abs_ang,float k,float c) {
     float generated_torque;
     generated_torque =-k*2.0*M_PI*abs_ang/ENCODER_COUNTS_PER_REV -c*ang_vel;
     return generated_torque;
 }
 
 static float ChirpSignalPass(uint16_t Magnitude) {
-    float torque;
+    float torque=0.0;
     t += 0.001;
     if (t > 12.0) {
         t = 0.0;
