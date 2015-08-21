@@ -576,5 +576,5 @@ void send_mavlink_calibration_progress(Uint8 progress, GIMBAL_AXIS axis,
 void send_mavlink_message(mavlink_message_t* msg) {
 	uint16_t message_len = mavlink_msg_to_send_buffer(message_buffer, msg);
 
-	uart_send_data(message_buffer, message_len);
+	//uart_send_data(message_buffer, message_len);
 }

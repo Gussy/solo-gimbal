@@ -7,7 +7,7 @@
 #include "control/filt2p.h"
 #include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
-
+#define MAX_NUM_CHIRPS 5
 static const int TorqueSignMap[AXIS_CNT] = {
         1, // EL
         -1, // AZ
@@ -27,15 +27,25 @@ static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
         ROLL
 };
 
-static const double RATE_UPSAMPLING_ALPHA = 0.1;
+static const int8_t roll_ang[] = { 35,0,-35};
+static const int8_t el_ang[] = { 35, 0, -45, -90, -120};
 
-static void SendDeltaAngleTelemetry(uint32_t az_gyro, uint32_t el_gyro, uint32_t rl_gyro);
-static void SendDeltaVelocityTelemetry(uint32_t az_accel, uint32_t el_accel, uint32_t rl_accel);
-static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);
-static void SendTorqueCmdTelemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);
+#define NUM_ROLL_ANGLES 3
+#define NUM_EL_ANGLES 5
 
-static float CorrectEncoderError(float raw_error);
-static float CalculatePosHoldGain(float encoder_error);
+
+float t = 0;
+float f = 0;
+float phi = 0;
+static uint8_t num_chirps = 0;
+static uint8_t el_ang_cnt =0;
+static uint8_t roll_ang_cnt =0;
+GimbalAxis torque_type = AZ;
+
+
+static float SpringMassDamperPass(int16_t ang_vel, int16_t abs_ang,float k,float c);
+static float ChirpSignalPass(uint16_t Magnitude);
+
 
 // structural mode at ~240hz on roll arm->camera carriage connection
 // 180hz 12dB chebyshev type 2 4th-order low pass
@@ -72,7 +82,7 @@ static int16 raw_accel_measurement[AXIS_CNT] = {0, 0, 0}; // raw accelerometer m
 static int16 raw_gyro_measurement[AXIS_CNT] = {0, 0, 0}; // raw gyro measurements in body frame
 static float filtered_gyro_measurement[AXIS_CNT] = {0, 0, 0}; // filtered gyro measurements in body frame
 static float filtered_gyro_measurement_jf[AXIS_CNT] = {0, 0, 0}; // euler angle derivatives
-static float setpoints[AXIS_CNT] = {0, 0, 0}; // position targets
+
 
 static int32 summed_raw_gyro[AXIS_CNT] = {0, 0, 0};
 static int32 summed_raw_accel[AXIS_CNT] = {0, 0, 0};
@@ -81,7 +91,7 @@ static int32 summed_torque_cmd[AXIS_CNT] = {0, 0, 0};
 static Uint16 summed_torque_cmd_count = 0;
 
 static Uint16 rate_loop_step = 0;
-static Uint16 telem_step = 0;
+
 
 void InitRateLoops(void)
 {
@@ -111,6 +121,8 @@ void RunRateLoops(ControlBoardParms* cb_parms)
     rate_loop_step++;
 
     switch(rate_loop_step) {
+        case 0: MDBSendTorques(0,torque_type, roll_ang[roll_ang_cnt], el_ang[el_ang_cnt]);
+                break;
         case 1: { // gyro and control loops
             float torque_limit = cb_parms->max_allowed_torque != 0?cb_parms->max_allowed_torque : 32767.0;
             float torque_out[AXIS_CNT];
@@ -118,44 +130,52 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             // Do gyro kinematics correction
             transform_ang_vel_to_joint_rate(filtered_gyro_measurement, filtered_gyro_measurement_jf);
 
-            if (cb_parms->control_type == CONTROL_TYPE_POS) {
-                for (i=0; i<AXIS_CNT; i++) {
-                    float encoder_error = CorrectEncoderError(-cb_parms->encoder_readings[i]);
-                    float pos_gain = CalculatePosHoldGain(encoder_error);
-                    setpoints[i] = pos_gain * encoder_error;
-                }
-            } else {
-                for (i=0; i<AXIS_CNT; i++) {
-                    // low-pass filter to do the upsampling between the 100Hz telemetry and 1kHz rate loop
-                    cb_parms->rate_cmd_inject_filtered[i] += (cb_parms->rate_cmd_inject[i] - cb_parms->rate_cmd_inject_filtered[i]) * RATE_UPSAMPLING_ALPHA;
-                    setpoints[i] = cb_parms->rate_cmd_inject_filtered[i];
-                }
-            }
-
             // Compute the new motor torque commands
-            torque_out[EL] = UpdatePID_Float(EL, setpoints[EL], filtered_gyro_measurement_jf[EL], torque_limit, 1.0f, 0.0f);
-            torque_out[AZ] = UpdatePID_Float(AZ, setpoints[AZ], filtered_gyro_measurement_jf[AZ], torque_limit, cos_phi*cos_phi, 0.0f);
-            torque_out[ROLL] = UpdatePID_Float(ROLL, setpoints[ROLL], filtered_gyro_measurement_jf[ROLL], torque_limit, 1.0f, 0.0f);
-
-            #ifdef PITCH_FILTER_NUM_SECTIONS
-            for(i=0; i<PITCH_FILTER_NUM_SECTIONS; i++) {
-                torque_out[EL] = update_filt2p(&(pitch_torque_filt_params[i]), &(pitch_torque_filt_state[i]), torque_out[EL]);
+            float roll_ang_in_enc,el_ang_in_enc;
+            el_ang_in_enc = (el_ang[el_ang_cnt]/360.0)*ENCODER_COUNTS_PER_REV;
+            roll_ang_in_enc = (roll_ang[roll_ang_cnt]/360.0)*ENCODER_COUNTS_PER_REV;
+            switch(torque_type){
+                case AZ:
+                    torque_out[EL] = SpringMassDamperPass(filtered_gyro_measurement_jf[EL], filtered_gyro_measurement_jf[EL]-el_ang_in_enc,2000.0,0.01);
+                    torque_out[ROLL] = SpringMassDamperPass(filtered_gyro_measurement_jf[ROLL], filtered_gyro_measurement_jf[ROLL]-roll_ang_in_enc,5000.0,0.05);
+                    torque_out[AZ] =  ChirpSignalPass(5000);
+                    if(num_chirps == MAX_NUM_CHIRPS && el_ang_cnt < (NUM_EL_ANGLES-1)) {
+                        num_chirps = 0;
+                        el_ang_cnt++;
+                    } else if(num_chirps == MAX_NUM_CHIRPS && roll_ang_cnt < (NUM_ROLL_ANGLES-1)) {
+                        num_chirps = 0;
+                        el_ang_cnt = 0;
+                        roll_ang_cnt++;
+                    } else if(num_chirps == MAX_NUM_CHIRPS) {
+                        torque_type = ROLL;
+                        num_chirps = 0;
+                        el_ang_cnt = 0;
+                        roll_ang_cnt = 0;
+                    }
+                    break;
+                case ROLL:
+                    torque_out[EL] = SpringMassDamperPass(filtered_gyro_measurement_jf[EL], filtered_gyro_measurement_jf[EL] - el_ang_in_enc,2000.0,0.01);
+                    torque_out[ROLL] = ChirpSignalPass(5000);
+                    torque_out[AZ] =  0;
+                    if(num_chirps == MAX_NUM_CHIRPS && el_ang_cnt < (NUM_EL_ANGLES-1)) {
+                        num_chirps = 0;
+                        el_ang_cnt++;
+                    } else if(num_chirps == MAX_NUM_CHIRPS){
+                        num_chirps = 0;
+                        el_ang_cnt=0;
+                        torque_type = EL;
+                    }
+                    break;
+                case EL:
+                    torque_out[EL] = ChirpSignalPass(3000);
+                    torque_out[ROLL] = SpringMassDamperPass(filtered_gyro_measurement_jf[ROLL], filtered_gyro_measurement_jf[ROLL],5000.0,0.05);
+                    torque_out[AZ] =  0;
+                    if(num_chirps == MAX_NUM_CHIRPS) {
+                        num_chirps = 0;
+                        torque_type = AZ;
+                    }
+                    break;
             }
-            #endif
-
-            #ifdef ROLL_FILTER_NUM_SECTIONS
-            for(i=0; i<ROLL_FILTER_NUM_SECTIONS; i++) {
-                torque_out[ROLL] = update_filt2p(&(roll_torque_filt_params[i]), &(roll_torque_filt_state[i]), torque_out[ROLL]);
-            }
-            #endif
-
-            #ifdef YAW_FILTER_NUM_SECTIONS
-            for(i=0; i<YAW_FILTER_NUM_SECTIONS; i++) {
-                torque_out[AZ] = update_filt2p(&(yaw_torque_filt_params[i]), &(yaw_torque_filt_state[i]), torque_out[AZ]);
-            }
-            #endif
-
-            torque_out[AZ] += torque_out[EL] * sin_phi;
 
             for (i=0; i<AXIS_CNT; i++) {
                 if (torque_out[i] > torque_limit) {
@@ -169,8 +189,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             summed_torque_cmd_count++;
 
             // Send out motor torques
-            MDBSendTorques(torque_out[AZ], torque_out[ROLL]);
-
+            MDBSendTorques(1,torque_out[ROLL],torque_out[EL],torque_out[AZ]);
             // Also update our own torque (fake like we got a value over CAN)
             cb_parms->param_set[CAND_PID_TORQUE].param = (int16)torque_out[EL];
             cb_parms->param_set[CAND_PID_TORQUE].sema = true;
@@ -182,57 +201,10 @@ void RunRateLoops(ControlBoardParms* cb_parms)
                 raw_accel_measurement[i] *= IMUSignMap[i];
                 summed_raw_accel[i] += raw_accel_measurement[i];
             }
+            MDBSendTorques(3,raw_accel_measurement[GyroAxisMap[X_AXIS]],raw_accel_measurement[GyroAxisMap[Y_AXIS]],raw_accel_measurement[GyroAxisMap[Z_AXIS]]);
             break;
         }
-        case 3: { // telem
-            telem_step++;
-            switch(telem_step) {
-                case 1: { // gyro
-                    IntOrFloat delta_angle[AXIS_CNT];
-                    memset(&delta_angle, 0, sizeof(delta_angle));
-                    for (i=0; i<AXIS_CNT; i++) {
-                        delta_angle[i].float_val = GYRO_FORMAT_TO_RAD_S(summed_raw_gyro[i]) / (float)RATE_LOOP_FREQUENCY_HZ;
-                    }
-                    memset(&summed_raw_gyro, 0, sizeof(summed_raw_gyro));
-
-                    SendDeltaAngleTelemetry(delta_angle[AZ].uint32_val,
-                                            delta_angle[EL].uint32_val,
-                                            delta_angle[ROLL].uint32_val);
-
-                    break;
-                }
-                case 2: { // accel
-                    IntOrFloat delta_velocity[AXIS_CNT] = {0, 0, 0};
-                    for (i=0; i<AXIS_CNT; i++) {
-                        delta_velocity[i].float_val = ACCEL_FORMAT_TO_MSS(summed_raw_accel[i]) / ((float)RATE_LOOP_FREQUENCY_HZ/8.0);
-                    }
-                    memset(&summed_raw_accel, 0, sizeof(summed_raw_accel));
-
-                    SendDeltaVelocityTelemetry(delta_velocity[AZ].uint32_val,
-                                               delta_velocity[EL].uint32_val,
-                                               delta_velocity[ROLL].uint32_val);
-
-                    break;
-                }
-                case 3: { // encoder
-                    SendEncoderTelemetry(cb_parms->encoder_readings[AZ], cb_parms->encoder_readings[EL], cb_parms->encoder_readings[ROLL]);
-                    break;
-                }
-                case 4: { // torque
-                    SendTorqueCmdTelemetry(summed_torque_cmd[AZ] / summed_torque_cmd_count,
-                                           summed_torque_cmd[EL] / summed_torque_cmd_count,
-                                           summed_torque_cmd[ROLL] / summed_torque_cmd_count);
-                    memset(&summed_torque_cmd, 0, sizeof(summed_torque_cmd));
-                    summed_torque_cmd_count = 0;
-                    break;
-                }
-                case 10: {
-                    telem_step = 0;
-                    break;
-                }
-            };
-            break;
-        }
+        case 3:
         case 8: {
             rate_loop_step = 0;
             break;
@@ -240,92 +212,31 @@ void RunRateLoops(ControlBoardParms* cb_parms)
     };
 }
 
-static void SendDeltaAngleTelemetry(uint32_t az_gyro, uint32_t el_gyro, uint32_t rl_gyro)
-{
-    Uint8 gyro_az_readings[4];
-    Uint8 gyro_el_readings[4];
-    Uint8 gyro_rl_readings[4];
-    gyro_az_readings[0] = (az_gyro >> 24) & 0x000000FF;
-    gyro_az_readings[1] = (az_gyro >> 16) & 0x000000FF;
-    gyro_az_readings[2] = (az_gyro >> 8) & 0x000000FF;
-    gyro_az_readings[3] = (az_gyro & 0x000000FF);
-    gyro_el_readings[0] = (el_gyro >> 24) & 0x000000FF;
-    gyro_el_readings[1] = (el_gyro >> 16) & 0x000000FF;
-    gyro_el_readings[2] = (el_gyro >> 8) & 0x000000FF;
-    gyro_el_readings[3] = (el_gyro & 0x000000FF);
-    gyro_rl_readings[0] = (rl_gyro >> 24) & 0x000000FF;
-    gyro_rl_readings[1] = (rl_gyro >> 16) & 0x000000FF;
-    gyro_rl_readings[2] = (rl_gyro >> 8) & 0x000000FF;
-    gyro_rl_readings[3] = (rl_gyro & 0x000000FF);
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_ANG_AZ_TELEMETRY, gyro_az_readings, 4);
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_ANG_EL_TELEMETRY, gyro_el_readings, 4);
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_ANG_RL_TELEMETRY, gyro_rl_readings, 4);
+static float SpringMassDamperPass(int16_t ang_vel, int16_t abs_ang,float k,float c) {
+    float generated_torque;
+    generated_torque =-k*2.0*M_PI*abs_ang/ENCODER_COUNTS_PER_REV -c*ang_vel;
+    return generated_torque;
 }
 
-static void SendDeltaVelocityTelemetry(uint32_t az_accel, uint32_t el_accel, uint32_t rl_accel)
-{
-    Uint8 accel_az_readings[4];
-    Uint8 accel_el_readings[4];
-    Uint8 accel_rl_readings[4];
-    accel_az_readings[0] = (az_accel >> 24) & 0x000000FF;
-    accel_az_readings[1] = (az_accel >> 16) & 0x000000FF;
-    accel_az_readings[2] = (az_accel >> 8) & 0x000000FF;
-    accel_az_readings[3] = (az_accel & 0x000000FF);
-    accel_el_readings[0] = (el_accel >> 24) & 0x000000FF;
-    accel_el_readings[1] = (el_accel >> 16) & 0x000000FF;
-    accel_el_readings[2] = (el_accel >> 8) & 0x000000FF;
-    accel_el_readings[3] = (el_accel & 0x000000FF);
-    accel_rl_readings[0] = (rl_accel >> 24) & 0x000000FF;
-    accel_rl_readings[1] = (rl_accel >> 16) & 0x000000FF;
-    accel_rl_readings[2] = (rl_accel >> 8) & 0x000000FF;
-    accel_rl_readings[3] = (rl_accel & 0x000000FF);
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_VEL_AZ_TELEMETRY, accel_az_readings, 4);
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_VEL_EL_TELEMETRY, accel_el_readings, 4);
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_VEL_RL_TELEMETRY, accel_rl_readings, 4);
-}
-
-static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder)
-{
-    Uint8 encoder_readings[6];
-    encoder_readings[0] = (az_encoder >> 8) & 0x00FF;
-    encoder_readings[1] = (az_encoder & 0x00FF);
-    encoder_readings[2] = (el_encoder >> 8) & 0x00FF;
-    encoder_readings[3] = (el_encoder & 0x00FF);
-    encoder_readings[4] = (rl_encoder >> 8) & 0x00FF;
-    encoder_readings[5] = (rl_encoder & 0x00FF);
-
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_ENCODER_TELEMETRY, encoder_readings, 6);
-}
-
-static void SendTorqueCmdTelemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd)
-{
-    Uint8 torque_cmds[6];
-    torque_cmds[0] = (az_torque_cmd >> 8) & 0x00FF;
-    torque_cmds[1] = (az_torque_cmd & 0x00FF);
-    torque_cmds[2] = (el_torque_cmd >> 8) & 0x00FF;
-    torque_cmds[3] = (el_torque_cmd & 0x00FF);
-    torque_cmds[4] = (rl_torque_cmd >> 8) & 0x00FF;
-    torque_cmds[5] = (rl_torque_cmd & 0x00FF);
-
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_TORQUE_CMD_TELEMETRY, torque_cmds, 6);
-}
-
-static float CorrectEncoderError(float raw_error)
-{
-    if (raw_error < -(ENCODER_COUNTS_PER_REV / 2)) {
-        return raw_error + ENCODER_COUNTS_PER_REV;
-    } else if (raw_error > (ENCODER_COUNTS_PER_REV / 2)) {
-        return raw_error - ENCODER_COUNTS_PER_REV;
+static float ChirpSignalPass(uint16_t Magnitude) {
+    float torque;
+    t += 0.001;
+    if (t > 12.0) {
+        t = 0.0;
+        num_chirps++;
+    }
+    if (t < 10) {
+        f = exp(log(5.0) * (1.0 - t/10.0) +
+                log(500.0) * (t/10.0));
+        phi += 2.0*M_PI*f*0.001;
+        if (phi > 2.0*M_PI) {
+            phi -= 2.0*M_PI;
+        }
+        torque = Magnitude*sin(phi);
     } else {
-        return raw_error;
+        torque = 0;
+        phi  = 0;
     }
+    return torque;
 }
 
-static float CalculatePosHoldGain(float encoder_error)
-{
-    float ret = 1.0f + 0.00004f * encoder_error*encoder_error;
-    if (ret > 8) {
-        ret = 8;
-    }
-    return ret;
-}

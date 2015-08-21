@@ -111,6 +111,59 @@ struct cand_message {
     unsigned 		param_request_cnt:4;
 };
 
+#define LOG_PACKET_HEADER	       uint8_t head1, head2, msgid;
+#define LOG_PACKET_HEADER_INIT(id) head1 : HEAD_BYTE1, head2 : HEAD_BYTE2, msgid : id
+// once the logging code is all converted we will remove these from
+// this header
+#define HEAD_BYTE1  0xA3    // Decimal 163
+#define HEAD_BYTE2  0x95    // Decimal 149
+/*
+Format characters in the format string for binary log messages
+  b   : int8_t
+  B   : uint8_t
+  h   : int16_t
+  H   : uint16_t
+  i   : int32_t
+  I   : uint32_t
+  f   : float
+  n   : char[4]
+  N   : char[16]
+  Z   : char[64]
+  c   : int16_t * 100
+  C   : uint16_t * 100
+  e   : int32_t * 100
+  E   : uint32_t * 100
+  L   : int32_t latitude/longitude
+  M   : uint8_t flight mode
+ */
+
+#define SID_FORMAT_MSG 128
+#define SID_DATA_MSG 129
+
+typedef struct {
+    uint8_t head1, head2, msgid;
+    uint8_t type;
+    uint8_t length;
+    char name[4];
+    char format[16];
+    char labels[64];
+}sid_format_t;
+typedef struct {
+    uint8_t head1, head2, msgid;    //3
+    uint8_t  seq_no[4];              //4
+    uint8_t torque_axis;           //1
+    uint8_t  roll_ang;              //1
+    uint8_t  el_ang;                //1
+    uint8_t  torque[2];                //2
+    uint8_t  gyro_x[2];                //2
+    uint8_t  gyro_y[2];                //2
+    uint8_t  gyro_z[2];                //2
+    uint8_t  accel_x[2];               //2
+    uint8_t  accel_y[2];               //2
+    uint8_t  accel_z[2];               //2
+}sysid_t;
+
+
 void ECanInit( void );
 interrupt void eCAN0INT_ISR(void);
 

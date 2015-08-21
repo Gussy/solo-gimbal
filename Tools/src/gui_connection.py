@@ -120,7 +120,7 @@ class connectionUI(object):
             for port in ports:
                 self.ui.cbSerialPort.addItem(str(port))
 
-    def addBaudrates(self, bauds=['230400', '115200']):
+    def addBaudrates(self, bauds=['230400', '115200', '500000']):
         self.ui.cbBaudrate.clear()
         if bauds:
             for baud in bauds:

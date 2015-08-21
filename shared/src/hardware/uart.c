@@ -33,7 +33,7 @@ void init_uart()
     // Set initial baud rate to 230400
     // For 230400, BRR = 9.851, set BRR to 10 for 227272 effective baud rate, for 1.36% deviation from nominal baud rate
     UART_SCI_PORT.SCIHBAUD = 0;
-    UART_SCI_PORT.SCILBAUD = 10;
+    UART_SCI_PORT.SCILBAUD = 4;
 
     // Configure SCI peripheral to free-run when the processor is suspended (debugging at a breakpoint)
     UART_SCI_PORT.SCIPRI.bit.SOFT = 0;

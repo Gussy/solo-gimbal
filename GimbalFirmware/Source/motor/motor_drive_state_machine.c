@@ -250,7 +250,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             } else {
                 // Send a zero torque command to the other axes to generate an encoder response
                 // (we update our own encoder value in a different place)
-                MDBSendTorques(0, 0);
+                MDBSendTorques(0, 0,0,0);
             }
             break;
 

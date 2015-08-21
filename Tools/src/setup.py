@@ -238,6 +238,9 @@ def command_interface():
     port, link = setup_mavlink.open_comm(args.port)
     print("Connecting via port %s" % port)
 
+    if args.file:
+        handle_file(args, link)
+        return
     # Send a heartbeat first to wake up the interface, because mavlink
     link.heartbeat_send(0, 0, 0, 0, 0)
 
@@ -249,10 +252,6 @@ def command_interface():
     else:
         print("No gimbal messages received, exiting.")
         sys.exit(1)
-
-    if args.file:
-        handle_file(args, link)
-        return
 
     if args.eraseapp:
         result = start_bootloader(link)

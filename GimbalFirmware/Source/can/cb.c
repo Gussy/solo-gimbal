@@ -33,22 +33,15 @@ void CBSendStatus( void )
 	cand_tx_multi_response(CAND_ID_ALL_AXES, pids, vals, 2);
 }
 
-void MDBSendTorques(int16 az, int16 roll)
+void MDBSendTorques(int16 msg_id, int16 data1, int16 data2, int16 data3)
 {
-    Uint32 combined[2];
-    int id, packed_id;
+    Uint32 combined[4];
     CAND_ParameterID pid = CAND_PID_TORQUE;
 
-    for (id = 0, packed_id = 0; packed_id < (AXIS_CNT - 1); id++) {
-        if (id == CAND_ID_AZ) {
-            combined[packed_id++] = az;
-        }
-
-        if (id == CAND_ID_ROLL) {
-            combined[packed_id++] = roll;
-        }
-    }
-
+    combined[0] = msg_id;
+    combined[1] = data1;
+    combined[2] = data2;
+    combined[3] = data3;
     cand_tx_multi_param(CAND_ID_ALL_AXES, &pid, combined, 1);
 }
 

@@ -28,7 +28,7 @@ def getSerialPorts(preferred_list=['*USB Serial*','*FTDI*']):
         return ret
     return mavutil.auto_detect_serial(preferred_list=preferred_list)
 
-def open_comm(port=None, baudrate=230400):
+def open_comm(port=None, baudrate=500000):
     link = None
     try:
         if not port:

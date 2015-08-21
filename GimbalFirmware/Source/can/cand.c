@@ -6,6 +6,7 @@
 #include "hardware/HWSpecific.h"
 #include "hardware/device_init.h"
 #include "PM_Sensorless.h"
+#include "hardware/uart.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -15,11 +16,13 @@ static void ECanInitGpio(void);
 static void ECanTx(struct MBOX* outbox);
 static int ECanRx(struct MBOX* inbox);
 
-#define CAN_TX_MBOX_CNT 16
 #define CAN_RX_MBOX_CNT 16
+#define CAN_TX_MBOX_CNT 16
 
 static uint8_t can_tx_mbox = 0;
-static CAND_ParameterID immediate_pid_lookup_buffer[6] = {
+static sysid_t sysid = {0},temp_sysid = {0};
+static uint8_t msg_pass=0,torque_pass=0,gyro_pass=0,accel_pass=0;//,pass=0;
+CAND_ParameterID immediate_pid_lookup_buffer[6] = {
     CAND_PID_TORQUE,
     CAND_PID_POSITION,
     CAND_PID_INVALID,
@@ -335,11 +338,191 @@ CAND_Result cand_rx(struct cand_message * msg)
 					            break;
 					        }
 					    }
-						msg->param_cnt = 1;							// there can only be 1 param in multicast of this type
+                        uint8_t format_id = SID_FORMAT_MSG,format_size = sizeof(sid_format_t), data_size = sizeof(sysid), data_id = SID_DATA_MSG;
+                        uint8_t fmt_name[4]="FMT";
+                        uint8_t fmt_fmt[16] = "BBnNZ";
+                        uint8_t fmt_labels[64] = "Type,Length,Name,Format,Columns";
 
+                        uint8_t data_name[4]="SID";
+                        uint8_t data_fmt[16] = "IBbbhhhhhhh";
+
+                        uint8_t data_labels[64] = "seq,torque_axis,roll,el,torque,gy_x,gy_y,gy_z,acc_x,acc_y,acc_z";
+                        uint8_t head_bytes[] = {HEAD_BYTE1,HEAD_BYTE2,128};
+                        static uint8_t format_sent = 0;
+                        static uint32_t seq_no = 0;
+                        //char tdata[10];
+                        //uint8_t tdata_size;
 						switch (CAND_GetSenderID()) {
 							case CAND_ID_AZ:
-							    msg->param[0] = mbox.MDL.word.HI_WORD;
+								    if(format_sent == 0){
+				                        uart_send_data((Uint8*)&head_bytes,sizeof(head_bytes));
+				                        uart_send_data((Uint8*)&format_id,sizeof(format_id));
+				                        uart_send_data((Uint8*)&format_size,sizeof(format_size));
+				                        uart_send_data((Uint8*)fmt_name,sizeof(fmt_name));
+				                        uart_send_data((Uint8*)fmt_fmt,sizeof(fmt_fmt));
+				                        uart_send_data((Uint8*)fmt_labels,sizeof(fmt_labels));
+				                        
+				                        uart_send_data((Uint8*)&head_bytes,sizeof(head_bytes));
+				                        uart_send_data((Uint8*)&data_id,sizeof(data_id));
+				                        uart_send_data((Uint8*)&data_size,sizeof(data_size));
+				                        uart_send_data((Uint8*)data_name,sizeof(data_name));
+				                        uart_send_data((Uint8*)data_fmt,sizeof(data_fmt));
+				                        uart_send_data((Uint8*)data_labels,sizeof(data_labels));
+				                        format_sent++;
+                                    }
+
+							        switch(mbox.MDL.word.HI_WORD){
+							            case 0:
+							                    msg->param_cnt = 0;
+							                    seq_no++;
+							                    msg_pass++;
+							                    //pass++;
+							                    //tdata_size = sprintf(tdata,"0,%d ",msg_pass);
+							                    //uart_send_data((Uint8*)tdata,tdata_size);
+							                    if(msg_pass > 1) {
+							                        temp_sysid.seq_no[3] = (seq_no>>24)&0xff;
+							                        temp_sysid.seq_no[2] = (seq_no>>16)&0xff;
+							                        temp_sysid.seq_no[1] = (seq_no>>8)&0xff;
+							                        temp_sysid.seq_no[0] = seq_no&0xff;
+							                        temp_sysid.torque_axis = mbox.MDL.word.LOW_WORD;
+							                        temp_sysid.roll_ang = mbox.MDH.word.HI_WORD;
+							                        temp_sysid.el_ang = mbox.MDH.word.LOW_WORD;
+							                        break;
+							                    }
+
+							                    sysid.seq_no[3] = (seq_no>>24)&0xff;
+							                    sysid.seq_no[2] = (seq_no>>16)&0xff;
+							                    sysid.seq_no[1] = (seq_no>>8)&0xff;
+							                    sysid.seq_no[0] = seq_no&0xff;
+							                    
+							                    sysid.torque_axis = mbox.MDL.word.LOW_WORD;
+							                    sysid.roll_ang = mbox.MDH.word.HI_WORD;
+							                    sysid.el_ang = mbox.MDH.word.LOW_WORD;
+							                    break;
+							             case 1:
+							                    msg->param_cnt = 1;
+							                    msg->param[0] = mbox.MDH.word.LOW_WORD;
+							                    torque_pass++;
+							                    //pass++;
+							                    //tdata_size = sprintf(tdata,"1,%d ",torque_pass);
+							                    //uart_send_data((Uint8*)tdata,tdata_size);
+							                    if(torque_pass>1) {
+							                        switch(sysid.torque_axis){
+							                            case ROLL: temp_sysid.torque[1] = mbox.MDL.word.LOW_WORD>>8;
+							                                    temp_sysid.torque[0] = mbox.MDL.word.LOW_WORD&0xff;
+							                                    break;
+							                            case EL: temp_sysid.torque[1] = mbox.MDH.word.HI_WORD>>8;
+							                                    temp_sysid.torque[0] = mbox.MDH.word.HI_WORD&0xff;
+							                                    break;
+							                            case AZ: temp_sysid.torque[1] = mbox.MDH.word.LOW_WORD>>8;
+							                                    temp_sysid.torque[0] = mbox.MDH.word.LOW_WORD&0xff;
+							                                    break;
+							                         }
+							                         break;
+							                    }
+							                    
+							                    switch(sysid.torque_axis){
+							                        case ROLL: sysid.torque[1] = mbox.MDL.word.LOW_WORD>>8;
+							                                sysid.torque[0] = mbox.MDL.word.LOW_WORD&0xff;
+							                                break;
+							                        case EL: sysid.torque[1] = mbox.MDH.word.HI_WORD>>8;
+							                                sysid.torque[0] = mbox.MDH.word.HI_WORD&0xff;
+							                                break;
+							                        case AZ: sysid.torque[1] = mbox.MDH.word.LOW_WORD>>8;
+							                                sysid.torque[0] = mbox.MDH.word.LOW_WORD&0xff;
+							                                break;
+							                    }
+
+							                    break;
+							              case 2:
+							                    msg->param_cnt = 0;
+							                    gyro_pass++;
+							                    //pass++;
+							                    //tdata_size = sprintf(tdata,"2,%d ",gyro_pass);
+							                    //uart_send_data((Uint8*)tdata,tdata_size);
+							                    if(gyro_pass > 1) {
+							                        temp_sysid.gyro_x[1] = mbox.MDL.word.LOW_WORD>>8;
+							                        temp_sysid.gyro_x[0] = mbox.MDL.word.LOW_WORD & 0xff;
+							                        
+							                        temp_sysid.gyro_y[1] = mbox.MDH.word.HI_WORD>>8;
+							                        temp_sysid.gyro_y[0] = mbox.MDH.word.HI_WORD & 0xff;
+							                        
+							                        temp_sysid.gyro_z[1] = mbox.MDH.word.LOW_WORD>>8;
+							                        temp_sysid.gyro_z[0] = mbox.MDH.word.LOW_WORD & 0xff;
+							                        break;
+							                    }
+							                    sysid.gyro_x[1] = mbox.MDL.word.LOW_WORD>>8;
+							                    sysid.gyro_x[0] = mbox.MDL.word.LOW_WORD & 0xff;
+							                    
+							                    sysid.gyro_y[1] = mbox.MDH.word.HI_WORD>>8;
+							                    sysid.gyro_y[0] = mbox.MDH.word.HI_WORD & 0xff;
+							                    
+							                    sysid.gyro_z[1] = mbox.MDH.word.LOW_WORD>>8;
+							                    sysid.gyro_z[0] = mbox.MDH.word.LOW_WORD & 0xff;
+							                    
+
+							                    break;
+							              case 3:
+							                    msg->param_cnt = 0;
+							                    accel_pass++;
+							                    //pass++;
+							                    //tdata_size = sprintf(tdata,"3,%d ",accel_pass);
+							                    //uart_send_data((Uint8*)tdata,tdata_size);
+							                    if(accel_pass > 1) {
+							                        temp_sysid.accel_x[1] = mbox.MDL.word.LOW_WORD>>8;
+							                        temp_sysid.accel_x[0] = mbox.MDL.word.LOW_WORD & 0xff;
+							                        
+							                        temp_sysid.accel_y[1] = mbox.MDH.word.HI_WORD>>8;
+							                        temp_sysid.accel_y[0] = mbox.MDH.word.HI_WORD&0xff;
+							                        
+							                        temp_sysid.accel_z[1] = mbox.MDH.word.LOW_WORD>>8;
+							                        temp_sysid.accel_z[0] = mbox.MDH.word.LOW_WORD&0xff;
+							                        
+							                        break;
+							                    }
+							                    sysid.accel_x[1] = mbox.MDL.word.LOW_WORD>>8;
+							                    sysid.accel_x[0] = mbox.MDL.word.LOW_WORD & 0xff;
+							                    
+							                    sysid.accel_y[1] = mbox.MDH.word.HI_WORD>>8;
+							                    sysid.accel_y[0] = mbox.MDH.word.HI_WORD&0xff;
+							                    
+							                    sysid.accel_z[1] = mbox.MDH.word.LOW_WORD>>8;
+							                    sysid.accel_z[0] = mbox.MDH.word.LOW_WORD&0xff;
+
+							                    break;
+							         }
+							         if(millis() <=8000){
+		                                accel_pass = 0;
+		                                gyro_pass = 0;
+		                                torque_pass = 0;
+		                                msg_pass = 0;    
+		                             }
+							         if(accel_pass == 0 || gyro_pass == 0 || torque_pass == 0 || msg_pass == 0) {
+							            break;
+							         }
+							         
+		                            sysid.head1 = HEAD_BYTE1;
+		                            sysid.head2 = HEAD_BYTE2;
+		                            sysid.msgid = 129;
+                                    if(accel_pass == gyro_pass && gyro_pass == msg_pass && gyro_pass == torque_pass) {
+                                        accel_pass=0;
+                                        gyro_pass=0;
+                                        msg_pass=0;
+                                        torque_pass=0;
+		                                if(millis() >=8000){
+		                                    //tdata_size = sprintf(tdata," %ld,%d\n", seq_no,sysid.roll_ang);
+                                            //uart_send_data((Uint8*)tdata,tdata_size);
+                                            //pass = 0;
+		                                    uart_send_data((Uint8*)&sysid, sizeof(sysid));
+		                                }
+                                            
+                                    } else {
+                                        accel_pass--;
+                                        gyro_pass--;
+                                        msg_pass--;
+                                        torque_pass--;
+                                        memcpy(&sysid, &temp_sysid,sizeof(temp_sysid));
+                                    }
 							    break;
 
 							case CAND_ID_ROLL:
