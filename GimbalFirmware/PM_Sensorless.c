@@ -87,22 +87,11 @@ Uint8 feedback_decimator;
 
 Uint32 IsrTicker = 0;
 Uint32 GyroISRTicker = 0;
-Uint16 GyroISRTime = 0;
-Uint32 RateLoopStartTimestamp = 0;
-Uint32 RateLoopEndTimestamp = 0;
-Uint32 RateLoopElapsedTime = 0;
-Uint32 MainWorkStartTimestamp = 0;
-Uint32 MainWorkEndTimestamp = 0;
-Uint32 MainWorkElapsedTime = 0;
-Uint32 MaxMainWorkElapsedTime = 0;
-Uint16 BackTicker = 0;
 
-Uint16 DRV_RESET = 0;
-
-volatile Uint16 EnableCAN = FALSE;
-volatile Uint8 GyroDataReadyFlag = FALSE;
-volatile Uint8 TorqueDemandAvailableFlag = FALSE;
-Uint8 GyroDataOverflowLatch = FALSE;
+volatile bool EnableCAN = false;
+volatile bool GyroDataReadyFlag = false;
+volatile bool TorqueDemandAvailableFlag = false;
+volatile bool GyroDataOverflowLatch = false;
 Uint32 GyroDataOverflowCount = 0;
 
 Uint16 IndexTimeOut = 0;
@@ -246,6 +235,8 @@ Uint32 MissedInterrupts = 0;
 
 Uint32 can_init_fault_message_resend_counter = 0;
 
+static Uint32 OldIsrTicker = 0;
+
 void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
@@ -349,6 +340,11 @@ void main(void)
 	    axis_parms.enable_flag = TRUE;
 	}
 
+	// Un-assert the DRV chip RESET signal to make the power stage active
+	GpioDataRegs.GPASET.bit.GPIO1 = 1;
+	GpioDataRegs.GPASET.bit.GPIO3 = 1;
+	GpioDataRegs.GPASET.bit.GPIO5 = 1;
+
     InitInterrupts();
 
     DEBUG_OFF;
@@ -361,51 +357,25 @@ void main(void)
 		(*Alpha_State_Ptr)();	// jump to an Alpha state (A0,B0,...)
 		//===========================================================
 
-		//Put the DRV chip in RESET if we want the power stage inactive
-		if(DRV_RESET)
-		{
-			GpioDataRegs.GPACLEAR.bit.GPIO1 = 1;
-			GpioDataRegs.GPACLEAR.bit.GPIO3 = 1;
-			GpioDataRegs.GPACLEAR.bit.GPIO5 = 1;
-		}
-		else
-		{
-			GpioDataRegs.GPASET.bit.GPIO1 = 1;
-			GpioDataRegs.GPASET.bit.GPIO3 = 1;
-			GpioDataRegs.GPASET.bit.GPIO5 = 1;
-		}
-
 		// Process and respond to any waiting CAN messages
 		if (EnableCAN) {
 		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, &load_ap_state_info);
 		}
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
-		if (board_hw_id == AZ) {
-		    mavlink_state_machine(&mavlink_gimbal_info, &motor_drive_parms);
-		}
-
-		MainWorkStartTimestamp = CpuTimer2Regs.TIM.all;
+        if (board_hw_id == AZ) {
+            mavlink_state_machine(&mavlink_gimbal_info, &motor_drive_parms);
+        }
 
         // If we're the elevation board, check to see if we need to run the rate loops
         if (board_hw_id == EL && control_board_parms.enabled) {
             // If there is new gyro data to be processed, and all axes have been homed (the rate loop has been enabled), run the rate loops
-            if (GyroDataReadyFlag == TRUE) {
-                GyroDataReadyFlag = FALSE;
-
-                RateLoopStartTimestamp = CpuTimer2Regs.TIM.all;
+            if (GyroDataReadyFlag) {
+                GyroDataReadyFlag = false;
 
                 DEBUG_ON;
                 RunRateLoops(&control_board_parms);
                 DEBUG_OFF;
-
-                RateLoopEndTimestamp = CpuTimer2Regs.TIM.all;
-
-                if (RateLoopEndTimestamp < RateLoopStartTimestamp) {
-                    RateLoopElapsedTime = RateLoopStartTimestamp - RateLoopEndTimestamp;
-                } else {
-                    RateLoopElapsedTime = (mSec50 - RateLoopEndTimestamp) + RateLoopStartTimestamp;
-                }
 
                 MotorCommutationLoop(&control_board_parms,
                                      &axis_parms,
@@ -417,42 +387,31 @@ void main(void)
 
             // Ensure that MainISR is disabled.
             ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = 0;
-        } else {
+        } else if(OldIsrTicker != IsrTicker || TorqueDemandAvailableFlag) {
             // If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
-            static Uint32 OldIsrTicker = 0;
-            if (OldIsrTicker != IsrTicker || TorqueDemandAvailableFlag) {
-                if (OldIsrTicker != IsrTicker && OldIsrTicker != (IsrTicker-1)) {
-                    MissedInterrupts++;
-                }
-                OldIsrTicker = IsrTicker;
-                TorqueDemandAvailableFlag = FALSE;
-
-                MotorCommutationLoop(&control_board_parms,
-                        &axis_parms,
-                        &motor_drive_parms,
-                        &encoder_parms,
-                        &power_filter_parms,
-                        &load_ap_state_info);
+            if (OldIsrTicker != IsrTicker && OldIsrTicker != (IsrTicker - 1)) {
+                MissedInterrupts++;
             }
+
+            OldIsrTicker = IsrTicker;
+            TorqueDemandAvailableFlag = false;
+
+            DEBUG_ON;
+            MotorCommutationLoop(&control_board_parms,
+                                 &axis_parms,
+                                 &motor_drive_parms,
+                                 &encoder_parms,
+                                 &power_filter_parms,
+                                 &load_ap_state_info);
+            DEBUG_OFF;
 
             // Ensure that MainISR is enabled.
             ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = 1;
         }
 
-        // Update any parameters that have changed due to CAN messages
-        ProcessParamUpdates(&control_board_parms, &debug_data);
-
-		// Measure total main work timing
-		MainWorkEndTimestamp = CpuTimer2Regs.TIM.all;
-
-        if (MainWorkEndTimestamp < MainWorkStartTimestamp) {
-            MainWorkElapsedTime = MainWorkStartTimestamp - MainWorkEndTimestamp;
-        } else {
-            MainWorkElapsedTime = (mSec50 - MainWorkEndTimestamp) + MainWorkStartTimestamp;
-        }
-
-        if (MainWorkElapsedTime > MaxMainWorkElapsedTime) {
-            MaxMainWorkElapsedTime = MainWorkElapsedTime;
+        if (board_hw_id == AZ) {
+            // Update any parameters that have changed due to CAN messages
+            ProcessParamUpdates(&control_board_parms, &debug_data);
         }
 	}
 } //END MAIN CODE
@@ -507,7 +466,7 @@ void C0(void)
 
 	Alpha_State_Ptr = &A0;	// Back to State A0
 
-	EnableCAN = TRUE;
+	EnableCAN = true;
 }
 
 
@@ -788,10 +747,10 @@ interrupt void GyroIntISR(void)
     // Notify the main loop that there is new gyro data to process
     // If the flag is already set, it means the previous gyro data has not yet been processed,
     // so set an overflow latch to flag the condition
-    if (GyroDataReadyFlag == FALSE) {
-        GyroDataReadyFlag = TRUE;
+    if (!GyroDataReadyFlag) {
+        GyroDataReadyFlag = true;
     } else {
-        GyroDataOverflowLatch = TRUE;
+        GyroDataOverflowLatch = true;
         GyroDataOverflowCount++;
     }
 
@@ -833,15 +792,17 @@ interrupt void MainISR(void)
 
 interrupt void eCAN0INT_ISR(void)
 {
+    DEBUG_ON;
     int16_t mailbox = ECanaRegs.CANGIF0.bit.MIV0;
     if(ECanaRegs.CANGIF0.bit.GMIF0 == 1 && mailbox == 31) {
-        TorqueDemandAvailableFlag = TRUE;
+        TorqueDemandAvailableFlag = true;
     }
 
     // Reenable core interrupts and CAN int from PIE module
     PieCtrlRegs.PIEACK.bit.ACK9 = 1; // Enables PIE to drive a pulse into the CPU
     IER |= M_INT9; // Enable INT9
     EINT;
+    DEBUG_OFF;
 }
 
 void power_down_motor()
