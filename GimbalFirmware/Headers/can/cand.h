@@ -112,7 +112,6 @@ struct cand_message {
 };
 
 void ECanInit( void );
-interrupt void eCAN0INT_ISR(void);
 
 CAND_SenderID CAND_GetSenderID( void );
 CAND_Result cand_init( void );
