@@ -5,11 +5,6 @@
 #include "hardware/encoder.h"
 #include "motor/motor_commutation.h"
 
-Uint32 TorqueLoopStartTime = 0;
-Uint32 TorqueLoopEndTime = 0;
-Uint32 TorqueLoopElapsedTime = 0;
-Uint32 MaxTorqueLoopElapsedTime = 0;
-
 #define ADC_MIN_REASONABLE_VALUE 50
 
 void MotorCommutationLoop(ControlBoardParms* cb_parms,
@@ -19,8 +14,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         AveragePowerFilterParms* power_filter_parms,
         LoadAxisParmsStateInfo* load_ap_state_info)
 {
-    TorqueLoopStartTime = CpuTimer2Regs.TIM.all;
-
     if (axis_parms->run_motor) {
         // Do the encoder calculations no matter what state we're in (we care in a bunch of states, so no reason to duplicate the work)
         UpdateEncoderReadings(encoder_parms, cb_parms);
@@ -136,26 +129,10 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
             EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
             EPwm2Regs.CMPA.half.CMPA=0; // PWM 2A - PhaseB
             EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
-        } else if (0) { // TODO: For testing, disable motor outputs on EL and ROLL
-            EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
-            EPwm2Regs.CMPA.half.CMPA=0; // PWM 2A - PhaseB
-            EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
         } else { // Otherwise, set PWM outputs appropriately
             EPwm1Regs.CMPA.half.CMPA=md_parms->pwm_gen_parms.PWM1out;  // PWM 1A - PhaseA
             EPwm2Regs.CMPA.half.CMPA=md_parms->pwm_gen_parms.PWM2out;  // PWM 2A - PhaseB
             EPwm3Regs.CMPA.half.CMPA=md_parms->pwm_gen_parms.PWM3out;  // PWM 3A - PhaseC
         }
-    }
-
-    TorqueLoopEndTime = CpuTimer2Regs.TIM.all;
-
-    if (TorqueLoopEndTime < TorqueLoopStartTime) {
-        TorqueLoopElapsedTime = TorqueLoopStartTime - TorqueLoopEndTime;
-    } else {
-        TorqueLoopElapsedTime = (mSec50 - TorqueLoopEndTime) + TorqueLoopStartTime;
-    }
-
-    if (TorqueLoopElapsedTime > MaxTorqueLoopElapsedTime) {
-        MaxTorqueLoopElapsedTime = TorqueLoopElapsedTime;
     }
 }
