@@ -1,8 +1,7 @@
 #include "f2806x_int8.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
-
-#include "F2806x_Examples.h"
+#include "hardware/timing.h"
 
 void InitSpiPort(SpiPortDescriptor* desc)
 {

@@ -1,5 +1,4 @@
 #include "PeripheralHeaderIncludes.h"
-#include "F2806x_Examples.h" // For DELAY_US
 
 #include "can/cand_BitFields.h"
 #include "can/cand.h"
