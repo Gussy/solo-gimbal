@@ -119,6 +119,7 @@ typedef union {
 interrupt void MainISR(void);
 interrupt void GyroIntISR(void);
 interrupt void MotorDriverFaultIntISR();
+interrupt void eCAN0INT_ISR(void);
 
 int GetIndexTimeOut(void);
 int GetAxisHomed(void);
