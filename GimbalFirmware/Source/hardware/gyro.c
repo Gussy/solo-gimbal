@@ -1,5 +1,5 @@
 #include "hardware/gyro.h"
-#include "F2806x_Examples.h" // For DELAY_US
+#include "hardware/timing.h"
 
 #define INTER_COMMAND_DELAY 2
 
