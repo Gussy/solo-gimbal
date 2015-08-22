@@ -21,7 +21,7 @@ struct CURRENT_FLASH_PARAM_STRUCT flash_params =
 
         //  {EL, AZ, ROLL}
         .torque_pid_kp = 3.50,
-        .torque_pid_ki = 1600.00,
+        .torque_pid_ki = 3600.00,
         .torque_pid_kr = 7.00,
 
         //  {EL, AZ, ROLL}
