@@ -1,5 +1,8 @@
+#ifndef __CURRENT_CONTROLLER_H__
+#define __CURRENT_CONTROLLER_H__
 // returns a duty cycle from 0 to 1
 #include "hardware/timing.h"
+#include <stdbool.h>
 
 struct current_controller_param_t {
     float Kp;        // Feedback proportional coefficient
@@ -29,4 +32,7 @@ struct current_controller_t {
     struct current_controller_state_t state;
 };
 
+void reset_current_controller(struct current_controller_t* controller);
 void run_current_controller(struct current_controller_t* controller);
+
+#endif // __CURRENT_CONTROLLER_H__

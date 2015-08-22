@@ -67,13 +67,13 @@ void Process_CAN_Messages(AxisParms* axis_parms,
     case CAND_RX_COMMAND:
         switch (msg.command) {
         case CAND_CMD_INIT:
-            axis_parms->enable_flag = TRUE;
+            set_axis_enable(true);
             md_parms->motor_drive_state = STATE_INIT;
             break;
 
         case CAND_CMD_ENABLE:
             if (md_parms->md_initialized) {
-                axis_parms->enable_flag = TRUE;
+                set_axis_enable(true);
                 md_parms->motor_drive_state = STATE_RUNNING;
             } else {
                 md_parms->motor_drive_state_after_initialisation = STATE_RUNNING;
@@ -94,8 +94,8 @@ void Process_CAN_Messages(AxisParms* axis_parms,
             break;
 
         case CAND_CMD_RESET:
-        	axis_parms->enable_flag = FALSE;
-        	md_parms->motor_drive_state = STATE_DISABLED;
+            set_axis_enable(false);
+            md_parms->motor_drive_state = STATE_DISABLED;
         	if (GetBoardHWID() != AZ) {
         		// just making sure we are off
         		power_down_motor();
@@ -348,16 +348,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
             // Query messages can contain up to 8 parameter requests, for now, handle
             // one at a time. (can can send multiple later if this becomes an issue)
             switch (msg.param_request_id[msg.param_request_cnt-1]) {
-            case CAND_PID_BIT:
-                if (msg.param_repeat) {
-                    axis_parms->BIT_heartbeat_enable = TRUE;
-                    axis_parms->BIT_heartbeat_decimate = 0;
-                } else {
-                    CBSendStatus();
-                    axis_parms->BIT_heartbeat_enable = FALSE;
-                }
-                break;
-
             default:
                 AxisFault(CAND_FAULT_UNSUPPORTED_PARAMETER, CAND_FAULT_TYPE_INFO, cb_parms, md_parms);
                 break;

@@ -14,7 +14,7 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         AveragePowerFilterParms* power_filter_parms,
         LoadAxisParmsStateInfo* load_ap_state_info)
 {
-    if (axis_parms->run_motor) {
+    if (get_axis_enable()) {
         // Do the encoder calculations no matter what state we're in (we care in a bunch of states, so no reason to duplicate the work)
         UpdateEncoderReadings(encoder_parms, cb_parms);
 
@@ -64,14 +64,22 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         // ------------------------------------------------------------------------------
         // Limit the requested current to prevent burning up the motor
         md_parms->pid_id.param.I = md_parms->park_xform_parms.Ds;
-        run_current_controller(&(md_parms->pid_id));
+        if (axis_parms->enable_flag) {
+            run_current_controller(&(md_parms->pid_id));
+        } else {
+            reset_current_controller(&(md_parms->pid_id));
+        }
 
         // ------------------------------------------------------------------------------
         //    Connect inputs of the iq PID controller and call the PID controller macro
         // ------------------------------------------------------------------------------
         // Limit the requested current to prevent burning up the motor
         md_parms->pid_iq.param.I = md_parms->park_xform_parms.Qs;
-        run_current_controller(&(md_parms->pid_iq));
+        if (axis_parms->enable_flag) {
+            run_current_controller(&(md_parms->pid_iq));
+        } else {
+            reset_current_controller(&(md_parms->pid_iq));
+        }
 
         // ------------------------------------------------------------------------------
         //  Connect inputs of the INV_PARK module and call the inverse park trans. macro

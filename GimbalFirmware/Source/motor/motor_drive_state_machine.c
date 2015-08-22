@@ -50,9 +50,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_id.param.Idem = 0;
             md_parms->pid_iq.param.Idem = 0;
 
-            // Enable periodic transmission of the BIT CAN message
-            axis_parms->BIT_heartbeat_enable = TRUE;
-
             // If we're the AZ board, transmit an init message to the other boards
             if (GetBoardHWID() == AZ) {
                 cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_INIT);
@@ -217,7 +214,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 axis_parms->blink_state = BLINK_INIT;
             } else {
                 md_parms->md_initialized = TRUE;
-                axis_parms->enable_flag = TRUE;
+                set_axis_enable(true);
                 md_parms->motor_drive_state = md_parms->motor_drive_state_after_initialisation;
             }
             break;
@@ -245,7 +242,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             	// control until externally commanded to
                 cb_parms->enabled = TRUE;
                 md_parms->md_initialized = TRUE;
-                axis_parms->enable_flag = TRUE;
+                set_axis_enable(true);
                 md_parms->motor_drive_state = md_parms->motor_drive_state_after_initialisation;
             } else {
                 // Send a zero torque command to the other axes to generate an encoder response

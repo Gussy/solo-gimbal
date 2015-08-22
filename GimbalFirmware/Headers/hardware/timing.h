@@ -2,6 +2,7 @@
 #define HARDWARE_TIMING_H_
 
 #include <inttypes.h>
+#include <stddef.h>
 
 /*-----------------------------------------------------------------------------
       Specify the clock rate of the CPU (SYSCLKOUT) in nS.
@@ -29,7 +30,18 @@
 
 #define DELAY_US(A) DSP28x_usDelay(((((long double) A * 1000.0L) / (long double)CPU_RATE) - 9.0L) / 5.0L)
 
+typedef void (*task_func_t)(void);
+struct SchedTask {
+    task_func_t task_func;
+    uint16_t interval_ms;
+    uint32_t last_run_ms;
+};
+
+void scheduler_init(struct SchedTask* tasks, size_t num_tasks);
+void run_scheduler();
 uint32_t millis(void);
 uint32_t micros(void);
+
+
 
 #endif /* HARDWARE_TIMING_H_ */

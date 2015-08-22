@@ -1,6 +1,12 @@
 #include "control/current_controller.h"
 #include "hardware/timing.h"
 
+void reset_current_controller(struct current_controller_t* controller) {
+    controller->state.integrator = 0.0;
+    controller->state.output = 0.0;
+    controller->state.last_run_us = micros();
+}
+
 void run_current_controller(struct current_controller_t* controller) {
     uint32_t tnow_us = micros();
     float dt = (tnow_us-controller->state.last_run_us)*1.0e-6;
