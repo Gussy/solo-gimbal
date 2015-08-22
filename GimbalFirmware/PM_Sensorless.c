@@ -40,41 +40,26 @@
 
 #define getTempSlope() (*(int (*)(void))0x3D7E82)();
 #define getTempOffset() (*(int (*)(void))0x3D7E85)();
-// State Machine function prototypes
-//------------------------------------
-// Alpha states
-void A0(void);	//state A0
-void B0(void);	//state B0
-void C0(void);	//state C0
 
-// A branch states
-void A1(void);	//state A1
-void A2(void);	//state A2
-void A3(void);	//state A3
+void check_rate_cmd_timeout(void);
+void update_LEDs(void);
+void check_gp_responses(void);
+void send_mav_heartbeat(void);
+void send_can_heartbeat(void);
+void read_temp_and_voltage(void);
 
-// B branch states
-void B1(void);	//state B1
-void B2(void);	//state B2
-void B3(void);	//state B3
-
-// C branch states
-void C1(void);	//state C1
-void C2(void);	//state C2
-void C3(void);	//state C3
-
-// Variable declarations
-void (*Alpha_State_Ptr)(void);	// Base States pointer
-void (*A_Task_Ptr)(void);		// State pointer A branch
-void (*B_Task_Ptr)(void);		// State pointer B branch
-void (*C_Task_Ptr)(void);		// State pointer C branch
+struct SchedTask scheduled_tasks[] = {
+    {.task_func=&check_rate_cmd_timeout,        .interval_ms=3,     .last_run_ms=1},
+    {.task_func=&gp_interface_state_machine,    .interval_ms=3,     .last_run_ms=2},
+    {.task_func=&update_LEDs,                   .interval_ms=150,   .last_run_ms=0},
+    {.task_func=&check_gp_responses,            .interval_ms=150,   .last_run_ms=1},
+    {.task_func=&read_temp_and_voltage,         .interval_ms=150,   .last_run_ms=2},
+    {.task_func=&send_can_heartbeat,            .interval_ms=1000,  .last_run_ms=(uint32_t)-1000},
+    {.task_func=&send_mav_heartbeat,            .interval_ms=1000,  .last_run_ms=1}
+};
 
 // Used for running BackGround in flash, and ISR in RAM
 extern Uint16 *RamfuncsLoadStart, *RamfuncsLoadEnd, *RamfuncsRunStart;
-
-int16	VTimer0[4];			// Virtual Timers slaved off CPU Timer 0 (A events)
-int16	VTimer1[4]; 		// Virtual Timers slaved off CPU Timer 1 (B events)
-int16	VTimer2[4]; 		// Virtual Timers slaved off CPU Timer 2 (C events)
-int16	SerialCommsTimer;
 
 // Global variables used in this system
 int16 DegreesC;
@@ -83,16 +68,13 @@ int16 TempSlope;
 Uint8 board_hw_id = 0;
 float DcBusVoltage = 0.0f;
 
-Uint8 feedback_decimator;
+uint16_t A_count;
 
 Uint32 IsrTicker = 0;
 Uint32 GyroISRTicker = 0;
 
-volatile bool EnableCAN = false;
 volatile bool GyroDataReadyFlag = false;
 volatile bool TorqueDemandAvailableFlag = false;
-volatile bool GyroDataOverflowLatch = false;
-Uint32 GyroDataOverflowCount = 0;
 
 Uint16 IndexTimeOut = 0;
 
@@ -111,9 +93,6 @@ EncoderParms encoder_parms = {
 AxisParms axis_parms = {
     .blink_state = BLINK_NO_COMM,
     .enable_flag = FALSE,
-    .run_motor = FALSE,
-    .BIT_heartbeat_enable = FALSE,
-    .BIT_heartbeat_decimate = 0,
     .all_init_params_recvd = FALSE,
     .other_axis_hb_recvd = {FALSE, FALSE, FALSE},
     .other_axis_init_params_recvd = {FALSE, FALSE, FALSE},
@@ -272,17 +251,7 @@ void main(void)
 	    InitAxisParmsLoader(&load_ap_state_info);
 	}
 
-    // Timing sync for slow background tasks
-    // Timer period definitions found in device specific PeripheralHeaderIncludes.h
-	CpuTimer0Regs.PRD.all =  mSec1;		// A tasks
-	CpuTimer1Regs.PRD.all =  mSec5;		// B tasks
-	CpuTimer2Regs.PRD.all =  mSec50;	// C tasks
-
-    // Tasks State-machine init
-	Alpha_State_Ptr = &A0;
-	A_Task_Ptr = &A1;
-	B_Task_Ptr = &B1;
-	C_Task_Ptr = &C1;
+	scheduler_init(scheduled_tasks, sizeof(scheduled_tasks)/sizeof(struct SchedTask));
 
     // Initialize PWM module
 	//add 1 as math in pwm macro does math and truncates
@@ -337,7 +306,7 @@ void main(void)
 	TempSlope = getTempSlope();
 
 	if (board_hw_id == AZ) {
-	    axis_parms.enable_flag = TRUE;
+        set_axis_enable(true);
 	}
 
 	// Un-assert the DRV chip RESET signal to make the power stage active
@@ -352,19 +321,19 @@ void main(void)
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
 	{
-		// State machine entry & exit point
-		//===========================================================
-		(*Alpha_State_Ptr)();	// jump to an Alpha state (A0,B0,...)
-		//===========================================================
+        run_scheduler();
 
-		// Process and respond to any waiting CAN messages
-		if (EnableCAN) {
-		    Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, &load_ap_state_info);
-		}
+        // Process and respond to any waiting CAN messages
+        Process_CAN_Messages(&axis_parms, &motor_drive_parms, &control_board_parms, &load_ap_state_info);
 
 		// If we're the AZ board, we also have to process messages from the MAVLink interface
         if (board_hw_id == AZ) {
             mavlink_state_machine(&mavlink_gimbal_info, &motor_drive_parms);
+        }
+
+        if (board_hw_id == EL) {
+            // Disable the MainISR when the pitch axis is timing off the gyro
+            ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = control_board_parms.enabled ? 0 : 1;
         }
 
         // If we're the elevation board, check to see if we need to run the rate loops
@@ -384,9 +353,6 @@ void main(void)
                                      &power_filter_parms,
                                      &load_ap_state_info);
             }
-
-            // Ensure that MainISR is disabled.
-            ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = 0;
         } else if(OldIsrTicker != IsrTicker || TorqueDemandAvailableFlag) {
             // If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
             if (OldIsrTicker != IsrTicker && OldIsrTicker != (IsrTicker - 1)) {
@@ -404,9 +370,6 @@ void main(void)
                                  &power_filter_parms,
                                  &load_ap_state_info);
             DEBUG_OFF;
-
-            // Ensure that MainISR is enabled.
-            ECap1Regs.ECEINT.bit.CTR_EQ_PRD1 = 1;
         }
 
         if (board_hw_id == AZ) {
@@ -416,107 +379,36 @@ void main(void)
 	}
 } //END MAIN CODE
 
-//=================================================================================
-//	STATE-MACHINE SEQUENCING AND SYNCRONIZATION FOR SLOW BACKGROUND TASKS
-//=================================================================================
-
-//--------------------------------- FRAMEWORK -------------------------------------
-void A0(void)
-{
-	// loop rate synchronizer for A-tasks
-	if(CpuTimer0Regs.TCR.bit.TIF == 1) {
-		CpuTimer0Regs.TCR.bit.TIF = 1;	// clear flag
-		//-----------------------------------------------------------
-		(*A_Task_Ptr)();		// jump to an A Task (A1,A2,A3,...)
-		//-----------------------------------------------------------
-
-		VTimer0[0]++;			// virtual timer 0, instance 0 (spare)
-		SerialCommsTimer++;
-	}
-
-	Alpha_State_Ptr = &B0;		// Comment out to allow only A tasks
+bool get_axis_enable(void) {
+    return axis_parms.enable_flag;
 }
 
-void B0(void)
-{
-	// loop rate synchronizer for B-tasks
-	if(CpuTimer1Regs.TCR.bit.TIF == 1) {
-		CpuTimer1Regs.TCR.bit.TIF = 1;				// clear flag
+void set_axis_enable(bool axis_enable) {
+    if (axis_parms.enable_flag != axis_enable) {
+        if (axis_enable) {
+            // Enable the motor driver
+            GpioDataRegs.GPBSET.bit.GPIO39 = 1;
 
-		//-----------------------------------------------------------
-		(*B_Task_Ptr)();		// jump to a B Task (B1,B2,B3,...)
-		//-----------------------------------------------------------
-		VTimer1[0]++;			// virtual timer 1, instance 0 (spare)
-	}
+            EALLOW;
+            EPwm1Regs.TZCLR.bit.OST=1;
+            EPwm2Regs.TZCLR.bit.OST=1;
+            EPwm3Regs.TZCLR.bit.OST=1;
+            EDIS;
+        } else {
+            // Disable the motor driver
+            GpioDataRegs.GPBCLEAR.bit.GPIO39 = 1;
 
-	Alpha_State_Ptr = &C0;		// Allow C state tasks
+            EALLOW;
+            EPwm1Regs.TZFRC.bit.OST=1;
+            EPwm2Regs.TZFRC.bit.OST=1;
+            EPwm3Regs.TZFRC.bit.OST=1;
+            EDIS;
+        }
+        axis_parms.enable_flag = axis_enable;
+    }
 }
 
-void C0(void)
-{
-	// loop rate synchronizer for C-tasks
-	if(CpuTimer2Regs.TCR.bit.TIF == 1) {
-		CpuTimer2Regs.TCR.bit.TIF = 1;				// clear flag
-
-		//-----------------------------------------------------------
-		(*C_Task_Ptr)();		// jump to a C Task (C1,C2,C3,...)
-		//-----------------------------------------------------------
-		VTimer2[0]++;			//virtual timer 2, instance 0 (spare)
-	}
-
-	Alpha_State_Ptr = &A0;	// Back to State A0
-
-	EnableCAN = true;
-}
-
-
-//=================================================================================
-//	A - TASKS (executed in every 1 msec)
-//=================================================================================
-//--------------------------------------------------------
-void A1(void) // Used to enable and disable the motor
-//--------------------------------------------------------
-{
-	if (axis_parms.enable_flag == FALSE) {
-
-	    // Disable the motor driver
-	    GpioDataRegs.GPBCLEAR.bit.GPIO39 = 1;
-
-		axis_parms.run_motor = FALSE;
-		
-		EALLOW;
-	 	EPwm1Regs.TZFRC.bit.OST=1;
-		EPwm2Regs.TZFRC.bit.OST=1;
-		EPwm3Regs.TZFRC.bit.OST=1;
-	 	EDIS;
-	} else if ((axis_parms.enable_flag == TRUE) && (axis_parms.run_motor == FALSE)) {
-        // Reset ID and IQ pid controller state
-        memset(&(motor_drive_parms.pid_id.state), 0, sizeof(motor_drive_parms.pid_id.state));
-        memset(&(motor_drive_parms.pid_iq.state), 0, sizeof(motor_drive_parms.pid_iq.state));
-        motor_drive_parms.pid_id.state.V_filtered = motor_drive_parms.pid_id.param.V;
-        motor_drive_parms.pid_iq.state.V_filtered = motor_drive_parms.pid_iq.param.V;
-
-        // Enable the motor driver
-        GpioDataRegs.GPBSET.bit.GPIO39 = 1;
-
-        axis_parms.run_motor = TRUE;
-
-        EALLOW;
-        EPwm1Regs.TZCLR.bit.OST=1;
-        EPwm2Regs.TZCLR.bit.OST=1;
-        EPwm3Regs.TZCLR.bit.OST=1;
-        EDIS;
-	}
-
-	//-------------------
-	//the next time CpuTimer0 'counter' reaches Period value go to A2
-	A_Task_Ptr = &A2;
-	//-------------------
-}
-
-//-----------------------------------------------------------------
-void A2(void) // SPARE (not used)
-//-----------------------------------------------------------------
+void check_rate_cmd_timeout(void)
 {
     // If we miss more than 10 rate commands in a row (roughly 100ms),
     // disable the gimbal axes.  They'll be re-enabled when we get a new
@@ -532,76 +424,7 @@ void A2(void) // SPARE (not used)
             }
         }
     }
-
-	//-------------------
-	//the next time CpuTimer0 'counter' reaches Period value go to A3
-	A_Task_Ptr = &A3;
-	//-------------------
 }
-
-int standalone_enable_counts = 0;
-int standalone_enable_counts_max = 2667;
-Uint16 standalone_enabled = FALSE;
-
-int init_counts = 0;
-int init_counts_max = 333;
-
-//-----------------------------------------
-void A3(void) // SPARE (not used)
-//-----------------------------------------
-{
-    // Need to call the gopro interface state machine periodically
-    gp_interface_state_machine();
-
-	//-----------------
-	//the next time CpuTimer0 'counter' reaches Period value go to A1
-	A_Task_Ptr = &A1;
-	//-----------------
-}
-
-
-//=================================================================================
-//	B - TASKS (executed in every 5 msec)
-//=================================================================================
-
-//----------------------------------- USER ----------------------------------------
-
-//----------------------------------------
-void B1(void) // SPARE
-//----------------------------------------
-{
-	//-----------------
-	//the next time CpuTimer1 'counter' reaches Period value go to B2
-	B_Task_Ptr = &B2;	
-	//-----------------
-}
-
-//----------------------------------------
-void B2(void) //  SPARE
-//----------------------------------------
-{
-	//-----------------
-	//the next time CpuTimer1 'counter' reaches Period value go to B3
-	B_Task_Ptr = &B3;
-	//-----------------
-}
-
-//----------------------------------------
-void B3(void) //  SPARE
-//----------------------------------------
-{
-	//-----------------
-	//the next time CpuTimer1 'counter' reaches Period value go to B1
-	B_Task_Ptr = &B1;	
-	//-----------------
-}
-
-
-//=================================================================================
-//	C - TASKS (executed in every 50 msec)
-//=================================================================================
-
-//--------------------------------- USER ------------------------------------------
 
 static uint16_t beacon_startup_counter = 0;
 static const uint16_t beacon_startup_delay_cycles = 14;
@@ -610,9 +433,7 @@ static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0
 static const LED_RGBA rgba_green = {.red = 0, .green = 0xff, .blue = 0, .alpha = 0xff};
 static const LED_RGBA rgba_blue = {.red = 0, .green = 0, .blue = 0xff, .alpha = 0xff};
 
-//----------------------------------------
-void C1(void) // Update Status LEDs
-//----------------------------------------
+void update_LEDs(void)
 {
     // Handle the beacon LED
     if(beacon_startup_counter < beacon_startup_delay_cycles) {
@@ -655,29 +476,17 @@ void C1(void) // Update Status LEDs
 	if (board_hw_id == EL) {
         led_update_state();
 	}
-
-	//the next time CpuTimer2 'counter' reaches Period value go to C2
-	C_Task_Ptr = &C2;	
-	//-----------------
 }
 
-//----------------------------------------
-void C2(void) // Send periodic BIT message and send fault messages if necessary
-//----------------------------------------
+void check_gp_responses(void)
 {
-	// Send the BIT message once every ~1sec
-	if (axis_parms.BIT_heartbeat_enable && (axis_parms.BIT_heartbeat_decimate-- <= 0)) {
-		CBSendStatus();
-		axis_parms.BIT_heartbeat_decimate = 6;	// ~1 Hz
-	}
-
-	// If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
-	if (board_hw_id == EL) {
-		if (gp_new_heartbeat_available()) {
-			// If there is a heartbeat status, get it and send out over CAN.
+    // If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
+    if (board_hw_id == EL) {
+        if (gp_new_heartbeat_available()) {
+            // If there is a heartbeat status, get it and send out over CAN.
             GPHeartbeatStatus status = gp_heartbeat_status();
-			cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)status);
-		}
+            cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)status);
+        }
 
         gp_transaction_t *txn;
         if (gp_get_completed_transaction(&txn)) {
@@ -699,18 +508,22 @@ void C2(void) // Send periodic BIT message and send fault messages if necessary
 
             cand_tx_response(CAND_ID_AZ, can_id, response_buffer);
         }
-	}
-
-	//the next time CpuTimer2 'counter' reaches Period value go to C3
-	C_Task_Ptr = &C3;	
-	//-----------------
+    }
 }
 
-int mavlink_heartbeat_counter = 0;
+void send_mav_heartbeat(void)
+{
+    if (board_hw_id == AZ) {
+        send_mavlink_heartbeat(mavlink_gimbal_info.mav_state, mavlink_gimbal_info.mav_mode);
+    }
+}
 
-//-----------------------------------------
-void C3(void) // Read temperature and handle stopping motor on receipt of fault messages
-//-----------------------------------------
+void send_can_heartbeat(void)
+{
+    CBSendStatus();
+}
+
+void read_temp_and_voltage(void)
 {
     DcBusVoltage = (((float)AdcResult.ADCRESULT14 / 4096.0f) * 3.30f) * VBUS_DIV_MULTIPLIER; // DC Bus voltage meas.
 	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset) * (long)TempSlope))>>14) + 1)>>1;
@@ -722,37 +535,12 @@ void C3(void) // Read temperature and handle stopping motor on receipt of fault 
 	// software start of conversion for temperature measurement and Bus Voltage Measurement
 	AdcRegs.ADCSOCFRC1.bit.SOC14 = 1;
 	AdcRegs.ADCSOCFRC1.bit.SOC15 = 1;
-
-	if (board_hw_id == AZ) {
-		// If we're the AZ axis, send the MAVLink heartbeat message at (roughly) 1Hz
-		if (++mavlink_heartbeat_counter > MAVLINK_HEARTBEAT_PERIOD) {
-			send_mavlink_heartbeat(mavlink_gimbal_info.mav_state, mavlink_gimbal_info.mav_mode);
-			mavlink_heartbeat_counter = 0;
-
-		    /* Useful for debugging temperature anhd voltage calculations
-		    char msg[30];
-		    snprintf(msg, sizeof(msg), "DegC %i Vbus %i", DegreesC, (uint16_t)(DcBusVoltage*100));
-		    send_mavlink_statustext(msg, MAV_SEVERITY_ALERT);*/
-		}
-	}
-
-	//-----------------
-	//the next time CpuTimer2 'counter' reaches Period value go to C1
-	C_Task_Ptr = &C1;	
-	//-----------------
 }
 
 interrupt void GyroIntISR(void)
 {
     // Notify the main loop that there is new gyro data to process
-    // If the flag is already set, it means the previous gyro data has not yet been processed,
-    // so set an overflow latch to flag the condition
-    if (!GyroDataReadyFlag) {
-        GyroDataReadyFlag = true;
-    } else {
-        GyroDataOverflowLatch = true;
-        GyroDataOverflowCount++;
-    }
+    GyroDataReadyFlag = true;
 
     // Acknowledge interrupt to receive more interrupts from PIE group 1
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
@@ -820,11 +608,6 @@ int GetIndexTimeOut(void)
 int GetAxisHomed(void)
 {
     return control_board_parms.axes_homed[board_hw_id];
-}
-
-Uint16 GetEnableFlag(void)
-{
-    return axis_parms.enable_flag;
 }
 
 Uint16 GetAxisParmsLoaded(void)

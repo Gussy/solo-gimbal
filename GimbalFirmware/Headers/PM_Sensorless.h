@@ -68,10 +68,7 @@ typedef struct {
 
 typedef struct {
     BlinkState blink_state;
-    volatile Uint16 enable_flag;
-    Uint16 run_motor;
-    Uint8 BIT_heartbeat_enable;
-    int BIT_heartbeat_decimate;
+    Uint16 enable_flag;
     Uint16 all_init_params_recvd;
     Uint16 other_axis_hb_recvd[AXIS_CNT];
     Uint16 other_axis_init_params_recvd[AXIS_CNT];
@@ -123,7 +120,8 @@ interrupt void eCAN0INT_ISR(void);
 
 int GetIndexTimeOut(void);
 int GetAxisHomed(void);
-Uint16 GetEnableFlag(void);
+bool get_axis_enable(void);
+void set_axis_enable(bool enable_flag);
 Uint16 GetAxisParmsLoaded(void);
 void power_down_motor(void);
 void EnableAZAxis(void);

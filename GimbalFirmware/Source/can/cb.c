@@ -23,7 +23,7 @@ void CBSendStatus( void )
 	vals[0] |= (GpioDataRegs.GPBDAT.bit.GPIO50) ? 0 : CAND_BIT_OTW;
 	vals[0] |= (GetIndexTimeOut() < IndexTimeOutLimit) ? 0 : CAND_BIT_IDEXTMOUT;
 	//vals[0] |= (GetIndexSyncFlag() > 0)?0:CAND_BIT_INDEXNF; // No index flag in this hw, figure out if we need something else
-	vals[0] |= (GetEnableFlag()) ? 0 : CAND_BIT_NOT_ENABLED;
+	vals[0] |= (get_axis_enable()) ? 0 : CAND_BIT_NOT_ENABLED;
 	vals[0] |= (GetAxisHomed() > 0) ? CAND_BIT_AXIS_HOMED : 0;
 	vals[0] |= (GetAxisParmsLoaded()) ? CAND_BIT_AXIS_PARMS_RECVD : 0;
 
@@ -50,21 +50,6 @@ void MDBSendTorques(int16 az, int16 roll)
     }
 
     cand_tx_multi_param(CAND_ID_ALL_AXES, &pid, combined, 1);
-}
-
-void MDBRequestBIT(CAND_DestinationID did)
-{
-    CAND_SID sid;
-    Uint8 payload = CAND_PID_BIT;
-
-    sid.sidWord = 0;
-    sid.all.m_id = CAND_MID_PARAMETER_QUERY;
-    sid.param_query.d_id = did;
-    sid.param_query.s_id = CAND_GetSenderID();
-    sid.param_query.dir = CAND_DIR_QUERY;
-    sid.param_query.repeat = 1;
-
-    cand_tx(sid, &payload, 1);
 }
 
 void CANSendCalibrationProgress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status)
