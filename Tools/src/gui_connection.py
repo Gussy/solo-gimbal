@@ -160,7 +160,7 @@ class connectionUI(object):
         version = setup_factory_pub.read_software_version(self.link, timeout=timeout)
         if version != None:
             major, minor, rev = int(version[0]), int(version[1]), int(version[2])
-            if major >= 0 and minor >= 18:
+            if (major == 0 and minor >= 18) or major >= 1:
                 serial_number = setup_factory_pub.get_serial_number(self.link)
                 assembly_time = setup_factory_pub.get_assembly_time(self.link)
             else:
