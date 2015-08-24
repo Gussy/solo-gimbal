@@ -55,7 +55,7 @@ struct SchedTask scheduled_tasks[] = {
     {.task_func=&update_LEDs,                   .interval_ms=150,   .last_run_ms=0},
     {.task_func=&check_gp_responses,            .interval_ms=150,   .last_run_ms=1},
     {.task_func=&read_temp_and_voltage,         .interval_ms=150,   .last_run_ms=2},
-    {.task_func=&send_can_heartbeat,            .interval_ms=1000,  .last_run_ms=(uint32_t)-1000},
+    {.task_func=&send_can_heartbeat,            .interval_ms=1000,  .last_run_ms=0},
     {.task_func=&send_mav_heartbeat,            .interval_ms=1000,  .last_run_ms=1}
 };
 
@@ -92,7 +92,7 @@ EncoderParms encoder_parms = {
 };
 
 AxisParms axis_parms = {
-    .blink_state = BLINK_NO_COMM,
+    .blink_state = BLINK_INIT,
     .enable_flag = FALSE,
     .all_init_params_recvd = FALSE,
     .other_axis_hb_recvd = {FALSE, FALSE, FALSE},
@@ -448,56 +448,52 @@ void check_rate_cmd_timeout(void)
     }
 }
 
-static uint16_t beacon_startup_counter = 0;
-static const uint16_t beacon_startup_delay_cycles = 14;
-static BlinkState last_axis_state = BLINK_ERROR; // Inisialise with BLINK_ERROR so the first cycle of C1 detects a changed state
-static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
-static const LED_RGBA rgba_green = {.red = 0, .green = 0xff, .blue = 0, .alpha = 0xff};
-static const LED_RGBA rgba_blue = {.red = 0, .green = 0, .blue = 0xff, .alpha = 0xff};
-
 void update_LEDs(void)
 {
-    // Handle the beacon LED
-    if(beacon_startup_counter < beacon_startup_delay_cycles) {
-        beacon_startup_counter++;
-    } else if(board_hw_id == EL && last_axis_state != axis_parms.blink_state) {
-        switch (axis_parms.blink_state) {
-            case BLINK_NO_COMM:
-                led_set_mode(LED_MODE_BLINK_FOREVER, rgba_blue, 0);
-                break;
+    static BlinkState last_blink_state = BLINK_INIT; // Initialise with BLINK_ERROR so the first cycle detects a changed state
+    static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
+    static const LED_RGBA rgba_green = {.red = 0, .green = 0xff, .blue = 0, .alpha = 0xff};
+    static const LED_RGBA rgba_blue = {.red = 0, .green = 0, .blue = 0xff, .alpha = 0xff};
 
-            case BLINK_INIT:
-                led_set_mode(LED_MODE_FADE_IN, rgba_green, 0);
-                break;
+    if(board_hw_id == EL) {
+        if (axis_parms.blink_state == BLINK_INIT && millis() > 5000 && !(axis_parms.other_axis_hb_recvd[AZ] && axis_parms.other_axis_hb_recvd[ROLL])) {
+            axis_parms.blink_state = BLINK_NO_COMM;
+        }
+        if (axis_parms.blink_state != last_blink_state) {
+            switch (axis_parms.blink_state) {
+                case BLINK_NO_COMM:
+                    led_set_mode(LED_MODE_BLINK_FOREVER, rgba_blue, 0);
+                    break;
 
-            case BLINK_RUNNING:
-                led_set_mode(LED_MODE_BREATHING, rgba_green, 0);
-                break;
+                case BLINK_INIT:
+                    led_set_mode(LED_MODE_FADE_IN, rgba_green, 0);
+                    break;
 
-            case BLINK_ERROR:
-                led_set_mode(LED_MODE_BLINK_FOREVER, rgba_red, 0);
-                break;
+                case BLINK_RUNNING:
+                    led_set_mode(LED_MODE_BREATHING, rgba_green, 0);
+                    break;
 
-            case BLINK_ERROR_UNRECOVERABLE:
-                led_set_mode(LED_MODE_SOLID, rgba_red, 0);
-                break;
+                case BLINK_ERROR:
+                    led_set_mode(LED_MODE_BLINK_FOREVER, rgba_red, 0);
+                    break;
 
-            case BLINK_CALIBRATING:
-                led_set_mode(LED_MODE_DISCO, rgba_red, 0);
-                break;
+                case BLINK_ERROR_UNRECOVERABLE:
+                    led_set_mode(LED_MODE_SOLID, rgba_red, 0);
+                    break;
 
-            case BLINK_OVERRIDE:
-            default:
-                break;
+                case BLINK_CALIBRATING:
+                    led_set_mode(LED_MODE_DISCO, rgba_red, 0);
+                    break;
+
+                case BLINK_OVERRIDE:
+                default:
+                    break;
+            }
+            last_blink_state = axis_parms.blink_state;
         }
 
-        last_axis_state = axis_parms.blink_state;
-    }
-
-	// Periodically call Gimbal Beacon state machine
-	if (board_hw_id == EL) {
         led_update_state();
-	}
+    }
 }
 
 void check_gp_responses(void)
