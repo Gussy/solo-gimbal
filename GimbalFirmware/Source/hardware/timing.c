@@ -10,10 +10,6 @@
 
 static uint64_t cycle_count_on_tick = 0;
 
-void timer_init(void) {
-    CpuTimer0Regs.PRD.all = UINT32_MAX;
-}
-
 bool check_timer_tick(void) {
     if (CpuTimer0Regs.TCR.bit.TIF == 1) {
         CpuTimer0Regs.TCR.bit.TIF = 1;
@@ -21,6 +17,12 @@ bool check_timer_tick(void) {
         return true;
     }
     return false;
+}
+
+void timer_init(void) {
+    CpuTimer0Regs.TIM.all = CpuTimer0Regs.PRD.all = UINT32_MAX;
+    check_timer_tick();
+    cycle_count_on_tick = 0;
 }
 
 uint64_t cycles_64(void) {
