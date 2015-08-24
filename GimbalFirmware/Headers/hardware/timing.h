@@ -37,11 +37,14 @@ struct SchedTask {
     uint32_t last_run_ms;
 };
 
-void scheduler_init(struct SchedTask* tasks, size_t num_tasks);
-void run_scheduler();
+// timing functions
+void timer_init(void);
+uint64_t cycles_64(void);
 uint32_t millis(void);
 uint32_t micros(void);
 
-
+// scheduler
+void scheduler_init(struct SchedTask* tasks, size_t num_tasks);
+void run_scheduler();
 
 #endif /* HARDWARE_TIMING_H_ */

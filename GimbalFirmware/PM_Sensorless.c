@@ -250,8 +250,8 @@ void main(void)
 	if ((board_hw_id == EL) || (board_hw_id == ROLL)) {
 	    InitAxisParmsLoader(&load_ap_state_info);
 	}
-
-	scheduler_init(scheduled_tasks, sizeof(scheduled_tasks)/sizeof(struct SchedTask));
+    timer_init();
+    scheduler_init(scheduled_tasks, sizeof(scheduled_tasks)/sizeof(struct SchedTask));
 
     // Initialize PWM module
 	//add 1 as math in pwm macro does math and truncates
