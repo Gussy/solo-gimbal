@@ -4,33 +4,11 @@
 #include "hardware/pll.h"
 #include "hardware/watchdog.h"
 #include "hardware/interrupts.h"
-#include "flash/flash.h"
 
 static void calibrate_adc();
 static void init_xtal();
 static void init_peripheral_clocks();
 static void init_gpio();
-
-void check_force_bl_pins() {
-#ifndef BOOTLOADER
-    // short the tx and rx pads next to the HDMI port to force bootloader
-    // set GPIO29 to output low
-    GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;
-    GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;
-    GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
-
-    // set GPIO28 to input, pull up
-    GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;
-    GpioCtrlRegs.GPADIR.bit.GPIO28 = 0;
-    GpioCtrlRegs.GPAPUD.bit.GPIO28 = 0;
-
-    // check GPIO28 for low signal
-    if (GpioDataRegs.GPADAT.bit.GPIO28 == 0) {
-        erase_our_flash();
-        watchdog_immediate_reset();
-    }
-#endif // BOOTLOADER
-}
 
 void DeviceInit()
 {
@@ -56,7 +34,6 @@ void DeviceInit()
 
    EALLOW; // below registers are "protected", allow access.
    init_peripheral_clocks();
-   check_force_bl_pins();
    init_gpio();
    EDIS;	// Disable register access
 }
