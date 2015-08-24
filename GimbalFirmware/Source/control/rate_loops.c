@@ -8,6 +8,9 @@
 #include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
 
+// set this to 1 or 2
+#define RATE_LOOP_KHZ 1
+
 static const int TorqueSignMap[AXIS_CNT] = {
         1, // EL
         -1, // AZ
@@ -226,14 +229,14 @@ void RunRateLoops(ControlBoardParms* cb_parms)
                     summed_torque_cmd_count = 0;
                     break;
                 }
-                case 10: {
+                case 10*RATE_LOOP_KHZ: {
                     telem_step = 0;
                     break;
                 }
             };
             break;
         }
-        case 8: {
+        case 8/RATE_LOOP_KHZ: {
             rate_loop_step = 0;
             break;
         }
