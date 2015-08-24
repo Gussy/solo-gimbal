@@ -20,9 +20,9 @@ struct CURRENT_FLASH_PARAM_STRUCT flash_params =
         .commutation_icept = { 0.0, 0.0, 0.0 },
 
         //  {EL, AZ, ROLL}
-        .torque_pid_kp = 3.50,
-        .torque_pid_ki = 3600.00,
-        .torque_pid_kr = 7.00,
+        .torque_pid_kp = 0.0,
+        .torque_pid_ki = 0.0,
+        .torque_pid_kr = 0.0,
 
         //  {EL, AZ, ROLL}
         .rate_pid_p = { 0.0, 0.0, 0.0 },

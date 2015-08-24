@@ -338,13 +338,6 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
     // Copy the parameters we need from our local copy of the flash params struct
     // into the runtime locations they need to be at
     GimbalAxis my_axis = (GimbalAxis)GetBoardHWID();
-    md_parms->pid_id.param.Kp = flash_params.torque_pid_kp;
-    md_parms->pid_id.param.Ki = flash_params.torque_pid_ki;
-    md_parms->pid_id.param.R = flash_params.torque_pid_kr;
-
-    md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp;
-    md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki;
-    md_parms->pid_iq.param.R = flash_params.torque_pid_kr;
 
     if (my_axis == EL) {
         // Turn HeroBus charging on or off based on setting in flash
@@ -371,6 +364,39 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
             rate_pid_loop_float[ROLL].gainI = flash_params.rate_pid_i[ROLL];
             rate_pid_loop_float[ROLL].gainD = flash_params.rate_pid_d[ROLL];
             rate_pid_loop_float[ROLL].dTermAlpha = flash_params.rate_pid_d_alpha[ROLL];
+        } else {
+            rate_pid_loop_float[AZ].gainP = DEFAULT_GMB_YAW_P;
+            rate_pid_loop_float[AZ].gainI = DEFAULT_GMB_YAW_I;
+            rate_pid_loop_float[AZ].gainD = DEFAULT_GMB_YAW_D;
+            rate_pid_loop_float[AZ].dTermAlpha = DEFAULT_GMB_YAW_D_A;
+
+            rate_pid_loop_float[EL].gainP = DEFAULT_GMB_PITCH_P;
+            rate_pid_loop_float[EL].gainI = DEFAULT_GMB_PITCH_I;
+            rate_pid_loop_float[EL].gainD = DEFAULT_GMB_PITCH_D;
+            rate_pid_loop_float[EL].dTermAlpha = DEFAULT_GMB_PITCH_D_A;
+
+            rate_pid_loop_float[ROLL].gainP = DEFAULT_GMB_ROLL_P;
+            rate_pid_loop_float[ROLL].gainI = DEFAULT_GMB_ROLL_I;
+            rate_pid_loop_float[ROLL].gainD = DEFAULT_GMB_ROLL_D;
+            rate_pid_loop_float[ROLL].dTermAlpha = DEFAULT_GMB_ROLL_D_A;
         }
+    }
+
+    if (flash_params.use_custom_gains == 1.0) {
+        md_parms->pid_id.param.Kp = flash_params.torque_pid_kp;
+        md_parms->pid_id.param.Ki = flash_params.torque_pid_ki;
+        md_parms->pid_id.param.R = flash_params.torque_pid_kr;
+
+        md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp;
+        md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki;
+        md_parms->pid_iq.param.R = flash_params.torque_pid_kr;
+    } else {
+        md_parms->pid_id.param.Kp = DEFAULT_GMB_TRQ_P;
+        md_parms->pid_id.param.Ki = DEFAULT_GMB_TRQ_I;
+        md_parms->pid_id.param.R = DEFAULT_GMB_TRQ_R;
+
+        md_parms->pid_iq.param.Kp = DEFAULT_GMB_TRQ_P;
+        md_parms->pid_iq.param.Ki = DEFAULT_GMB_TRQ_I;
+        md_parms->pid_iq.param.R = DEFAULT_GMB_TRQ_R;
     }
 }
