@@ -58,7 +58,7 @@ def show(link):
     swver = setup_factory_pub.read_software_version(link, timeout=2)
     if swver != None:
         major, minor, rev = int(swver[0]), int(swver[1]), int(swver[2])
-        if major >= 0 and minor >= 18:
+        if (major == 0 and minor >= 18) or major > 0:
             serial_number = setup_factory_pub.get_serial_number(link)
             assembly_time = setup_factory_pub.get_assembly_time(link)
         else:

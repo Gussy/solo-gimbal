@@ -221,6 +221,8 @@ def command_interface():
         parser.add_argument("--lifetest", help="run the gimbal life test", action='store_true')
         parser.add_argument("--limp", help="disable position hold mode", action='store_true')
         parser.add_argument("--nolimp", help="enable position hold mode", action='store_true')
+        parser.add_argument("--hard", help="enable low torque mode", action='store_true')
+        parser.add_argument("--soft", help="disable low torque mode", action='store_true')
     if setup_home:
         parser.add_argument("-j", "--jointcalibration", help="Calibrate joint angles", action='store_true')
         parser.add_argument("-g", "--gyrocalibration", help="Calibrate gyros", action='store_true')
@@ -237,6 +239,10 @@ def command_interface():
     # Open the serial port
     port, link = setup_mavlink.open_comm(args.port)
     print("Connecting via port %s" % port)
+
+    if link is None:
+        print("Failed to open port %s" % port)
+        sys.exit(1)
 
     # Send a heartbeat first to wake up the interface, because mavlink
     link.heartbeat_send(0, 0, 0, 0, 0)
@@ -361,6 +367,14 @@ def command_interface():
 
         if args.nolimp:
             setup_param.pos_hold_enable(link)
+            return
+
+        if args.hard:
+            setup_param.low_torque_mode(link, False)
+            return
+
+        if args.soft:
+            setup_param.low_torque_mode(link, True)
             return
 
     if setup_home:
