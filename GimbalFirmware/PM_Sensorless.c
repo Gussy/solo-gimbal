@@ -26,6 +26,7 @@
 #include "parameters/mavlink_parameter_interface.h"
 #include "flash/flash.h"
 #include "flash/flash_init.h"
+#include "hardware/watchdog.h"
 #include "control/rate_loops.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "gopro/gopro_interface.h"
@@ -220,6 +221,27 @@ void main(void)
 {
 	DeviceInit();	// Device Life support & GPIO
     board_hw_id = GetBoardHWID();
+
+    if (board_hw_id == AZ) {
+        // short the tx and rx pads next to the HDMI port to force bootloader
+        // set GPIO29 to output low
+        GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;
+        GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;
+        GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
+
+        // set GPIO28 to input, pull up
+        GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;
+        GpioCtrlRegs.GPADIR.bit.GPIO28 = 0;
+        GpioCtrlRegs.GPAPUD.bit.GPIO28 = 0;
+
+        // check GPIO28 for low signal
+        if (GpioDataRegs.GPADAT.bit.GPIO28 == 0) {
+            erase_our_flash();
+            watchdog_immediate_reset();
+        }
+
+        DeviceInit();
+    }
 
     // Program the EEPROM on every boot
     if(board_hw_id == EL) {
