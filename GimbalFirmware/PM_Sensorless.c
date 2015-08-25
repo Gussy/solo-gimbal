@@ -42,12 +42,12 @@
 #define getTempSlope() (*(int (*)(void))0x3D7E82)();
 #define getTempOffset() (*(int (*)(void))0x3D7E85)();
 
-void check_rate_cmd_timeout(void);
-void update_LEDs(void);
-void check_gp_responses(void);
-void send_mav_heartbeat(void);
-void send_can_heartbeat(void);
-void read_temp_and_voltage(void);
+static void check_rate_cmd_timeout(void);
+static void update_LEDs(void);
+static void check_gp_responses(void);
+static void send_mav_heartbeat(void);
+static void send_can_heartbeat(void);
+static void read_temp_and_voltage(void);
 
 struct SchedTask scheduled_tasks[] = {
     {.task_func=&check_rate_cmd_timeout,        .interval_ms=3,     .last_run_ms=1},
@@ -64,20 +64,15 @@ extern Uint16 *RamfuncsLoadStart, *RamfuncsLoadEnd, *RamfuncsRunStart;
 
 // Global variables used in this system
 int16 DegreesC;
-int16 TempOffset;
-int16 TempSlope;
-Uint8 board_hw_id = 0;
-float DcBusVoltage = 0.0f;
+static int16 TempOffset;
+static int16 TempSlope;
+static Uint8 board_hw_id = 0;
+static float DcBusVoltage = 0.0f;
 
-uint16_t A_count;
+static Uint32 IsrTicker = 0;
 
-Uint32 IsrTicker = 0;
-Uint32 GyroISRTicker = 0;
-
-volatile bool GyroDataReadyFlag = false;
-volatile bool TorqueDemandAvailableFlag = false;
-
-Uint16 IndexTimeOut = 0;
+static volatile bool GyroDataReadyFlag = false;
+static volatile bool TorqueDemandAvailableFlag = false;
 
 EncoderParms encoder_parms = {
     .raw_theta = 0,
@@ -211,10 +206,7 @@ MotorDriveParms motor_drive_parms = {
     .md_initialized = FALSE
 };
 
-Uint32 MissedInterrupts = 0;
-
-Uint32 can_init_fault_message_resend_counter = 0;
-
+static Uint32 can_init_fault_message_resend_counter = 0;
 static Uint32 OldIsrTicker = 0;
 
 void main(void)
@@ -377,10 +369,6 @@ void main(void)
             }
         } else if(OldIsrTicker != IsrTicker || TorqueDemandAvailableFlag) {
             // If the 10kHz loop timer has ticked since the last time we ran the motor commutation loop, run the commutation loop
-            if (OldIsrTicker != IsrTicker && OldIsrTicker != (IsrTicker - 1)) {
-                MissedInterrupts++;
-            }
-
             OldIsrTicker = IsrTicker;
             TorqueDemandAvailableFlag = false;
 
@@ -430,7 +418,7 @@ void set_axis_enable(bool axis_enable) {
     }
 }
 
-void check_rate_cmd_timeout(void)
+static void check_rate_cmd_timeout(void)
 {
     // If we miss more than 10 rate commands in a row (roughly 100ms),
     // disable the gimbal axes.  They'll be re-enabled when we get a new
@@ -448,7 +436,7 @@ void check_rate_cmd_timeout(void)
     }
 }
 
-void update_LEDs(void)
+static void update_LEDs(void)
 {
     static BlinkState last_blink_state = BLINK_INIT; // Initialise with BLINK_ERROR so the first cycle detects a changed state
     static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
@@ -496,7 +484,7 @@ void update_LEDs(void)
     }
 }
 
-void check_gp_responses(void)
+static void check_gp_responses(void)
 {
     // If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
     if (board_hw_id == EL) {
@@ -529,19 +517,19 @@ void check_gp_responses(void)
     }
 }
 
-void send_mav_heartbeat(void)
+static void send_mav_heartbeat(void)
 {
     if (board_hw_id == AZ) {
         send_mavlink_heartbeat(mavlink_gimbal_info.mav_state, mavlink_gimbal_info.mav_mode);
     }
 }
 
-void send_can_heartbeat(void)
+static void send_can_heartbeat(void)
 {
     CBSendStatus();
 }
 
-void read_temp_and_voltage(void)
+static void read_temp_and_voltage(void)
 {
     DcBusVoltage = (((float)AdcResult.ADCRESULT14 / 4096.0f) * 3.30f) * VBUS_DIV_MULTIPLIER; // DC Bus voltage meas.
 	DegreesC = ((((long)((AdcResult.ADCRESULT15 - (long)TempOffset) * (long)TempSlope))>>14) + 1)>>1;
@@ -583,7 +571,6 @@ interrupt void MainISR(void)
     // Verifying the ISR
     IsrTicker++;
 
-#if (DSP2803x_DEVICE_H==1)||(DSP280x_DEVICE_H==1)||(F2806x_DEVICE_H==1)
     // Enable more interrupts from this timer
     // KRK Changed to ECAP1 interrupt
     ECap1Regs.ECCLR.bit.CTR_EQ_PRD1 = 0x1;
@@ -592,8 +579,6 @@ interrupt void MainISR(void)
     // Acknowledge interrupt to receive more interrupts from PIE group 3
     // KRK Changed to Group 4 to use ECAP interrupt.
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
-#endif
-
 }
 
 interrupt void eCAN0INT_ISR(void)
@@ -606,21 +591,14 @@ interrupt void eCAN0INT_ISR(void)
 
     // Reenable core interrupts and CAN int from PIE module
     PieCtrlRegs.PIEACK.bit.ACK9 = 1; // Enables PIE to drive a pulse into the CPU
-    IER |= M_INT9; // Enable INT9
-    EINT;
     DEBUG_OFF;
 }
 
 void power_down_motor()
 {
-    EPwm1Regs.CMPA.half.CMPA=0; // PWM 1A - PhaseA
-    EPwm2Regs.CMPA.half.CMPA=0; // PWM 2A - PhaseB
-    EPwm3Regs.CMPA.half.CMPA=0; // PWM 3A - PhaseC
-}
-
-int GetIndexTimeOut(void)
-{
-    return IndexTimeOut;
+    EPwm1Regs.CMPA.half.CMPA = 0; // PWM 1A - PhaseA
+    EPwm2Regs.CMPA.half.CMPA = 0; // PWM 2A - PhaseB
+    EPwm3Regs.CMPA.half.CMPA = 0; // PWM 3A - PhaseC
 }
 
 int GetAxisHomed(void)
