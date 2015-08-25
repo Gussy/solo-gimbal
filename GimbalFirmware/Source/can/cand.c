@@ -17,6 +17,8 @@ static int ECanRx(struct MBOX* inbox);
 #define CAN_TX_MBOX_CNT 16
 #define CAN_RX_MBOX_CNT 16
 
+#define TORQUE_CMD_SID  0x581    // The SID signature of the torque command message
+
 static uint8_t can_tx_mbox = 0;
 static CAND_ParameterID immediate_pid_lookup_buffer[6] = {
     CAND_PID_TORQUE,
@@ -65,6 +67,13 @@ void ECanInit(void)        // Initialize eCAN-A module
 
 	ECanaRegs.CANMD.all = 0xFFFFFFFF << CAN_TX_MBOX_CNT;	///< Boxes 0-15 are Tx, 16-31 Rx, (1 = rx)
 
+	if(GetBoardHWID() == EL) {
+        // Setup outgoing torque commands to a specific transmit mailbox
+	    // Mailbox 0 is the highest priority and will always be sent before other messages
+        ECanaMboxes.MBOX0.MSGID.bit.STDMSGID = TORQUE_CMD_SID;
+        ECanaLAMRegs.LAM0.all = 0x0003FFFF; // 11 Message ID bits must match exactly
+	}
+
 	// Configure overwrite protection for all rx mailboxes
 	ECanaRegs.CANOPC.all = 0xFFFFFFFF << CAN_TX_MBOX_CNT; // 1 = overwrite protection
 
@@ -82,10 +91,12 @@ void ECanInit(void)        // Initialize eCAN-A module
 		lam->all = 0x1FFFFFFF;
 	}
 
-	// Setup torque command specific mailbox
-    ECanaMboxes.MBOX31.MSGID.bit.STDMSGID = 0x581; // 0x581 is the SID signature of the torque command message
-    ECanaLAMRegs.LAM31.all = 0x0003FFFF; // 11 Message ID bits must match exactly
-	ECanaRegs.CANOPC.bit.OPC31 = 0; // Disable over-write protection (mbox will hold latest value)
+	if(GetBoardHWID() != EL) {
+        // Setup incomming torque commands to a specific receive mailbox
+        ECanaMboxes.MBOX31.MSGID.bit.STDMSGID = TORQUE_CMD_SID;
+        ECanaLAMRegs.LAM31.all = 0x0003FFFF; // 11 Message ID bits must match exactly
+        ECanaRegs.CANOPC.bit.OPC31 = 0; // Disable over-write protection (mbox will hold latest value)
+	}
 
 	// Enable interrupts for the torque mailbox
 	ECanaRegs.CANMIM.bit.MIM31 = 1; // Interrupt enable mask (enabled)
