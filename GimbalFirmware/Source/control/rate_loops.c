@@ -8,7 +8,7 @@
 #include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
 
-#define RATE_LOOP_KHZ 1 // valid settings: 1, 2, 4
+#define RATE_LOOP_KHZ 2 // valid settings: 1, 2, 4
 
 static const int TorqueSignMap[AXIS_CNT] = {
         1, // EL
