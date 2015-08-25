@@ -63,7 +63,7 @@ struct Filt2p_Params yaw_torque_filt_params[YAW_FILTER_NUM_SECTIONS] = {
 };
 struct Filt2p_State yaw_torque_filt_state[YAW_FILTER_NUM_SECTIONS];
 
-struct Filt2p_Params gyro_filt_params = { .b0 = 0.097631072937817, .b1 = 0.195262145875635, .b2 = 0.097631072937817, .a1 = -0.942809041582063, .a2 = 0.333333333333333 };
+struct Filt2p_Params gyro_filt_params;
 struct Filt2p_State gyro_filt_state[AXIS_CNT];
 
 Uint16 telemetry_decimation_count = 0;
@@ -87,6 +87,7 @@ static Uint16 telem_step = 0;
 
 void InitRateLoops(void)
 {
+    calc_butter2p(8000, 1000, &gyro_filt_params);
     memset(&gyro_filt_state, 0, sizeof(gyro_filt_state));
 
 #ifdef ROLL_FILTER_NUM_SECTIONS
