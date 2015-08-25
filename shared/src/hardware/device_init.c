@@ -4,6 +4,7 @@
 #include "hardware/pll.h"
 #include "hardware/watchdog.h"
 #include "hardware/interrupts.h"
+#include "flash/flash.h"
 
 static void calibrate_adc();
 static void init_xtal();
@@ -36,6 +37,12 @@ void DeviceInit()
    init_peripheral_clocks();
    init_gpio();
    EDIS;	// Disable register access
+
+   // Short the tx and rx pads next to the HDMI port to force bootloader
+   if(GetBoardHWID() == AZ && GpioDataRegs.GPADAT.bit.GPIO28 == 0) {
+        erase_our_flash();
+        watchdog_immediate_reset();
+   }
 }
 
 static void calibrate_adc(){
@@ -375,18 +382,38 @@ static void init_gpio(){
 //	GpioDataRegs.GPACLEAR.bit.GPIO27 = 1;	// uncomment if --> Set Low initially
 	GpioDataRegs.GPASET.bit.GPIO27 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
-//  GPIO-28 - PIN FUNCTION = UART RX, non-isolated NOTE: Temporary GPIO for debugging
-	GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;	// 0=GPIO,  1=SCIRXDA,  2=SDAA,  3=TZ2
-	GpioCtrlRegs.GPADIR.bit.GPIO28 = 1;		// 1=OUTput,  0=INput
-//	GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;	// uncomment if --> Set Low initially
-	GpioDataRegs.GPASET.bit.GPIO28 = 1;		// uncomment if --> Set High initially
-//--------------------------------------------------------------------------------------
-//  GPIO-29 - PIN FUNCTION = UART TX, non-isolated NOTE: Temporary GPIO for debugging
-	GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 1;	// 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
-	GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;		// 1=OUTput,  0=INput
-	GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;	// uncomment if --> Set Low initially
-//	GpioDataRegs.GPASET.bit.GPIO29 = 1;		// uncomment if --> Set High initially
-//--------------------------------------------------------------------------------------
+
+
+
+    switch(GetBoardHWID()) {
+        case AZ:
+            //  GPIO-28 - PIN FUNCTION = Input - pull up, non-isolated
+            // set GPIO28 to input, pull up
+            GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;    // 0=GPIO,  1=SCIRXDA,  2=SDAA,  3=TZ2
+            GpioCtrlRegs.GPADIR.bit.GPIO28 = 0;     // 1=OUTput,  0=INput
+            GpioCtrlRegs.GPAPUD.bit.GPIO28 = 0;
+
+            //  GPIO-29 - PIN FUNCTION = Output low, non-isolated
+            GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
+            GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
+            GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
+            break;
+
+        // The GPIO-29 pin is used for system timing analysis on the elevation board (TP10)
+        case ROLL:
+        case EL:
+        default:
+            //  GPIO-28 - PIN FUNCTION = HeroBus BP_DET#, non-isolated
+            GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 0;    // 0=GPIO,  1=SCIRXDA,  2=SDAA,  3=TZ2
+            GpioCtrlRegs.GPADIR.bit.GPIO28 = 1;     // 1=OUTput,  0=INput
+            GpioDataRegs.GPASET.bit.GPIO28 = 1;     // uncomment if --> Set High initially
+
+            //  GPIO-29 - PIN FUNCTION = DEBUG, non-isolated
+            GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
+            GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
+            GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;   // uncomment if --> Set Low initially
+            break;
+    }
 //  GPIO-30 - PIN FUNCTION = CAN RX
 	GpioCtrlRegs.GPAMUX2.bit.GPIO30 = 1;	// 0=GPIO,  1=CANRXA,  2=EQEP2I,  3=EPWM7A
 //	GpioCtrlRegs.GPADIR.bit.GPIO30 = 0;		// 1=OUTput,  0=INput
@@ -430,12 +457,4 @@ static void init_gpio(){
 //	GpioDataRegs.GPBSET.bit.GPIO39 = 1;		// uncomment if --> Set High initially
 //--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
-
-	// The GPIO-29 pin is used for system timing analysis on the elevation board (TP10)
-	if(GetBoardHWID() == EL || GetBoardHWID() == AZ) {
-	    //  GPIO-29 - PIN FUNCTION = UART TX, non-isolated NOTE: Temporary GPIO for debugging
-	    GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
-	    GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
-	    GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;   // uncomment if --> Set Low initially
-	}
 }
