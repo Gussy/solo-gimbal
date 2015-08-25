@@ -279,8 +279,13 @@ void main(void)
 
     // If we're the AZ board, initialize UART for MAVLink communication
     // Also initialize the MAVLink subsystem
+
+    if (board_hw_id == EL) {
+        init_uart(&SciaRegs);
+    }
+
     if (board_hw_id == AZ) {
-        init_uart();
+        init_uart(&ScibRegs);
         init_mavlink();
     } else {
         // Initialise the mavlink param data-structure so we can
@@ -500,6 +505,9 @@ static void send_mav_heartbeat(void)
 {
     if (board_hw_id == AZ) {
         send_mavlink_heartbeat(mavlink_gimbal_info.mav_state, mavlink_gimbal_info.mav_mode);
+    }
+    if (board_hw_id == EL) {
+        uart_send_data("hello world\n", 12);
     }
 }
 
