@@ -8,8 +8,7 @@
 #include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
 
-// set this to 1 or 2
-#define RATE_LOOP_KHZ 1
+#define RATE_LOOP_KHZ 1 // valid settings: 1, 2, 4
 
 static const int TorqueSignMap[AXIS_CNT] = {
         1, // EL
@@ -179,15 +178,13 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             cb_parms->param_set[CAND_PID_TORQUE].sema = true;
             break;
         }
-        case 2: { // accel
+        case 2: { // accel and telem
             ReadAccel(&(raw_accel_measurement[GyroAxisMap[X_AXIS]]), &(raw_accel_measurement[GyroAxisMap[Y_AXIS]]), &(raw_accel_measurement[GyroAxisMap[Z_AXIS]]));
             for (i=0; i<AXIS_CNT; i++) {
                 raw_accel_measurement[i] *= IMUSignMap[i];
                 summed_raw_accel[i] += raw_accel_measurement[i];
             }
-            break;
-        }
-        case 3: { // telem
+
             telem_step++;
             switch(telem_step) {
                 case 1: { // gyro
@@ -236,11 +233,11 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             };
             break;
         }
-        case 8/RATE_LOOP_KHZ: {
-            rate_loop_step = 0;
-            break;
-        }
     };
+
+    if (rate_loop_step >= 8/RATE_LOOP_KHZ) {
+        rate_loop_step = 0;
+    }
 }
 
 static void SendDeltaAngleTelemetry(uint32_t az_gyro, uint32_t el_gyro, uint32_t rl_gyro)
