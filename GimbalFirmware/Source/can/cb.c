@@ -21,7 +21,7 @@ void CBSendStatus( void )
 	vals[0] = 0;
 	vals[0] |= (GpioDataRegs.GPADAT.bit.GPIO26) ? 0 : CAND_BIT_CH1_FAULT;
 	vals[0] |= (GpioDataRegs.GPBDAT.bit.GPIO50) ? 0 : CAND_BIT_OTW;
-	vals[0] |= (GetIndexTimeOut() < IndexTimeOutLimit) ? 0 : CAND_BIT_IDEXTMOUT;
+	vals[0] |= 0; // CAND_BIT_IDEXTMOUT
 	//vals[0] |= (GetIndexSyncFlag() > 0)?0:CAND_BIT_INDEXNF; // No index flag in this hw, figure out if we need something else
 	vals[0] |= (get_axis_enable()) ? 0 : CAND_BIT_NOT_ENABLED;
 	vals[0] |= (GetAxisHomed() > 0) ? CAND_BIT_AXIS_HOMED : 0;
