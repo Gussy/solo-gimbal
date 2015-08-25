@@ -15,6 +15,7 @@
 // Empty setup functions so this code can run DeviceInit()
 void PieCntlInit(void){}
 void PieVectTableInit(void){}
+void erase_our_flash(void){}
 
 static const LED_RGBA rgba_amber_dim = {.red=1, .green=1, .blue=0, .alpha=0xff};
 
