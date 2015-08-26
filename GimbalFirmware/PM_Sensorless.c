@@ -269,14 +269,14 @@ void main(void)
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication
-    // Also initialize the MAVLink subsystem
-
     if (board_hw_id == EL) {
         init_uart(&SciaRegs);
+    } else if (board_hw_id == AZ) {
+        init_uart(&ScibRegs);
     }
 
+    // Initialize the MAVLink subsystem
     if (board_hw_id == AZ) {
-        init_uart(&ScibRegs);
         init_mavlink();
     } else {
         // Initialise the mavlink param data-structure so we can
