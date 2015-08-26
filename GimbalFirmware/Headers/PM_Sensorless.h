@@ -25,8 +25,15 @@
 
 #include <stdbool.h>
 
+#define USE_EL_DEBUG_UART
+
+#ifdef USE_EL_DEBUG_UART
 #define DEBUG_ON    {}
 #define DEBUG_OFF   {}
+#else
+#define DEBUG_ON    {GpioDataRegs.GPASET.bit.GPIO29 = 1;}
+#define DEBUG_OFF   {GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;}
+#endif
 
 // Units are 11915/Amp (+/-32767 counts full scale over +/-2.75A full scale)
 #define LOW_TORQUE_MODE_MAX (5000.0)

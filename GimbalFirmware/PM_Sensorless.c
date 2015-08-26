@@ -278,10 +278,17 @@ void main(void)
     }
 
     // If we're the AZ board, initialize UART for MAVLink communication
-    if (board_hw_id == EL) {
-        init_uart(&SciaRegs);
-    } else if (board_hw_id == AZ) {
-        init_uart(&ScibRegs);
+    switch(board_hw_id) {
+        case AZ:
+            init_uart(&ScibRegs);
+            break;
+#ifdef USE_EL_DEBUG_UART
+        case EL:
+            init_uart(&SciaRegs);
+            break;
+#endif
+        default:
+            break;
     }
 
     // Initialize the MAVLink subsystem

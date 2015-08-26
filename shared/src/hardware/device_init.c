@@ -403,15 +403,16 @@ static void init_gpio(){
             GpioCtrlRegs.GPADIR.bit.GPIO28 = 1;     // 1=OUTput,  0=INput
             GpioDataRegs.GPASET.bit.GPIO28 = 1;     // uncomment if --> Set High initially
 
-            /*
+            #ifdef USE_EL_DEBUG_UART
             //  GPIO-29 - PIN FUNCTION = DEBUG, non-isolated
             GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
             GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
             GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;   // uncomment if --> Set Low initially
-            */
-
+            #else
             //  GPIO-29 - PIN FUNCTION = UART TX, non-isolated NOTE: Temporary GPIO for debugging
             GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 1;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
+            #endif
+
             break;
     }
 //  GPIO-30 - PIN FUNCTION = CAN RX
