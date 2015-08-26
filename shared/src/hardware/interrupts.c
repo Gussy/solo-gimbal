@@ -65,17 +65,17 @@ void InitInterrupts()
     // ******************************************
     if (board_hw_id == EL) {
         EALLOW;
-        PieVectTable.SCIRXINTA = &uart_rx_isr; // Uart RX ISR is driven from SCI-B receive
-        PieVectTable.SCITXINTA = &uart_tx_isr; // Uart TX ISR is driven from SCI-B transmit
+        PieVectTable.SCIRXINTA = &uart_rx_isr; // Uart RX ISR is driven from SCI-A receive
+        PieVectTable.SCITXINTA = &uart_tx_isr; // Uart TX ISR is driven from SCI-A transmit
 
         PieVectTable.XINT1 = &GyroIntISR; // Gyro ISR is driven from external interrupt 1
         PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx fifo interrupts are handled by the same ISR
         PieVectTable.I2CINT1A = &i2c_int_a_isr; // All non-fifo I2C interrupts are handled by the same ISR
         EDIS;
 
-        // Enable PIE group 9 interrupt 1 for SCI-A rx
+        // Enable PIE group 9 interrupt 1 for SCI-A receive
         PieCtrlRegs.PIEIER9.bit.INTx1 = 1;
-        // Enable PIE group 9 interrupt 2 for SCI-A tx
+        // Enable PIE group 9 interrupt 2 for SCI-A transmit
         PieCtrlRegs.PIEIER9.bit.INTx2 = 1;
 
         // Enable CPU INT9 for SCI-A
@@ -176,7 +176,7 @@ void PieVectTableInit(void)
    	for(i=0; i < 115; i++) 
     *Dest++ = &ISR_ILLEGAL;
    	EDIS;
- 
+
    	// Enable the PIE Vector Table
    	PieCtrlRegs.PIECTRL.bit.ENPIE = 1; 	
 }
