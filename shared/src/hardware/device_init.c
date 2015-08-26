@@ -289,7 +289,6 @@ static void init_gpio(){
             GpioDataRegs.GPACLEAR.bit.GPIO17 = 1;   // uncomment if --> Set Low initially
         //  GpioDataRegs.GPASET.bit.GPIO17 = 1;     // uncomment if --> Set High initially
         //--------------------------------------------------------------------------------------
-        //--------------------------------------------------------------------------------------
         //  GPIO-18 - PIN FUNCTION = Tx to copter
             GpioCtrlRegs.GPAMUX2.bit.GPIO18 = 2;    // 0=GPIO, 1=SPICLKA, 2=SCITXDB, 3=XCLKOUT
         //  GpioCtrlRegs.GPADIR.bit.GPIO18 = 0;     // 1=OUTput,  0=INput
@@ -322,7 +321,6 @@ static void init_gpio(){
 	    //  GpioDataRegs.GPACLEAR.bit.GPIO17 = 1;   // uncomment if --> Set Low initially
 	    //  GpioDataRegs.GPASET.bit.GPIO17 = 1;     // uncomment if --> Set High initially
 	    //--------------------------------------------------------------------------------------
-        //--------------------------------------------------------------------------------------
         //  GPIO-18 - PIN FUNCTION = Gyro SPI port Clk
             GpioCtrlRegs.GPAMUX2.bit.GPIO18 = 1;    // 0=GPIO, 1=SPICLKA, 2=SCITXDB, 3=XCLKOUT
         //  GpioCtrlRegs.GPADIR.bit.GPIO18 = 0;     // 1=OUTput,  0=INput
@@ -456,6 +454,5 @@ static void init_gpio(){
 	GpioCtrlRegs.GPBDIR.bit.GPIO39 = 1;		// 1=OUTput,  0=INput
 	GpioDataRegs.GPBCLEAR.bit.GPIO39 = 1;	// uncomment if --> Set Low initially
 //	GpioDataRegs.GPBSET.bit.GPIO39 = 1;		// uncomment if --> Set High initially
-//--------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------
 }
