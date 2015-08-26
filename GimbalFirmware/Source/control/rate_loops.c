@@ -8,8 +8,7 @@
 #include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
 
-// set this to 1 or 2
-#define RATE_LOOP_KHZ 1
+#define RATE_LOOP_KHZ 2 // valid settings: 1, 2, 4
 
 static const int TorqueSignMap[AXIS_CNT] = {
         1, // EL
@@ -64,7 +63,7 @@ struct Filt2p_Params yaw_torque_filt_params[YAW_FILTER_NUM_SECTIONS] = {
 };
 struct Filt2p_State yaw_torque_filt_state[YAW_FILTER_NUM_SECTIONS];
 
-struct Filt2p_Params gyro_filt_params = { .b0 = 0.097631072937817, .b1 = 0.195262145875635, .b2 = 0.097631072937817, .a1 = -0.942809041582063, .a2 = 0.333333333333333 };
+struct Filt2p_Params gyro_filt_params;
 struct Filt2p_State gyro_filt_state[AXIS_CNT];
 
 Uint16 telemetry_decimation_count = 0;
@@ -88,6 +87,7 @@ static Uint16 telem_step = 0;
 
 void InitRateLoops(void)
 {
+    calc_butter2p(8000, 1000, &gyro_filt_params);
     memset(&gyro_filt_state, 0, sizeof(gyro_filt_state));
 
 #ifdef ROLL_FILTER_NUM_SECTIONS
@@ -179,15 +179,13 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             cb_parms->param_set[CAND_PID_TORQUE].sema = true;
             break;
         }
-        case 2: { // accel
+        case 2: { // accel and telem
             ReadAccel(&(raw_accel_measurement[GyroAxisMap[X_AXIS]]), &(raw_accel_measurement[GyroAxisMap[Y_AXIS]]), &(raw_accel_measurement[GyroAxisMap[Z_AXIS]]));
             for (i=0; i<AXIS_CNT; i++) {
                 raw_accel_measurement[i] *= IMUSignMap[i];
                 summed_raw_accel[i] += raw_accel_measurement[i];
             }
-            break;
-        }
-        case 3: { // telem
+
             telem_step++;
             switch(telem_step) {
                 case 1: { // gyro
@@ -236,11 +234,11 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             };
             break;
         }
-        case 8/RATE_LOOP_KHZ: {
-            rate_loop_step = 0;
-            break;
-        }
     };
+
+    if (rate_loop_step >= 8/RATE_LOOP_KHZ) {
+        rate_loop_step = 0;
+    }
 }
 
 static void SendDeltaAngleTelemetry(uint32_t az_gyro, uint32_t el_gyro, uint32_t rl_gyro)
