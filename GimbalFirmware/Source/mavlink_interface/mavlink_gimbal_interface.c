@@ -26,6 +26,7 @@ static void handle_data_transmission_handshake(mavlink_message_t *msg);
 static void handle_reset_gimbal();
 static void handle_full_reset_gimbal(void);
 static void handle_request_axis_calibration(MotorDriveParms* md_parms);
+static void handle_power_off_initiated(void);
 static void handle_gopro_get_request(mavlink_message_t* received_msg);
 static void handle_gopro_set_request(mavlink_message_t* received_msg);
 static void handle_gimbal_control(mavlink_message_t* received_msg, MavlinkGimbalInfo* mavlink_info);
@@ -163,6 +164,10 @@ static void process_mavlink_input(MavlinkGimbalInfo* mavlink_info, MotorDrivePar
 			                mavlink_msg_command_long_get_param7(&received_msg) == 42.0) {
 			            handle_full_reset_gimbal();
 			        }
+			        break;
+			    case MAV_CMD_POWER_OFF_INITIATED:
+			        handle_power_off_initiated();
+			        break;
 			    default:
 					break;
 			    }
@@ -372,6 +377,14 @@ static void handle_request_axis_calibration(MotorDriveParms* md_parms)
         cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_CALIBRATE_AXES);
         md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
     }
+}
+
+static void handle_power_off_initiated(void)
+{
+    Uint32 parameter = 0;
+    parameter |= (((Uint32)GOPRO_COMMAND_POWER) << 8) & 0x0000FF00;
+    parameter |= (((Uint32)false) << 0) & 0x000000FF;
+    cand_tx_param(CAND_ID_EL, CAND_PID_GOPRO_SET_REQUEST, parameter);
 }
 
 void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode) {
