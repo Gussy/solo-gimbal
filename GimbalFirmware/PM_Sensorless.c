@@ -361,10 +361,8 @@ void main(void)
             DEBUG_OFF;
         }
 
-        if (board_hw_id == AZ) {
-            // Update any parameters that have changed due to CAN messages
-            ProcessParamUpdates(&control_board_parms, &debug_data);
-        }
+        // Update any parameters that have changed due to CAN messages
+        ProcessParamUpdates(&control_board_parms, &debug_data);
 	}
 } //END MAIN CODE
 
