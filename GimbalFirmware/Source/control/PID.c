@@ -9,8 +9,8 @@ PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     // Elevation
     {
         .gainP = 1.650000,
-        .gainI = 0.288000,
-        .gainD = 0.212000,
+        .gainI = 0.144000,
+        .gainD = 0.424000,
         .integralCumulative = 0.0,
         .dTermAlpha = 0.5,
         .processVarPrevious = 0.0,
@@ -20,7 +20,7 @@ PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     // Azimuth
     {
         .gainP = 6.500000,
-        .gainI = 0.600000,
+        .gainI = 0.300000,
         .gainD = 0.000000,
         .integralCumulative = 0.0,
         .dTermAlpha = 0.5,
@@ -31,7 +31,7 @@ PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     // Roll
     {
         .gainP = 6.000000,
-        .gainI = 0.700000,
+        .gainI = 0.350000,
         .gainD = 0.000000,
         .integralCumulative = 0.0,
         .dTermAlpha = 0.5,
