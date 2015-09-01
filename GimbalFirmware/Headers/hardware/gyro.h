@@ -15,7 +15,7 @@
 #define ACCEL_FULL_SCALE_G 4.0
 #define ACCEL_FULL_SCALE_MSS (ACCEL_FULL_SCALE_G*GRAVITY_MSS)
 
-#define ACCEL_FORMAT_TO_MSS(accel) ((float)accel*ACCEL_FULL_SCALE_G/(float)INT_MAX)
+#define ACCEL_FORMAT_TO_MSS(accel) ((float)accel*ACCEL_FULL_SCALE_MSS/(float)INT_MAX)
 #define GYRO_FORMAT_TO_RAD_S(gyro) ((float)gyro*GYRO_FULL_SCALE_RAD_S/(float)INT_MAX)
 #define RAD_S_TO_GYRO_FORMAT(rads) ((float)rads*(float)INT_MAX/GYRO_FULL_SCALE_RAD_S)
 

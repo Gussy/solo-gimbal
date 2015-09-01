@@ -253,7 +253,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             case 2: { // accel
                 IntOrFloat delta_velocity[AXIS_CNT] = {0, 0, 0};
                 for (i=0; i<AXIS_CNT; i++) {
-                    delta_velocity[i].float_val = ACCEL_FORMAT_TO_MSS(summed_raw_accel[i]) / ((float)RATE_LOOP_FREQUENCY_HZ/8.0);
+                    delta_velocity[i].float_val = ACCEL_FORMAT_TO_MSS(summed_raw_accel[i]) / (ACCEL_READ_KHZ*1000);
                 }
                 memset(&summed_raw_accel, 0, sizeof(summed_raw_accel));
 
