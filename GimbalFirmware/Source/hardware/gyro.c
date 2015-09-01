@@ -54,8 +54,8 @@ void InitGyro()
 
     DELAY_US(INTER_COMMAND_DELAY);
 
-    // Set the sample rate to 8KHz (based on an 8KHz gyro output rate, change this if that changes)
-    SpiWriteReg8Bit(&gyro_spi_desc, MPU_SMPRT_DIV_REG, 0); // Sample rate = Gyro Output Rate (8KHz) / (1 + Sample Rate Divider) = 1 KHz
+    // Set the sample rate
+    SpiWriteReg8Bit(&gyro_spi_desc, MPU_SMPRT_DIV_REG, 8/GYRO_READ_KHZ - 1);
 
     DELAY_US(INTER_COMMAND_DELAY);
 
