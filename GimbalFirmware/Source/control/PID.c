@@ -1,6 +1,7 @@
 #include "control/PID.h"
 #include <stdlib.h>
 
+// These are loaded over CAN at boot
 PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
     // These get loaded over CAN at boot and are hard-coded with the default PID values
     // The hardcoded PID gains and dTermAlpha can be overriden by the parameteres stored
@@ -8,33 +9,33 @@ PIDData_Float rate_pid_loop_float[AXIS_CNT] = {
 
     // Elevation
     {
-        .gainP = 1.650000,
-        .gainI = 0.144000,
-        .gainD = 0.424000,
+        .gainP = 0.0,
+        .gainI = 0.0,
+        .gainD = 0.0,
         .integralCumulative = 0.0,
-        .dTermAlpha = 0.5,
+        .dTermAlpha = 0.0,
         .processVarPrevious = 0.0,
         .deltaPvFilt = 0.0
     },
 
     // Azimuth
     {
-        .gainP = 6.500000,
-        .gainI = 0.300000,
-        .gainD = 0.000000,
+        .gainP = 0.0,
+        .gainI = 0.0,
+        .gainD = 0.0,
         .integralCumulative = 0.0,
-        .dTermAlpha = 0.5,
+        .dTermAlpha = 0.0,
         .processVarPrevious = 0.0,
         .deltaPvFilt = 0.0
     },
 
     // Roll
     {
-        .gainP = 6.000000,
-        .gainI = 0.350000,
-        .gainD = 0.000000,
+        .gainP = 0.0,
+        .gainI = 0.0,
+        .gainD = 0.0,
         .integralCumulative = 0.0,
-        .dTermAlpha = 0.5,
+        .dTermAlpha = 0.0,
         .processVarPrevious = 0.0,
         .deltaPvFilt = 0.0
     }
