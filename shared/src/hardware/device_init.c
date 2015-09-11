@@ -92,7 +92,7 @@ static void init_peripheral_clocks(){
 	   SysCtrlRegs.PCLKCR0.bit.MCBSPAENCLK = 0;	// McBSP-A
 	   //------------------------------------------------
 	   // SCI-B is used for MAVLink communication with the parent system
-	   SysCtrlRegs.PCLKCR0.bit.SCIAENCLK = 0;   // SCI-A
+	   SysCtrlRegs.PCLKCR0.bit.SCIAENCLK = 1;   // SCI-A
 	   SysCtrlRegs.PCLKCR0.bit.SCIBENCLK = 1;	// SCI-B
 	   //------------------------------------------------
 	   // CAN-A is used for communication with the other gimbal axes
@@ -409,9 +409,10 @@ static void init_gpio(){
             GpioDataRegs.GPASET.bit.GPIO28 = 1;     // uncomment if --> Set High initially
 
             //  GPIO-29 - PIN FUNCTION = DEBUG, non-isolated
-            GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
-            GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
-            GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;   // uncomment if --> Set Low initially
+            GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 1;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
+            //  GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
+            //  GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;   // uncomment if --> Set Low initially
+            //  GpioDataRegs.GPASET.bit.GPIO29 = 1;     // uncomment if --> Set High initially
             break;
     }
 //  GPIO-30 - PIN FUNCTION = CAN RX

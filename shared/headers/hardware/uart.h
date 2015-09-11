@@ -3,11 +3,10 @@
 
 #include "PeripheralHeaderIncludes.h"
 
-#define UART_SCI_PORT ScibRegs
 #define UART_BUFFER_SIZE 2048
 #define UART_STRING_LIMIT UART_BUFFER_SIZE
 
-void init_uart();
+void init_uart(volatile struct SCI_REGS *port);
 void uart_send_data(Uint8* data, int length);
 void uart_printf(const char* format, ...);
 int uart_chars_available();
