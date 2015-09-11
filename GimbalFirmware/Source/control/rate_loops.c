@@ -31,8 +31,9 @@ static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
 
 static const double RATE_UPSAMPLING_ALPHA = 0.1;
 
-static void SendDeltaAngleTelemetry(uint32_t az_gyro, uint32_t el_gyro, uint32_t rl_gyro);
-static void SendDeltaVelocityTelemetry(uint32_t az_accel, uint32_t el_accel, uint32_t rl_accel);
+static void float_to_byte_array(float in, Uint8* ret);
+static void SendDeltaAngleTelemetry(float az_gyro, float el_gyro, float rl_gyro);
+static void SendDeltaVelocityTelemetry(float az_accel, float el_accel, float rl_accel);
 static void SendEncoderTelemetry(int16 az_encoder, int16 el_encoder, int16 rl_encoder);
 static void SendTorqueCmdTelemetry(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);
 
@@ -267,29 +268,29 @@ void RunRateLoops(ControlBoardParms* cb_parms)
         telem_step++;
         switch(telem_step) {
             case 1: { // gyro
-                IntOrFloat delta_angle[AXIS_CNT];
+                float delta_angle[AXIS_CNT];
                 memset(&delta_angle, 0, sizeof(delta_angle));
                 for (i=0; i<AXIS_CNT; i++) {
-                    delta_angle[i].float_val = GYRO_FORMAT_TO_RAD_S(summed_raw_gyro[i]) / (float)RATE_LOOP_FREQUENCY_HZ;
+                    delta_angle[i] = GYRO_FORMAT_TO_RAD_S(summed_raw_gyro[i]) / (float)RATE_LOOP_FREQUENCY_HZ;
                 }
                 memset(&summed_raw_gyro, 0, sizeof(summed_raw_gyro));
 
-                SendDeltaAngleTelemetry(delta_angle[AZ].uint32_val,
-                                        delta_angle[EL].uint32_val,
-                                        delta_angle[ROLL].uint32_val);
+                SendDeltaAngleTelemetry(delta_angle[AZ],
+                                        delta_angle[EL],
+                                        delta_angle[ROLL]);
 
                 break;
             }
             case 2: { // accel
-                IntOrFloat delta_velocity[AXIS_CNT] = {0, 0, 0};
+                float delta_velocity[AXIS_CNT] = {0, 0, 0};
                 for (i=0; i<AXIS_CNT; i++) {
-                    delta_velocity[i].float_val = ACCEL_FORMAT_TO_MSS(summed_raw_accel[i]) / (ACCEL_READ_KHZ*1000);
+                    delta_velocity[i] = ACCEL_FORMAT_TO_MSS(summed_raw_accel[i]) / (ACCEL_READ_KHZ*1000);
                 }
                 memset(&summed_raw_accel, 0, sizeof(summed_raw_accel));
 
-                SendDeltaVelocityTelemetry(delta_velocity[AZ].uint32_val,
-                                           delta_velocity[EL].uint32_val,
-                                           delta_velocity[ROLL].uint32_val);
+                SendDeltaVelocityTelemetry(delta_velocity[AZ],
+                                           delta_velocity[EL],
+                                           delta_velocity[ROLL]);
 
                 break;
             }
@@ -313,45 +314,36 @@ void RunRateLoops(ControlBoardParms* cb_parms)
     }
 }
 
-static void SendDeltaAngleTelemetry(uint32_t az_gyro, uint32_t el_gyro, uint32_t rl_gyro)
+static void float_to_byte_array(float in, Uint8* ret) {
+    IntOrFloat float_converter;
+    float_converter.float_val = in;
+    ret[0] = (float_converter.uint32_val >> 24) & 0x000000FF;
+    ret[1] = (float_converter.uint32_val >> 16) & 0x000000FF;
+    ret[2] = (float_converter.uint32_val >> 8) & 0x000000FF;
+    ret[3] = (float_converter.uint32_val & 0x000000FF);
+}
+
+static void SendDeltaAngleTelemetry(float az_gyro, float el_gyro, float rl_gyro)
 {
     Uint8 gyro_az_readings[4];
     Uint8 gyro_el_readings[4];
     Uint8 gyro_rl_readings[4];
-    gyro_az_readings[0] = (az_gyro >> 24) & 0x000000FF;
-    gyro_az_readings[1] = (az_gyro >> 16) & 0x000000FF;
-    gyro_az_readings[2] = (az_gyro >> 8) & 0x000000FF;
-    gyro_az_readings[3] = (az_gyro & 0x000000FF);
-    gyro_el_readings[0] = (el_gyro >> 24) & 0x000000FF;
-    gyro_el_readings[1] = (el_gyro >> 16) & 0x000000FF;
-    gyro_el_readings[2] = (el_gyro >> 8) & 0x000000FF;
-    gyro_el_readings[3] = (el_gyro & 0x000000FF);
-    gyro_rl_readings[0] = (rl_gyro >> 24) & 0x000000FF;
-    gyro_rl_readings[1] = (rl_gyro >> 16) & 0x000000FF;
-    gyro_rl_readings[2] = (rl_gyro >> 8) & 0x000000FF;
-    gyro_rl_readings[3] = (rl_gyro & 0x000000FF);
+    float_to_byte_array(az_gyro, gyro_az_readings);
+    float_to_byte_array(el_gyro, gyro_el_readings);
+    float_to_byte_array(rl_gyro, gyro_rl_readings);
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_ANG_AZ_TELEMETRY, gyro_az_readings, 4);
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_ANG_EL_TELEMETRY, gyro_el_readings, 4);
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_ANG_RL_TELEMETRY, gyro_rl_readings, 4);
 }
 
-static void SendDeltaVelocityTelemetry(uint32_t az_accel, uint32_t el_accel, uint32_t rl_accel)
+static void SendDeltaVelocityTelemetry(float az_accel, float el_accel, float rl_accel)
 {
     Uint8 accel_az_readings[4];
     Uint8 accel_el_readings[4];
     Uint8 accel_rl_readings[4];
-    accel_az_readings[0] = (az_accel >> 24) & 0x000000FF;
-    accel_az_readings[1] = (az_accel >> 16) & 0x000000FF;
-    accel_az_readings[2] = (az_accel >> 8) & 0x000000FF;
-    accel_az_readings[3] = (az_accel & 0x000000FF);
-    accel_el_readings[0] = (el_accel >> 24) & 0x000000FF;
-    accel_el_readings[1] = (el_accel >> 16) & 0x000000FF;
-    accel_el_readings[2] = (el_accel >> 8) & 0x000000FF;
-    accel_el_readings[3] = (el_accel & 0x000000FF);
-    accel_rl_readings[0] = (rl_accel >> 24) & 0x000000FF;
-    accel_rl_readings[1] = (rl_accel >> 16) & 0x000000FF;
-    accel_rl_readings[2] = (rl_accel >> 8) & 0x000000FF;
-    accel_rl_readings[3] = (rl_accel & 0x000000FF);
+    float_to_byte_array(az_accel, accel_az_readings);
+    float_to_byte_array(el_accel, accel_el_readings);
+    float_to_byte_array(rl_accel, accel_rl_readings);
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_VEL_AZ_TELEMETRY, accel_az_readings, 4);
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_VEL_EL_TELEMETRY, accel_el_readings, 4);
     cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_DEL_VEL_RL_TELEMETRY, accel_rl_readings, 4);
