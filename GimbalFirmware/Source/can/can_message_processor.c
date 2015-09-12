@@ -22,7 +22,7 @@
 
 float float_from_uint8_t_array(uint8_t* in) {
     IntOrFloat float_converter;
-    float_converter.uint32_val = (((Uint32)in[0] << 24) & 0xFF000000) | (((Uint32)in[1] << 16) & 0x00FF0000) | (((Uint32)in[2] << 8) & 0x0000FF00) | ((Uint32)in[3] & 0x000000FF);
+    float_converter.uint32_val = (((Uint32)in[3] << 24) & 0xFF000000) | (((Uint32)in[2] << 16) & 0x00FF0000) | (((Uint32)in[1] << 8) & 0x0000FF00) | ((Uint32)in[0] & 0x000000FF);
     return float_converter.float_val;
 }
 

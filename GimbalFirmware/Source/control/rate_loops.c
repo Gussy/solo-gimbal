@@ -317,10 +317,10 @@ void RunRateLoops(ControlBoardParms* cb_parms)
 static void float_to_byte_array(float in, Uint8* ret) {
     IntOrFloat float_converter;
     float_converter.float_val = in;
-    ret[0] = (float_converter.uint32_val >> 24) & 0x000000FF;
-    ret[1] = (float_converter.uint32_val >> 16) & 0x000000FF;
-    ret[2] = (float_converter.uint32_val >> 8) & 0x000000FF;
-    ret[3] = (float_converter.uint32_val & 0x000000FF);
+    ret[3] = (float_converter.uint32_val >> 24) & 0x000000FF;
+    ret[2] = (float_converter.uint32_val >> 16) & 0x000000FF;
+    ret[1] = (float_converter.uint32_val >> 8) & 0x000000FF;
+    ret[0] = (float_converter.uint32_val & 0x000000FF);
 }
 
 static void SendDeltaAngleTelemetry(float az_gyro, float el_gyro, float rl_gyro)
