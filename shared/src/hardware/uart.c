@@ -38,6 +38,12 @@ void init_uart(volatile struct SCI_REGS *port)
     uart_port->SCIHBAUD = 0;
     uart_port->SCILBAUD = 10;
 
+    if (uart_port == &SciaRegs) {
+        uart_port->SCILBAUD = 4;
+    } else {
+        uart_port->SCILBAUD = 10;
+    }
+
     // Configure SCI peripheral to free-run when the processor is suspended (debugging at a breakpoint)
     uart_port->SCIPRI.bit.SOFT = 0;
     uart_port->SCIPRI.bit.FREE = 1;
