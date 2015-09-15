@@ -16,7 +16,6 @@
 #include "can/can_parameter_updates.h"
 #include "control/gyro_kinematics_correction.h"
 #include "control/PID.h"
-#include "control/average_power_filter.h"
 #include "control/running_average_filter.h"
 #include "control/filt2p.h"
 #include "motor/motor_drive_state_machine.h"
@@ -139,14 +138,6 @@ DebugData debug_data = {
     .debug_1 = 0,
     .debug_2 = 0,
     .debug_3 = 0
-};
-
-AveragePowerFilterParms power_filter_parms = {
-    .iq_filter = 0.0,        // Iq filter output
-    .iq_filter_prev = 0.0,        // Iq filter previous
-    .alpha = 0.0,        // Alpha factor
-    .current_limit = 0.0,        // Current limit
-    .iq_over = FALSE,      // Iq over current
 };
 
 MotorDriveParms motor_drive_parms = {
@@ -292,12 +283,6 @@ void main(void)
         // translate incoming mavlink params to flash params
         init_default_mavlink_params();
     }
-
-    // Initialize the average power filter
-    // Current sample frequency is frequency of main ISR
-    // Tau = 840 seconds per CW's calculations on 5/1/15
-    // Current limit = 0.2 Amps^2 per CW's calculations on 5/1/15
-    init_average_power_filter(&power_filter_parms, COMMUTATION_FREQUENCY_HZ, 840, 0.2);
 	
 	// Get temp sensor calibration coefficients
 	TempOffset = getTempOffset();
@@ -348,7 +333,6 @@ void main(void)
                                      &axis_parms,
                                      &motor_drive_parms,
                                      &encoder_parms,
-                                     &power_filter_parms,
                                      &load_ap_state_info);
             }
         } else if(OldIsrTicker != IsrTicker || TorqueDemandAvailableFlag) {
@@ -361,7 +345,6 @@ void main(void)
                                  &axis_parms,
                                  &motor_drive_parms,
                                  &encoder_parms,
-                                 &power_filter_parms,
                                  &load_ap_state_info);
             DEBUG_OFF;
         }

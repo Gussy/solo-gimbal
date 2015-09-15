@@ -33,7 +33,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         ControlBoardParms* cb_parms,
         MotorDriveParms* md_parms,
         EncoderParms* encoder_parms,
-        AveragePowerFilterParms* pf_parms,
         LoadAxisParmsStateInfo* load_ap_state_info)
 {
     switch (md_parms->motor_drive_state) {
@@ -293,7 +292,6 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             if (md_parms->fault_revive_counter++ > (((Uint32)COMMUTATION_FREQUENCY_HZ * (Uint32)FAULT_REVIVE_TIME_MS)/1000)) {
                 md_parms->fault_revive_counter = 0;
-                reset_average_power_filter(pf_parms);
                 md_parms->motor_drive_state = STATE_RUNNING;
             }
             break;

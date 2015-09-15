@@ -25,7 +25,6 @@ OBJS = \
     $(PROJ_ROOT)/Source/gopro/gopro_i2c.o												\
     $(PROJ_ROOT)/Source/gopro/gopro_hero3p.o											\
     $(PROJ_ROOT)/Source/gopro/gopro_hero4.o												\
-    $(PROJ_ROOT)/Source/control/average_power_filter.o 									\
     $(PROJ_ROOT)/Source/control/gyro_kinematics_correction.o 							\
     $(PROJ_ROOT)/Source/control/PID.o 													\
     $(PROJ_ROOT)/Source/control/filt2p.o 												\

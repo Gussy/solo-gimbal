@@ -11,7 +11,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         AxisParms* axis_parms,
         MotorDriveParms* md_parms,
         EncoderParms* encoder_parms,
-        AveragePowerFilterParms* power_filter_parms,
         LoadAxisParmsStateInfo* load_ap_state_info)
 {
     if (get_axis_enable()) {
@@ -23,7 +22,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
                 cb_parms,
                 md_parms,
                 encoder_parms,
-                power_filter_parms,
                 load_ap_state_info);
 
         // If both Ia and Ib currents are at their minimum values (-2.75A), the current sensor has probably lost it's +5V supply
@@ -34,16 +32,6 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
             //  Connect inputs of the CLARKE module and call the clarke transformation macro
             md_parms->clarke_xform_parms.As=(((AdcResult.ADCRESULT1)*0.00024414-md_parms->cal_offset_A)*2*MAX_CURRENT); // Phase A curr.
             md_parms->clarke_xform_parms.Bs=(((AdcResult.ADCRESULT3)*0.00024414-md_parms->cal_offset_B)*2*MAX_CURRENT); // Phase B curr.
-
-            // Run an iteration of the average power filter
-            // Scale -1 to +1 current to +/- full scale current, since power filter expects current in amps
-            run_average_power_filter(power_filter_parms, md_parms->pid_iq.param.Idem);
-        }
-
-        // If the average power has exceeded the preset limit on either phase a or b, error out this axis
-        if (check_average_power_over_limit(power_filter_parms)) {
-            reset_average_power_filter(power_filter_parms);
-            AxisFault(CAND_FAULT_OVER_CURRENT, CAND_FAULT_TYPE_RECOVERABLE, cb_parms, md_parms);
         }
 
         CLARKE_MACRO(md_parms->clarke_xform_parms)

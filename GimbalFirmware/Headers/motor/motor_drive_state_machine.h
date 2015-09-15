@@ -3,7 +3,6 @@
 
 #include "PM_Sensorless.h"
 #include "control/running_average_filter.h"
-#include "control/average_power_filter.h"
 #include "parameters/load_axis_parms_state_machine.h"
 
 #define PRE_INIT_TIME_MS 2000
@@ -53,7 +52,7 @@ typedef struct {
     Uint16 md_initialized;
 } MotorDriveParms;
 
-void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, AveragePowerFilterParms* pf_parms, LoadAxisParmsStateInfo* load_ap_state_info);
+void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
 void update_local_params_from_flash(MotorDriveParms* md_parms);
 
 #endif /* MOTOR_DRIVE_STATE_MACHINE_H_ */
