@@ -10,6 +10,7 @@ void init_uart(volatile struct SCI_REGS *port);
 void uart_send_data(Uint8* data, int length);
 void uart_printf(const char* format, ...);
 int uart_chars_available();
+int uart_tx_space();
 unsigned char uart_get_char();
 int uart_read_available_chars(char* buffer, int buffer_size);
 

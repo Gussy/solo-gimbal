@@ -7,7 +7,10 @@
 #include "control/filt2p.h"
 #include "control/gyro_kinematics_correction.h"
 #include "PM_Sensorless-Settings.h"
+#include "hardware/uart.h"
+#include "hardware/timing.h"
 
+#define LOG_IMU_DATA
 #define RATE_CTRL_KHZ 2 // valid settings: 1, 2, 4
 
 static const int TorqueSignMap[AXIS_CNT] = {
@@ -31,6 +34,7 @@ static const GimbalAxis GyroAxisMap[AXIS_CNT] = {
 
 static const double RATE_UPSAMPLING_ALPHA = 0.1;
 
+static void log_vector(uint8_t msg_id, uint32_t time_us, int16_t x, int16_t y, int16_t z);
 static void float_to_byte_array(float in, Uint8* ret);
 static void SendDeltaAngleTelemetry(float az_gyro, float el_gyro, float rl_gyro);
 static void SendDeltaVelocityTelemetry(float az_accel, float el_accel, float rl_accel);
@@ -144,6 +148,10 @@ static uint16_t steps_since_accel = 0;
 static bool need_rate_loop = false;
 static bool need_accel_read = false;
 static bool need_send_telem = false;
+static bool need_rate_log = false;
+
+static int16_t rates_for_log[AXIS_CNT] = {0, 0, 0};
+static uint32_t rate_time_us_for_log = 0;
 
 static uint16_t telem_step = 0;
 
@@ -191,6 +199,11 @@ void RunRateLoops(ControlBoardParms* cb_parms)
     if (steps_since_telem >= GYRO_READ_KHZ*10) {
         need_send_telem = true;
         steps_since_telem = 0;
+    }
+
+    if (!need_rate_loop && need_rate_log) {
+        log_vector(0x81, rate_time_us_for_log, rates_for_log[ROLL], rates_for_log[EL], rates_for_log[AZ]);
+        need_rate_log = false;
     }
 
     if (need_rate_loop) {
@@ -257,6 +270,13 @@ void RunRateLoops(ControlBoardParms* cb_parms)
         // Also update our own torque (fake like we got a value over CAN)
         cb_parms->param_set[CAND_PID_TORQUE].param = (int16)torque_out[EL];
         cb_parms->param_set[CAND_PID_TORQUE].sema = true;
+
+        // Log rate
+        need_rate_log = true;
+        rate_time_us_for_log = micros();
+        for (i=0; i<AXIS_CNT; i++) {
+            rates_for_log[i] = (int16_t)(filtered_gyro_measurement[i]+0.5);
+        }
     } else if (need_accel_read) {
         need_accel_read = false;
         ReadAccel(&(raw_accel_measurement[GyroAxisMap[X_AXIS]]), &(raw_accel_measurement[GyroAxisMap[Y_AXIS]]), &(raw_accel_measurement[GyroAxisMap[Z_AXIS]]));
@@ -312,6 +332,28 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             }
         };
     }
+}
+
+static void log_vector(uint8_t msg_id, uint32_t time_us, int16_t x, int16_t y, int16_t z) {
+#ifdef LOG_IMU_DATA
+    if (uart_tx_space() >= 13) {
+        Uint8 log_data[13];
+        log_data[0] = 0xA3;
+        log_data[1] = 0x95;
+        log_data[2] = msg_id;
+        log_data[3] = (time_us >> 0) & 0xFF;
+        log_data[4] = (time_us >> 8) & 0xFF;
+        log_data[5] = (time_us >> 16) & 0xFF;
+        log_data[6] = (time_us >> 24) & 0xFF;
+        log_data[7] = (x >> 0) & 0xFF;
+        log_data[8] = (x >> 8) & 0xFF;
+        log_data[9] = (y >> 0) & 0xFF;
+        log_data[10] = (y >> 8) & 0xFF;
+        log_data[11] = (z >> 0) & 0xFF;
+        log_data[12] = (z >> 8) & 0xFF;
+        uart_send_data(log_data,13);
+    }
+#endif //LOG_IMU_DATA
 }
 
 static void float_to_byte_array(float in, Uint8* ret) {

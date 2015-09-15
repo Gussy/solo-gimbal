@@ -72,6 +72,11 @@ void init_uart(volatile struct SCI_REGS *port)
     uart_port->SCICTL1.bit.SWRESET = 1;
 }
 
+int uart_tx_space()
+{
+    return UART_BUFFER_SIZE-uart_tx_ringbuf.size(&uart_tx_ringbuf);
+}
+
 int uart_chars_available()
 {
     return uart_rx_ringbuf.size(&uart_rx_ringbuf);
