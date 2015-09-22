@@ -81,6 +81,7 @@ typedef struct {
 } gp_transaction_t;
 
 void init_gp_interface();
+void disable_gp_interface();
 void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
 bool gp_request_power_on();

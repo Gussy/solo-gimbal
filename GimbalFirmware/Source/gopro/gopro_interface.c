@@ -37,6 +37,8 @@ Uint16 heartbeat_counter = 0;
 
 
 typedef struct {
+    bool enabled;
+
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 
     bool txn_result_pending;
@@ -68,7 +70,14 @@ void init_gp_interface()
 
     gopro_i2c_init();
 
+    gp.enabled = true;
+
     // bacpac detect is enabled once we know the camera is powered on
+}
+
+void disable_gp_interface()
+{
+    gp.enabled = false;
 }
 
 void gp_reset()
@@ -396,6 +405,10 @@ void gp_disable_charging()
 void gp_interface_state_machine()
 {
     GPPowerStatus new_power_status;
+
+    // Early exit if the interface is not enabled
+    if(!gp.enabled)
+        return;
 
     if (gp.waiting_for_i2c) {
         if (gopro_i2c_in_progress()) {
