@@ -67,6 +67,10 @@ def handle_file(args, link):
         sys.stdout.flush();
         if result == loader_results.Success:
             print("Upload successful")
+
+            # If the script is being run on a Solo, make sure custom gains are diabled
+            if setup_factory_private is None:
+                setup_param.set_use_custom_gains(link, 0)
         elif result == loader_results.NoResponse:
             print("No response from gimbal, exiting.")
             sys.exit(1)
