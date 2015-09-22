@@ -28,6 +28,7 @@ OBJS = \
     $(PROJ_ROOT)/Source/control/gyro_kinematics_correction.o 							\
     $(PROJ_ROOT)/Source/control/PID.o 													\
     $(PROJ_ROOT)/Source/control/filt2p.o 												\
+    $(PROJ_ROOT)/Source/control/temp_control.o 												\
     $(PROJ_ROOT)/Source/control/rate_loops.o 											\
     $(PROJ_ROOT)/Source/control/running_average_filter.o 								\
     $(PROJ_ROOT)/Source/control/current_controller.o 								\

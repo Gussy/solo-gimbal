@@ -9,6 +9,7 @@
 #include "PM_Sensorless-Settings.h"
 #include "hardware/uart.h"
 #include "hardware/timing.h"
+#include "control/temp_control.h"
 
 #define LOG_IMU_DATA
 #define RATE_CTRL_KHZ 2 // valid settings: 1, 2, 4
@@ -127,6 +128,23 @@ struct Filt2p_State yaw_torque_filt_state[YAW_FILTER_NUM_SECTIONS];
 struct Filt2p_Params gyro_filt_params;
 struct Filt2p_State gyro_filt_state[AXIS_CNT];
 
+struct temp_control_param_t temp_control_params = {
+    .Cw       = 3.10,
+    .Ca       = 27.39,
+    .Rwa      = 7.03,
+    .Rag      = 5.98,
+    .R        = 6.94,
+    .TCRw     = 0.00384,
+    .Tw_lim   = 45.0,
+    .Tw_lim_P = 10.0
+};
+
+struct temp_control_state_t temp_control_state[AXIS_CNT] = {
+    {.Tw=0, .Ta=0, .I_lim=2.75},
+    {.Tw=0, .Ta=0, .I_lim=2.75},
+    {.Tw=0, .Ta=0, .I_lim=2.75}
+};
+
 uint16_t telemetry_decimation_count = 0;
 uint16_t torque_cmd_telemetry_decimation_count = 5; // Start this at 5 so it's staggered with respect to the rest of the telemetry
 
@@ -140,6 +158,8 @@ static float setpoints[AXIS_CNT] = {0, 0, 0}; // position targets
 static int32_t summed_raw_gyro[AXIS_CNT] = {0, 0, 0};
 static int32_t summed_raw_accel[AXIS_CNT] = {0, 0, 0};
 
+static float torque_out[AXIS_CNT];
+
 static int32_t summed_torque_cmd[AXIS_CNT] = {0, 0, 0};
 static uint16_t summed_torque_cmd_count = 0;
 
@@ -150,7 +170,7 @@ static uint16_t steps_since_accel = 0;
 static bool need_rate_loop = false;
 static bool need_accel_read = false;
 static bool need_send_telem = false;
-static bool need_rate_log = false;
+static bool need_post_rate_tasks = false;
 
 static int16_t rates_for_log[AXIS_CNT] = {0, 0, 0};
 static uint32_t rate_time_us_for_log = 0;
@@ -203,15 +223,29 @@ void RunRateLoops(ControlBoardParms* cb_parms)
         steps_since_telem = 0;
     }
 
-    if (!need_rate_loop && need_rate_log) {
+    if (!need_rate_loop && need_post_rate_tasks) {
         log_vector(0x81, rate_time_us_for_log, rates_for_log[ROLL], rates_for_log[EL], rates_for_log[AZ]);
-        need_rate_log = false;
+        for (i=0; i<AXIS_CNT; i++) {
+            temp_control_update(&temp_control_params, &(temp_control_state[i]), torque_out[i]*MAX_CURRENT/32767.0, 1.0/(RATE_CTRL_KHZ*1000.0));
+        }
+        need_post_rate_tasks = false;
     }
 
     if (need_rate_loop) {
         need_rate_loop = false;
-        float torque_limit = cb_parms->max_allowed_torque != 0?cb_parms->max_allowed_torque : 32767.0;
-        float torque_out[AXIS_CNT];
+
+        float torque_limit[AXIS_CNT] = { 32767.0, 32767.0, 32767.0 };
+        for (i=0; i<AXIS_CNT; i++) {
+            float temp_control_torque_lim = temp_control_state[i].I_lim * 32767.0/MAX_CURRENT;
+
+            if (cb_parms->max_allowed_torque != 0 && torque_limit[i] > cb_parms->max_allowed_torque) {
+                torque_limit[i] = cb_parms->max_allowed_torque;
+            }
+
+            if (torque_limit[i] > temp_control_torque_lim) {
+                torque_limit[i] = temp_control_torque_lim;
+            }
+        }
 
         // Do gyro kinematics correction
         transform_ang_vel_to_joint_rate(filtered_gyro_measurement, filtered_gyro_measurement_jf);
@@ -231,9 +265,9 @@ void RunRateLoops(ControlBoardParms* cb_parms)
         }
 
         // Compute the new motor torque commands
-        torque_out[EL] = UpdatePID_Float(EL, setpoints[EL], filtered_gyro_measurement_jf[EL], torque_limit, 1.0f, 0.0f);
-        torque_out[AZ] = UpdatePID_Float(AZ, setpoints[AZ], filtered_gyro_measurement_jf[AZ], torque_limit, cos_phi*cos_phi, 0.0f);
-        torque_out[ROLL] = UpdatePID_Float(ROLL, setpoints[ROLL], filtered_gyro_measurement_jf[ROLL], torque_limit, 1.0f, 0.0f);
+        torque_out[EL] = UpdatePID_Float(EL, setpoints[EL], filtered_gyro_measurement_jf[EL], torque_limit[EL], 1.0f, 0.0f);
+        torque_out[AZ] = UpdatePID_Float(AZ, setpoints[AZ], filtered_gyro_measurement_jf[AZ], torque_limit[AZ], cos_phi*cos_phi, 0.0f);
+        torque_out[ROLL] = UpdatePID_Float(ROLL, setpoints[ROLL], filtered_gyro_measurement_jf[ROLL], torque_limit[ROLL], 1.0f, 0.0f);
 
         #ifdef PITCH_FILTER_NUM_SECTIONS
         for(i=0; i<PITCH_FILTER_NUM_SECTIONS; i++) {
@@ -256,10 +290,10 @@ void RunRateLoops(ControlBoardParms* cb_parms)
         torque_out[AZ] += torque_out[EL] * sin_phi;
 
         for (i=0; i<AXIS_CNT; i++) {
-            if (torque_out[i] > torque_limit) {
-                torque_out[i] = torque_limit;
-            } else if (torque_out[i] < -torque_limit) {
-                torque_out[i] = -torque_limit;
+            if (torque_out[i] > torque_limit[i]) {
+                torque_out[i] = torque_limit[i];
+            } else if (torque_out[i] < -torque_limit[i]) {
+                torque_out[i] = -torque_limit[i];
             }
             torque_out[i] *= TorqueSignMap[i];
             summed_torque_cmd[i] += (int16)torque_out[i];
@@ -273,8 +307,9 @@ void RunRateLoops(ControlBoardParms* cb_parms)
         cb_parms->param_set[CAND_PID_TORQUE].param = (int16)torque_out[EL];
         cb_parms->param_set[CAND_PID_TORQUE].sema = true;
 
+        need_post_rate_tasks = true;
+
         // Log rate
-        need_rate_log = true;
         rate_time_us_for_log = micros();
         for (i=0; i<AXIS_CNT; i++) {
             rates_for_log[i] = (int16_t)(filtered_gyro_measurement[i]+0.5);
