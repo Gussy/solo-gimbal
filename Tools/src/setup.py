@@ -197,6 +197,14 @@ def printValidation(link):
     else:
         print("Accelerometer\t- ERROR")
 
+    valid = setup_validate.validate_gains(link)
+    if valid == setup_validate.Results.Pass:
+        print("Gains   \t- PASS")
+    elif valid == setup_validate.Results.Fail:
+        print("Gains   \t- WARNING - custom gains are enabled (disable with --customgains=0)")
+    else:
+        print("Gains   \t- ERROR")
+
 # Main method when called directly
 def command_interface():
     parser = argparse.ArgumentParser()
