@@ -138,58 +138,28 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // Time out the calibration time.  After it has expired, transition to the next state
             md_parms->current_cal_timer++;
             if (md_parms->current_cal_timer > (((Uint32)COMMUTATION_FREQUENCY_HZ * (Uint32)CURRENT_CALIBRATION_TIME_MS)/1000)) {
-                md_parms->motor_drive_state = STATE_CHECK_AXIS_CALIBRATION;
+                if(GetBoardHWID() == AZ) {
+                    md_parms->motor_drive_state = STATE_CHECK_AXIS_CALIBRATION;
+                } else {
+                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
+                }
             }
             break;
 
         case STATE_CHECK_AXIS_CALIBRATION:
-            if (flash_params.commutation_slope[GetBoardHWID()] == 0.0) {
-                // If our commutation calibration slope is 0, then our axis needs calibrating
-                if (GetBoardHWID() == AZ) {
-                    cb_parms->calibration_status[AZ] = GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE;
-                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_STATUS;
-                } else {
-                    CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE);
-                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
-                }
+            if(flash_params.commutation_slope[EL] == 0.0f ||
+               flash_params.commutation_slope[AZ] == 0.0f ||
+               flash_params.commutation_slope[ROLL] == 0.0f) {
+                md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
+                CANUpdateBeaconState(LED_MODE_BREATHING, rgba_red, 0);
             } else {
-                // If there's a number other than 0 in the axis calibration slope, then our axis doesn't need to be calibrated
-                if (GetBoardHWID() == AZ) {
-                    cb_parms->calibration_status[AZ] = GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE;
-                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_STATUS;
-                } else {
-                    CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED_FALSE);
-                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
-                }
-            }
-            break;
-
-        case STATE_WAIT_FOR_AXIS_CALIBRATION_STATUS:
-            // Wait for all of the axes to report their calibration status
-            if ((cb_parms->calibration_status[AZ] != GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) &&
-                (cb_parms->calibration_status[EL] != GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN) &&
-                (cb_parms->calibration_status[ROLL] != GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN)) {
-                // We've received the axis calibration status from all axes.  Check to see if any of them require calibration
-                if ((cb_parms->calibration_status[AZ] == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE) ||
-                    (cb_parms->calibration_status[EL] == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE) ||
-                    (cb_parms->calibration_status[ROLL] == GIMBAL_AXIS_CALIBRATION_REQUIRED_TRUE)) {
-                    // If any axes require calibration, go to the wait for axis calibration command state, where we'll send a periodic
-                    // status message and wait for a command to calibrate
-                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
-                    CANUpdateBeaconState(LED_MODE_BREATHING, rgba_red, 0);
-                } else {
-                    cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_CALIBRATE_AXES);
-                    md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
-                }
+                cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_CALIBRATE_AXES);
+                md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
             }
             break;
 
         case STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND:
-            // If we're the AZ board, send a periodic mavlink message indicating which axes need to be calibrated,
-            // otherwise, do nothing and stay in this state until we receive a command to calibrate
-            if (GetBoardHWID() == AZ) {
-
-            }
+            // Wait until a calibration command is sent
             break;
 
         case STATE_TAKE_COMMUTATION_CALIBRATION_DATA:
