@@ -25,6 +25,7 @@ float max_torque = LOW_TORQUE_MODE_MAX;
 float sysid = 0.0;
 float k_rate = 2.0;
 float send_torques = 1.0;
+float gp_control = 0.0f;
 
 void init_default_mavlink_params()
 {
@@ -187,6 +188,11 @@ void init_default_mavlink_params()
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_type = MAV_PARAM_TYPE_REAL32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].float_data_ptr = &send_torques;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL].param_id, "GMB_GP_GTRL", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL].float_data_ptr = &gp_control;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].param_id, "GMB_OFF_JNT_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].param_type = MAV_PARAM_TYPE_REAL32;
@@ -463,6 +469,12 @@ void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value, Contro
                 cb_parms->max_allowed_torque = 0;
             } else {
                 cb_parms->max_allowed_torque = (int16)floor(float_converter.float_val);
+            }
+        } else if(param_id == MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL) {
+            if(float_converter.float_val == 1.0f) {
+                init_gp_interface();
+            } else {
+                disable_gp_interface();
             }
         }
     }

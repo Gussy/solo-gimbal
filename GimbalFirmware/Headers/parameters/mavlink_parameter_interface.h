@@ -54,6 +54,7 @@ typedef enum {
 	MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE,
 	MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS,
 	MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE,
+	MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL,
     MAVLINK_GIMBAL_PARAM_GMB_TRQ_P,
     MAVLINK_GIMBAL_PARAM_GMB_TRQ_I,
     MAVLINK_GIMBAL_PARAM_GMB_TRQ_R,
@@ -86,6 +87,8 @@ void handle_param_read(mavlink_message_t* received_msg);
 void send_gimbal_param(int param_num);
 void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value, ControlBoardParms *cb_parms);
 
+// Volatile params access by other subsystems
 extern float send_torques;
+extern float gp_control;
 
 #endif /* MAVLINK_PARAMETER_INTERFACE_H_ */
