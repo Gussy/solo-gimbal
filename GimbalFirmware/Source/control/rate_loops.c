@@ -13,6 +13,8 @@
 #define LOG_IMU_DATA
 #define RATE_CTRL_KHZ 2 // valid settings: 1, 2, 4
 
+#define TELEM_LOOP_HZ 100
+
 static const int TorqueSignMap[AXIS_CNT] = {
         1, // EL
         -1, // AZ
@@ -196,7 +198,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
     }
 
     // send telemetry every 10ms
-    if (steps_since_telem >= GYRO_READ_KHZ*10) {
+    if (steps_since_telem >= (GYRO_READ_KHZ*1000)/TELEM_LOOP_HZ) {
         need_send_telem = true;
         steps_since_telem = 0;
     }
@@ -304,7 +306,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
             case 2: { // accel
                 float delta_velocity[AXIS_CNT] = {0, 0, 0};
                 for (i=0; i<AXIS_CNT; i++) {
-                    delta_velocity[i] = ACCEL_FORMAT_TO_MSS(summed_raw_accel[i]) / (ACCEL_READ_KHZ*1000);
+                    delta_velocity[i] = ACCEL_FORMAT_TO_MSS(summed_raw_accel[i]) / (float)(ACCEL_READ_KHZ*1000);
                 }
                 memset(&summed_raw_accel, 0, sizeof(summed_raw_accel));
 
