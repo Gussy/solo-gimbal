@@ -9,6 +9,7 @@
 #include "control/PID.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "parameters/flash_params.h"
+#include "gopro/gopro_interface.h"
 #include "PeripheralHeaderIncludes.h"
 
 #include <string.h>
@@ -108,6 +109,11 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // we can continue with our init sequence
             if (load_ap_state_info->axis_parms_load_complete) {
             	update_local_params_from_flash(md_parms);
+
+                // Program the EEPROM if the assembly time isn't set (factory uncalibrated gimbals)
+                if(GetBoardHWID() == EL && flash_params.assy_time == 0.0f) {
+                    gp_write_eeprom();
+                }
 
                 axis_parms->all_init_params_recvd = TRUE;
                 md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
