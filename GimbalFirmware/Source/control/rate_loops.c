@@ -11,7 +11,7 @@
 #include "hardware/timing.h"
 #include "control/temp_control.h"
 
-#define LOG_IMU_DATA
+//#define LOG_IMU_DATA
 #define RATE_CTRL_KHZ 2 // valid settings: 1, 2, 4
 
 #define TELEM_LOOP_HZ 100
