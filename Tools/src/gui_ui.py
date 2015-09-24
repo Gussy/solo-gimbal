@@ -616,6 +616,7 @@ class Ui_MainWindow(object):
         self.sbxTestsTimeout.setGeometry(QtCore.QRect(10, 190, 111, 25))
         self.sbxTestsTimeout.setMaximum(3600)
         self.sbxTestsTimeout.setSingleStep(5)
+        self.sbxTestsTimeout.setValue(5)
         self.sbxTestsTimeout.setObjectName("sbxTestsTimeout")
         self.lblTestsTimeoutLabel = QtGui.QLabel(self.tabTests)
         self.lblTestsTimeoutLabel.setGeometry(QtCore.QRect(10, 170, 111, 19))
@@ -726,7 +727,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralWidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(3)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

@@ -197,6 +197,9 @@ class calibrationUI(object):
             self.status = "Resetting"
             reset = yield AsyncTask(self.resetGimbal)
             if reset:
+                # If the connection is cycled too early, the gimbal doesn't fully
+                # initialise and won't send us any gimbal report messages...
+                time.sleep(10) 
                 self.connection.cycleConnection()
 
             if result == setup_comutation.Results.Success:
@@ -312,7 +315,21 @@ class calibrationUI(object):
             filePath = os.path.join('logs', '%s.json' % params['serial_number'])
             with open(filePath, 'w') as f:
                 json.dump(params, f)
+        
+            with open(filePath, 'r') as f:
+                tmpStr = f.read()
 
+            logTestJson = json.loads(tmpStr)
+            logTestJson['run'] = {'runTime':'0:00:00','runFaults':255}
+            logTestJson['align'] = {'alignTime':'0:00:00','alignFaults':255}
+
+            date_time = time.localtime(logTestJson['assembly_time'])            
+            assembly_date_time=str(date_time.tm_year)+"-"+str.format("%02d"%date_time.tm_mon)+"-"+str.format("%02d"%date_time.tm_mday)+"_"+str.format("%02d"%date_time.tm_hour)+"-"+str.format("%02d"%date_time.tm_min)+"-"+str.format("%02d"%date_time.tm_sec)
+
+            filePath = os.path.join('logs', '%s_%s.json' % (params['serial_number'],assembly_date_time))
+            with open(filePath, 'w') as f:
+                json.dump(logTestJson, f)
+       
     def isCalibrated(self, params):
         if 'icept' in params.keys():
             if params['icept'] == 0 or params['slope'] == 0:
