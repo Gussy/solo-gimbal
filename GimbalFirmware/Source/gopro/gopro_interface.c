@@ -65,6 +65,9 @@ static gopro_t gp;
 
 void init_gp_interface()
 {
+    // Program the EEPROM on every boot
+    gp_write_eeprom();
+
     gp_reset();
     gp.power_status = GP_POWER_UNKNOWN;
 

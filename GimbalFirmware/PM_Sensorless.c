@@ -214,11 +214,6 @@ void main(void)
 	DeviceInit();	// Device Life support & GPIO
     board_hw_id = GetBoardHWID();
 
-    // Program the EEPROM on every boot
-    if(board_hw_id == EL) {
-    	gp_write_eeprom();
-    }
-
 	// Initialize CAN peripheral, and CAND backend
 	ECanInit();
 	if (cand_init() != CAND_SUCCESS) {
