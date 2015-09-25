@@ -220,29 +220,30 @@ bool gp_handshake_complete()
 
 GPHeartbeatStatus gp_heartbeat_status()
 {
-	GPHeartbeatStatus heartbeat_status = GP_HEARTBEAT_DISCONNECTED;
-
-	/*if (gp_get_power_status() == GP_POWER_ON
-			&& gp_ready_for_cmd()
-			&& last_request_type == GP_REQUEST_SET
-			&& last_set_request.cmd_id == GOPRO_COMMAND_SHUTTER
-			&& last_set_request.value == 1) {
-			heartbeat_status = GP_HEARTBEAT_RECORDING;
-    } else */
-    if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
-        if (gp_is_recording()) {
-            heartbeat_status = GP_HEARTBEAT_RECORDING;
-        } else {
-            heartbeat_status = GP_HEARTBEAT_CONNECTED;
-        }
-    } else if (gp_get_power_status() != GP_POWER_ON && !i2c_get_bb() && gp_von_is_enabled()) {
-		// If the power isn't 'on' but the I2C lines are still pulled high, it's likely an incompatible Hero 4 firmware
-		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
-    } else if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
-		heartbeat_status = GP_HEARTBEAT_INCOMPATIBLE;
-	}
     new_heartbeat_available = false;
-    return heartbeat_status;
+
+	// A GoPro is connected, ready for action and had queried the gccb version
+	if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
+	    // The connected state is overloaded with the recording state
+        if (gp_is_recording()) {
+            return GP_HEARTBEAT_RECORDING;
+        } else {
+            return GP_HEARTBEAT_CONNECTED;
+        }
+	}
+
+	// A GoPro is not in a "connected" state, but we can see something is plugged in
+	if (gp_get_power_status() != GP_POWER_ON && gp_von_is_enabled() && init_timed_out()) {
+	    return GP_HEARTBEAT_INCOMPATIBLE;
+	}
+
+	// A GoPro is connected, but it's not talking to us, or we're not talking to it
+	if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
+	    return GP_HEARTBEAT_INCOMPATIBLE;
+	}
+
+	// Either a GoPro is no connected, or there is no electrical way of detecting it
+	return GP_HEARTBEAT_DISCONNECTED;
 }
 
 bool gp_request_power_on()
