@@ -233,7 +233,7 @@ GPHeartbeatStatus gp_heartbeat_status()
 	}
 
 	// A GoPro is not in a "connected" state, but we can see something is plugged in
-	if (gp_get_power_status() != GP_POWER_ON && gp_von_is_enabled()) {
+	if (gp_get_power_status() != GP_POWER_ON && gp_von_is_enabled() && init_timed_out()) {
 	    return GP_HEARTBEAT_INCOMPATIBLE;
 	}
 
