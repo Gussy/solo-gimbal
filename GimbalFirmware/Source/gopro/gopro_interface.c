@@ -590,12 +590,16 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
 
 void gp_write_eeprom()
 {
+    // This function writes to the 24LC00 EEPROM which the GoPro reads from
+    // as specified in the hero bus datasheet
     // Data to write into EEPROM
     uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
     uint8_t i;
 
-    if (!gp_von_is_enabled())
+    // if gopro is on, don't write EEPROM because this may crash the gopro
+    if (gp_von_is_enabled()) {
 		return;
+    }
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
 	gp_disable_hb_interface();
