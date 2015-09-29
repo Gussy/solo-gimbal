@@ -86,6 +86,8 @@ void gp_reset()
     gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
+    gp_control_state = GP_CONTROL_STATE_IDLE;
+
     gp_deassert_intr();
 
     gp_h3p_init(&gp.h3p);
