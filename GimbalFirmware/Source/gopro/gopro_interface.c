@@ -224,8 +224,8 @@ GPHeartbeatStatus gp_heartbeat_status()
 {
     new_heartbeat_available = false;
 
-	// A GoPro is connected, ready for action and had queried the gccb version
-	if (gp_get_power_status() == GP_POWER_ON && gp_ready_for_cmd() && gp_handshake_complete()) {
+    // A GoPro is connected, ready for action and had queried the gccb version
+    if (gp_get_power_status() == GP_POWER_ON && gp_handshake_complete() && !init_timed_out()) {
 	    // The connected state is overloaded with the recording state
         if (gp_is_recording()) {
             return GP_HEARTBEAT_RECORDING;
