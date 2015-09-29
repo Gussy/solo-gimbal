@@ -17,11 +17,7 @@ void gopro_i2c_init()
 
 bool gopro_i2c_in_progress()
 {
-    if (!i2c_get_bb() && i2c_get_scd()) {
-        return false;
-    }
-
-    return true;
+    return i2c_get_bb() || !i2c_get_scd();
 }
 
 void gopro_i2c_send(const uint16_t *buf, Uint8 len)
