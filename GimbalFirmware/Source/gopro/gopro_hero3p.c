@@ -38,17 +38,6 @@ bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len)
     return false;
 }
 
-// TODO: maybe switch this to be an internal command instead
-bool gp_h3p_request_power_off()
-{
-    GPCmd cmd;
-    cmd.cmd[0] = 'P';
-    cmd.cmd[1] = 'W';
-    cmd.cmd_parm = 0x00;
-    gp_h3p_send_command(&cmd);
-    return true;
-}
-
 static bool gp_h3p_cmd_has_param(const GPCmd* c)
 {
     /*
@@ -116,7 +105,9 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
     switch (request->cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                gp_h3p_request_power_off();
+                cmd.cmd[0] = 'P';
+                cmd.cmd[1] = 'W';
+                cmd.cmd_parm = 0x00;
             } else {
                 // gp_request_power_on() does not require a herobus transaction,
                 // so mark it complete immediately
