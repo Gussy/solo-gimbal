@@ -272,24 +272,6 @@ bool gp_request_power_on()
     return false;
 }
 
-bool gp_request_power_off()
-{
-    if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
-        switch (gp.model) {
-            case GP_MODEL_HERO3P:
-                return gp_h3p_request_power_off();
-            case GP_MODEL_HERO4:
-                return gp_h4_request_power_off(&gp.h4);
-            case GP_MODEL_UNKNOWN:
-                return false;
-            default:
-                return false;
-        }
-    }
-
-    return false;
-}
-
 bool gp_request_capture_mode()
 {
     if (gp_ready_for_cmd() && !gp_is_recording()) {

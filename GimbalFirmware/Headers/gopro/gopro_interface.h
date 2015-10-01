@@ -79,7 +79,6 @@ void init_gp_interface();
 void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
 bool gp_request_power_on();
-bool gp_request_power_off();
 bool gp_request_capture_mode();
 bool gp_send_command(const GPCmd* cmd);
 bool gp_send_cmd(const uint16_t* cmd, uint16_t len);
