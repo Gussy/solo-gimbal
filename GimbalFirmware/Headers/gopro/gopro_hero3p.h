@@ -47,12 +47,12 @@ void gp_h3p_init(gp_h3p_t *h3p);
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p);
 bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len);
 
-int gp_h3p_forward_get_request(Uint8 cmd_id);
-int gp_h3p_forward_set_request(const GPSetRequest* request);
+bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c);
+bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c);
 
 bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, bool from_camera, uint16_t *txbuf);
 
 bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camera);
-bool gp_h3p_send_command(const GPCmd* cmd);
+void gp_h3p_produce_command(const GPCmd* cmd, gp_h3p_cmd_t *c);
 
 #endif // _GOPRO_HERO3P_H

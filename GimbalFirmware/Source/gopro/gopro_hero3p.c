@@ -61,9 +61,13 @@ static bool gp_h3p_cmd_has_param(const GPCmd* c)
     return true;
 }
 
-// TODO: return type int change to bool? to match other functions
-int gp_h3p_forward_get_request(Uint8 cmd_id)
+bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
 {
+    /*
+     * Convert the GetRequest from the CAN layer into a herobus command.
+     * Return true if we produced data to send, false otherwise.
+     */
+
     GPCmd cmd;
 
     switch (cmd_id) {
@@ -71,35 +75,40 @@ int gp_h3p_forward_get_request(Uint8 cmd_id)
             cmd.cmd[0] = 's';
             cmd.cmd[1] = 'h';
             // TODO: not sure if this command should be called directly, since don't want to be sending commands to GoPro while recording (spec document)
-        break;
+            break;
 
         case GOPRO_COMMAND_CAPTURE_MODE:
             cmd.cmd[0] = 'c';
             cmd.cmd[1] = 'm';
-        break;
+            break;
 
         case GOPRO_COMMAND_MODEL:
             cmd.cmd[0] = 'c';
             cmd.cmd[1] = 'v';
-        break;
+            break;
 
         case GOPRO_COMMAND_BATTERY:
             cmd.cmd[0] = 'b';
             cmd.cmd[1] = 'l';
-        break;
+            break;
 
         default:
             // Unsupported Command ID
             gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-            return -1;
+            return false;
     }
 
-    gp_h3p_send_command(&cmd);
-    return 0;
+    gp_h3p_produce_command(&cmd, c);
+    return true;
 }
 
-int gp_h3p_forward_set_request(const GPSetRequest* request)
+bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c)
 {
+    /*
+     * Convert the SetRequest from the CAN layer into a herobus command.
+     * Return true if we produced data to send, false otherwise.
+     */
+
     GPCmd cmd;
 
     switch (request->cmd_id) {
@@ -113,6 +122,7 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
                 // so mark it complete immediately
                 gp_request_power_on();
                 gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_SUCCESS);
+                return false;
             }
             break;
 
@@ -139,7 +149,7 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
                     break;
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                    return -1;
+                    return false;
                 }
             }
             break;
@@ -167,11 +177,11 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
         default:
             // Unsupported Command ID
             gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-            return -1;
+            return false;
     }
 
-    gp_h3p_send_command(&cmd);
-    return 0;
+    gp_h3p_produce_command(&cmd, c);
+    return true;
 }
 
 bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, bool from_camera, uint16_t *txbuf)
@@ -270,11 +280,8 @@ bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camer
     return true;
 }
 
-bool gp_h3p_send_command(const GPCmd* cmd)
+void gp_h3p_produce_command(const GPCmd* cmd, gp_h3p_cmd_t *c)
 {
-    gp_h3p_pkt_t p;
-    gp_h3p_cmd_t *c = &p.cmd;
-
     c->cmd1 = cmd->cmd[0];
     c->cmd2 = cmd->cmd[1];
 
@@ -285,9 +292,6 @@ bool gp_h3p_send_command(const GPCmd* cmd)
     } else {
         c->len = 0x2;
     }
-
-    gp_send_cmd(p.bytes, p.cmd.len + 1);
-    return true;
 }
 
 void gp_h3p_sanitize_buf_len(uint16_t *buf) { // TODO: inline?

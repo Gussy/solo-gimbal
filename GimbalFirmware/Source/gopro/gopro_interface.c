@@ -296,26 +296,32 @@ int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
      *
      */
 
+    if ((gp_get_power_status() != GP_POWER_ON) || !gp_ready_for_cmd()) {
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        return -1;
+    }
+
     gp.txn.reqtype = GP_REQUEST_GET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)cmd_id;
     gp.txn_is_internal = txn_is_internal;
 
-    if ((gp_get_power_status() == GP_POWER_ON) && gp_ready_for_cmd()) {
-        switch (gp.model) {
-        case GP_MODEL_HERO3P:
-            return gp_h3p_forward_get_request(cmd_id);
-
-        case GP_MODEL_HERO4:
-            return gp_h4_forward_get_request(&gp.h4, cmd_id);
-
-        default:
-            return -1;
+    switch (gp.model) {
+    case GP_MODEL_HERO3P: {
+        gp_h3p_pkt_t p;
+        if (gp_h3p_produce_get_request(cmd_id, &p.cmd)) {
+            gp_send_cmd(p.bytes, p.cmd.len + 1);
         }
-    } else {
+    } break;
 
-        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+    case GP_MODEL_HERO4:
+        gp_h4_forward_get_request(&gp.h4, cmd_id);
+        break;
+
+    default:
         return -1;
     }
+
+    return 0;
 }
 
 int gp_set_request(GPSetRequest* request)
@@ -328,26 +334,35 @@ int gp_set_request(GPSetRequest* request)
      * via gp_get_last_set_response()
      */
 
+    if (!(gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) ||
+        !gp_ready_for_cmd())
+    {
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        return -1;
+    }
+
     gp.txn.reqtype = GP_REQUEST_SET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)request->cmd_id;
     gp.txn_is_internal = false;     // parameterize if we ever need to send an internal 'SET' command
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
-	if ((gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) && gp_ready_for_cmd()) {
-        switch (gp.model) {
-            case GP_MODEL_HERO3P:
-                return gp_h3p_forward_set_request(request);
-            case GP_MODEL_HERO4:
-                return gp_h4_forward_set_request(&gp.h4, request);
-            case GP_MODEL_UNKNOWN:
-                return -1;
-            default:
-                return -1;
+    switch (gp.model) {
+    case GP_MODEL_HERO3P: {
+        gp_h3p_pkt_t p;
+        if (gp_h3p_produce_set_request(request, &p.cmd)) {
+            gp_send_cmd(p.bytes, p.cmd.len + 1);
         }
-	} else {
-        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-		return -1;
-	}
+    } break;
+
+    case GP_MODEL_HERO4:
+        gp_h4_forward_set_request(&gp.h4, request);
+        break;
+
+    default:
+        return -1;
+    }
+
+    return 0;
 }
 
 GPPowerStatus gp_get_power_status()
