@@ -55,6 +55,8 @@ typedef struct {
     GPPowerStatus power_status;
 
     uint16_t init_timeout_ms;
+    uint16_t intr_timeout_count;        // how long has INTR been asserted without seeing a START
+    bool intr_retry_pulse_in_progress;  // if our INTR request was ignored, are we in the middle of a retry pulse?
     GPModel model;
     GPCaptureMode capture_mode;
     GPCaptureMode pending_capture_mode;
@@ -89,6 +91,8 @@ void gp_reset()
     // txn is not initialized
 
     gp.init_timeout_ms = 0;
+    gp.intr_timeout_count = 0;
+    gp.intr_retry_pulse_in_progress = false;
     gp.model = GP_MODEL_UNKNOWN;
     gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
@@ -393,11 +397,54 @@ void gp_disable_charging()
     gp_set_charging_asserted_out(false);
 }
 
+static void gp_check_intr_timeout()
+{
+    /*
+     * GoPro datasheet says that if INTR is asserted for 2 seconds
+     * and it doesn't respond to us, just try again :/
+     *
+     * Trying again consists of deasserting INTR and reasserting
+     * after a short pulse duration.
+     *
+     * What happens if we're ignored again? Just keep trying.
+     *
+     * Called from within the state machine ticker.
+     */
+
+    const unsigned INTR_TIMEOUT_MILLIS = 2000;
+    const unsigned INTR_RETRY_PULSE_MILLIS = 1;
+
+    // pulsing to retry?
+    if (gp.intr_retry_pulse_in_progress) {
+        if (++gp.intr_timeout_count >= (INTR_RETRY_PULSE_MILLIS/GP_STATE_MACHINE_PERIOD_MS)) {
+            gp_set_intr_asserted_out(true);
+            gp.intr_retry_pulse_in_progress = false;
+            gp.intr_timeout_count = 0;
+        }
+        return;
+    }
+
+    // check for timeout while asserted
+    if (gp_get_intr_asserted_out()) {
+        if (++gp.intr_timeout_count >= (INTR_TIMEOUT_MILLIS/GP_STATE_MACHINE_PERIOD_MS)) {
+            gp_set_intr_asserted_out(false);
+            gp.intr_retry_pulse_in_progress = true;
+            gp.intr_timeout_count = 0;
+        }
+    } else {
+        // we rely on INTR being deasserted once we're addressed via i2c
+        gp.intr_timeout_count = 0;
+    }
+
+}
+
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
 // for proper gopro interface operation
 void gp_update()
 {
     GPPowerStatus new_power_status;
+
+    gp_check_intr_timeout();
 
     if (gp.i2c_txn.in_progress) {
         if (timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
