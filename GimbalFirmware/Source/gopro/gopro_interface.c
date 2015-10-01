@@ -307,9 +307,9 @@ int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
 
     switch (gp.model) {
     case GP_MODEL_HERO3P: {
-        gp_h3p_pkt_t p;
-        if (gp_h3p_produce_get_request(cmd_id, &p.cmd)) {
-            gp_send_cmd(p.bytes, p.cmd.len + 1);
+        gp_h3p_pkt_t h3p;
+        if (gp_h3p_produce_get_request(cmd_id, &h3p.cmd)) {
+            gp_send_cmd(h3p.bytes, h3p.cmd.len + 1);
         }
     } break;
 
@@ -348,9 +348,9 @@ int gp_set_request(GPSetRequest* request)
 	// GoPro has to be powered on and ready, or the command has to be a power on command
     switch (gp.model) {
     case GP_MODEL_HERO3P: {
-        gp_h3p_pkt_t p;
-        if (gp_h3p_produce_set_request(request, &p.cmd)) {
-            gp_send_cmd(p.bytes, p.cmd.len + 1);
+        gp_h3p_pkt_t h3p;
+        if (gp_h3p_produce_set_request(request, &h3p.cmd)) {
+            gp_send_cmd(h3p.bytes, h3p.cmd.len + 1);
         }
     } break;
 

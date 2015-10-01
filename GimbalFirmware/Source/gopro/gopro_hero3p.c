@@ -10,6 +10,7 @@
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf);
 static void gp_h3p_handle_response(const uint16_t *respbuf);
 static void gp_h3p_sanitize_buf_len(uint16_t *buf);
+static void gp_h3p_finalize_command(gp_h3p_cmd_t *c);
 
 void gp_h3p_init(gp_h3p_t *h3p)
 {
@@ -38,23 +39,23 @@ bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len)
     return false;
 }
 
-static bool gp_h3p_cmd_has_param(const GPCmd* c)
+static bool gp_h3p_cmd_has_param(const gp_h3p_cmd_t *c)
 {
     /*
      * For the most part, commands have a parameter, queries never do.
      * Commands are 2 uppercase characters, queries are 2 lowercase characters
      */
 
-    if (islower(c->cmd[0])) {
+    if (islower(c->cmd1)) {
         return false;
     }
 
     // Need to special case 'DL', 'DA', and 'FO' commands, since they don't have parameters
-    if ((c->cmd[0] == 'F') && (c->cmd[1] == 'O')) {
+    if ((c->cmd1 == 'F') && (c->cmd2 == 'O')) {
         return false;
     }
 
-    if (c->cmd[0] == 'D' && (c->cmd[1] == 'L' || c->cmd[1] == 'A')) {
+    if (c->cmd1 == 'D' && (c->cmd2 == 'L' || c->cmd2 == 'A')) {
         return false;
     }
 
@@ -68,28 +69,26 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
      * Return true if we produced data to send, false otherwise.
      */
 
-    GPCmd cmd;
-
     switch (cmd_id) {
         case GOPRO_COMMAND_SHUTTER:
-            cmd.cmd[0] = 's';
-            cmd.cmd[1] = 'h';
+            c->cmd1 = 's';
+            c->cmd2 = 'h';
             // TODO: not sure if this command should be called directly, since don't want to be sending commands to GoPro while recording (spec document)
             break;
 
         case GOPRO_COMMAND_CAPTURE_MODE:
-            cmd.cmd[0] = 'c';
-            cmd.cmd[1] = 'm';
+            c->cmd1 = 'c';
+            c->cmd2 = 'm';
             break;
 
         case GOPRO_COMMAND_MODEL:
-            cmd.cmd[0] = 'c';
-            cmd.cmd[1] = 'v';
+            c->cmd1 = 'c';
+            c->cmd2 = 'v';
             break;
 
         case GOPRO_COMMAND_BATTERY:
-            cmd.cmd[0] = 'b';
-            cmd.cmd[1] = 'l';
+            c->cmd1 = 'b';
+            c->cmd2 = 'l';
             break;
 
         default:
@@ -98,7 +97,7 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
             return false;
     }
 
-    gp_h3p_produce_command(&cmd, c);
+    gp_h3p_finalize_command(c);
     return true;
 }
 
@@ -109,14 +108,12 @@ bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c)
      * Return true if we produced data to send, false otherwise.
      */
 
-    GPCmd cmd;
-
     switch (request->cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                cmd.cmd[0] = 'P';
-                cmd.cmd[1] = 'W';
-                cmd.cmd_parm = 0x00;
+                c->cmd1 = 'P';
+                c->cmd2 = 'W';
+                c->payload[0] = 0x00;
             } else {
                 // gp_request_power_on() does not require a herobus transaction,
                 // so mark it complete immediately
@@ -127,20 +124,20 @@ bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c)
             break;
 
         case GOPRO_COMMAND_CAPTURE_MODE:
-            cmd.cmd[0] = 'C';
-            cmd.cmd[1] = 'M';
-            cmd.cmd_parm = request->value;
+            c->cmd1 = 'C';
+            c->cmd2 = 'M';
+            c->payload[0] = request->value;
             gp_pend_capture_mode(request->value);
             break;
 
         case GOPRO_COMMAND_SHUTTER:
-            cmd.cmd[0] = 'S';
-            cmd.cmd[1] = 'H';
-            cmd.cmd_parm = request->value;
+            c->cmd1 = 'S';
+            c->cmd2 = 'H';
+            c->payload[0] = request->value;
 
             // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
             if (gp_capture_mode() == GP_CAPTURE_MODE_VIDEO) {
-                switch (cmd.cmd_parm) {
+                switch (request->value) {
                 case GP_RECORDING_START:
                     gp_set_recording_state(true);
                     break;
@@ -156,21 +153,21 @@ bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c)
 
         /* Unsupported commands */
         case GOPRO_COMMAND_RESOLUTION:
-            cmd.cmd[0] = 'V';
-            cmd.cmd[1] = 'V';
-            cmd.cmd_parm = request->value;
+            c->cmd1 = 'V';
+            c->cmd2 = 'V';
+            c->payload[0] = request->value;
             break;
 
         case GOPRO_COMMAND_FRAME_RATE:
-            cmd.cmd[0] = 'F';
-            cmd.cmd[1] = 'S';
-            cmd.cmd_parm = request->value;
+            c->cmd1 = 'F';
+            c->cmd2 = 'S';
+            c->payload[0] = request->value;
             break;
 
         case GOPRO_COMMAND_FIELD_OF_VIEW:
-            cmd.cmd[0] = 'F';
-            cmd.cmd[1] = 'V';
-            cmd.cmd_parm = request->value;
+            c->cmd1 = 'F';
+            c->cmd2 = 'V';
+            c->payload[0] = request->value;
             break;
         /* End of unsupported commands */
 
@@ -180,7 +177,7 @@ bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c)
             return false;
     }
 
-    gp_h3p_produce_command(&cmd, c);
+    gp_h3p_finalize_command(c);
     return true;
 }
 
@@ -280,15 +277,11 @@ bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camer
     return true;
 }
 
-void gp_h3p_produce_command(const GPCmd* cmd, gp_h3p_cmd_t *c)
+void gp_h3p_finalize_command(gp_h3p_cmd_t *c)
 {
-    c->cmd1 = cmd->cmd[0];
-    c->cmd2 = cmd->cmd[1];
-
     // first byte is len, upper bit clear to indicate command originated from the gimbal (not the GoPro)
-    if (gp_h3p_cmd_has_param(cmd)) {
+    if (gp_h3p_cmd_has_param(c)) {
         c->len = 0x3;
-        c->payload[0] = cmd->cmd_parm;
     } else {
         c->len = 0x2;
     }

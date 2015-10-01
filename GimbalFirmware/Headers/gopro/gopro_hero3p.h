@@ -53,6 +53,5 @@ bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c);
 bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, bool from_camera, uint16_t *txbuf);
 
 bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camera);
-void gp_h3p_produce_command(const GPCmd* cmd, gp_h3p_cmd_t *c);
 
 #endif // _GOPRO_HERO3P_H
