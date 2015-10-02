@@ -628,34 +628,48 @@ void gp_on_slave_address(bool addressed_as_tx)
         // send data as appropriate
         // length is 1st byte in command buffer, add 1 for length field
 
-        gopro_i2c_send(txbuf, txbuf[0] + 1);
-
-        // keep track of whether we're sending a cmd or response.
-        // if sending cmd, need to know whether to wait for a response.
-        if (gp.hb_txn_phase == HB_TXN_WAIT_FOR_CMD_START) {
+        switch (gp.hb_txn_phase) {
+        case HB_TXN_WAIT_FOR_CMD_START:
+            gopro_i2c_send(txbuf, txbuf[0] + 1);
             gp.hb_txn_phase =  HB_TXN_TXING_CMD;
-        } else {
-            gp.hb_txn_phase = HB_TXN_TXING_RSP;
+            break;
+
+        case HB_TXN_WAIT_FOR_RSP_START:
+            gopro_i2c_send(txbuf, txbuf[0] + 1);
+            gp.hb_txn_phase =  HB_TXN_TXING_RSP;
+            break;
+
+        default:
+            // error, return to idle
+            gp.hb_txn_phase = HB_TXN_IDLE;
+            // NAK i2c
+            break;
         }
 
     } else {
         // addressed as receiver.
-        // in the general case, we wait for the stop condition to indicate a transaction is complete.
-
-        i2c_begin_rx(rxbuf, RX_BUF_SZ);
-
-        if (gp.hb_txn_phase == HB_TXN_WAIT_FOR_CMD_START) {
+        switch (gp.hb_txn_phase) {
+        case HB_TXN_WAIT_FOR_CMD_START:
             // Special case - we have asked the GoPro to read a command from us, but before it has started to read the command,
             // it issues a command to us first.  Per the spec, we have to give up on our command request and service the GoPro's command
 
             // Indicate that the command we were trying to send has been preempted by the GoPro
             // Indicate that a "new response" is available (what's available is the indication that the command was preempted)
             gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-//            last_cmd_response.result = GP_CMD_PREEMPTED;
-        }
+            // fall through, and start rxing anyway
 
-        // wait for the rx to complete
-        gp.hb_txn_phase = HB_TXN_RXING;
+        case HB_TXN_IDLE:
+        case HB_TXN_WAIT_FOR_GP_RSP:
+            i2c_begin_rx(rxbuf, RX_BUF_SZ);
+            gp.hb_txn_phase = HB_TXN_RXING;
+            break;
+
+        default:
+            // error, return to idle
+            gp.hb_txn_phase = HB_TXN_IDLE;
+            // NAK i2c
+            break;
+        }
     }
 }
 
