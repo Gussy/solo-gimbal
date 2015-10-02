@@ -313,9 +313,12 @@ int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
         }
     } break;
 
-    case GP_MODEL_HERO4:
-        gp_h4_forward_get_request(&gp.h4, cmd_id);
-        break;
+    case GP_MODEL_HERO4: {
+        gp_h4_pkt_t h4p;
+        if (gp_h4_produce_get_request(&gp.h4, cmd_id, &h4p)) {
+            gp_send_cmd(h4p.bytes, h4p.cmd.len + 1);
+        }
+    } break;
 
     default:
         return -1;
@@ -354,9 +357,12 @@ int gp_set_request(GPSetRequest* request)
         }
     } break;
 
-    case GP_MODEL_HERO4:
-        gp_h4_forward_set_request(&gp.h4, request);
-        break;
+    case GP_MODEL_HERO4: {
+        gp_h4_pkt_t h4p;
+        if (gp_h4_produce_set_request(&gp.h4, request, &h4p)) {
+            gp_send_cmd(h4p.bytes, h4p.cmd.len + 1);
+        }
+    } break;
 
     default:
         return -1;
@@ -507,9 +513,13 @@ void gp_on_txn_complete()
     case GP_MODEL_HERO3P:
         // do nothing
         break;
-    case GP_MODEL_HERO4:
-        gp_h4_on_txn_complete(&gp.h4);
-        break;
+    case GP_MODEL_HERO4: {
+        gp_h4_pkt_t p;
+        if (gp_h4_on_txn_complete(&gp.h4, &p)) {
+            gp_send_cmd(p.bytes, p.cmd.len + 1);
+        }
+    } break;
+
     case GP_MODEL_UNKNOWN:
     default:
         break;

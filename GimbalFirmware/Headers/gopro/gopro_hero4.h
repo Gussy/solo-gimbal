@@ -87,24 +87,21 @@ typedef union {
 
 } gp_h4_pkt_t;
 
-// TODO: maybe use this one in gp_h4_request_power_off
-typedef enum{
+typedef enum {
     GP_H4_POWER_OFF_NORMAL,
     GP_H4_POWER_OFF_FORCED
 } GPH4Power;
 
 void gp_h4_init(gp_h4_t *h4);
 bool gp_h4_handshake_complete(const gp_h4_t *h4);
-void gp_h4_finish_handshake(gp_h4_t *h4);
-void gp_h4_on_txn_complete(gp_h4_t *h4);
+bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p);
+bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p);
 bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len);
 
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len);
 bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
 
-bool gp_h4_request_power_off(gp_h4_t *h4);
-
-int gp_h4_forward_get_request(gp_h4_t *h4, Uint8 cmd_id);
-int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request);
+bool gp_h4_produce_get_request(gp_h4_t *h4, Uint8 cmd_id, gp_h4_pkt_t *p);
+bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_pkt_t *p);
 
 #endif // _GOPRO_HERO4_H

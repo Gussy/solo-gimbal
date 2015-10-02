@@ -34,7 +34,7 @@ enum GP_H4_HANDSHAKE_STEPS {
 static void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t *c, gp_h4_pkt_t *rsp);
 static void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
 static bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r);
-static void gp_h4_send_yy_cmd(gp_h4_t *h4, uint16_t api_group, uint16_t api_id, const uint16_t *b, uint16_t len);
+static void gp_h4_finalize_yy_cmd(gp_h4_t *h4, uint16_t payloadlen, gp_h4_yy_cmd_t *c);
 
 void gp_h4_init(gp_h4_t *h4)
 {
@@ -52,7 +52,7 @@ bool gp_h4_handshake_complete(const gp_h4_t *h4)
     return h4->handshake_step == GP_H4_HANDSHAKE_CHANNEL_OPEN;
 }
 
-void gp_h4_finish_handshake(gp_h4_t *h4)
+bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p)
 {
     /*
      * Called when:
@@ -67,17 +67,24 @@ void gp_h4_finish_handshake(gp_h4_t *h4)
 
     if (h4->handshake_step == GP_H4_HANDSHAKE_HB_PROTO_VERSION) {
         // 'Get Channel ID/Open Channel' is api 0/1
-        gp_h4_send_yy_cmd(h4, 0, 1, NULL, 0);
+        gp_h4_yy_cmd_t *yy = &p->yy_cmd;
+        yy->api_group = 0;
+        yy->api_id = 1;
+        gp_h4_finalize_yy_cmd(h4, 0, yy);
+        return true;
     }
+
+    return false;
 }
 
-void gp_h4_on_txn_complete(gp_h4_t *h4)
+bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
 {
     // must kick off final step of handshake sequence on hero4
     if (!gp_handshake_complete()) {
-        gp_h4_finish_handshake(h4);
-        return;
+        return gp_h4_finish_handshake(h4, p);
     }
+
+    return false;
 }
 
 bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len)
@@ -155,32 +162,21 @@ static uint16_t yy_rsp_len(const gp_h4_yy_rsp_t *r)
     return (r->datalen1 * 10) + r->datalen2;
 }
 
-void gp_h4_send_yy_cmd(gp_h4_t *h4, uint16_t api_group, uint16_t api_id, const uint16_t *b, uint16_t len)
+void gp_h4_finalize_yy_cmd(gp_h4_t *h4, uint16_t payloadlen, gp_h4_yy_cmd_t *c)
 {
     /*
      * assemble a YY cmd for transmission.
+     * expects that api_group and api_id are populated elsewhere.
      *
      * 'len' specifies payload length.
      */
-    uint16_t i;
 
-    gp_h4_pkt_t p;
-    gp_h4_yy_cmd_t *c = &p.yy_cmd;
-
-    yy_set_cmd_len(c, len);
+    yy_set_cmd_len(c, payloadlen);
     c->l1 = 'Y';
     c->l2 = 'Y';
     c->chan_id = h4->channel_id;
     c->tid = 0;
     c->tcb = TCB_CMD_SINGLE_PKT;
-    c->api_group = api_group;
-    c->api_id = api_id;
-
-    for (i = 0; i < len; ++i) {
-        c->payload[i] = b[i];
-    }
-
-    gp_send_cmd(p.bytes, p.cmd.len + 1);
 }
 
 static bool is_zz(const gp_h4_pkt_t* c)
@@ -281,44 +277,33 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
     return true;
 }
 
-bool gp_h4_request_power_off(gp_h4_t *h4)
-{
-    uint16_t api_group = 8;
-    uint16_t api_id = 2;
-    uint16_t b[1] = {GP_H4_POWER_OFF_NORMAL}; // 0x00 - Normal, 0x01 - Forced
-    uint16_t len = 1;
-    gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
-    return true;
-}
-
-int gp_h4_forward_get_request(gp_h4_t *h4, Uint8 cmd_id)
+bool gp_h4_produce_get_request(gp_h4_t *h4, Uint8 cmd_id, gp_h4_pkt_t *p)
 {
     /*
      * A GET request has been received via the CAN interface,
      * forward it to the camera.
      */
 
-    uint16_t api_group = 0;
-    uint16_t api_id = 0;
-    uint16_t b[1] = {0}; // should always be null when treating get_requests, alt: b[GP_H4_YY_CMD_MAX_PAYLOAD]
-    uint16_t len = 0;
+    gp_h4_yy_cmd_t *yy = &p->yy_cmd;
+
+    uint16_t payloadlen = 0;
 
     switch (cmd_id) {
         case GOPRO_COMMAND_CAPTURE_MODE:
-            api_group = 1;
-            api_id    = 0;
+            yy->api_group = 1;
+            yy->api_id    = 0;
             break;
 
         case GOPRO_COMMAND_BATTERY:
-            api_group = 8;
-            api_id    = 0;
+            yy->api_group = 8;
+            yy->api_id    = 0;
             break;
 
         case GOPRO_COMMAND_RESOLUTION:
         case GOPRO_COMMAND_FRAME_RATE:
         case GOPRO_COMMAND_FIELD_OF_VIEW:
-            api_group = 2;
-            api_id    = 2;
+            yy->api_group = 2;
+            yy->api_id    = 2;
             break;
 
         case GOPRO_COMMAND_MODEL:
@@ -326,46 +311,46 @@ int gp_h4_forward_get_request(gp_h4_t *h4, Uint8 cmd_id)
         default:
             // Unsupported Command ID
             gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-            return -1;
+            return false;
     }
 
-    gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
-    return 0;
+    gp_h4_finalize_yy_cmd(h4, payloadlen, yy);
+    return true;
 }
 
-int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
+bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_pkt_t *p)
 {
     /*
      * A SET request has been received via the CAN interface,
      * forward it to the camera.
      */
 
-    uint16_t api_group = 0;
-    uint16_t api_id = 0;
-    uint16_t b[GP_H4_YY_CMD_MAX_PAYLOAD];
-    uint16_t len = 0;
+    gp_h4_yy_cmd_t *yy = &p->yy_cmd;
+
+    uint16_t payloadlen = 0;
 
     switch (request->cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                api_group = 8;  // TODO: alternatively use gp_h4_request_power_off() and pass in power-off type
-                api_id = 2;
-                b[0] = request->value;
-                len = 1;
+                yy->api_group = 8;
+                yy->api_id = 2;
+                yy->payload[0] = request->value;
+                payloadlen = 1;
             } else {
                 // no supported command to power on.
                 // have tried gp_request_power_on(), which is implemented based on hero3 docs,
                 // but does not appear to power up the camera.
                 gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                return -1;
+                return false;
             }
             break;
 
         case GOPRO_COMMAND_CAPTURE_MODE:
-            api_group = 1;
-            api_id = 1;
-            b[0] = request->value;
-            len = 1;
+            yy->api_group = 1;
+            yy->api_id = 1;
+            // TODO: verify this is a valid GPH4Power value
+            yy->payload[0] = request->value;
+            payloadlen = 1;
 
             gp_pend_capture_mode(request->value);
             break;
@@ -374,96 +359,95 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
 
             switch (gp_capture_mode()) {
             case GP_CAPTURE_MODE_VIDEO:
-                api_group = 2;
+                yy->api_group = 2;
                 switch (request->value) {
                 case GP_RECORDING_START:
-                    api_id = 0x1b;
+                    yy->api_id = 0x1b;
                     gp_set_recording_state(true); // TODO: settings this after the command has received a successful response would be more robust
                     break;
                 case GP_RECORDING_STOP:
-                    api_id = 0x1c;
+                    yy->api_id = 0x1c;
                     gp_set_recording_state(false);
                     break;
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                    return -1;
+                    return false;
                 }
                 break;
 
             case GP_CAPTURE_MODE_PHOTO:
-                api_group = 3;
+                yy->api_group = 3;
                 switch (request->value) {
                 case GP_RECORDING_START:
-                    api_id = 0x17;
+                    yy->api_id = 0x17;
                     //gp_set_recording_state(true);     // no need since we don't have a way to find out when recording is finished
                     break;
                 case GP_RECORDING_STOP:
-                    api_id = 0x18;
+                    yy->api_id = 0x18;
                     //gp_set_recording_state(false);
                     break;
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                    return -1;
+                    return false;
                 }
                 break;
 
             case GP_CAPTURE_MODE_BURST:
-                api_group = 4;
+                yy->api_group = 4;
                 switch (request->value) {
                 case GP_RECORDING_START:
-                    api_id = 0x1b;
+                    yy->api_id = 0x1b;
                     //gp_set_recording_state(true);      // no need since we don't have a way to find out when recording is finished
                     break;
                 case GP_RECORDING_STOP:
-                    api_id = 0x1c;
+                    yy->api_id = 0x1c;
                     //gp_set_recording_state(false);
                     break;
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                    return -1;
+                    return false;
                 }
                 break;
 
-            case GP_CAPTURE_MODE_UNKNOWN:
             default:
                 // unknown capture mode
                 gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                return -1;
+                return false;
             }
 
-            len = 0;
+            payloadlen = 0;
             break;
 
         case GOPRO_COMMAND_RESOLUTION: // TODO: how do we know the other values? new MAVLink message type might be needed here
-            b[0] = request->value;  // resolution
-            b[1] = 0;               // fps
-            b[2] = 0;               // fov
+            yy->payload[0] = request->value;  // resolution
+            yy->payload[1] = 0;               // fps
+            yy->payload[2] = 0;               // fov
         case GOPRO_COMMAND_FIELD_OF_VIEW:
-            b[0] = 0;
-            b[1] = request->value;
-            b[2] = 0;
+            yy->payload[0] = 0;
+            yy->payload[1] = request->value;
+            yy->payload[2] = 0;
         case GOPRO_COMMAND_FRAME_RATE:
-            b[0] = 0;
-            b[1] = 0;
-            b[2] = request->value;
+            yy->payload[0] = 0;
+            yy->payload[1] = 0;
+            yy->payload[2] = request->value;
 
             /* TODO set to default while we figure this out */
             // TODO: current defaults: 1080p (enum:9) @ 30 FPS (enum:8), wide (enum:0)
-            b[0] = 9;
-            b[1] = 8;
-            b[2] = 0;
+            yy->payload[0] = 9;
+            yy->payload[1] = 8;
+            yy->payload[2] = 0;
 
-            len = 3;
-            api_group = 2;
-            api_id = 3;
+            payloadlen = 3;
+            yy->api_group = 2;
+            yy->api_id = 3;
             break;
 
         default:
             // Unsupported Command ID
             gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-            return -1;
+            return false;
     }
 
-    gp_h4_send_yy_cmd(h4, api_group, api_id, b, len);
-    return 0;
+    gp_h4_finalize_yy_cmd(h4, payloadlen, yy);
+    return true;
 }
