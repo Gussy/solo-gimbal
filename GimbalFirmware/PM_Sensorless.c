@@ -299,8 +299,6 @@ void main(void)
 
     InitInterrupts();
 
-    DEBUG_OFF;
-
 	// IDLE loop. Just sit and loop forever:
 	for(;;)  //infinite loop
 	{
@@ -325,9 +323,7 @@ void main(void)
             if (GyroDataReadyFlag) {
                 GyroDataReadyFlag = false;
 
-                DEBUG_ON;
                 RunRateLoops(&control_board_parms);
-                DEBUG_OFF;
 
                 MotorCommutationLoop(&control_board_parms,
                                      &axis_parms,
@@ -340,13 +336,11 @@ void main(void)
             OldIsrTicker = IsrTicker;
             TorqueDemandAvailableFlag = false;
 
-            DEBUG_ON;
             MotorCommutationLoop(&control_board_parms,
                                  &axis_parms,
                                  &motor_drive_parms,
                                  &encoder_parms,
                                  &load_ap_state_info);
-            DEBUG_OFF;
         }
 
         // Update any parameters that have changed due to CAN messages
@@ -548,7 +542,6 @@ interrupt void MainISR(void)
 
 interrupt void eCAN0INT_ISR(void)
 {
-    DEBUG_ON;
     int16_t mailbox = ECanaRegs.CANGIF0.bit.MIV0;
     if(ECanaRegs.CANGIF0.bit.GMIF0 == 1 && mailbox == 31) {
         TorqueDemandAvailableFlag = true;
@@ -556,7 +549,6 @@ interrupt void eCAN0INT_ISR(void)
 
     // Reenable core interrupts and CAN int from PIE module
     PieCtrlRegs.PIEACK.bit.ACK9 = 1; // Enables PIE to drive a pulse into the CPU
-    DEBUG_OFF;
 }
 
 void power_down_motor()
