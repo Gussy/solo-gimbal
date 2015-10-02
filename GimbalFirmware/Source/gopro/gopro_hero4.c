@@ -353,7 +353,9 @@ int gp_h4_forward_set_request(gp_h4_t *h4, const GPSetRequest* request)
                 b[0] = request->value;
                 len = 1;
             } else {
-                // do nothing, can't request power on
+                // no supported command to power on.
+                // have tried gp_request_power_on(), which is implemented based on hero3 docs,
+                // but does not appear to power up the camera.
                 gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                 return -1;
             }

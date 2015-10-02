@@ -118,7 +118,10 @@ int gp_h3p_forward_set_request(const GPSetRequest* request)
             if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
                 gp_h3p_request_power_off();
             } else {
+                // gp_request_power_on() does not require a herobus transaction,
+                // so mark it complete immediately
                 gp_request_power_on();
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_SUCCESS);
             }
             break;
 
