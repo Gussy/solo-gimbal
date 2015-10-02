@@ -20,14 +20,14 @@
 
 
 typedef enum {
-    GP_CONTROL_STATE_IDLE,
-    GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND,
-    GP_CONTROL_STATE_WAIT_FOR_COMPLETE_CMD_SEND,
-    GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE,
-    GP_CONTROL_STATE_WAIT_FOR_GP_DATA_COMPLETE,
-    GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE,
-    GP_CONTROL_STATE_WAIT_TO_COMPLETE_RESPONSE_SEND
-} GPControlState;
+    HB_TXN_IDLE,
+    HB_TXN_WAIT_FOR_CMD_START,      // we've asserted INTR, will respond with our cmd
+    HB_TXN_TXING_CMD,               // transmitting cmd via i2c
+    HB_TXN_WAIT_FOR_GP_RSP,         // we've transmitted a cmd, waiting for response from gopro
+    HB_TXN_WAIT_FOR_RSP_START,      // we've asserted INTR, will respond with our rsp
+    HB_TXN_TXING_RSP,               // transmitting response via i2c
+    HB_TXN_RXING,                   // receiving bytes via i2c, contents determine cmd vs rsp
+} herobus_txn_phase_t;
 
 typedef enum {
     GP_POWER_UNKNOWN,

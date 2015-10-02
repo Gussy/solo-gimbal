@@ -30,7 +30,6 @@ static bool gp_is_recording();
 static void gp_write_eeprom();
 
 
-volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
 volatile Uint32 timeout_counter = 0;
 
@@ -42,6 +41,8 @@ static uint16_t rxbuf[RX_BUF_SZ];
 
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
+
+    volatile herobus_txn_phase_t hb_txn_phase;
 
     gp_transaction_t txn;
 
@@ -88,7 +89,7 @@ void gp_reset()
     gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
-    gp_control_state = GP_CONTROL_STATE_IDLE;
+    gp.hb_txn_phase = HB_TXN_IDLE;
 
     gp_set_intr_asserted_out(false);
 
@@ -108,7 +109,7 @@ static bool init_timed_out()
 
 bool gp_ready_for_cmd()
 {
-    return (gp_control_state == GP_CONTROL_STATE_IDLE) && !i2c_get_bb();
+    return (gp.hb_txn_phase == HB_TXN_IDLE) && !i2c_get_bb();
 }
 
 bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
@@ -119,7 +120,7 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
      */
     uint16_t i;
 
-    if (gp_control_state != GP_CONTROL_STATE_IDLE) {
+    if (gp.hb_txn_phase != HB_TXN_IDLE) {
         return false;
     }
 
@@ -132,7 +133,7 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
 
     // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
     timeout_counter = 0;
-    gp_control_state = GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND;
+    gp.hb_txn_phase = HB_TXN_WAIT_FOR_CMD_START;
 
     return true;
 }
@@ -380,13 +381,13 @@ void gp_update()
         } else {
             gp.waiting_for_i2c = false;
 
-            if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_GP_DATA_COMPLETE) {
+            if (gp.hb_txn_phase == HB_TXN_RXING) {
                 // transaction was rx
                 if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
                     // if we have data to send, send it over I2C
                     gp_set_intr_asserted_out(true);
 
-                    gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
+                    gp.hb_txn_phase = HB_TXN_WAIT_FOR_RSP_START;
                     timeout_counter = 0;
                 } else {
                     gp_on_txn_complete();
@@ -394,11 +395,11 @@ void gp_update()
 
             } else {
                 // transaction was tx
-                if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_COMPLETE_CMD_SEND) {
-                    gp_control_state =  GP_CONTROL_STATE_WAIT_FOR_CMD_RESPONSE;
+                if (gp.hb_txn_phase == HB_TXN_TXING_CMD) {
+                    gp.hb_txn_phase =  HB_TXN_WAIT_FOR_GP_RSP;
                 } else {
                     // sent response, we're all done
-                    gp_control_state = GP_CONTROL_STATE_IDLE;
+                    gp.hb_txn_phase = HB_TXN_IDLE;
 
                     gp_on_txn_complete();
                 }
@@ -504,7 +505,7 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
 
     // base case, we have received a response and we're back to idle,
     // handlers can override if they have a response to send
-    gp_control_state = GP_CONTROL_STATE_IDLE;
+    gp.hb_txn_phase = HB_TXN_IDLE;
 
     switch (gp.model) {
     case GP_MODEL_HERO3P:{
@@ -542,7 +543,7 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
     default:
         // error in data rx, return to idle
         gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-        gp_control_state = GP_CONTROL_STATE_IDLE;
+        gp.hb_txn_phase = HB_TXN_IDLE;
         break;
     }
 
@@ -631,11 +632,10 @@ void gp_on_slave_address(bool addressed_as_tx)
 
         // keep track of whether we're sending a cmd or response.
         // if sending cmd, need to know whether to wait for a response.
-        if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND) {
-            gp_control_state =  GP_CONTROL_STATE_WAIT_FOR_COMPLETE_CMD_SEND;
-
+        if (gp.hb_txn_phase == HB_TXN_WAIT_FOR_CMD_START) {
+            gp.hb_txn_phase =  HB_TXN_TXING_CMD;
         } else {
-            gp_control_state = GP_CONTROL_STATE_WAIT_TO_COMPLETE_RESPONSE_SEND;
+            gp.hb_txn_phase = HB_TXN_TXING_RSP;
         }
 
     } else {
@@ -644,7 +644,7 @@ void gp_on_slave_address(bool addressed_as_tx)
 
         i2c_begin_rx(rxbuf, RX_BUF_SZ);
 
-        if (gp_control_state == GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND) {
+        if (gp.hb_txn_phase == HB_TXN_WAIT_FOR_CMD_START) {
             // Special case - we have asked the GoPro to read a command from us, but before it has started to read the command,
             // it issues a command to us first.  Per the spec, we have to give up on our command request and service the GoPro's command
 
@@ -655,7 +655,7 @@ void gp_on_slave_address(bool addressed_as_tx)
         }
 
         // wait for the rx to complete
-        gp_control_state = GP_CONTROL_STATE_WAIT_FOR_GP_DATA_COMPLETE;
+        gp.hb_txn_phase = HB_TXN_RXING;
     }
 }
 
@@ -671,7 +671,7 @@ void gp_timeout()
     //last_cmd_response.cmd_result = reason;
     //new_response_available = true;
 
-    gp_control_state = GP_CONTROL_STATE_IDLE;
+    gp.hb_txn_phase = HB_TXN_IDLE;
 }
 
 GPCaptureMode gp_capture_mode()
