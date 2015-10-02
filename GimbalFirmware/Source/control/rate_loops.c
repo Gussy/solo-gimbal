@@ -11,7 +11,6 @@
 #include "hardware/timing.h"
 #include "control/temp_control.h"
 
-//#define LOG_IMU_DATA
 #define RATE_CTRL_KHZ 2 // valid settings: 1, 2, 4
 
 #define TELEM_LOOP_HZ 100
@@ -372,7 +371,7 @@ void RunRateLoops(ControlBoardParms* cb_parms)
 }
 
 static void log_vector(uint8_t msg_id, uint32_t time_us, int16_t x, int16_t y, int16_t z) {
-#ifdef LOG_IMU_DATA
+#if defined(PIN29_DEBUG_IMU_LOGGING)
     if (uart_tx_space() >= 13) {
         Uint8 log_data[13];
         log_data[0] = 0xA3;
@@ -390,7 +389,7 @@ static void log_vector(uint8_t msg_id, uint32_t time_us, int16_t x, int16_t y, i
         log_data[12] = (z >> 8) & 0xFF;
         uart_send_data(log_data,13);
     }
-#endif //LOG_IMU_DATA
+#endif
 }
 
 static void float_to_byte_array(float in, Uint8* ret) {

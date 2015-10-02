@@ -397,7 +397,6 @@ static void init_gpio(){
             GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
             break;
 
-        // The GPIO-29 pin is used for system timing analysis on the elevation board (TP10)
         case ROLL:
         case EL:
         default:
@@ -406,11 +405,13 @@ static void init_gpio(){
             GpioCtrlRegs.GPADIR.bit.GPIO28 = 1;     // 1=OUTput,  0=INput
             GpioDataRegs.GPASET.bit.GPIO28 = 1;     // uncomment if --> Set High initially
 
-            //  GPIO-29 - PIN FUNCTION = DEBUG, non-isolated
+#if defined(PIN29_DEBUG_IMU_LOGGING)
             GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 1;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
-            //  GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
-            //  GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;   // uncomment if --> Set Low initially
-            //  GpioDataRegs.GPASET.bit.GPIO29 = 1;     // uncomment if --> Set High initially
+#else
+            GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
+            GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
+            GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;     // uncomment if --> Set High initially
+#endif
             break;
     }
 //  GPIO-30 - PIN FUNCTION = CAN RX
