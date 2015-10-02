@@ -43,6 +43,7 @@ typedef struct {
     bool txn_is_internal;
     gp_transaction_t txn;
 
+    bool pwr_on_pulse_in_progress; // waiting GP_PWRON_TIME_MS before powering on camera
     GPPowerStatus power_status;
 
     uint16_t init_timeout_ms;
@@ -64,6 +65,7 @@ static gopro_t gp;
 void init_gp_interface()
 {
     gp_reset();
+    gp.pwr_on_pulse_in_progress = false;
     gp.power_status = GP_POWER_UNKNOWN;
 
     gopro_i2c_init();
@@ -250,8 +252,20 @@ GPHeartbeatStatus gp_heartbeat_status()
 
 bool gp_request_power_on()
 {
-    if (gp_control_state == GP_CONTROL_STATE_IDLE) {
-        gp_control_state = GP_CONTROL_STATE_REQUEST_POWER_ON;
+    /*
+     * From the HERO3 docs:
+     *
+     * "PWRON is an active-low signal and is pulled-up internally on the camera to 3.0V.
+     *  Drive this pin using an open-collector driver.
+     *  Apply an active-low pulse of 100ms to turn on the camera"
+     *
+     * This does not appear to power on hero4 devices. TBD.
+     */
+
+    if (!gp.pwr_on_pulse_in_progress) {
+        GP_PWRON_LOW();
+        gp_power_on_counter = 0;
+        gp.pwr_on_pulse_in_progress = true;
         return true;
     }
 
@@ -359,14 +373,14 @@ GPPowerStatus gp_get_power_status()
     // If we've either requested the power be turned on, or are waiting for the power on timeout to elapse, return
     // GP_POWER_WAIT so the user knows they should query the power status again at a later time
     // Otherwise, poll the gopro voltage on pin to get the current gopro power status
-    if (gp_control_state == GP_CONTROL_STATE_REQUEST_POWER_ON || gp_control_state == GP_CONTROL_STATE_WAIT_POWER_ON) {
+    if (gp.pwr_on_pulse_in_progress) {
         return GP_POWER_WAIT;
+    }
+
+    if (gp_von_is_enabled()) {
+        return GP_POWER_ON;
     } else {
-        if (gp_von_is_enabled()) {
-            return GP_POWER_ON;
-        } else {
-            return GP_POWER_OFF;
-        }
+        return GP_POWER_OFF;
     }
 }
 
@@ -434,21 +448,11 @@ void gp_interface_state_machine()
         }
     }
 
-    switch (gp_control_state) {
-        case GP_CONTROL_STATE_REQUEST_POWER_ON:
-            GP_PWRON_LOW();
-            gp_power_on_counter = 0;
-            gp_control_state = GP_CONTROL_STATE_WAIT_POWER_ON;
-            break;
-
-        case GP_CONTROL_STATE_WAIT_POWER_ON:
-            if (gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
-                GP_PWRON_HIGH();
-                gp_control_state = GP_CONTROL_STATE_IDLE;
-
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_SUCCESS);
-            }
-            break;
+    if (gp.pwr_on_pulse_in_progress) {
+        if (gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+            GP_PWRON_HIGH();
+            gp.pwr_on_pulse_in_progress = false;
+        }
     }
 
     if (gp_get_power_status() == GP_POWER_ON) {
@@ -657,8 +661,6 @@ void gp_on_slave_address(bool addressed_as_tx)
     /*
      * Called in ISR context when the i2c device detects
      * that we've been successfully addressed by the camera.
-     *
-     *
      */
 
     timeout_counter = 0;
