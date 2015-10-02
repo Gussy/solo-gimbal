@@ -79,10 +79,6 @@ void init_gp_interface();
 void gp_interface_state_machine();
 GPPowerStatus gp_get_power_status();
 bool gp_request_power_on();
-bool gp_request_capture_mode();
-bool gp_send_command(const GPCmd* cmd);
-bool gp_send_cmd(const uint16_t* cmd, uint16_t len);
-bool gp_ready_for_cmd();
 void gp_write_eeprom();
 
 void gp_on_slave_address(bool addressed_as_tx);
@@ -90,7 +86,6 @@ void gp_on_slave_address(bool addressed_as_tx);
 uint16_t gp_transaction_cmd();
 GPRequestType gp_transaction_direction();
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
-bool gp_transaction_result_available();
 bool gp_get_completed_transaction(gp_transaction_t **rsp);
 
 inline void gp_assert_intr() {
@@ -114,12 +109,9 @@ void gp_enable_charging();
 void gp_disable_charging();
 
 GPCaptureMode gp_capture_mode();
-bool gp_handshake_complete();
-bool gp_is_valid_capture_mode(Uint8 capture_mode);
 void gp_latch_pending_capture_mode();
 bool gp_pend_capture_mode(Uint8 capture_mode);
 bool gp_set_capture_mode(Uint8 capture_mode);
 void gp_set_recording_state(bool recording_state);
-bool gp_is_recording();
 
 #endif /* GOPRO_INTERFACE_H_ */

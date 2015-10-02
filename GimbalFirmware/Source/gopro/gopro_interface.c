@@ -20,6 +20,12 @@ static void gp_timeout();
 static void gp_detect_camera_model(const uint16_t *buf, uint16_t len);
 static void gp_on_txn_complete();
 static bool handle_rx_data(uint16_t *buf, uint16_t len);
+static bool gp_send_cmd(const uint16_t* cmd, uint16_t len);
+static bool gp_ready_for_cmd();
+static bool gp_request_capture_mode();
+static bool gp_handshake_complete();
+static bool gp_is_valid_capture_mode(Uint8 capture_mode);
+static bool gp_is_recording();
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
@@ -176,11 +182,6 @@ uint16_t gp_transaction_cmd()
      */
 
     return gp.txn.mav_cmd;
-}
-
-bool gp_transaction_result_available()
-{
-    return gp.txn_result_pending;
 }
 
 bool gp_get_completed_transaction(gp_transaction_t ** rsp)

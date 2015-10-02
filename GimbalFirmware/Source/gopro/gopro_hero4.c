@@ -80,7 +80,7 @@ bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p)
 bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
 {
     // must kick off final step of handshake sequence on hero4
-    if (!gp_handshake_complete()) {
+    if (!gp_h4_handshake_complete(h4)) {
         return gp_h4_finish_handshake(h4, p);
     }
 

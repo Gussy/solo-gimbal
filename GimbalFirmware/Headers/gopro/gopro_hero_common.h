@@ -46,18 +46,6 @@ typedef struct {
     Uint8 result;
 } GPSetResponse;
 
-typedef struct {
-    char cmd[2];
-    Uint8 cmd_parm;
-} GPCmd;
-
-typedef struct {
-    char cmd[2];
-    GPCmdStatus status; // as reported by the camera
-    Uint8 value;
-    GPCmdResult result; // of the i2c transaction itself
-} GPCmdResponse;
-
 
 // TODO: the use of this struct might change based on pending changes to how information is passed through MAVLink
 typedef enum {
