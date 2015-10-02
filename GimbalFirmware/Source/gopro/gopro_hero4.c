@@ -106,6 +106,12 @@ bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len)
      * to determine if the received data is formatted correctly.
      */
 
+    // all hero4 packets have at least 5 bytes:
+    // len, ack, reserved, tid, tcb
+    if (len < 5) {
+        return false;
+    }
+
     // first byte is the length of the received data,
     // ensure it matches the received size
     if (buf[0] != len - 1) {

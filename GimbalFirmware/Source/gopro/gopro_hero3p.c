@@ -260,10 +260,15 @@ bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camer
      * Called when an i2c rx transaction has completed successfully,
      * to determine if the received data is formatted correctly.
      *
-     * Drain all the data from the i2c ringbuf, and ensure
-     * the advertised len matches what we actually recevied.
+     * Ensure the advertised len matches what we actually recevied.
      */
+
     uint16_t buf_len;
+
+    // must include at least len & status, in the case of a response
+    if (len < 2) {
+        return false;
+    }
 
     // first byte is the length of the received data,
     // top bit signals the cmd originator, 1 == camera, 0 == backpack
