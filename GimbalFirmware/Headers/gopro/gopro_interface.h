@@ -71,31 +71,29 @@ typedef struct {
     uint16_t len;                       // response payload len
 } gp_transaction_t;
 
-void init_gp_interface();
-void gp_interface_state_machine();
-GPPowerStatus gp_get_power_status();
+// public interface
+void gp_init();
+void gp_update();
+int gp_get_request(Uint8 cmd_id, bool txn_is_internal);
+int gp_set_request(GPSetRequest* request);
+GPHeartbeatStatus gp_get_heartbeat_status();
+void gp_enable_charging();
+void gp_disable_charging();
+bool gp_get_completed_transaction(gp_transaction_t **rsp); // TODO remove me
+
+// "private" functions, called from gopro_hero4/gopro_hero3/gopro_i2c
+// TODO detangle/remove from this header
 bool gp_request_power_on();
-void gp_write_eeprom();
-
 void gp_on_slave_address(bool addressed_as_tx);
-
 uint16_t gp_transaction_cmd();
 GPRequestType gp_transaction_direction();
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
-bool gp_get_completed_transaction(gp_transaction_t **rsp);
-
-int gp_get_request(Uint8 cmd_id, bool txn_is_internal);
-int gp_set_request(GPSetRequest* request);
-
-GPHeartbeatStatus gp_heartbeat_status();
-
-void gp_enable_charging();
-void gp_disable_charging();
-
 GPCaptureMode gp_capture_mode();
 void gp_latch_pending_capture_mode();
 bool gp_pend_capture_mode(Uint8 capture_mode);
 bool gp_set_capture_mode(Uint8 capture_mode);
 void gp_set_recording_state(bool recording_state);
+GPPowerStatus gp_get_power_status();
+
 
 #endif /* GOPRO_INTERFACE_H_ */

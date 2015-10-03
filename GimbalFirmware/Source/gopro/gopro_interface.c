@@ -27,6 +27,8 @@ static bool gp_request_capture_mode();
 static bool gp_handshake_complete();
 static bool gp_is_valid_capture_mode(Uint8 capture_mode);
 static bool gp_is_recording();
+static void gp_write_eeprom();
+
 
 volatile GPControlState gp_control_state = GP_CONTROL_STATE_IDLE;
 Uint32 gp_power_on_counter = 0;
@@ -63,8 +65,9 @@ typedef struct {
 static gopro_t gp;
 
 
-void init_gp_interface()
+void gp_init()
 {
+    gp_write_eeprom();
     gp_reset();
     gp_set_pwron_asserted_out(false);
     gp.power_status = GP_POWER_UNKNOWN;
@@ -213,7 +216,7 @@ bool gp_handshake_complete()
     }
 }
 
-GPHeartbeatStatus gp_heartbeat_status()
+GPHeartbeatStatus gp_get_heartbeat_status()
 {
     // A GoPro is connected, ready for action and had queried the gccb version
     if (gp_get_power_status() == GP_POWER_ON && gp_handshake_complete() && !init_timed_out()) {
@@ -387,7 +390,7 @@ void gp_disable_charging()
 
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
 // for proper gopro interface operation
-void gp_interface_state_machine()
+void gp_update()
 {
     GPPowerStatus new_power_status;
 
@@ -568,7 +571,7 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
     return false;
 }
 
-void gp_write_eeprom()
+static void gp_write_eeprom()
 {
     // This function writes to the 24LC00 EEPROM which the GoPro reads from
     // as specified in the hero bus datasheet

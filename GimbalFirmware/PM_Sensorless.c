@@ -51,7 +51,7 @@ static void send_gp_heartbeat(void);
 
 struct SchedTask scheduled_tasks[] = {
     {.task_func=&check_rate_cmd_timeout,        .interval_ms=3,     .last_run_ms=1},
-    {.task_func=&gp_interface_state_machine,    .interval_ms=3,     .last_run_ms=2},
+    {.task_func=&gp_update,                     .interval_ms=GP_STATE_MACHINE_PERIOD_MS,     .last_run_ms=2},
     {.task_func=&update_LEDs,                   .interval_ms=150,   .last_run_ms=0},
     {.task_func=&check_gp_responses,            .interval_ms=150,   .last_run_ms=1},
     {.task_func=&read_temp_and_voltage,         .interval_ms=150,   .last_run_ms=2},
@@ -207,11 +207,6 @@ void main(void)
 	DeviceInit();	// Device Life support & GPIO
     board_hw_id = GetBoardHWID();
 
-    // Program the EEPROM on every boot
-    if(board_hw_id == EL) {
-    	gp_write_eeprom();
-    }
-
 	// Initialize CAN peripheral, and CAND backend
 	ECanInit();
 	if (cand_init() != CAND_SUCCESS) {
@@ -262,7 +257,7 @@ void main(void)
         InitGyro();
 
         // Initialize the HeroBus interface
-        init_gp_interface();
+        gp_init();
 
         // Initialize the beacon LED
         init_led();
@@ -486,7 +481,7 @@ static void send_can_heartbeat(void)
 
 static void send_gp_heartbeat(void) {
     if (board_hw_id == EL) {
-        cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)gp_heartbeat_status());
+        cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)gp_get_heartbeat_status());
     }
 }
 
