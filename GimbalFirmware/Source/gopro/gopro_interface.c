@@ -39,8 +39,14 @@ volatile Uint32 timeout_counter = 0;
 static uint16_t txbuf[TX_BUF_SZ];
 static uint16_t rxbuf[RX_BUF_SZ];
 
+// state associated with current i2c transaction
+struct i2c_txn_t {
+    bool in_progress;       // tx/rx is ongoing
+    bool direction_is_tx;   // direction of transaction - rx or tx
+};
+
 typedef struct {
-    bool waiting_for_i2c; // waiting for i2c either tx/rx
+    struct i2c_txn_t i2c_txn;
 
     volatile herobus_txn_phase_t hb_txn_phase;
 
@@ -78,7 +84,7 @@ void gp_init()
 
 void gp_reset()
 {
-    gp.waiting_for_i2c = false;
+    gp.i2c_txn.in_progress = false;
 
     // txn is not initialized
 
@@ -373,13 +379,13 @@ void gp_update()
 {
     GPPowerStatus new_power_status;
 
-    if (gp.waiting_for_i2c) {
+    if (gp.i2c_txn.in_progress) {
         if (gopro_i2c_in_progress()) {
             if (timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
                 gp_timeout();
             }
         } else {
-            gp.waiting_for_i2c = false;
+            gp.i2c_txn.in_progress = false;
 
             if (gp.hb_txn_phase == HB_TXN_RXING) {
                 // transaction was rx
@@ -622,7 +628,8 @@ void gp_on_slave_address(bool addressed_as_tx)
     gp_set_intr_asserted_out(false);
 
     timeout_counter = 0;
-    gp.waiting_for_i2c = true;
+    gp.i2c_txn.in_progress = true;
+    gp.i2c_txn.direction_is_tx = addressed_as_tx;
 
     if (addressed_as_tx) {
         // send data as appropriate
@@ -676,7 +683,7 @@ void gp_on_slave_address(bool addressed_as_tx)
 void gp_timeout()
 {
     gopro_i2c_on_timeout();
-    gp.waiting_for_i2c = false;
+    gp.i2c_txn.in_progress = false;
 
     timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
     gp_set_intr_asserted_out(false); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
