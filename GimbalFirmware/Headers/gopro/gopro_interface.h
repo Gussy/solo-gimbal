@@ -84,8 +84,6 @@ GPRequestType gp_transaction_direction();
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
 bool gp_get_completed_transaction(gp_transaction_t **rsp);
 
-bool gp_new_heartbeat_available();
-
 int gp_get_request(Uint8 cmd_id, bool txn_is_internal);
 int gp_set_request(GPSetRequest* request);
 

@@ -38,11 +38,6 @@ volatile Uint32 timeout_counter = 0;
 static uint16_t txbuf[TX_BUF_SZ];
 static uint16_t rxbuf[RX_BUF_SZ];
 
-bool new_heartbeat_available = false;
-
-Uint16 heartbeat_counter = 0;
-
-
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 
@@ -169,11 +164,6 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdSt
     gp.txn_result_pending = true;
 }
 
-bool gp_new_heartbeat_available()
-{
-    return new_heartbeat_available;
-}
-
 uint16_t gp_transaction_cmd()
 {
     /*
@@ -225,8 +215,6 @@ bool gp_handshake_complete()
 
 GPHeartbeatStatus gp_heartbeat_status()
 {
-    new_heartbeat_available = false;
-
     // A GoPro is connected, ready for action and had queried the gccb version
     if (gp_get_power_status() == GP_POWER_ON && gp_handshake_complete() && !init_timed_out()) {
 	    // The connected state is overloaded with the recording state
@@ -463,12 +451,6 @@ void gp_interface_state_machine()
             gp_request_capture_mode();
         }
     }
-
-	// Periodically signal a MAVLINK_MSG_ID_GOPRO_HEARTBEAT message to be sent
-	if (++heartbeat_counter >= (GP_MAVLINK_HEARTBEAT_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
-        new_heartbeat_available = true;
-		heartbeat_counter = 0;
-	}
 
     // Detect a change in power status to reset some flags when a GoPro is re-connected during operation
     new_power_status = gp_get_power_status();

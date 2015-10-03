@@ -44,9 +44,10 @@
 static void check_rate_cmd_timeout(void);
 static void update_LEDs(void);
 static void check_gp_responses(void);
+static void read_temp_and_voltage(void);
 static void send_mav_heartbeat(void);
 static void send_can_heartbeat(void);
-static void read_temp_and_voltage(void);
+static void send_gp_heartbeat(void);
 
 struct SchedTask scheduled_tasks[] = {
     {.task_func=&check_rate_cmd_timeout,        .interval_ms=3,     .last_run_ms=1},
@@ -55,7 +56,8 @@ struct SchedTask scheduled_tasks[] = {
     {.task_func=&check_gp_responses,            .interval_ms=150,   .last_run_ms=1},
     {.task_func=&read_temp_and_voltage,         .interval_ms=150,   .last_run_ms=2},
     {.task_func=&send_can_heartbeat,            .interval_ms=1000,  .last_run_ms=0},
-    {.task_func=&send_mav_heartbeat,            .interval_ms=1000,  .last_run_ms=1}
+    {.task_func=&send_mav_heartbeat,            .interval_ms=1000,  .last_run_ms=1},
+    {.task_func=&send_gp_heartbeat,             .interval_ms=1000,  .last_run_ms=2}
 };
 
 // Used for running BackGround in flash, and ISR in RAM
@@ -447,12 +449,6 @@ static void check_gp_responses(void)
 {
     // If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
     if (board_hw_id == EL) {
-        if (gp_new_heartbeat_available()) {
-            // If there is a heartbeat status, get it and send out over CAN.
-            GPHeartbeatStatus status = gp_heartbeat_status();
-            cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)status);
-        }
-
         gp_transaction_t *txn;
         if (gp_get_completed_transaction(&txn)) {
 
@@ -486,6 +482,12 @@ static void send_mav_heartbeat(void)
 static void send_can_heartbeat(void)
 {
     CBSendStatus();
+}
+
+static void send_gp_heartbeat(void) {
+    if (board_hw_id == EL) {
+        cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)gp_heartbeat_status());
+    }
 }
 
 static void read_temp_and_voltage(void)
