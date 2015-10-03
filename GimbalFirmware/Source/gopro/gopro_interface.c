@@ -387,27 +387,44 @@ void gp_update()
         } else {
             gp.i2c_txn.in_progress = false;
 
-            if (gp.hb_txn_phase == HB_TXN_RXING) {
-                // transaction was rx
-                if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
-                    // if we have data to send, send it over I2C
-                    gp_set_intr_asserted_out(true);
+            if (gp.i2c_txn.direction_is_tx) {
+                switch (gp.hb_txn_phase) {
+                case HB_TXN_TXING_CMD:
+                    // finished sending cmd, gopro should now respond to us
+                    gp.hb_txn_phase = HB_TXN_WAIT_FOR_GP_RSP;
+                    break;
 
-                    gp.hb_txn_phase = HB_TXN_WAIT_FOR_RSP_START;
-                    timeout_counter = 0;
-                } else {
-                    gp_on_txn_complete();
-                }
-
-            } else {
-                // transaction was tx
-                if (gp.hb_txn_phase == HB_TXN_TXING_CMD) {
-                    gp.hb_txn_phase =  HB_TXN_WAIT_FOR_GP_RSP;
-                } else {
+                case HB_TXN_TXING_RSP:
                     // sent response, we're all done
                     gp.hb_txn_phase = HB_TXN_IDLE;
-
                     gp_on_txn_complete();
+                    break;
+
+                default:
+                    // error, return to idle
+                    gp.hb_txn_phase = HB_TXN_IDLE;
+                    break;
+                }
+            } else {
+                // finished rxing
+                switch (gp.hb_txn_phase) {
+                case HB_TXN_RXING:
+                    if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
+                        // if we have data to send, send it over I2C
+                        gp_set_intr_asserted_out(true);
+
+                        gp.hb_txn_phase = HB_TXN_WAIT_FOR_RSP_START;
+                        timeout_counter = 0;
+                    } else {
+                        gp.hb_txn_phase = HB_TXN_IDLE;
+                        gp_on_txn_complete();
+                    }
+                    break;
+
+                default:
+                    // error, return to idle
+                    gp.hb_txn_phase = HB_TXN_IDLE;
+                    break;
                 }
             }
         }
