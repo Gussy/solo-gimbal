@@ -22,6 +22,7 @@ OBJS = \
     $(PROJ_ROOT)/Source/can/cand.o 														\
     $(PROJ_ROOT)/Source/can/cb.o														\
     $(PROJ_ROOT)/Source/gopro/gopro_interface.o 										\
+    $(PROJ_ROOT)/Source/gopro/gopro_helpers.o 										\
     $(PROJ_ROOT)/Source/gopro/gopro_i2c.o												\
     $(PROJ_ROOT)/Source/gopro/gopro_hero3p.o											\
     $(PROJ_ROOT)/Source/gopro/gopro_hero4.o												\

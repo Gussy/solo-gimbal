@@ -59,7 +59,6 @@ void gopro_i2c_on_addressed()
     // must capture transaction direction before clearing stop condition
     bool addressed_as_slave_tx = i2c_get_sdir();
 
-    gp_deassert_intr(); // we've been acknowledged, can deassert
     i2c_clr_scd();      // clear previous stop condition so we can be notified on the upcoming one
 
     // notify gp that we've been addressed

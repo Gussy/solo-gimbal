@@ -4,6 +4,7 @@
 #include "gopro_hero_common.h"
 #include "gopro_hero3p.h"
 #include "gopro_hero4.h"
+#include "gopro_helpers.h"
 #include "PeripheralHeaderIncludes.h"
 
 // Include for GOPRO_COMMAND enum
@@ -49,7 +50,6 @@ typedef struct {
     bool txn_is_internal;
     gp_transaction_t txn;
 
-    bool pwr_on_pulse_in_progress; // waiting GP_PWRON_TIME_MS before powering on camera
     GPPowerStatus power_status;
 
     uint16_t init_timeout_ms;
@@ -71,7 +71,7 @@ static gopro_t gp;
 void init_gp_interface()
 {
     gp_reset();
-    gp.pwr_on_pulse_in_progress = false;
+    gp_set_pwron_asserted_out(false);
     gp.power_status = GP_POWER_UNKNOWN;
 
     gopro_i2c_init();
@@ -96,7 +96,7 @@ void gp_reset()
 
     gp_control_state = GP_CONTROL_STATE_IDLE;
 
-    gp_deassert_intr();
+    gp_set_intr_asserted_out(false);
 
     gp_h3p_init(&gp.h3p);
     gp_h4_init(&gp.h4);
@@ -134,7 +134,7 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
     }
 
     // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
-    gp_assert_intr();
+    gp_set_intr_asserted_out(true);
 
     // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
     timeout_counter = 0;
@@ -238,7 +238,7 @@ GPHeartbeatStatus gp_heartbeat_status()
 	}
 
 	// A GoPro is not in a "connected" state, but we can see something is plugged in
-	if (gp_get_power_status() != GP_POWER_ON && gp_von_is_enabled() && init_timed_out()) {
+	if (gp_get_power_status() != GP_POWER_ON && gp_get_von_asserted_in() && init_timed_out()) {
 	    return GP_HEARTBEAT_INCOMPATIBLE;
 	}
 
@@ -263,10 +263,9 @@ bool gp_request_power_on()
      * This does not appear to power on hero4 devices. TBD.
      */
 
-    if (!gp.pwr_on_pulse_in_progress) {
-        GP_PWRON_LOW();
+    if (!gp_get_pwron_asserted_out()) {
+        gp_set_pwron_asserted_out(true);
         gp_power_on_counter = 0;
-        gp.pwr_on_pulse_in_progress = true;
         return true;
     }
 
@@ -377,39 +376,25 @@ GPPowerStatus gp_get_power_status()
     // If we've either requested the power be turned on, or are waiting for the power on timeout to elapse, return
     // GP_POWER_WAIT so the user knows they should query the power status again at a later time
     // Otherwise, poll the gopro voltage on pin to get the current gopro power status
-    if (gp.pwr_on_pulse_in_progress) {
+    if (gp_get_pwron_asserted_out()) {
         return GP_POWER_WAIT;
     }
 
-    if (gp_von_is_enabled()) {
+    if (gp_get_von_asserted_in()) {
         return GP_POWER_ON;
     } else {
         return GP_POWER_OFF;
     }
 }
 
-void gp_enable_hb_interface()
-{
-    // Set BacPac detect low (active low)
-    GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
-}
-
-void gp_disable_hb_interface()
-{
-    // Set BacPac detect high (active low)
-    GpioDataRegs.GPASET.bit.GPIO28 = 1;
-}
-
 void gp_enable_charging()
 {
-    // Set GoPro 5v enable low (active low)
-    GpioDataRegs.GPACLEAR.bit.GPIO23 = 1;
+    gp_set_charging_asserted_out(true);
 }
 
 void gp_disable_charging()
 {
-    // Set GoPro 5v enable high (active low)
-    GpioDataRegs.GPASET.bit.GPIO23 = 1;
+    gp_set_charging_asserted_out(false);
 }
 
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
@@ -430,7 +415,7 @@ void gp_interface_state_machine()
                 // transaction was rx
                 if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
                     // if we have data to send, send it over I2C
-                    gp_assert_intr();
+                    gp_set_intr_asserted_out(true);
 
                     gp_control_state = GP_CONTROL_STATE_WAIT_READY_TO_SEND_RESPONSE;
                     timeout_counter = 0;
@@ -452,10 +437,9 @@ void gp_interface_state_machine()
         }
     }
 
-    if (gp.pwr_on_pulse_in_progress) {
+    if (gp_get_pwron_asserted_out()) {
         if (gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
-            GP_PWRON_HIGH();
-            gp.pwr_on_pulse_in_progress = false;
+            gp_set_pwron_asserted_out(false);
         }
     }
 
@@ -468,7 +452,7 @@ void gp_interface_state_machine()
             if (init_timed_out()) {
                 // camera is incompatible,
                 // try to avoid freezing it by disabling bacpac detect
-                gp_disable_hb_interface();
+                gp_set_bp_detect_asserted_out(false);
             }
         }
 
@@ -494,10 +478,10 @@ void gp_interface_state_machine()
 
         if (gp.power_status == GP_POWER_ON) {
             // camera is up and running, we can let it know we're here
-            gp_enable_hb_interface();
+            gp_set_bp_detect_asserted_out(true);
         } else {
             // keep bacpac detect disabled by default
-            gp_disable_hb_interface();
+            gp_set_bp_detect_asserted_out(false);
         }
     }
 }
@@ -611,12 +595,12 @@ void gp_write_eeprom()
     uint8_t i;
 
     // if gopro is on, don't write EEPROM because this may crash the gopro
-    if (gp_von_is_enabled()) {
+    if (gp_get_von_asserted_in()) {
 		return;
     }
 
 	// Disable the HeroBus port (GoPro should stop mastering the I2C bus)
-	gp_disable_hb_interface();
+	gp_set_bp_detect_asserted_out(false);
 
 	// Init I2C peripheral
 	I2caRegs.I2CMDR.all = 0x0000;
@@ -671,6 +655,8 @@ void gp_on_slave_address(bool addressed_as_tx)
      * that we've been successfully addressed by the camera.
      */
 
+    gp_set_intr_asserted_out(false);
+
     timeout_counter = 0;
     gp.waiting_for_i2c = true;
 
@@ -716,7 +702,7 @@ void gp_timeout()
     gp.waiting_for_i2c = false;
 
     timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
-    gp_deassert_intr(); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
+    gp_set_intr_asserted_out(false); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
 
     // Indicate that a "new response" is available (what's available is the indication that we timed out)
     //last_cmd_response.cmd_result = reason;

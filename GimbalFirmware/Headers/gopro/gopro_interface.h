@@ -21,10 +21,6 @@
 #define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
 #define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
 
-inline bool gp_von_is_enabled() {
-    return GpioDataRegs.GPADAT.bit.GPIO6;
-}
-
 typedef enum {
     GP_CONTROL_STATE_IDLE,
     GP_CONTROL_STATE_WAIT_FOR_START_CMD_SEND,
@@ -88,14 +84,6 @@ GPRequestType gp_transaction_direction();
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
 bool gp_get_completed_transaction(gp_transaction_t **rsp);
 
-inline void gp_assert_intr() {
-    GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;
-}
-
-inline void gp_deassert_intr(void) {
-    GpioDataRegs.GPASET.bit.GPIO26 = 1;
-}
-
 bool gp_new_heartbeat_available();
 
 int gp_get_request(Uint8 cmd_id, bool txn_is_internal);
@@ -103,8 +91,6 @@ int gp_set_request(GPSetRequest* request);
 
 GPHeartbeatStatus gp_heartbeat_status();
 
-void gp_enable_hb_interface();
-void gp_disable_hb_interface();
 void gp_enable_charging();
 void gp_disable_charging();
 

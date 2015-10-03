@@ -2,6 +2,7 @@
 #define CAND_H_
 
 #include "f2806x_int8.h"
+#include "PeripheralHeaderIncludes.h"
 
 #include "cand_BitFields.h"
 
