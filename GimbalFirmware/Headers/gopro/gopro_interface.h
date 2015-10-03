@@ -18,8 +18,6 @@
 #define GP_CAPTURE_MODE_POLLING_INTERVAL 1000
 #define GP_I2C_EEPROM_NUMBYTES 16
 
-#define GP_PWRON_LOW() {GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;}
-#define GP_PWRON_HIGH() {GpioDataRegs.GPASET.bit.GPIO22 = 1;}
 
 typedef enum {
     GP_CONTROL_STATE_IDLE,
