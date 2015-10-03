@@ -43,7 +43,6 @@
 
 static void check_rate_cmd_timeout(void);
 static void update_LEDs(void);
-static void check_gp_responses(void);
 static void read_temp_and_voltage(void);
 static void send_mav_heartbeat(void);
 static void send_can_heartbeat(void);
@@ -53,7 +52,6 @@ struct SchedTask scheduled_tasks[] = {
     {.task_func=&check_rate_cmd_timeout,        .interval_ms=3,     .last_run_ms=1},
     {.task_func=&gp_update,                     .interval_ms=GP_STATE_MACHINE_PERIOD_MS,     .last_run_ms=2},
     {.task_func=&update_LEDs,                   .interval_ms=150,   .last_run_ms=0},
-    {.task_func=&check_gp_responses,            .interval_ms=150,   .last_run_ms=1},
     {.task_func=&read_temp_and_voltage,         .interval_ms=150,   .last_run_ms=2},
     {.task_func=&send_can_heartbeat,            .interval_ms=1000,  .last_run_ms=0},
     {.task_func=&send_mav_heartbeat,            .interval_ms=1000,  .last_run_ms=1},
@@ -437,33 +435,6 @@ static void update_LEDs(void)
         }
 
         led_update_state();
-    }
-}
-
-static void check_gp_responses(void)
-{
-    // If we're the EL board, periodically check if there are any new GoPro responses that we should send back to the AZ board
-    if (board_hw_id == EL) {
-        gp_transaction_t *txn;
-        if (gp_get_completed_transaction(&txn)) {
-
-            CAND_ParameterID can_id;
-            Uint32 response_buffer = 0;
-            response_buffer |= ((((Uint32)txn->mav_cmd) << 8) & 0x0000FF00);
-
-            if (txn->reqtype == GP_REQUEST_GET) {
-                // XXX: only returning first byte for now.
-                //      want to be able to return larger chunks in the future
-                response_buffer |= ((((Uint32)txn->payload[0]) << 0) & 0x000000FF);
-                can_id = CAND_PID_GOPRO_GET_RESPONSE;
-
-            } else {
-                response_buffer |= ((((Uint32)txn->status) << 0) & 0x000000FF);
-                can_id = CAND_PID_GOPRO_SET_RESPONSE;
-            }
-
-            cand_tx_response(CAND_ID_AZ, can_id, response_buffer);
-        }
     }
 }
 

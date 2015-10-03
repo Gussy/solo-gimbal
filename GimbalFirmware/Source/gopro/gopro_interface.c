@@ -43,8 +43,6 @@ static uint16_t rxbuf[RX_BUF_SZ];
 typedef struct {
     bool waiting_for_i2c; // waiting for i2c either tx/rx
 
-    bool txn_result_pending;
-    bool txn_is_internal;
     gp_transaction_t txn;
 
     GPPowerStatus power_status;
@@ -81,8 +79,6 @@ void gp_reset()
 {
     gp.waiting_for_i2c = false;
 
-    gp.txn_result_pending = false;
-    gp.txn_is_internal = false;
     // txn is not initialized
 
     gp.init_timeout_ms = 0;
@@ -164,7 +160,14 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdSt
     gp.txn.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_SET_RESPONSE_RESULT_SUCCESS : GOPRO_SET_RESPONSE_RESULT_FAILURE;
     gp.txn.len = len;
 
-    gp.txn_result_pending = true;
+    if (!gp.txn.is_internal) {
+        if (gp.txn.reqtype == GP_REQUEST_GET) {
+            // TODO: this does not handle the case of failed transactions - could reply with corrupted data?
+            gp_send_mav_get_response(gp.txn.mav_cmd, gp.txn.payload[0]);
+        } else {
+            gp_send_mav_set_response(gp.txn.mav_cmd, gp.txn.status);
+        }
+    }
 }
 
 uint16_t gp_transaction_cmd()
@@ -175,31 +178,6 @@ uint16_t gp_transaction_cmd()
      */
 
     return gp.txn.mav_cmd;
-}
-
-bool gp_get_completed_transaction(gp_transaction_t ** rsp)
-{
-    /*
-     * Retrieve the currently pending response.
-     * Returns false if there is not a new response available.
-     */
-
-    if (!gp.txn_result_pending) {
-        return false;
-    }
-
-    gp.txn_result_pending = false;
-
-    // if transaction is internal, don't return currently pending response
-    if (gp.txn_is_internal) {
-        gp.txn_is_internal = false;
-
-        return false;
-    }
-
-    *rsp = &gp.txn;
-
-    return true;
 }
 
 bool gp_handshake_complete()
@@ -294,7 +272,7 @@ int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
 
     gp.txn.reqtype = GP_REQUEST_GET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)cmd_id;
-    gp.txn_is_internal = txn_is_internal;
+    gp.txn.is_internal = txn_is_internal;
 
     switch (gp.model) {
     case GP_MODEL_HERO3P: {
@@ -337,7 +315,7 @@ int gp_set_request(GPSetRequest* request)
 
     gp.txn.reqtype = GP_REQUEST_SET;
     gp.txn.mav_cmd = (GOPRO_COMMAND)request->cmd_id;
-    gp.txn_is_internal = false;     // parameterize if we ever need to send an internal 'SET' command
+    gp.txn.is_internal = false;     // parameterize if we ever need to send an internal 'SET' command
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
     switch (gp.model) {

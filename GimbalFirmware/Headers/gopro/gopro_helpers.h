@@ -5,8 +5,8 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-bool gp_send_get_response(uint8_t cmd_id, uint8_t value);
-bool gp_send_set_response(uint8_t cmd_id, uint8_t result);
+bool gp_send_mav_get_response(uint8_t cmd_id, uint8_t value);
+bool gp_send_mav_set_response(uint8_t cmd_id, uint8_t result);
 
 // get and set state of bp_detect pin
 void gp_set_bp_detect_asserted_out(bool assert);

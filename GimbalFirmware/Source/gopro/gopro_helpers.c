@@ -2,12 +2,12 @@
 #include "can/cand.h"
 #include "PeripheralHeaderIncludes.h"
 
-bool gp_send_get_response(uint8_t cmd_id, uint8_t value) {
+bool gp_send_mav_get_response(uint8_t cmd_id, uint8_t value) {
     cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_GET_RESPONSE, (((uint32_t)cmd_id) << 8) | (((uint32_t)value) << 0));
     return true;
 }
 
-bool gp_send_set_response(uint8_t cmd_id, uint8_t result) {
+bool gp_send_mav_set_response(uint8_t cmd_id, uint8_t result) {
     cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_SET_RESPONSE, (((uint32_t)cmd_id) << 8) | (((uint32_t)result) << 0));
     return true;
 }

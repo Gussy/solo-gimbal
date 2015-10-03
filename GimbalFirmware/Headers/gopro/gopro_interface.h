@@ -69,6 +69,7 @@ typedef struct {
     uint16_t status;            // was this set/get operation successful (see ...)
     uint16_t payload[GP_MAX_RESP_LEN];  // response payload
     uint16_t len;                       // response payload len
+    bool is_internal;           // determines if a response over MAVLink is warranted
 } gp_transaction_t;
 
 // public interface
@@ -79,7 +80,6 @@ int gp_set_request(GPSetRequest* request);
 GPHeartbeatStatus gp_get_heartbeat_status();
 void gp_enable_charging();
 void gp_disable_charging();
-bool gp_get_completed_transaction(gp_transaction_t **rsp); // TODO remove me
 
 // "private" functions, called from gopro_hero4/gopro_hero3/gopro_i2c
 // TODO detangle/remove from this header
