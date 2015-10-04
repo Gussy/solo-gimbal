@@ -41,7 +41,7 @@ void gopro_i2c_isr(I2CAIntSrc int_src)
 
     switch (int_src) {
     case I2C_INT_SRC_STOP_DETECTED:
-        // polling on this in main thread for now
+        gp_on_i2c_stop_condition();
         break;
 
     case I2C_INT_SRC_ADDRESSED_AS_SLAVE:

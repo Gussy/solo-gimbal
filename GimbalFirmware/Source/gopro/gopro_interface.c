@@ -380,53 +380,8 @@ void gp_update()
     GPPowerStatus new_power_status;
 
     if (gp.i2c_txn.in_progress) {
-        if (gopro_i2c_in_progress()) {
-            if (timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
-                gp_timeout();
-            }
-        } else {
-            gp.i2c_txn.in_progress = false;
-
-            if (gp.i2c_txn.direction_is_tx) {
-                switch (gp.hb_txn_phase) {
-                case HB_TXN_TXING_CMD:
-                    // finished sending cmd, gopro should now respond to us
-                    gp.hb_txn_phase = HB_TXN_WAIT_FOR_GP_RSP;
-                    break;
-
-                case HB_TXN_TXING_RSP:
-                    // sent response, we're all done
-                    gp.hb_txn_phase = HB_TXN_IDLE;
-                    gp_on_txn_complete();
-                    break;
-
-                default:
-                    // error, return to idle
-                    gp.hb_txn_phase = HB_TXN_IDLE;
-                    break;
-                }
-            } else {
-                // finished rxing
-                switch (gp.hb_txn_phase) {
-                case HB_TXN_RXING:
-                    if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
-                        // if we have data to send, send it over I2C
-                        gp_set_intr_asserted_out(true);
-
-                        gp.hb_txn_phase = HB_TXN_WAIT_FOR_RSP_START;
-                        timeout_counter = 0;
-                    } else {
-                        gp.hb_txn_phase = HB_TXN_IDLE;
-                        gp_on_txn_complete();
-                    }
-                    break;
-
-                default:
-                    // error, return to idle
-                    gp.hb_txn_phase = HB_TXN_IDLE;
-                    break;
-                }
-            }
+        if (timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+            gp_timeout();
         }
     }
 
@@ -692,6 +647,63 @@ void gp_on_slave_address(bool addressed_as_tx)
             // error, return to idle
             gp.hb_txn_phase = HB_TXN_IDLE;
             // NAK i2c
+            break;
+        }
+    }
+}
+
+void gp_on_i2c_stop_condition()
+{
+    /*
+     * Called in ISR context when the i2c device detects a STOP condition.
+     *
+     * Ensure we're in a reasonable state, and continue processing
+     * this herobus transaction.
+     */
+
+    if (!gp.i2c_txn.in_progress) {
+        // error, unexpected completion event
+        return;
+    }
+
+    gp.i2c_txn.in_progress = false;
+    timeout_counter = 0;
+
+    if (gp.i2c_txn.direction_is_tx) {
+        switch (gp.hb_txn_phase) {
+        case HB_TXN_TXING_CMD:
+            // finished sending cmd, gopro should now respond to us
+            gp.hb_txn_phase = HB_TXN_WAIT_FOR_GP_RSP;
+            break;
+
+        case HB_TXN_TXING_RSP:
+            // sent response, we're all done
+            gp.hb_txn_phase = HB_TXN_IDLE;
+            gp_on_txn_complete();
+            break;
+
+        default:
+            // error, return to idle
+            gp.hb_txn_phase = HB_TXN_IDLE;
+            break;
+        }
+    } else {
+        // finished rxing
+        switch (gp.hb_txn_phase) {
+        case HB_TXN_RXING:
+            if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
+                // if we have data to send, send it over I2C
+                gp_set_intr_asserted_out(true);
+                gp.hb_txn_phase = HB_TXN_WAIT_FOR_RSP_START;
+            } else {
+                gp.hb_txn_phase = HB_TXN_IDLE;
+                gp_on_txn_complete();
+            }
+            break;
+
+        default:
+            // error, return to idle
+            gp.hb_txn_phase = HB_TXN_IDLE;
             break;
         }
     }
