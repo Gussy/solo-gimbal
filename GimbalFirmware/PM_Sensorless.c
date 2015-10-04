@@ -340,6 +340,9 @@ void main(void)
 
         // Update any parameters that have changed due to CAN messages
         ProcessParamUpdates(&control_board_parms, &debug_data);
+
+        // send any pending mavlink responses
+        gp_send_mav_response();
 	}
 } //END MAIN CODE
 

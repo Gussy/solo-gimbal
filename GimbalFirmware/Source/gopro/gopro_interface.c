@@ -95,6 +95,7 @@ void gp_reset()
     gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
+    gp.txn.status = GP_CMD_STATUS_INCOMPLETE;
     gp.hb_txn_phase = HB_TXN_IDLE;
 
     gp_set_intr_asserted_out(false);
@@ -164,17 +165,36 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdSt
     // XXX: probably want to:
     //      - unify the values of GPCmdStatus and GOPRO_SET_RESPONSE_RESULT, currently they're opposites
     //      - make GOPRO_SET_RESPONSE_RESULT more general (GOPRO_RESPONSE_RESULT or similar)
-    gp.txn.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_SET_RESPONSE_RESULT_SUCCESS : GOPRO_SET_RESPONSE_RESULT_FAILURE;
     gp.txn.len = len;
+    gp.txn.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_SET_RESPONSE_RESULT_SUCCESS : GOPRO_SET_RESPONSE_RESULT_FAILURE;
 
-    if (!gp.txn.is_internal) {
+    // result transmitted via gp_send_mav_response()
+}
+
+void gp_send_mav_response()
+{
+    /*
+     * Called frequently on the main thread.
+     * Send the results of a mavlink-bound transaction that has completed, if available.
+     *
+     * A mavlink response can only become available as the result of
+     * a successfully completed i2c transaction, or an i2c timeout.
+     */
+
+    i2c_disable_scd_isr();  // critical section
+
+    if (gp.txn.status != GP_CMD_STATUS_INCOMPLETE && !gp.txn.is_internal) {
         if (gp.txn.reqtype == GP_REQUEST_GET) {
             // TODO: this does not handle the case of failed transactions - could reply with corrupted data?
             gp_send_mav_get_response(gp.txn.mav_cmd, gp.txn.payload[0]);
         } else {
             gp_send_mav_set_response(gp.txn.mav_cmd, gp.txn.status);
         }
+
+        gp.txn.status = GP_CMD_STATUS_INCOMPLETE;
     }
+
+    i2c_enable_scd_isr();  // end critical section
 }
 
 uint16_t gp_transaction_cmd()
@@ -717,9 +737,12 @@ void gp_timeout()
     timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
     gp_set_intr_asserted_out(false); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
 
-    // Indicate that a "new response" is available (what's available is the indication that we timed out)
-    //last_cmd_response.cmd_result = reason;
-    //new_response_available = true;
+    i2c_disable_scd_isr();  // critical section
+    // default case is for transaction to be completed in ISR ctx,
+    // timeout gets processed on main thread, so need to ensure
+    // exclusive access to the txn result
+    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+    i2c_enable_scd_isr();  // critical section
 
     gp.hb_txn_phase = HB_TXN_IDLE;
 }

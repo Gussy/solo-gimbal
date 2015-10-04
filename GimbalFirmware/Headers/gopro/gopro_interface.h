@@ -72,6 +72,7 @@ typedef struct {
 
 // public interface
 void gp_init();
+void gp_send_mav_response();
 void gp_update();
 int gp_get_request(Uint8 cmd_id, bool txn_is_internal);
 int gp_set_request(GPSetRequest* request);
