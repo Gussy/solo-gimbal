@@ -43,6 +43,7 @@ void init_i2c(I2CIntACallback interrupt_a_callback)
 
     // Configure I2C module interrupts
     I2caRegs.I2CIER.bit.AAS = 1; // Enable interrupts for when we're addressed as a slave
+    I2caRegs.I2CIER.bit.SCD = 1; // Enable interrupt for Stop Condition Detected
     I2caRegs.I2CIER.bit.RRDY = 1; // Enable interrupts for when data is received
     I2caRegs.I2CIER.bit.XRDY = 0; // Disable the transmit interrupt for now.  It will be enabled when there is data to send
 
@@ -126,6 +127,16 @@ void i2c_begin_rx(uint16_t* data, int maxlen)
 int i2c_get_rx_len()
 {
     return rx.len;
+}
+
+void i2c_enable_scd_isr()
+{
+    I2caRegs.I2CIER.bit.SCD = 1;
+}
+
+void i2c_disable_scd_isr()
+{
+    I2caRegs.I2CIER.bit.SCD = 0;
 }
 
 interrupt void i2c_fifo_isr(void)

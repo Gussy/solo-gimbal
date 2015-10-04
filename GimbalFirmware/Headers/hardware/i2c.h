@@ -28,6 +28,9 @@ void i2c_begin_tx(const uint16_t* data, int length);
 void i2c_begin_rx(uint16_t* data, int maxlen);
 int i2c_get_rx_len();
 
+void i2c_enable_scd_isr();
+void i2c_disable_scd_isr();
+
 interrupt void i2c_fifo_isr(void);
 interrupt void i2c_int_a_isr(void);
 
