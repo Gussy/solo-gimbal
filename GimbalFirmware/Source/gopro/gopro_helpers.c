@@ -27,8 +27,14 @@ bool gp_get_bp_detect_asserted_out(void) {
 void gp_set_intr_asserted_out(bool assert) {
     if (assert) {
         GpioDataRegs.GPACLEAR.bit.GPIO26 = 1;
+#if defined(PIN29_DEBUG_GP_INTR)
+        GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;
+#endif
     } else {
         GpioDataRegs.GPASET.bit.GPIO26 = 1;
+#if defined(PIN29_DEBUG_GP_INTR)
+        GpioDataRegs.GPASET.bit.GPIO29 = 1;
+#endif
     }
 }
 
