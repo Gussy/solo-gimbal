@@ -410,7 +410,7 @@ static void init_gpio(){
 #else
             GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
             GpioCtrlRegs.GPADIR.bit.GPIO29 = 1;     // 1=OUTput,  0=INput
-            GpioDataRegs.GPACLEAR.bit.GPIO29 = 1;     // uncomment if --> Set High initially
+            GpioDataRegs.GPASET.bit.GPIO29 = 1;     // uncomment if --> Set High initially
 #endif
             break;
     }
