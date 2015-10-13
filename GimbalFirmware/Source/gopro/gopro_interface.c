@@ -62,7 +62,8 @@ typedef struct {
     uint16_t init_timeout_ms;
     uint16_t intr_timeout_count;        // how long has INTR been asserted without seeing a START
     bool intr_retry_pulse_in_progress;  // if our INTR request was ignored, are we in the middle of a retry pulse?
-    uint32_t intr_pending_timestamp_us; // intr request pending?
+    bool intr_pending;                  // is an intr assertion pending?
+    uint32_t intr_pending_timestamp_us; // timestamp intr assertion was requested
     GPModel model;
     GPCaptureMode capture_mode;
     GPCaptureMode pending_capture_mode;
@@ -100,6 +101,7 @@ void gp_reset()
     gp.intr_timeout_count = 0;
     gp.intr_retry_pulse_in_progress = false;
     gp.intr_pending_timestamp_us = 0;
+    gp.intr_pending = false;
     gp.model = GP_MODEL_UNKNOWN;
     gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
@@ -123,6 +125,7 @@ static void gp_pend_intr_assertion()
      */
 
     gp.intr_pending_timestamp_us = micros();
+    gp.intr_pending = true;
 }
 
 static bool init_timed_out()
@@ -464,9 +467,10 @@ void gp_fast_update()
     gp_send_mav_response();
 
     // handle pending intr requests
-    if (gp.intr_pending_timestamp_us && (micros() - gp.intr_pending_timestamp_us > GP_INTR_DELAY_US)) {
+    if (gp.intr_pending && (micros() - gp.intr_pending_timestamp_us > GP_INTR_DELAY_US)) {
         gp_set_intr_asserted_out(true);
         gp.intr_pending_timestamp_us = 0;
+        gp.intr_pending = false;
     }
 }
 
