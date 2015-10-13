@@ -15,6 +15,11 @@
 
 #define GP_INIT_TIMEOUT_MS 10000    // Time allowed for GoPro to complete handshake before it is deemed incompatible, could probably be reduced to something lower but it should be at least > 3000, if not more (accurate time TBD)
 
+// empirically discovered, we must delay at least GP_INTR_DELAY_US
+// after an i2c cmd is received before asserting INTR, otherwise
+// the gopro appears to miss the edge and fail to respond.
+#define GP_INTR_DELAY_US    50
+
 static void gp_reset();
 static void gp_timeout();
 
@@ -57,6 +62,7 @@ typedef struct {
     uint16_t init_timeout_ms;
     uint16_t intr_timeout_count;        // how long has INTR been asserted without seeing a START
     bool intr_retry_pulse_in_progress;  // if our INTR request was ignored, are we in the middle of a retry pulse?
+    uint32_t intr_pending_timestamp_us; // intr request pending?
     GPModel model;
     GPCaptureMode capture_mode;
     GPCaptureMode pending_capture_mode;
@@ -93,6 +99,7 @@ void gp_reset()
     gp.init_timeout_ms = 0;
     gp.intr_timeout_count = 0;
     gp.intr_retry_pulse_in_progress = false;
+    gp.intr_pending_timestamp_us = 0;
     gp.model = GP_MODEL_UNKNOWN;
     gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
@@ -106,6 +113,16 @@ void gp_reset()
 
     gp_h3p_init(&gp.h3p);
     gp_h4_init(&gp.h4);
+}
+
+static void gp_pend_intr_assertion()
+{
+    /*
+     * See comments on GP_INTR_DELAY_US above.
+     * INTR is eventually asserted in gp_fast_update()
+     */
+
+    gp.intr_pending_timestamp_us = micros();
 }
 
 static bool init_timed_out()
@@ -140,7 +157,7 @@ bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
     }
 
     // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
-    gp_set_intr_asserted_out(true);
+    gp_pend_intr_assertion();
 
     // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
     timeout_counter = 0;
@@ -417,7 +434,7 @@ static void gp_check_intr_timeout()
     // pulsing to retry?
     if (gp.intr_retry_pulse_in_progress) {
         if (++gp.intr_timeout_count >= (INTR_RETRY_PULSE_MILLIS/GP_STATE_MACHINE_PERIOD_MS)) {
-            gp_set_intr_asserted_out(true);
+            gp_pend_intr_assertion();
             gp.intr_retry_pulse_in_progress = false;
             gp.intr_timeout_count = 0;
         }
@@ -445,6 +462,12 @@ void gp_fast_update()
      */
 
     gp_send_mav_response();
+
+    // handle pending intr requests
+    if (gp.intr_pending_timestamp_us && (micros() - gp.intr_pending_timestamp_us > GP_INTR_DELAY_US)) {
+        gp_set_intr_asserted_out(true);
+        gp.intr_pending_timestamp_us = 0;
+    }
 }
 
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
@@ -769,7 +792,7 @@ void gp_on_i2c_stop_condition()
         case HB_TXN_RXING:
             if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
                 // if we have data to send, send it over I2C
-                gp_set_intr_asserted_out(true);
+                gp_pend_intr_assertion();
                 gp.hb_txn_phase = HB_TXN_WAIT_FOR_RSP_START;
             } else {
                 gp.hb_txn_phase = HB_TXN_IDLE;
