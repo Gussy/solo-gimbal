@@ -18,7 +18,7 @@
 // empirically discovered, we must delay at least GP_INTR_DELAY_US
 // after an i2c cmd is received before asserting INTR, otherwise
 // the gopro appears to miss the edge and fail to respond.
-#define GP_INTR_DELAY_US    50
+#define GP_INTR_DELAY_US    500
 
 static void gp_reset();
 static void gp_timeout();
