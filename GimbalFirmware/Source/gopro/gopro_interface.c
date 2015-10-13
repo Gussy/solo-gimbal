@@ -59,7 +59,7 @@ typedef struct {
 
     GPPowerStatus power_status;
 
-    uint16_t init_timeout_ms;
+    uint16_t handshake_timeout_count;
     uint16_t intr_timeout_count;        // how long has INTR been asserted without seeing a START
     bool intr_retry_pulse_in_progress;  // if our INTR request was ignored, are we in the middle of a retry pulse?
     bool intr_pending;                  // is an intr assertion pending?
@@ -97,7 +97,7 @@ void gp_reset()
 
     // txn is not initialized
 
-    gp.init_timeout_ms = 0;
+    gp.handshake_timeout_count = 0;
     gp.intr_timeout_count = 0;
     gp.intr_retry_pulse_in_progress = false;
     gp.intr_pending_timestamp_us = 0;
@@ -135,7 +135,7 @@ static bool init_timed_out()
      * camera connection before we declare it either `connected` or `incompatible`.
      */
 
-    return gp.init_timeout_ms >= (GP_INIT_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS);
+    return gp.handshake_timeout_count >= (GP_INIT_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS);
 }
 
 bool gp_ready_for_cmd()
@@ -498,7 +498,7 @@ void gp_update()
         // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
         // the heartbeat with an incompatible state while it's gccb version is being queried
         if(!gp_handshake_complete() && !init_timed_out()) {
-            gp.init_timeout_ms++;
+            gp.handshake_timeout_count++;
 
             if (init_timed_out()) {
                 // camera is incompatible,
