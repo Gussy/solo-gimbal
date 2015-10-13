@@ -175,7 +175,7 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdSt
     // result transmitted via gp_send_mav_response()
 }
 
-void gp_send_mav_response()
+static void gp_send_mav_response()
 {
     /*
      * Called frequently on the main thread.
@@ -436,6 +436,15 @@ static void gp_check_intr_timeout()
         gp.intr_timeout_count = 0;
     }
 
+}
+
+void gp_fast_update()
+{
+    /*
+     * Called directly from the main loop (ie, not via the scheduler).
+     */
+
+    gp_send_mav_response();
 }
 
 // It's expected that this function is repeatedly called every period as configured in the header (currently 3ms)
