@@ -405,7 +405,7 @@ static void init_gpio(){
             GpioCtrlRegs.GPADIR.bit.GPIO28 = 1;     // 1=OUTput,  0=INput
             GpioDataRegs.GPASET.bit.GPIO28 = 1;     // uncomment if --> Set High initially
 
-#if defined(PIN29_DEBUG_IMU_LOGGING)
+#if defined(PIN29_DEBUG_IMU_LOGGING) || defined(PIN29_DEBUG_UART)
             GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 1;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
 #else
             GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 0;    // 0=GPIO,  1=SCITXDA,  2=SCLA,  3=TZ3
