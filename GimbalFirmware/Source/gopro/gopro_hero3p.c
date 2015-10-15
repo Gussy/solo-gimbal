@@ -236,20 +236,15 @@ void gp_h3p_handle_response(const gp_h3p_rsp_t *rsp)
      */
 
     // Special Handling of responses
-    if (gp_transaction_cmd() == GOPRO_COMMAND_MODEL) {
-        // Take third byte (CAMERA_MODEL) of the "camera model and firmware version" response
-        gp_set_transaction_result(&rsp->payload[1], 1, (GPCmdStatus)rsp->status);
-    } else {
-        if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
-            if (gp_transaction_direction() == GP_REQUEST_GET) {
-                gp_set_capture_mode(rsp->payload[0]);   // Set capture mode state with capture mode received from GoPro
-            } else if (gp_transaction_direction() == GP_REQUEST_SET) {
-                gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
-            }
+    if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
+        if (gp_transaction_direction() == GP_REQUEST_GET) {
+            gp_set_capture_mode(rsp->payload[0]);   // Set capture mode state with capture mode received from GoPro
+        } else if (gp_transaction_direction() == GP_REQUEST_SET) {
+            gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
-
-        gp_set_transaction_result(&rsp->payload[0], 1, (GPCmdStatus)rsp->status);
     }
+
+    gp_set_transaction_result(&rsp->payload[0], 1, (GPCmdStatus)rsp->status);
 }
 
 
