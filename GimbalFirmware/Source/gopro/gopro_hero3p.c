@@ -7,8 +7,8 @@
 // Include for GOPRO_COMMAND enum
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 
-static void gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf);
-static void gp_h3p_handle_response(const uint16_t *respbuf);
+static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
+static void gp_h3p_handle_response(const gp_h3p_rsp_t *rsp);
 static void gp_h3p_sanitize_buf_len(uint16_t *buf);
 static void gp_h3p_finalize_command(gp_h3p_cmd_t *c);
 
@@ -181,7 +181,7 @@ bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c)
     return true;
 }
 
-bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, bool from_camera, uint16_t *txbuf)
+bool gp_h3p_handle_rx(gp_h3p_t *h3p, gp_h3p_pkt_t *p, bool from_camera, gp_h3p_rsp_t *rsp)
 {
     /*
      * Handle incoming i2c data from the camera.
@@ -190,21 +190,22 @@ bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, bool from_camera, uint16_t *
      * should be written back to the camera.
      */
 
-    gp_h3p_sanitize_buf_len(buf);
+    gp_h3p_sanitize_buf_len(p->bytes);
 
     if (from_camera) {
-        gp_h3p_handle_command(h3p, buf, txbuf);
+        gp_h3p_handle_command(h3p, &p->cmd, rsp);
         return true;
     }
 
-    gp_h3p_handle_response(buf);
+    gp_h3p_handle_response(&p->rsp);
     return false;
 }
 
-void gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbuf)
+void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp)
 {
     /*
      * A validated command has been received from the camera.
+     * Write our response into 'rsp'.
      *
      * First make sure the command is one we support.  Per the GoPro spec,
      * we only have to respond to the "vs" command which queries
@@ -213,43 +214,41 @@ void gp_h3p_handle_command(gp_h3p_t *h3p, const uint16_t *cmdbuf, uint16_t *txbu
      * For any other command from the GoPro, return an error response
      */
 
-    if ((cmdbuf[1] == 'v') && (cmdbuf[2] == 's')) {
+    if ((cmd->cmd1 == 'v') && (cmd->cmd2 == 's')) {
         // Preload the response buffer with the command response.  This will be transmitted in the ISR
-        txbuf[0] = 2; // Packet size, 1st byte is status byte, 2nd byte is protocol version
-        txbuf[1] = GP_CMD_STATUS_SUCCESS;
-        txbuf[2] = GP_PROTOCOL_VERSION;
+        rsp->len = 2;
+        rsp->status = GP_CMD_STATUS_SUCCESS;
+        rsp->payload[0] = GP_PROTOCOL_VERSION;
         h3p->gccb_version_queried = true;
         return;
     }
 
     // Preload the response buffer with an error response, since we don't support the command we
     // were sent.  This will be transmitted in the ISR
-    txbuf[0] = 1; // Packet size, only status byte
-    txbuf[1] = GP_CMD_STATUS_FAILURE;
+    rsp->len = 1;
+    rsp->status = GP_CMD_STATUS_FAILURE;
 }
 
-void gp_h3p_handle_response(const uint16_t *respbuf)
+void gp_h3p_handle_response(const gp_h3p_rsp_t *rsp)
 {
     /*
      * Process a response to one of our commands.
      */
 
-    GPCmdStatus status = (GPCmdStatus)respbuf[1];
-
     // Special Handling of responses
     if (gp_transaction_cmd() == GOPRO_COMMAND_MODEL) {
         // Take third byte (CAMERA_MODEL) of the "camera model and firmware version" response
-        gp_set_transaction_result(&respbuf[3], 1, status);
+        gp_set_transaction_result(&rsp->payload[1], 1, (GPCmdStatus)rsp->status);
     } else {
         if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
             if (gp_transaction_direction() == GP_REQUEST_GET) {
-                gp_set_capture_mode(respbuf[2]);                           // Set capture mode state with capture mode received from GoPro
+                gp_set_capture_mode(rsp->payload[0]);   // Set capture mode state with capture mode received from GoPro
             } else if (gp_transaction_direction() == GP_REQUEST_SET) {
-                gp_latch_pending_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
+                gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
             }
         }
 
-        gp_set_transaction_result(&respbuf[2], 1, status);
+        gp_set_transaction_result(&rsp->payload[0], 1, (GPCmdStatus)rsp->status);
     }
 }
 
