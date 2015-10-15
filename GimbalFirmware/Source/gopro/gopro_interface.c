@@ -84,7 +84,6 @@ void gp_init()
     gp_write_eeprom();
     gp_reset();
     gp_set_pwron_asserted_out(false);
-    gp.power_status = GP_POWER_UNKNOWN;
 
     gopro_i2c_init();
 
@@ -103,6 +102,7 @@ void gp_reset()
     gp.intr_pending_timestamp_us = 0;
     gp.intr_pending = false;
     gp.model = GP_MODEL_UNKNOWN;
+    gp.power_status = GP_POWER_UNKNOWN;
     gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
@@ -112,6 +112,7 @@ void gp_reset()
     gp.hb_txn_phase = HB_TXN_IDLE;
 
     gp_set_intr_asserted_out(false);
+    gp_set_bp_detect_asserted_out(false);
 
     gp_h3p_init(&gp.h3p);
     gp_h4_init(&gp.h4);
@@ -524,9 +525,6 @@ void gp_update()
         if (gp.power_status == GP_POWER_ON) {
             // camera is up and running, we can let it know we're here
             gp_set_bp_detect_asserted_out(true);
-        } else {
-            // keep bacpac detect disabled by default
-            gp_set_bp_detect_asserted_out(false);
         }
     }
 }
