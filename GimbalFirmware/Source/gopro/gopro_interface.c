@@ -86,8 +86,6 @@ void gp_init()
     gp_set_pwron_asserted_out(false);
     gp.power_status = GP_POWER_UNKNOWN;
 
-    gopro_i2c_init();
-
     // bacpac detect is enabled once we know the camera is powered on
 }
 
@@ -115,6 +113,8 @@ void gp_reset()
 
     gp_h3p_init(&gp.h3p);
     gp_h4_init(&gp.h4);
+
+    gopro_i2c_init();   // resets the i2c device
 }
 
 static void gp_pend_intr_assertion()
@@ -814,7 +814,8 @@ void gp_on_i2c_stop_condition()
 
 void gp_timeout()
 {
-    gopro_i2c_on_timeout();
+    gopro_i2c_init();   // resets the i2c device
+
     gp.i2c_txn.in_progress = false;
 
     timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
