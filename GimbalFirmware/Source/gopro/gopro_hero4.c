@@ -32,7 +32,7 @@ enum GP_H4_HANDSHAKE_STEPS {
 };
 
 static void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t *c, gp_h4_pkt_t *rsp);
-static void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
+static gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
 static bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r);
 static void gp_h4_finalize_yy_cmd(gp_h4_t *h4, uint16_t payloadlen, gp_h4_yy_cmd_t *c);
 
@@ -121,7 +121,7 @@ bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len)
     return true;
 }
 
-bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp)
+gp_h4_err_t gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp)
 {
     /*
      * Handle a newly received packet.
@@ -130,17 +130,23 @@ bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp)
      * needs to be written back out.
      */
 
+    gp_h4_err_t err = GP_H4_ERR_OK;
+
     switch (p->cmd.tcb) {
     case TCB_CMD_SINGLE_PKT:
         gp_h4_handle_cmd(h4, p, rsp);
-        return true;
+        break;
 
     case TCB_RSP_FINAL_FRAME:
-        gp_h4_handle_rsp(h4, p);
+        err = gp_h4_handle_rsp(h4, p);
+        break;
+
+    default:
+        err = GP_H4_ERR_RSP_BAD_TCB;
         break;
     }
 
-    return false;
+    return err;
 }
 
 static void yy_set_cmd_len(gp_h4_yy_cmd_t *c, uint16_t len)
@@ -206,14 +212,36 @@ void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t* c, gp_h4_pkt_t *rsp)
     }
 }
 
-void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
+static gp_h4_err_t gp_h4_get_rsp_err(const gp_h4_yy_rsp_t *rsp)
+{
+    /*
+     * Check rsp for error condition.
+     */
+
+    if (rsp->tcb != TCB_RSP_FINAL_FRAME) {
+        return GP_H4_ERR_RSP_BAD_TCB;
+    }
+
+    if (rsp->ack != H4_ACK) {
+        return GP_H4_ERR_NACK;
+    }
+
+    if (rsp->err_code != 0) {
+        return GP_H4_ERR_YY_ERR_BYTE;
+    }
+
+    return GP_H4_ERR_OK;
+}
+
+gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
 {
     const gp_h4_yy_rsp_t * rsp = &p->yy_rsp;
     uint16_t len = yy_rsp_len(rsp);
 
-    if (rsp->tcb != TCB_RSP_FINAL_FRAME || rsp->ack != H4_ACK || rsp->err_code) {
+    gp_h4_err_t err = gp_h4_get_rsp_err(rsp);
+    if (err != GP_H4_ERR_OK) {
         gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_FAILURE);
-        return;
+        return err;
     }
 
     // handle any packets that shouldn't be forwarded via mavlink
@@ -221,7 +249,7 @@ void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         // 'Get Channel ID/Open Channel' is api 0/1
         h4->channel_id = rsp->payload[0];
         h4->handshake_step = GP_H4_HANDSHAKE_CHANNEL_OPEN;
-        return;         // TODO: update with new bool for internal transactions
+        return err; // TODO: update with new bool for internal transactions
     }
 
     if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
@@ -235,6 +263,7 @@ void gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
     }
 
     gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_SUCCESS);
+    return err;
 }
 
 bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)

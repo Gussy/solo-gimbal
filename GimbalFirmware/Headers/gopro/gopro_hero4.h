@@ -18,7 +18,7 @@ typedef struct {
     uint16_t camera_proto_version[GP_H4_PROTO_NUM_BYTES];   // ZZ_REQ_SEND_PROTO_VERSION
     uint16_t camera_fw_version[16];                         // non-null-terminated string
     uint16_t channel_id;
-    uint16_t handshake_step;
+    uint16_t handshake_step;                                // GP_H4_HANDSHAKE_STEPS
 } gp_h4_t;
 
 // hero 4 packet formats
@@ -92,6 +92,13 @@ typedef enum {
     GP_H4_POWER_OFF_FORCED
 } GPH4Power;
 
+typedef enum {
+    GP_H4_ERR_OK,
+    GP_H4_ERR_NACK,         // ack byte set to nack
+    GP_H4_ERR_YY_ERR_BYTE,  // err_code was non-zero
+    GP_H4_ERR_RSP_BAD_TCB,  // a tcb value other than TCB_RSP_FINAL_FRAME
+} gp_h4_err_t;
+
 void gp_h4_init(gp_h4_t *h4);
 bool gp_h4_handshake_complete(const gp_h4_t *h4);
 bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p);
@@ -99,7 +106,7 @@ bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p);
 bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len);
 
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len);
-bool gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
+gp_h4_err_t gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
 
 bool gp_h4_produce_get_request(gp_h4_t *h4, Uint8 cmd_id, gp_h4_pkt_t *p);
 bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_pkt_t *p);

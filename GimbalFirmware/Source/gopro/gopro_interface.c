@@ -601,20 +601,27 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
             // XXX: avoid all this copying
 
             gp_h4_pkt_t pkt;
-            gp_h4_pkt_t rsp;
+            gp_h4_pkt_t rsp = { .rsp.len = 0 };
 
             uint16_t i;
             for (i = 0; i < GP_COMMAND_RECEIVE_BUFFER_SIZE; ++i) {
                 pkt.bytes[i] = buf[i];
             }
 
-            if (gp_h4_handle_rx(&gp.h4, &pkt, &rsp)) {
-
-                for (i = 0; i < rsp.rsp.len + 1; ++i) {
-                    txbuf[i] = rsp.bytes[i];
+            if (gp_h4_handle_rx(&gp.h4, &pkt, &rsp) == GP_H4_ERR_OK) {
+                if (rsp.rsp.len > 0) {
+                    memcpy(txbuf, rsp.bytes, rsp.rsp.len + 1);
+                    return true;
                 }
-
-                return true;
+            } else {
+                // if we get a error response during handshake, reset and start over
+                // otherwise, report the transaction failure via mavlink
+                if (!gp_h4_handshake_complete(&gp.h4)) {
+                    gp_reset();
+                } else {
+                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                    gp.hb_txn_phase = HB_TXN_IDLE;
+                }
             }
         }
         break;
