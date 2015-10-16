@@ -50,7 +50,7 @@ bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len);
 bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c);
 bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c);
 
-bool gp_h3p_handle_rx(gp_h3p_t *h3p, uint16_t *buf, bool from_camera, uint16_t *txbuf);
+bool gp_h3p_handle_rx(gp_h3p_t *h3p, gp_h3p_pkt_t *p, bool from_camera, gp_h3p_rsp_t *rsp);
 
 bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camera);
 

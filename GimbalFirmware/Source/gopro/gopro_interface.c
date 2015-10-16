@@ -26,7 +26,7 @@ static void gp_timeout();
 static void gp_detect_camera_model(const uint16_t *buf, uint16_t len);
 static void gp_on_txn_complete();
 static bool handle_rx_data(uint16_t *buf, uint16_t len);
-static bool gp_send_cmd(const uint16_t* cmd, uint16_t len);
+static bool gp_begin_cmd_send(uint16_t len);
 static bool gp_ready_for_cmd();
 static bool gp_request_capture_mode();
 static bool gp_handshake_complete();
@@ -38,11 +38,19 @@ static void gp_write_eeprom();
 Uint32 gp_power_on_counter = 0;
 volatile Uint32 timeout_counter = 0;
 
-#define TX_BUF_SZ  128
-#define RX_BUF_SZ  128
+// buffers for i2c transactions
+struct pktbuf {
+    union {
+        gp_h3p_pkt_t h3p;
+        gp_h4_pkt_t h4p;
+        uint16_t bytes[MAX(sizeof(gp_h3p_pkt_t), sizeof(gp_h4_pkt_t))];
+    };
 
-static uint16_t txbuf[TX_BUF_SZ];
-static uint16_t rxbuf[RX_BUF_SZ];
+    uint16_t len;
+};
+
+static struct pktbuf txbuf;
+static struct pktbuf rxbuf;
 
 // state associated with current i2c transaction
 struct i2c_txn_t {
@@ -84,7 +92,6 @@ void gp_init()
     gp_write_eeprom();
     gp_reset();
     gp_set_pwron_asserted_out(false);
-    gp.power_status = GP_POWER_UNKNOWN;
 
     // bacpac detect is enabled once we know the camera is powered on
 }
@@ -101,6 +108,7 @@ void gp_reset()
     gp.i2c_stop_timestamp_us = 0;
     gp.intr_pending = false;
     gp.model = GP_MODEL_UNKNOWN;
+    gp.power_status = GP_POWER_UNKNOWN;
     gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
     gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
@@ -110,6 +118,7 @@ void gp_reset()
     gp.hb_txn_phase = HB_TXN_IDLE;
 
     gp_set_intr_asserted_out(false);
+    gp_set_bp_detect_asserted_out(false);
 
     gp_h3p_init(&gp.h3p);
     gp_h4_init(&gp.h4);
@@ -149,21 +158,22 @@ bool gp_ready_for_cmd()
     return (gp.hb_txn_phase == HB_TXN_IDLE) && !i2c_get_bb();
 }
 
-bool gp_send_cmd(const uint16_t* cmd, uint16_t len)
+bool gp_begin_cmd_send(uint16_t len)
 {
     /*
-     * Called by protocol modules (h4, h3p, etc)
-     * to send a command to the camera.
+     * Begin transmitting the contents of txbuf.
+     *
+     * txbuf must already be filled, just the length is set here.
+     *
+     * Assert INTR, we'll begin writing bytes once we get addressed
+     * by the camera.
      */
-    uint16_t i;
 
     if (gp.hb_txn_phase != HB_TXN_IDLE) {
         return false;
     }
 
-    for (i = 0; i < len; ++i) {
-        txbuf[i] = cmd[i];
-    }
+    txbuf.len = len;
 
     // Assert the GoPro interrupt line, letting it know we'd like it to read a command from us
     gp_pend_intr_assertion();
@@ -332,19 +342,17 @@ int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
     gp.txn.is_internal = txn_is_internal;
 
     switch (gp.model) {
-    case GP_MODEL_HERO3P: {
-        gp_h3p_pkt_t h3p;
-        if (gp_h3p_produce_get_request(cmd_id, &h3p.cmd)) {
-            gp_send_cmd(h3p.bytes, h3p.cmd.len + 1);
+    case GP_MODEL_HERO3P:
+        if (gp_h3p_produce_get_request(cmd_id, &txbuf.h3p.cmd)) {
+            gp_begin_cmd_send(txbuf.h3p.cmd.len + 1);
         }
-    } break;
+        break;
 
-    case GP_MODEL_HERO4: {
-        gp_h4_pkt_t h4p;
-        if (gp_h4_produce_get_request(&gp.h4, cmd_id, &h4p)) {
-            gp_send_cmd(h4p.bytes, h4p.cmd.len + 1);
+    case GP_MODEL_HERO4:
+        if (gp_h4_produce_get_request(&gp.h4, cmd_id, &txbuf.h4p)) {
+            gp_begin_cmd_send(txbuf.h4p.cmd.len + 1);
         }
-    } break;
+        break;
 
     default:
         return -1;
@@ -376,19 +384,17 @@ int gp_set_request(GPSetRequest* request)
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
     switch (gp.model) {
-    case GP_MODEL_HERO3P: {
-        gp_h3p_pkt_t h3p;
-        if (gp_h3p_produce_set_request(request, &h3p.cmd)) {
-            gp_send_cmd(h3p.bytes, h3p.cmd.len + 1);
+    case GP_MODEL_HERO3P:
+        if (gp_h3p_produce_set_request(request, &txbuf.h3p.cmd)) {
+            gp_begin_cmd_send(txbuf.h3p.cmd.len + 1);
         }
-    } break;
+        break;
 
-    case GP_MODEL_HERO4: {
-        gp_h4_pkt_t h4p;
-        if (gp_h4_produce_set_request(&gp.h4, request, &h4p)) {
-            gp_send_cmd(h4p.bytes, h4p.cmd.len + 1);
+    case GP_MODEL_HERO4:
+        if (gp_h4_produce_set_request(&gp.h4, request, &txbuf.h4p)) {
+            gp_begin_cmd_send(txbuf.h4p.cmd.len + 1);
         }
-    } break;
+        break;
 
     default:
         return -1;
@@ -529,9 +535,6 @@ void gp_update()
         if (gp.power_status == GP_POWER_ON) {
             // camera is up and running, we can let it know we're here
             gp_set_bp_detect_asserted_out(true);
-        } else {
-            // keep bacpac detect disabled by default
-            gp_set_bp_detect_asserted_out(false);
         }
     }
 }
@@ -548,12 +551,11 @@ void gp_on_txn_complete()
     case GP_MODEL_HERO3P:
         // do nothing
         break;
-    case GP_MODEL_HERO4: {
-        gp_h4_pkt_t p;
-        if (gp_h4_on_txn_complete(&gp.h4, &p)) {
-            gp_send_cmd(p.bytes, p.cmd.len + 1);
+    case GP_MODEL_HERO4:
+        if (gp_h4_on_txn_complete(&gp.h4, &txbuf.h4p)) {
+            gp_begin_cmd_send(txbuf.h4p.cmd.len + 1);
         }
-    } break;
+        break;
 
     case GP_MODEL_UNKNOWN:
     default:
@@ -594,10 +596,11 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
     gp.hb_txn_phase = HB_TXN_IDLE;
 
     switch (gp.model) {
-    case GP_MODEL_HERO3P:{
+    case GP_MODEL_HERO3P: {
         bool from_camera;
         if (gp_h3p_rx_data_is_valid(buf, len, &from_camera)) {
-            if (gp_h3p_handle_rx(&gp.h3p, buf, from_camera, txbuf)) {
+            if (gp_h3p_handle_rx(&gp.h3p, &rxbuf.h3p, from_camera, &txbuf.h3p.rsp)) {
+                txbuf.len = txbuf.h3p.rsp.len + 1;
                 return true;
             }
         }
@@ -605,23 +608,23 @@ bool handle_rx_data(uint16_t *buf, uint16_t len)
     }
     case GP_MODEL_HERO4:
         if (gp_h4_rx_data_is_valid(buf, len)) {
-            // XXX: avoid all this copying
 
-            gp_h4_pkt_t pkt;
-            gp_h4_pkt_t rsp;
+            txbuf.h4p.rsp.len = 0;
 
-            uint16_t i;
-            for (i = 0; i < GP_COMMAND_RECEIVE_BUFFER_SIZE; ++i) {
-                pkt.bytes[i] = buf[i];
-            }
-
-            if (gp_h4_handle_rx(&gp.h4, &pkt, &rsp)) {
-
-                for (i = 0; i < rsp.rsp.len + 1; ++i) {
-                    txbuf[i] = rsp.bytes[i];
+            if (gp_h4_handle_rx(&gp.h4, &rxbuf.h4p, &txbuf.h4p) == GP_H4_ERR_OK) {
+                if (txbuf.h4p.rsp.len > 0) {
+                    txbuf.len = txbuf.h4p.rsp.len + 1;
+                    return true;
                 }
-
-                return true;
+            } else {
+                // if we get a error response during handshake, reset and start over
+                // otherwise, report the transaction failure via mavlink
+                if (!gp_h4_handshake_complete(&gp.h4)) {
+                    gp_reset();
+                } else {
+                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                    gp.hb_txn_phase = HB_TXN_IDLE;
+                }
             }
         }
         break;
@@ -717,12 +720,12 @@ void gp_on_slave_address(bool addressed_as_tx)
 
         switch (gp.hb_txn_phase) {
         case HB_TXN_WAIT_FOR_CMD_START:
-            gopro_i2c_send(txbuf, txbuf[0] + 1);
+            gopro_i2c_send(txbuf.bytes, txbuf.len);
             gp.hb_txn_phase =  HB_TXN_TXING_CMD;
             break;
 
         case HB_TXN_WAIT_FOR_RSP_START:
-            gopro_i2c_send(txbuf, txbuf[0] + 1);
+            gopro_i2c_send(txbuf.bytes, txbuf.len);
             gp.hb_txn_phase =  HB_TXN_TXING_RSP;
             break;
 
@@ -747,7 +750,7 @@ void gp_on_slave_address(bool addressed_as_tx)
 
         case HB_TXN_IDLE:
         case HB_TXN_WAIT_FOR_GP_RSP:
-            i2c_begin_rx(rxbuf, RX_BUF_SZ);
+            i2c_begin_rx(rxbuf.bytes, sizeof rxbuf.bytes);
             gp.hb_txn_phase = HB_TXN_RXING;
             break;
 
@@ -801,7 +804,8 @@ void gp_on_i2c_stop_condition()
         // finished rxing
         switch (gp.hb_txn_phase) {
         case HB_TXN_RXING:
-            if (handle_rx_data(rxbuf, i2c_get_rx_len())) {
+            rxbuf.len = i2c_get_rx_len();
+            if (handle_rx_data(rxbuf.bytes, rxbuf.len)) {
                 // if we have data to send, send it over I2C
                 gp_pend_intr_assertion();
                 gp.hb_txn_phase = HB_TXN_WAIT_FOR_RSP_START;
