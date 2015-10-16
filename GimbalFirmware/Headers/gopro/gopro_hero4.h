@@ -19,6 +19,7 @@ typedef struct {
     uint16_t camera_fw_version[16];                         // non-null-terminated string
     uint16_t channel_id;
     uint16_t handshake_step;                                // GP_H4_HANDSHAKE_STEPS
+    bool pending_recording_state;   // latched based on response from camera
 } gp_h4_t;
 
 // hero 4 packet formats

@@ -22,6 +22,7 @@ void gp_h4_init(gp_h4_t *h4)
 
     h4->channel_id = 0; // defaults to 0
     h4->handshake_step = GP_H4_HANDSHAKE_NONE;
+    h4->pending_recording_state = false;
 }
 
 bool gp_h4_handshake_complete(const gp_h4_t *h4)
@@ -237,6 +238,12 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         }
     }
 
+    if (rsp->api_group == API_GRP_MODE_VID &&
+       (rsp->api_id == API_ID_TRIGGER_VID_START || rsp->api_id == API_ID_TRIGGER_VID_STOP))
+    {
+        gp_set_recording_state(h4->pending_recording_state);
+    }
+
     gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_SUCCESS);
     return err;
 }
@@ -369,13 +376,13 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
                 yy->api_group = API_GRP_MODE_VID;
                 switch (request->value) {
                 case GP_RECORDING_START:
-                    gp_set_recording_state(true); // TODO: settings this after the command has received a successful response would be more robust
                     yy->api_id = API_ID_TRIGGER_VID_START;
+                    h4->pending_recording_state = true;
                     break;
 
                 case GP_RECORDING_STOP:
-                    gp_set_recording_state(false);
                     yy->api_id = API_ID_TRIGGER_VID_STOP;
+                    h4->pending_recording_state = false;
                     break;
 
                 default:
