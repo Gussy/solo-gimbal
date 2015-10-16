@@ -1,4 +1,5 @@
 #include "gopro_hero4.h"
+#include "gopro_hero4_defs.h"
 #include "hardware/i2c.h"
 #include "gopro_interface.h"
 
@@ -6,30 +7,6 @@
 
 // Include for GOPRO_COMMAND enum
 #include "mavlink_interface/mavlink_gimbal_interface.h"
-
-enum GP_H4_ACK_VALS {
-    H4_ACK  = 0,
-    H4_NACK = 1
-};
-
-enum GP_H4_TCB_VALS {
-    TCB_CMD_SINGLE_PKT  = 0x0,
-    TCB_RSP_FINAL_FRAME = 0x10
-};
-
-enum GP_ZZ_FMT {
-    ZZ_I2C_BUS_SPEED    = 1,    // 0 == standard
-    ZZ_RDY              = 2,    // 1 == ready
-    ZZ_FW_VERSION       = 3,    // fmt: "HD4.0x.MM.mm.rr"
-    ZZ_PROTO_VERSION    = 4     // fmt: MM, mm, rr (3 bytes)
-};
-
-enum GP_H4_HANDSHAKE_STEPS {
-    GP_H4_HANDSHAKE_NONE,
-    GP_H4_HANDSHAKE_READY,              // have received `ZZ ready` cmd from camera
-    GP_H4_HANDSHAKE_HB_PROTO_VERSION,   // have receive `ZZ HeroBus Protocol Version` from camera
-    GP_H4_HANDSHAKE_CHANNEL_OPEN        // have opened the comms channel with the camera
-};
 
 static void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t *c, gp_h4_pkt_t *rsp);
 static gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
