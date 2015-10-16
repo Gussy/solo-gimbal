@@ -15,6 +15,7 @@
 // Hero 3 related state
 typedef struct {
     bool gccb_version_queried;
+    bool pending_recording_state;   // requested record state, latched on response from gopro
 } gp_h3p_t;
 
 // Hero 3+ packet formats
@@ -48,7 +49,7 @@ bool gp_h3p_handshake_complete(const gp_h3p_t *h3p);
 bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len);
 
 bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c);
-bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c);
+bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const GPSetRequest* request, gp_h3p_cmd_t *c);
 
 bool gp_h3p_handle_rx(gp_h3p_t *h3p, gp_h3p_pkt_t *p, bool from_camera, gp_h3p_rsp_t *rsp);
 
