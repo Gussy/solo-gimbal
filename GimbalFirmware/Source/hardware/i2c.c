@@ -6,12 +6,12 @@
 #include "gopro_interface.h"
 
 typedef struct {
-    const uint16_t *p;
+    const uint8_t *p;
     uint16_t len;
 } tx_transaction_t;
 
 typedef struct {
-    uint16_t *p;
+    uint8_t *p;
     uint16_t len;
     uint16_t maxlen;
 } rx_transaction_t;
@@ -97,7 +97,7 @@ static void send_next_byte()
     }
 }
 
-void i2c_begin_tx(const uint16_t* data, int length)
+void i2c_begin_tx(const uint8_t* data, int length)
 {
     /*
      * Kick off transmission of 'data'.
@@ -113,7 +113,7 @@ void i2c_begin_tx(const uint16_t* data, int length)
     I2caRegs.I2CIER.bit.XRDY = 1;
 }
 
-void i2c_begin_rx(uint16_t* data, int maxlen)
+void i2c_begin_rx(uint8_t* data, int maxlen)
 {
     /*
      * Prepare to receive into 'data'.

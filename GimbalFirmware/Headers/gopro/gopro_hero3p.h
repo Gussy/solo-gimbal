@@ -29,17 +29,17 @@ typedef struct {
 
 // Request (CMD) General Format
 typedef struct {
-    uint16_t len;     // size of this packet (not including 'len'), also contains requester id (Camera or Bac-Pac) in most significant bit
-    uint16_t cmd1;    // first letter of 2-letter cmd
-    uint16_t cmd2;    // second letter of 2-letter cmd
-    uint16_t payload[GP_H3P_MAX_PAYLOAD - 3]; // known as 'params' in documentation // TODO: keep this consistent with hero4 naming or call params?
+    uint8_t len;    // size of this packet (not including 'len'), also contains requester id (Camera or Bac-Pac) in most significant bit
+    uint8_t cmd1;   //  first letter of 2-letter cmd
+    uint8_t cmd2;   // second letter of 2-letter cmd
+    uint8_t payload[GP_H3P_MAX_PAYLOAD - 3]; // known as 'params' in documentation // TODO: keep this consistent with hero4 naming or call params?
 } gp_h3p_cmd_t;
 
 // Response (RSP) General Format
 typedef struct {
-    uint16_t len;       // size of this packet (not including 'len')
-    uint16_t status;    // successful/unsuccessful
-    uint16_t payload[GP_H3P_MAX_PAYLOAD - 2];
+    uint8_t len;        // size of this packet (not including 'len')
+    uint8_t status;     // successful/unsuccessful
+    uint8_t payload[GP_H3P_MAX_PAYLOAD - 2];
 } gp_h3p_rsp_t;
 
 typedef union {
@@ -47,19 +47,19 @@ typedef union {
     gp_h3p_cmd_t cmd;
     gp_h3p_rsp_t rsp;
 
-    uint16_t bytes[GP_H3P_MAX_PACKET];
+    uint8_t bytes[GP_H3P_MAX_PACKET];
 
 } gp_h3p_pkt_t;
 
 void gp_h3p_init(gp_h3p_t *h3p);
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p);
-bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len);
+bool gp_h3p_recognize_packet(const uint8_t *buf, uint16_t len);
 
 bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c);
 bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t *request, gp_h3p_cmd_t *c);
 
 bool gp_h3p_handle_rx(gp_h3p_t *h3p, gp_h3p_pkt_t *p, bool from_camera, gp_h3p_rsp_t *rsp);
 
-bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camera);
+bool gp_h3p_rx_data_is_valid(const uint8_t *buf, uint16_t len, bool *from_camera);
 
 #endif // _GOPRO_HERO3P_H
