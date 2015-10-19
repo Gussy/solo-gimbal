@@ -1,4 +1,5 @@
 #include "gopro_hero4.h"
+#include "gopro_hero4_defs.h"
 #include "hardware/i2c.h"
 #include "gopro_interface.h"
 
@@ -6,30 +7,6 @@
 
 // Include for GOPRO_COMMAND enum
 #include "mavlink_interface/mavlink_gimbal_interface.h"
-
-enum GP_H4_ACK_VALS {
-    H4_ACK  = 0,
-    H4_NACK = 1
-};
-
-enum GP_H4_TCB_VALS {
-    TCB_CMD_SINGLE_PKT  = 0x0,
-    TCB_RSP_FINAL_FRAME = 0x10
-};
-
-enum GP_ZZ_FMT {
-    ZZ_I2C_BUS_SPEED    = 1,    // 0 == standard
-    ZZ_RDY              = 2,    // 1 == ready
-    ZZ_FW_VERSION       = 3,    // fmt: "HD4.0x.MM.mm.rr"
-    ZZ_PROTO_VERSION    = 4     // fmt: MM, mm, rr (3 bytes)
-};
-
-enum GP_H4_HANDSHAKE_STEPS {
-    GP_H4_HANDSHAKE_NONE,
-    GP_H4_HANDSHAKE_READY,              // have received `ZZ ready` cmd from camera
-    GP_H4_HANDSHAKE_HB_PROTO_VERSION,   // have receive `ZZ HeroBus Protocol Version` from camera
-    GP_H4_HANDSHAKE_CHANNEL_OPEN        // have opened the comms channel with the camera
-};
 
 static void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t *c, gp_h4_pkt_t *rsp);
 static gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
@@ -45,6 +22,7 @@ void gp_h4_init(gp_h4_t *h4)
 
     h4->channel_id = 0; // defaults to 0
     h4->handshake_step = GP_H4_HANDSHAKE_NONE;
+    h4->pending_recording_state = false;
 }
 
 bool gp_h4_handshake_complete(const gp_h4_t *h4)
@@ -66,10 +44,9 @@ bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p)
      */
 
     if (h4->handshake_step == GP_H4_HANDSHAKE_HB_PROTO_VERSION) {
-        // 'Get Channel ID/Open Channel' is api 0/1
         gp_h4_yy_cmd_t *yy = &p->yy_cmd;
-        yy->api_group = 0;
-        yy->api_id = 1;
+        yy->api_group = API_GRP_GEN_CMDS;
+        yy->api_id = API_ID_OPEN_CHAN;
         gp_h4_finalize_yy_cmd(h4, 0, yy);
         return true;
     }
@@ -245,8 +222,7 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
     }
 
     // handle any packets that shouldn't be forwarded via mavlink
-    if (rsp->api_group == 0 && rsp->api_id == 1 && len == 1) {
-        // 'Get Channel ID/Open Channel' is api 0/1
+    if (rsp->api_group == API_GRP_GEN_CMDS && rsp->api_id == API_ID_OPEN_CHAN && len == 1) {
         h4->channel_id = rsp->payload[0];
         h4->handshake_step = GP_H4_HANDSHAKE_CHANNEL_OPEN;
         return err; // TODO: update with new bool for internal transactions
@@ -260,6 +236,12 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
             gp_latch_pending_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
+    }
+
+    if (rsp->api_group == API_GRP_MODE_VID &&
+       (rsp->api_id == API_ID_TRIGGER_VID_START || rsp->api_id == API_ID_TRIGGER_VID_STOP))
+    {
+        gp_set_recording_state(h4->pending_recording_state);
     }
 
     gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_SUCCESS);
@@ -324,29 +306,27 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, Uint8 cmd_id, gp_h4_pkt_t *p)
     uint16_t payloadlen = 0;
 
     switch (cmd_id) {
-        case GOPRO_COMMAND_CAPTURE_MODE:
-            yy->api_group = 1;
-            yy->api_id    = 0;
-            break;
+    case GOPRO_COMMAND_CAPTURE_MODE:
+        yy->api_group = API_GRP_MODE_CAM;
+        yy->api_id    = API_ID_GET_CAM_MAIN_MODE;
+        break;
 
-        case GOPRO_COMMAND_BATTERY:
-            yy->api_group = 8;
-            yy->api_id    = 0;
-            break;
+    case GOPRO_COMMAND_BATTERY:
+        yy->api_group = API_GRP_CAM_SETTINGS;
+        yy->api_id    = API_ID_GET_BATTERY_LVL;
+        break;
 
-        case GOPRO_COMMAND_RESOLUTION:
-        case GOPRO_COMMAND_FRAME_RATE:
-        case GOPRO_COMMAND_FIELD_OF_VIEW:
-            yy->api_group = 2;
-            yy->api_id    = 2;
-            break;
+    case GOPRO_COMMAND_RESOLUTION:
+    case GOPRO_COMMAND_FRAME_RATE:
+    case GOPRO_COMMAND_FIELD_OF_VIEW:
+        yy->api_group = API_GRP_MODE_VID;
+        yy->api_id    = API_ID_GET_RES_FR_FOV;
+        break;
 
-        case GOPRO_COMMAND_MODEL:
-        case GOPRO_COMMAND_SHUTTER:
-        default:
-            // Unsupported Command ID
-            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-            return false;
+    default:
+        // Unsupported Command ID
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        return false;
     }
 
     gp_h4_finalize_yy_cmd(h4, payloadlen, yy);
@@ -367,8 +347,8 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
     switch (request->cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                yy->api_group = 8;
-                yy->api_id = 2;
+                yy->api_group = API_GRP_CAM_SETTINGS;
+                yy->api_id = API_ID_POWER_OFF;
                 yy->payload[0] = request->value;
                 payloadlen = 1;
             } else {
@@ -381,8 +361,8 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
             break;
 
         case GOPRO_COMMAND_CAPTURE_MODE:
-            yy->api_group = 1;
-            yy->api_id = 1;
+            yy->api_group = API_GRP_MODE_CAM;
+            yy->api_id = API_ID_SET_CAM_MAIN_MODE;
             // TODO: verify this is a valid GPH4Power value
             yy->payload[0] = request->value;
             payloadlen = 1;
@@ -391,19 +371,20 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
             break;
 
         case GOPRO_COMMAND_SHUTTER:
-
             switch (gp_capture_mode()) {
             case GP_CAPTURE_MODE_VIDEO:
-                yy->api_group = 2;
+                yy->api_group = API_GRP_MODE_VID;
                 switch (request->value) {
                 case GP_RECORDING_START:
-                    yy->api_id = 0x1b;
-                    gp_set_recording_state(true); // TODO: settings this after the command has received a successful response would be more robust
+                    yy->api_id = API_ID_TRIGGER_VID_START;
+                    h4->pending_recording_state = true;
                     break;
+
                 case GP_RECORDING_STOP:
-                    yy->api_id = 0x1c;
-                    gp_set_recording_state(false);
+                    yy->api_id = API_ID_TRIGGER_VID_STOP;
+                    h4->pending_recording_state = false;
                     break;
+
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                     return false;
@@ -411,16 +392,16 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
                 break;
 
             case GP_CAPTURE_MODE_PHOTO:
-                yy->api_group = 3;
+                yy->api_group = API_GRP_MODE_PHOTO;
                 switch (request->value) {
                 case GP_RECORDING_START:
-                    yy->api_id = 0x17;
-                    //gp_set_recording_state(true);     // no need since we don't have a way to find out when recording is finished
+                    yy->api_id = API_ID_TRIGGER_PHOTO_START;
                     break;
+
                 case GP_RECORDING_STOP:
-                    yy->api_id = 0x18;
-                    //gp_set_recording_state(false);
+                    yy->api_id = API_ID_TRIGGER_PHOTO_STOP;
                     break;
+
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                     return false;
@@ -428,16 +409,16 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
                 break;
 
             case GP_CAPTURE_MODE_BURST:
-                yy->api_group = 4;
+                yy->api_group = API_GRP_MODE_MULTISHOT;
                 switch (request->value) {
                 case GP_RECORDING_START:
-                    yy->api_id = 0x1b;
-                    //gp_set_recording_state(true);      // no need since we don't have a way to find out when recording is finished
+                    yy->api_id = API_ID_TRIGGER_MULTI_START;
                     break;
+
                 case GP_RECORDING_STOP:
-                    yy->api_id = 0x1c;
-                    //gp_set_recording_state(false);
+                    yy->api_id = API_ID_TRIGGER_MULTI_STOP;
                     break;
+
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                     return false;
@@ -473,8 +454,8 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
             yy->payload[2] = 0;
 
             payloadlen = 3;
-            yy->api_group = 2;
-            yy->api_id = 3;
+            yy->api_group = API_GRP_MODE_VID;
+            yy->api_id = API_ID_SET_RES_FR_FOV;
             break;
 
         default:

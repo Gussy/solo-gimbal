@@ -8,13 +8,14 @@
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
-static void gp_h3p_handle_response(const gp_h3p_rsp_t *rsp);
+static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
 static void gp_h3p_sanitize_buf_len(uint16_t *buf);
 static void gp_h3p_finalize_command(gp_h3p_cmd_t *c);
 
 void gp_h3p_init(gp_h3p_t *h3p)
 {
     h3p->gccb_version_queried = false;
+    h3p->pending_recording_state = false;
 }
 
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
@@ -101,7 +102,7 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
     return true;
 }
 
-bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c)
+bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const GPSetRequest* request, gp_h3p_cmd_t *c)
 {
     /*
      * Convert the SetRequest from the CAN layer into a herobus command.
@@ -139,11 +140,10 @@ bool gp_h3p_produce_set_request(const GPSetRequest* request, gp_h3p_cmd_t *c)
             if (gp_capture_mode() == GP_CAPTURE_MODE_VIDEO) {
                 switch (request->value) {
                 case GP_RECORDING_START:
-                    gp_set_recording_state(true);
-                    break;
                 case GP_RECORDING_STOP:
-                    gp_set_recording_state(false);
+                    h3p->pending_recording_state = (request->value == GP_RECORDING_START);
                     break;
+
                 default:
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                     return false;
@@ -197,7 +197,7 @@ bool gp_h3p_handle_rx(gp_h3p_t *h3p, gp_h3p_pkt_t *p, bool from_camera, gp_h3p_r
         return true;
     }
 
-    gp_h3p_handle_response(&p->rsp);
+    gp_h3p_handle_response(h3p, &p->rsp);
     return false;
 }
 
@@ -229,19 +229,31 @@ void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t 
     rsp->status = GP_CMD_STATUS_FAILURE;
 }
 
-void gp_h3p_handle_response(const gp_h3p_rsp_t *rsp)
+void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
 {
     /*
      * Process a response to one of our commands.
      */
 
     // Special Handling of responses
-    if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
+    switch (gp_transaction_cmd()) {
+    case GOPRO_COMMAND_CAPTURE_MODE:
         if (gp_transaction_direction() == GP_REQUEST_GET) {
             gp_set_capture_mode(rsp->payload[0]);   // Set capture mode state with capture mode received from GoPro
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
             gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
+
+    case GOPRO_COMMAND_SHUTTER:
+        /*
+         * This alone is not enough to verify the recording state is correct,
+         * as the camera responds with success status even if the SD card is not inserted.
+         * Need to check for SD card presence before sending shutter trigger cmd.
+         */
+        if (rsp->status == GP_CMD_STATUS_SUCCESS && gp_capture_mode() == GP_CAPTURE_MODE_VIDEO) {
+            gp_set_recording_state(h3p->pending_recording_state);
+        }
+        break;
     }
 
     gp_set_transaction_result(&rsp->payload[0], 1, (GPCmdStatus)rsp->status);

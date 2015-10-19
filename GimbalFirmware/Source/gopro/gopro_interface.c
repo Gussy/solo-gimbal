@@ -385,7 +385,7 @@ int gp_set_request(GPSetRequest* request)
 	// GoPro has to be powered on and ready, or the command has to be a power on command
     switch (gp.model) {
     case GP_MODEL_HERO3P:
-        if (gp_h3p_produce_set_request(request, &txbuf.h3p.cmd)) {
+        if (gp_h3p_produce_set_request(&gp.h3p, request, &txbuf.h3p.cmd)) {
             gp_begin_cmd_send(txbuf.h3p.cmd.len + 1);
         }
         break;
