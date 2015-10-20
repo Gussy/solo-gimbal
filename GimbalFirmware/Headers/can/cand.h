@@ -116,16 +116,16 @@ void ECanInit( void );
 
 CAND_SenderID CAND_GetSenderID( void );
 CAND_Result cand_init( void );
-CAND_Result cand_tx(CAND_SID sid, uint8_t* p_data, uint8_t p_data_size);
+CAND_Result cand_tx(CAND_SID sid, const uint8_t* p_data, uint8_t p_data_size);
 CAND_Result cand_rx( struct cand_message * msg );
 CAND_Result cand_tx_response( CAND_DestinationID did, CAND_ParameterID pid, Uint32 val );
-CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid, Uint32 *val, uint8_t resp_cnt );
+CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid, const Uint32 *val, uint8_t resp_cnt );
 CAND_Result cand_tx_fault(CAND_FaultCode fault_code, CAND_FaultType fault_type);
 CAND_Result cand_tx_request(CAND_DestinationID did, CAND_ParameterID pid);
 CAND_Result cand_tx_multi_request(CAND_DestinationID did, CAND_ParameterID* pids, uint8_t request_cnt);
-CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, Uint32* param, Uint8 param_cnt);
+CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, const Uint32* param, Uint8 param_cnt);
 CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 param);
-CAND_Result cand_tx_extended_param(CAND_DestinationID did, CAND_ExtendedParameterID epid, uint8_t* param, int param_length);
+CAND_Result cand_tx_extended_param(CAND_DestinationID did, CAND_ExtendedParameterID epid, const uint8_t* param, int param_length);
 CAND_Result cand_tx_command(CAND_DestinationID did, CAND_Command cmd);
 
 #endif /* CAND_H_ */

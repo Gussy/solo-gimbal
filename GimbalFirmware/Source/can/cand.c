@@ -551,7 +551,7 @@ CAND_Result cand_rx(struct cand_message * msg)
 	return ret;
 }
 
-CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, Uint32* param, Uint8 param_cnt)
+CAND_Result cand_tx_multi_param(CAND_DestinationID did, CAND_ParameterID* pid, const Uint32* param, Uint8 param_cnt)
 {
     CAND_SID sid;
     Uint8 payload[8], payload_cnt = 0;
@@ -700,7 +700,7 @@ CAND_Result cand_tx_param(CAND_DestinationID did, CAND_ParameterID pid, Uint32 p
     return cand_tx(sid, payload, payload_size);
 }
 
-CAND_Result cand_tx_extended_param(CAND_DestinationID did, CAND_ExtendedParameterID epid, uint8_t* param, int param_length)
+CAND_Result cand_tx_extended_param(CAND_DestinationID did, CAND_ExtendedParameterID epid, const uint8_t* param, int param_length)
 {
     CAND_SID sid;
     Uint8 payload[8];
@@ -772,7 +772,7 @@ CAND_Result cand_tx_multi_request(CAND_DestinationID did, CAND_ParameterID* pids
     return cand_tx(sid, payload, request_cnt);
 }
 
-CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid, Uint32 *val, uint8_t resp_cnt)
+CAND_Result cand_tx_multi_response(CAND_DestinationID did, CAND_ParameterID *pid, const Uint32 *val, uint8_t resp_cnt)
 {
 	CAND_SID sid;
 	uint8_t payload[10], pcnt=0;
@@ -881,7 +881,7 @@ CAND_Result cand_tx_fault(CAND_FaultCode fault_code, CAND_FaultType fault_type)
 	return cand_tx(sid, NULL, 0);
 }
 
-CAND_Result cand_tx(CAND_SID sid, uint8_t* p_data, uint8_t p_data_size)
+CAND_Result cand_tx(CAND_SID sid, const uint8_t* p_data, uint8_t p_data_size)
 {
 	Uint16 i;
 	struct MBOX mbox;
