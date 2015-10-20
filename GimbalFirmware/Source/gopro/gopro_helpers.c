@@ -2,14 +2,26 @@
 #include "can/cand.h"
 #include "PeripheralHeaderIncludes.h"
 
-bool gp_send_mav_get_response(uint8_t cmd_id, uint8_t value) {
-    cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_GET_RESPONSE, (((uint32_t)cmd_id) << 8) | (((uint32_t)value) << 0));
-    return true;
-}
 
-bool gp_send_mav_set_response(uint8_t cmd_id, uint8_t result) {
-    cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_SET_RESPONSE, (((uint32_t)cmd_id) << 8) | (((uint32_t)result) << 0));
-    return true;
+bool gp_send_mav_can_response(const gp_transaction_t *t)
+{
+    /*
+     * Send the mavlink msg back via can to the AZ board,
+     * which will then forward it over serial.
+     *
+     * Relies on the fact that get responses are a superset
+     * of set responses, and sends the appropriate number of bytes
+     * based on the type of response.
+     */
+
+    CAND_Result ret;
+    if (t->reqtype == GP_REQUEST_GET) {
+        ret = cand_tx_extended_param(CAND_ID_AZ, CAND_PID_GOPRO_GET_RESPONSE, t->response.bytes, sizeof(gp_can_mav_get_rsp_t));
+    } else {
+        ret = cand_tx_extended_param(CAND_ID_AZ, CAND_PID_GOPRO_SET_RESPONSE, t->response.bytes, sizeof(gp_can_mav_set_rsp_t));
+    }
+
+    return (ret == CAND_SUCCESS);
 }
 
 void gp_set_bp_detect_asserted_out(bool assert) {

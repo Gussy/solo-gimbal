@@ -294,7 +294,7 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
     return true;
 }
 
-bool gp_h4_produce_get_request(gp_h4_t *h4, Uint8 cmd_id, gp_h4_pkt_t *p)
+bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
 {
     /*
      * A GET request has been received via the CAN interface,
@@ -333,7 +333,7 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, Uint8 cmd_id, gp_h4_pkt_t *p)
     return true;
 }
 
-bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_pkt_t *p)
+bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request, gp_h4_pkt_t *p)
 {
     /*
      * A SET request has been received via the CAN interface,
@@ -344,12 +344,12 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
 
     uint16_t payloadlen = 0;
 
-    switch (request->cmd_id) {
+    switch (request->mav.cmd_id) {
         case GOPRO_COMMAND_POWER:
-            if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
+            if(request->mav.value[0] == 0x00 && gp_get_power_status() == GP_POWER_ON) {
                 yy->api_group = API_GRP_CAM_SETTINGS;
                 yy->api_id = API_ID_POWER_OFF;
-                yy->payload[0] = request->value;
+                yy->payload[0] = request->mav.value[0];
                 payloadlen = 1;
             } else {
                 // no supported command to power on.
@@ -364,17 +364,17 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
             yy->api_group = API_GRP_MODE_CAM;
             yy->api_id = API_ID_SET_CAM_MAIN_MODE;
             // TODO: verify this is a valid GPH4Power value
-            yy->payload[0] = request->value;
+            yy->payload[0] = request->mav.value[0];
             payloadlen = 1;
 
-            gp_pend_capture_mode(request->value);
+            gp_pend_capture_mode(request->mav.value[0]);
             break;
 
         case GOPRO_COMMAND_SHUTTER:
             switch (gp_capture_mode()) {
             case GP_CAPTURE_MODE_VIDEO:
                 yy->api_group = API_GRP_MODE_VID;
-                switch (request->value) {
+                switch (request->mav.value[0]) {
                 case GP_RECORDING_START:
                     yy->api_id = API_ID_TRIGGER_VID_START;
                     h4->pending_recording_state = true;
@@ -393,7 +393,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
 
             case GP_CAPTURE_MODE_PHOTO:
                 yy->api_group = API_GRP_MODE_PHOTO;
-                switch (request->value) {
+                switch (request->mav.value[0]) {
                 case GP_RECORDING_START:
                     yy->api_id = API_ID_TRIGGER_PHOTO_START;
                     break;
@@ -410,7 +410,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
 
             case GP_CAPTURE_MODE_BURST:
                 yy->api_group = API_GRP_MODE_MULTISHOT;
-                switch (request->value) {
+                switch (request->mav.value[0]) {
                 case GP_RECORDING_START:
                     yy->api_id = API_ID_TRIGGER_MULTI_START;
                     break;
@@ -435,17 +435,17 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_p
             break;
 
         case GOPRO_COMMAND_RESOLUTION: // TODO: how do we know the other values? new MAVLink message type might be needed here
-            yy->payload[0] = request->value;  // resolution
+            yy->payload[0] = request->mav.value[0];  // resolution
             yy->payload[1] = 0;               // fps
             yy->payload[2] = 0;               // fov
         case GOPRO_COMMAND_FIELD_OF_VIEW:
             yy->payload[0] = 0;
-            yy->payload[1] = request->value;
+            yy->payload[1] = request->mav.value[0];
             yy->payload[2] = 0;
         case GOPRO_COMMAND_FRAME_RATE:
             yy->payload[0] = 0;
             yy->payload[1] = 0;
-            yy->payload[2] = request->value;
+            yy->payload[2] = request->mav.value[0];
 
             /* TODO set to default while we figure this out */
             // TODO: current defaults: 1080p (enum:9) @ 30 FPS (enum:8), wide (enum:0)

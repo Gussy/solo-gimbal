@@ -102,16 +102,16 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
     return true;
 }
 
-bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const GPSetRequest* request, gp_h3p_cmd_t *c)
+bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* request, gp_h3p_cmd_t *c)
 {
     /*
      * Convert the SetRequest from the CAN layer into a herobus command.
      * Return true if we produced data to send, false otherwise.
      */
 
-    switch (request->cmd_id) {
+    switch (request->mav.cmd_id) {
         case GOPRO_COMMAND_POWER:
-            if(request->value == 0x00 && gp_get_power_status() == GP_POWER_ON) {
+            if(request->mav.value[0] == 0x00 && gp_get_power_status() == GP_POWER_ON) {
                 c->cmd1 = 'P';
                 c->cmd2 = 'W';
                 c->payload[0] = 0x00;
@@ -127,21 +127,21 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const GPSetRequest* request, gp_h
         case GOPRO_COMMAND_CAPTURE_MODE:
             c->cmd1 = 'C';
             c->cmd2 = 'M';
-            c->payload[0] = request->value;
-            gp_pend_capture_mode(request->value);
+            c->payload[0] = request->mav.value[0];
+            gp_pend_capture_mode(request->mav.value[0]);
             break;
 
         case GOPRO_COMMAND_SHUTTER:
             c->cmd1 = 'S';
             c->cmd2 = 'H';
-            c->payload[0] = request->value;
+            c->payload[0] = request->mav.value[0];
 
             // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
             if (gp_capture_mode() == GP_CAPTURE_MODE_VIDEO) {
-                switch (request->value) {
+                switch (request->mav.value[0]) {
                 case GP_RECORDING_START:
                 case GP_RECORDING_STOP:
-                    h3p->pending_recording_state = (request->value == GP_RECORDING_START);
+                    h3p->pending_recording_state = (request->mav.value[0] == GP_RECORDING_START);
                     break;
 
                 default:
@@ -155,19 +155,19 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const GPSetRequest* request, gp_h
         case GOPRO_COMMAND_RESOLUTION:
             c->cmd1 = 'V';
             c->cmd2 = 'V';
-            c->payload[0] = request->value;
+            c->payload[0] = request->mav.value[0];
             break;
 
         case GOPRO_COMMAND_FRAME_RATE:
             c->cmd1 = 'F';
             c->cmd2 = 'S';
-            c->payload[0] = request->value;
+            c->payload[0] = request->mav.value[0];
             break;
 
         case GOPRO_COMMAND_FIELD_OF_VIEW:
             c->cmd1 = 'F';
             c->cmd2 = 'V';
-            c->payload[0] = request->value;
+            c->payload[0] = request->mav.value[0];
             break;
         /* End of unsupported commands */
 

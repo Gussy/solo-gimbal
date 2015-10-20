@@ -72,21 +72,5 @@ void ProcessParamUpdates(ControlBoardParms* cb_parms, DebugData* debug_data)
             // (NOTE: in practice, all 3 rate commands should be updated at the same time, since the parameter updates come in the same message)
             transform_ang_vel_to_joint_rate(rate_cmds_received, cb_parms->rate_cmd_inject);
         }
-
-        // Check for any new GoPro get requests
-        if (cb_parms->param_set[CAND_PID_GOPRO_GET_REQUEST].sema == true) {
-            gp_get_request((Uint8)cb_parms->param_set[CAND_PID_GOPRO_GET_REQUEST].param, false);
-            cb_parms->param_set[CAND_PID_GOPRO_GET_REQUEST].sema = false;
-        }
-
-        // Check for any new GoPro set requests
-        if (cb_parms->param_set[CAND_PID_GOPRO_SET_REQUEST].sema == true) {
-            // Extract the GoPro set request command id and value from the CAN parameter
-            GPSetRequest set_request;
-            set_request.cmd_id = (cb_parms->param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 8) & 0x000000FF;
-            set_request.value = (cb_parms->param_set[CAND_PID_GOPRO_SET_REQUEST].param >> 0) & 0x000000FF;
-            gp_set_request(&set_request);
-            cb_parms->param_set[CAND_PID_GOPRO_SET_REQUEST].sema = false;
-        }
     }
 }

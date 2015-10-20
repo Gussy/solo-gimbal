@@ -114,7 +114,7 @@ void gp_reset()
     gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
-    gp.txn.status = GP_CMD_STATUS_INCOMPLETE;
+    gp.txn.response.mav.status = GP_CMD_STATUS_INCOMPLETE;
     gp.hb_txn_phase = HB_TXN_IDLE;
 
     gp_set_intr_asserted_out(false);
@@ -197,16 +197,13 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdSt
      * through the CAN interface.
      */
 
-    uint16_t i;
-    for (i = 0; i < len; ++i) {
-        gp.txn.payload[i] = resp_bytes[i];
-    }
+    memcpy(gp.txn.response.mav.value, resp_bytes, len);
 
     // XXX: probably want to:
     //      - unify the values of GPCmdStatus and GOPRO_SET_RESPONSE_RESULT, currently they're opposites
     //      - make GOPRO_SET_RESPONSE_RESULT more general (GOPRO_RESPONSE_RESULT or similar)
     gp.txn.len = len;
-    gp.txn.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_SET_RESPONSE_RESULT_SUCCESS : GOPRO_SET_RESPONSE_RESULT_FAILURE;
+    gp.txn.response.mav.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_SET_RESPONSE_RESULT_SUCCESS : GOPRO_SET_RESPONSE_RESULT_FAILURE;
 
     // result transmitted via gp_send_mav_response()
 }
@@ -223,15 +220,9 @@ static void gp_send_mav_response()
 
     i2c_disable_scd_isr();  // critical section
 
-    if (gp.txn.status != GP_CMD_STATUS_INCOMPLETE && !gp.txn.is_internal) {
-        if (gp.txn.reqtype == GP_REQUEST_GET) {
-            // TODO: this does not handle the case of failed transactions - could reply with corrupted data?
-            gp_send_mav_get_response(gp.txn.mav_cmd, gp.txn.payload[0]);
-        } else {
-            gp_send_mav_set_response(gp.txn.mav_cmd, gp.txn.status);
-        }
-
-        gp.txn.status = GP_CMD_STATUS_INCOMPLETE;
+    if (gp.txn.response.mav.status != GP_CMD_STATUS_INCOMPLETE && !gp.txn.is_internal) {
+        gp_send_mav_can_response(&gp.txn);
+        gp.txn.response.mav.status = GP_CMD_STATUS_INCOMPLETE;
     }
 
     i2c_enable_scd_isr();  // end critical section
@@ -244,7 +235,7 @@ uint16_t gp_transaction_cmd()
      * can be handy for interpreting the corresponding response.
      */
 
-    return gp.txn.mav_cmd;
+    return gp.txn.response.mav.cmd_id;
 }
 
 bool gp_handshake_complete()
@@ -311,14 +302,16 @@ bool gp_request_power_on()
 bool gp_request_capture_mode()
 {
     if (gp_ready_for_cmd() && !gp_is_recording()) {
-        gp_get_request(GOPRO_COMMAND_CAPTURE_MODE, false);                  // not internal since currently there is no other method to notify when the capture mode changes, besides addressing a request
+        gp_can_mav_get_req_t req;
+        req.mav.cmd_id = GOPRO_COMMAND_CAPTURE_MODE;
+        gp_get_request(&req, false);                  // not internal since currently there is no other method to notify when the capture mode changes, besides addressing a request
         return true;
     }
 
     return false;
 }
 
-int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
+int gp_get_request(const gp_can_mav_get_req_t *req, bool txn_is_internal)
 {
     /*
      * Called when a CAN msg has been received with a `gopro get request` msg type
@@ -338,18 +331,18 @@ int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
     }
 
     gp.txn.reqtype = GP_REQUEST_GET;
-    gp.txn.mav_cmd = (GOPRO_COMMAND)cmd_id;
+    gp.txn.response.mav.cmd_id = (GOPRO_COMMAND)req->mav.cmd_id;
     gp.txn.is_internal = txn_is_internal;
 
     switch (gp.model) {
     case GP_MODEL_HERO3P:
-        if (gp_h3p_produce_get_request(cmd_id, &txbuf.h3p.cmd)) {
+        if (gp_h3p_produce_get_request(req->mav.cmd_id, &txbuf.h3p.cmd)) {
             gp_begin_cmd_send(txbuf.h3p.cmd.len + 1);
         }
         break;
 
     case GP_MODEL_HERO4:
-        if (gp_h4_produce_get_request(&gp.h4, cmd_id, &txbuf.h4p)) {
+        if (gp_h4_produce_get_request(&gp.h4, req->mav.cmd_id, &txbuf.h4p)) {
             gp_begin_cmd_send(txbuf.h4p.cmd.len + 1);
         }
         break;
@@ -361,7 +354,7 @@ int gp_get_request(Uint8 cmd_id, bool txn_is_internal)
     return 0;
 }
 
-int gp_set_request(GPSetRequest* request)
+int gp_set_request(const gp_can_mav_set_req_t* req)
 {
     /*
      * Called when a CAN msg has been received with a 'gopro set request' msg type.
@@ -371,7 +364,7 @@ int gp_set_request(GPSetRequest* request)
      * via gp_get_last_set_response()
      */
 
-    if (!(gp_get_power_status() == GP_POWER_ON || (request->cmd_id == GOPRO_COMMAND_POWER && request->value == 0x01)) ||
+    if (!(gp_get_power_status() == GP_POWER_ON || (req->mav.cmd_id == GOPRO_COMMAND_POWER && req->mav.value[0] == 0x01)) ||
         !gp_ready_for_cmd())
     {
         gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
@@ -379,19 +372,19 @@ int gp_set_request(GPSetRequest* request)
     }
 
     gp.txn.reqtype = GP_REQUEST_SET;
-    gp.txn.mav_cmd = (GOPRO_COMMAND)request->cmd_id;
+    gp.txn.response.mav.cmd_id = (GOPRO_COMMAND)req->mav.cmd_id;
     gp.txn.is_internal = false;     // parameterize if we ever need to send an internal 'SET' command
 
 	// GoPro has to be powered on and ready, or the command has to be a power on command
     switch (gp.model) {
     case GP_MODEL_HERO3P:
-        if (gp_h3p_produce_set_request(&gp.h3p, request, &txbuf.h3p.cmd)) {
+        if (gp_h3p_produce_set_request(&gp.h3p, req, &txbuf.h3p.cmd)) {
             gp_begin_cmd_send(txbuf.h3p.cmd.len + 1);
         }
         break;
 
     case GP_MODEL_HERO4:
-        if (gp_h4_produce_set_request(&gp.h4, request, &txbuf.h4p)) {
+        if (gp_h4_produce_set_request(&gp.h4, req, &txbuf.h4p)) {
             gp_begin_cmd_send(txbuf.h4p.cmd.len + 1);
         }
         break;
