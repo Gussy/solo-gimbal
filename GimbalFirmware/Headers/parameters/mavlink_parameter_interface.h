@@ -67,6 +67,11 @@ typedef enum {
     GIMBAL_PARAM_READ_ONLY
 } GimbalParameterAccessType;
 
+typedef enum {
+    GIMBAL_PARAM_VOLATILE,
+    GIMBAL_PARAM_NON_VOLATILE
+} GimbalParameterMemoryType;
+
 //NOTE: I'm not using the MAVLink library's mavlink_param_union_t, because the C2000 compiler does not support anonymous unions
 //It was easier just to add this custom version here than to modify the MAVLink library
 typedef union {
@@ -75,10 +80,9 @@ typedef union {
 } mavlink_param_union_c2000_t;
 
 typedef struct {
-    uint8_t param_type;
+    GimbalParameterMemoryType param_type;
     float* float_data_ptr;
     flash_param_keys_t kvstore_key;
-    uint32_t* uint32_data_ptr;
     GimbalParameterAccessType access_type;
     char param_id[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1];
 } GimbalMavlinkParameter;

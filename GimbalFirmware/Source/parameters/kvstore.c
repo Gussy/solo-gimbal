@@ -32,15 +32,6 @@ uint16_t kvstore_get_uint16(const flash_param_keys_t key)
     return 0;
 }
 
-uint32_t kvstore_get_uint32(const flash_param_keys_t key)
-{
-    if(key < FLASH_PARAM_KEY_COUNT) {
-        return kvstore[key].as_dword;
-    }
-
-    return 0;
-}
-
 void kvstore_put_float(const flash_param_keys_t key, const float value)
 {
     kvstore[key].as_float = value;
@@ -49,9 +40,4 @@ void kvstore_put_float(const flash_param_keys_t key, const float value)
 void kvstore_put_uint16(const flash_param_keys_t key, const uint16_t value)
 {
     kvstore[key].as_words[0] = value;
-}
-
-void kvstore_put_uint32(const flash_param_keys_t key, const uint32_t value)
-{
-    kvstore[key].as_dword = value;
 }

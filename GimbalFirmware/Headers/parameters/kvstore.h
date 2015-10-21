@@ -68,12 +68,8 @@ void kvstore_init(void);
 
 float kvstore_get_float(const flash_param_keys_t key);
 uint16_t kvstore_get_uint16(const flash_param_keys_t key);
-uint32_t kvstore_get_uint32(const flash_param_keys_t key);
 
 void kvstore_put_float(const flash_param_keys_t key, const float value);
 void kvstore_put_uint16(const flash_param_keys_t key, const uint16_t value);
-void kvstore_put_uint32(const flash_param_keys_t key, const uint32_t value);
-
-
 
 #endif /* HEADERS_PARAMETERS_KVSTORE_H_ */
