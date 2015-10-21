@@ -92,6 +92,21 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
             c->cmd2 = 'l';
             break;
 
+        case GOPRO_COMMAND_RESOLUTION:
+            c->cmd1 = 'v';
+            c->cmd2 = 'v';
+            break;
+
+        case GOPRO_COMMAND_FRAME_RATE:
+            c->cmd1 = 'f';
+            c->cmd2 = 's';
+            break;
+
+        case GOPRO_COMMAND_FIELD_OF_VIEW:
+            c->cmd1 = 'f';
+            c->cmd2 = 'v';
+            break;
+
         default:
             // Unsupported Command ID
             gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
