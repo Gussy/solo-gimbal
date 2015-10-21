@@ -206,7 +206,7 @@ MAVLINK_HELPER uint16_t mavlink_msg_to_send_buffer(uint8_t *buffer, const mavlin
 	buffer[3] = msg->sysid;
 	buffer[4] = msg->compid;
 	buffer[5] = msg->msgid;
-	uint8_t payload_bytes_packed = 0;
+	int payload_bytes_packed = 0;
 	while (payload_bytes_packed < msg->len) {
 	    buffer[payload_bytes_packed + MAVLINK_NUM_HEADER_BYTES] = mav_get_uint8_t_c2000((void*)(&(msg->payload64[0])), payload_bytes_packed);
 	    payload_bytes_packed++;

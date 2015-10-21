@@ -478,6 +478,7 @@ void send_mavlink_gopro_get_response(const gp_can_mav_get_rsp_t *rsp)
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_get_response_msg,
                                     rsp->mav.cmd_id,
+                                    rsp->mav.status,
                                     rsp->mav.value[0]);
     send_mavlink_message(&gopro_get_response_msg);
 }

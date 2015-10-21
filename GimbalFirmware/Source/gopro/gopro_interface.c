@@ -199,11 +199,8 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdSt
 
     memcpy(gp.txn.response.mav.value, resp_bytes, len);
 
-    // XXX: probably want to:
-    //      - unify the values of GPCmdStatus and GOPRO_SET_RESPONSE_RESULT, currently they're opposites
-    //      - make GOPRO_SET_RESPONSE_RESULT more general (GOPRO_RESPONSE_RESULT or similar)
     gp.txn.len = len;
-    gp.txn.response.mav.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_SET_RESPONSE_RESULT_SUCCESS : GOPRO_SET_RESPONSE_RESULT_FAILURE;
+    gp.txn.response.mav.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_REQUEST_SUCCESS : GOPRO_REQUEST_FAILED;
 
     // result transmitted via gp_send_mav_response()
 }
