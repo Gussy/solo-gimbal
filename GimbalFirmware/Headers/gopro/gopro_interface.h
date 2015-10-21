@@ -5,6 +5,7 @@
 #include "gopro/gopro_hero_common.h"
 #include "gopro_mavlink_can.h"
 #include "PM_Sensorless-Settings.h"
+#include "mavlink_interface/gimbal_mavlink.h"
 
 #include <stdbool.h>
 
@@ -46,14 +47,6 @@ typedef enum{
     GP_MODEL_UNKNOWN
 } GPModel;
 
-typedef enum{
-    GP_CAPTURE_MODE_VIDEO,  // would like to start at 0x00 since this is consistent with spec but could be troublesome if mode enums begin to differ in the future
-    GP_CAPTURE_MODE_PHOTO,
-    GP_CAPTURE_MODE_BURST,
-    // GP_MODE_TIME_LAPSE // TODO: do we want to make these GP-specific? maybe do it at the i2c layer and keep this as the superset? GPMode in general?
-    GP_CAPTURE_MODE_UNKNOWN //= 99
-} GPCaptureMode;
-
 // represents a command/response transaction
 typedef struct {
     GPRequestType reqtype;          // what kind of transaction is this
@@ -80,10 +73,10 @@ void gp_on_slave_address(bool addressed_as_tx);
 uint16_t gp_transaction_cmd();
 GPRequestType gp_transaction_direction();
 void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
-GPCaptureMode gp_capture_mode();
+GOPRO_CAPTURE_MODE gp_capture_mode();
 void gp_latch_pending_capture_mode();
-bool gp_pend_capture_mode(Uint8 capture_mode);
-bool gp_set_capture_mode(Uint8 capture_mode);
+bool gp_pend_capture_mode(uint8_t capture_mode);
+bool gp_set_capture_mode(uint8_t capture_mode);
 void gp_set_recording_state(bool recording_state);
 GPPowerStatus gp_get_power_status();
 

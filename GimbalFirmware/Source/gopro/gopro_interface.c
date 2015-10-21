@@ -7,9 +7,6 @@
 #include "gopro_helpers.h"
 #include "PeripheralHeaderIncludes.h"
 
-// Include for GOPRO_COMMAND enum
-#include "mavlink_interface/mavlink_gimbal_interface.h"
-
 #include <ctype.h>
 
 
@@ -30,7 +27,7 @@ static bool gp_begin_cmd_send(uint16_t len);
 static bool gp_ready_for_cmd();
 static bool gp_request_capture_mode();
 static bool gp_handshake_complete();
-static bool gp_is_valid_capture_mode(Uint8 capture_mode);
+static bool gp_is_valid_capture_mode(uint8_t mode);
 static bool gp_is_recording();
 static void gp_write_eeprom();
 
@@ -73,8 +70,8 @@ typedef struct {
     bool intr_pending;                  // is an intr assertion pending?
     uint32_t i2c_stop_timestamp_us;     // last time we saw an i2c stop condition. related to GP_INTR_DELAY_US
     GPModel model;
-    GPCaptureMode capture_mode;
-    GPCaptureMode pending_capture_mode;
+    GOPRO_CAPTURE_MODE capture_mode;
+    GOPRO_CAPTURE_MODE pending_capture_mode;
     uint16_t capture_mode_polling_counter;
     bool recording;
 
@@ -109,8 +106,8 @@ void gp_reset()
     gp.intr_pending = false;
     gp.model = GP_MODEL_UNKNOWN;
     gp.power_status = GP_POWER_UNKNOWN;
-    gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
-    gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+    gp.capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN;
+    gp.pending_capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN;
     gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
@@ -832,23 +829,23 @@ void gp_timeout()
     gp.hb_txn_phase = HB_TXN_IDLE;
 }
 
-GPCaptureMode gp_capture_mode()
+GOPRO_CAPTURE_MODE gp_capture_mode()
 {
     return gp.capture_mode;
 }
 
-bool gp_is_valid_capture_mode(Uint8 capture_mode) {
-    return (capture_mode == GP_CAPTURE_MODE_VIDEO || capture_mode == GP_CAPTURE_MODE_PHOTO || capture_mode == GP_CAPTURE_MODE_BURST);
+bool gp_is_valid_capture_mode(uint8_t mode) {
+    return GOPRO_CAPTURE_MODE_UNKNOWN < mode && mode < GOPRO_CAPTURE_MODE_ENUM_END;
 }
 
 void gp_latch_pending_capture_mode()
 {
-    if (gp.pending_capture_mode != GP_CAPTURE_MODE_UNKNOWN) {
+    if (gp.pending_capture_mode != GOPRO_CAPTURE_MODE_UNKNOWN) {
         gp_set_capture_mode(gp.pending_capture_mode);
     }
 }
 
-bool gp_pend_capture_mode(Uint8 capture_mode)
+bool gp_pend_capture_mode(uint8_t capture_mode)
 {
     /*
      * Called when a 'SET capture mode' cmd, which contains the new capture
@@ -863,18 +860,18 @@ bool gp_pend_capture_mode(Uint8 capture_mode)
      */
 
     if (gp_is_valid_capture_mode(capture_mode)) {
-        gp.pending_capture_mode = (GPCaptureMode)capture_mode;
+        gp.pending_capture_mode = (GOPRO_CAPTURE_MODE)capture_mode;
         return true;
     }
 
     return false;
 }
 
-bool gp_set_capture_mode(Uint8 capture_mode)
+bool gp_set_capture_mode(uint8_t capture_mode)
 {
     if (gp_is_valid_capture_mode(capture_mode)) {
-        gp.capture_mode = (GPCaptureMode)capture_mode;
-        gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+        gp.capture_mode = (GOPRO_CAPTURE_MODE)capture_mode;
+        gp.pending_capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN;
         return true;
     }
 

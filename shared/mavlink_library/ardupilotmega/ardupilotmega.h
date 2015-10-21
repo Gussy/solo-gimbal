@@ -315,6 +315,23 @@ typedef enum GOPRO_COMMAND
 #endif
 
 /** @brief  */
+#ifndef HAVE_ENUM_GOPRO_CAPTURE_MODE
+#define HAVE_ENUM_GOPRO_CAPTURE_MODE
+typedef enum GOPRO_CAPTURE_MODE
+{
+	GOPRO_CAPTURE_MODE_UNKNOWN=0, /* Mode not yet known | */
+	GOPRO_CAPTURE_MODE_VIDEO=1, /* Video mode | */
+	GOPRO_CAPTURE_MODE_PHOTO=2, /* Photo mode | */
+	GOPRO_CAPTURE_MODE_BURST=3, /* Burst mode, hero 3 only | */
+	GOPRO_CAPTURE_MODE_TIME_LAPSE=4, /* Time lapse mode, hero 3 only | */
+	GOPRO_CAPTURE_MODE_MULTI_SHOT=5, /* Multi shot mode, hero 4 only | */
+	GOPRO_CAPTURE_MODE_PLAYBACK=6, /* Playback mode, hero 4 only, silver only except when LCD or HDMI is connected to black | */
+	GOPRO_CAPTURE_MODE_SETUP=7, /* Playback mode, hero 4 only | */
+	GOPRO_CAPTURE_MODE_ENUM_END=8, /*  | */
+} GOPRO_CAPTURE_MODE;
+#endif
+
+/** @brief  */
 #ifndef HAVE_ENUM_GOPRO_RESOLUTION
 #define HAVE_ENUM_GOPRO_RESOLUTION
 typedef enum GOPRO_RESOLUTION

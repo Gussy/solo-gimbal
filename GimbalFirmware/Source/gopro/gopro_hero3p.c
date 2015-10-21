@@ -4,8 +4,15 @@
 
 #include <ctype.h>
 
-// Include for GOPRO_COMMAND enum
-#include "mavlink_interface/mavlink_gimbal_interface.h"
+#include "mavlink_interface/gimbal_mavlink.h"
+
+typedef enum {
+    H3P_CAPTURE_MODE_VIDEO      = 0,
+    H3P_CAPTURE_MODE_PHOTO      = 1,
+    H3P_CAPTURE_MODE_BURST      = 2,
+    H3P_CAPTURE_MODE_TIME_LAPSE = 3,
+    H3P_CAPTURE_MODE_UNKNOWN    = 0xee  // arbitrary invalid value
+} H3P_CAPTURE_MODE;
 
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
 static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
@@ -117,6 +124,28 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
     return true;
 }
 
+static GOPRO_CAPTURE_MODE h3p_to_mav_cap_mode(uint8_t h3p_mode) {
+    // translate between mavlink and hero 3+ values
+    switch (h3p_mode) {
+    case H3P_CAPTURE_MODE_VIDEO:        return GOPRO_CAPTURE_MODE_VIDEO;
+    case H3P_CAPTURE_MODE_PHOTO:        return GOPRO_CAPTURE_MODE_PHOTO;
+    case H3P_CAPTURE_MODE_BURST:        return GOPRO_CAPTURE_MODE_BURST;
+    case H3P_CAPTURE_MODE_TIME_LAPSE:   return GOPRO_CAPTURE_MODE_TIME_LAPSE;
+    default:                            return GOPRO_CAPTURE_MODE_UNKNOWN;
+    }
+}
+
+static H3P_CAPTURE_MODE mav_to_h3p_cap_mode(uint8_t mav_mode) {
+    // translate between hero 3+ and mavlink values
+    switch (mav_mode) {
+    case GOPRO_CAPTURE_MODE_VIDEO:      return H3P_CAPTURE_MODE_VIDEO;
+    case GOPRO_CAPTURE_MODE_PHOTO:      return H3P_CAPTURE_MODE_PHOTO;
+    case GOPRO_CAPTURE_MODE_BURST:      return H3P_CAPTURE_MODE_BURST;
+    case GOPRO_CAPTURE_MODE_TIME_LAPSE: return H3P_CAPTURE_MODE_TIME_LAPSE;
+    default:                            return H3P_CAPTURE_MODE_UNKNOWN;
+    }
+}
+
 bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* request, gp_h3p_cmd_t *c)
 {
     /*
@@ -139,12 +168,17 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             }
             break;
 
-        case GOPRO_COMMAND_CAPTURE_MODE:
+        case GOPRO_COMMAND_CAPTURE_MODE: {
             c->cmd1 = 'C';
             c->cmd2 = 'M';
-            c->payload[0] = request->mav.value[0];
-            gp_pend_capture_mode(request->mav.value[0]);
-            break;
+            uint8_t mode = mav_to_h3p_cap_mode(request->mav.value[0]);
+            if (mode != H3P_CAPTURE_MODE_UNKNOWN) {
+                c->payload[0] = mode;
+                gp_pend_capture_mode(mode);
+            } else {
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+            }
+        } break;
 
         case GOPRO_COMMAND_SHUTTER:
             c->cmd1 = 'S';
@@ -152,7 +186,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             c->payload[0] = request->mav.value[0];
 
             // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
-            if (gp_capture_mode() == GP_CAPTURE_MODE_VIDEO) {
+            if (gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
                 switch (request->mav.value[0]) {
                 case GP_RECORDING_START:
                 case GP_RECORDING_STOP:
@@ -254,7 +288,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
     switch (gp_transaction_cmd()) {
     case GOPRO_COMMAND_CAPTURE_MODE:
         if (gp_transaction_direction() == GP_REQUEST_GET) {
-            gp_set_capture_mode(rsp->payload[0]);   // Set capture mode state with capture mode received from GoPro
+            gp_set_capture_mode(h3p_to_mav_cap_mode(rsp->payload[0]));   // Set capture mode state with capture mode received from GoPro
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
             gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
@@ -265,7 +299,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
          * as the camera responds with success status even if the SD card is not inserted.
          * Need to check for SD card presence before sending shutter trigger cmd.
          */
-        if (rsp->status == GP_CMD_STATUS_SUCCESS && gp_capture_mode() == GP_CAPTURE_MODE_VIDEO) {
+        if (rsp->status == GP_CMD_STATUS_SUCCESS && gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
             gp_set_recording_state(h3p->pending_recording_state);
         }
         break;

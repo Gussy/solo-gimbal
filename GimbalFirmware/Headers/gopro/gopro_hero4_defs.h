@@ -29,6 +29,15 @@ enum GP_H4_HANDSHAKE_STEPS {
     GP_H4_HANDSHAKE_CHANNEL_OPEN        // have opened the comms channel with the camera
 };
 
+typedef enum {
+    H4_CAPTURE_MODE_VIDEO       = 0,
+    H4_CAPTURE_MODE_PHOTO       = 1,
+    H4_CAPTURE_MODE_MULTI_SHOT  = 2,
+    H4_CAPTURE_MODE_PLAYBACK    = 4,
+    H4_CAPTURE_MODE_SETUP       = 5,
+    H4_CAPTURE_MODE_UNKNOWN     = 0xee  // arbitrary invalid value
+} GP_H4_CAPTURE_MODE;
+
 enum GP_H4_API_GROUP {
     API_GRP_GEN_CMDS        = 0,
     API_GRP_MODE_CAM        = 1,
