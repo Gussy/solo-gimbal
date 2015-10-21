@@ -1,7 +1,7 @@
 #include "motor/commutation_calibration_state_machine.h"
 #include "can/cand.h"
 #include "hardware/device_init.h"
-#include "parameters/flash_params.h"
+#include "parameters/kvstore.h"
 #include "helpers/fault_handling.h"
 #include "mavlink_interface/gimbal_mavlink.h"
 #include "can/cb.h"
@@ -62,8 +62,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         case COMMUTATION_CALIBRATION_STATE_INIT:
         {
             Uint16 dataIndex;
-		    encoder_parms->calibration_slope = flash_params.commutation_slope[GetBoardHWID()];
-		    encoder_parms->calibration_intercept = flash_params.commutation_icept[GetBoardHWID()];
+            load_commutations_params_from_kvstore(encoder_parms);
+
         	// don't calibrate if we got slope set already
         	if (encoder_parms->calibration_slope != 0) {
     		    md_parms->motor_drive_state = STATE_HOMING;
@@ -210,7 +210,26 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 	hardstop++;
                 	if ((hardstop > 1) || (cc_parms.current_iteration >= COMMUTATION_ARRAY_SIZE)) {
                 		if (cc_parms.current_iteration > 16) {
-                			calc_slope_intercept(2, cc_parms.current_iteration-3, &flash_params.commutation_slope[GetBoardHWID()], &flash_params.commutation_icept[GetBoardHWID()]);
+                		    float calibration_slope;
+                		    float calibration_intercept;
+                			calc_slope_intercept(2, (cc_parms.current_iteration - 3), &calibration_slope, &calibration_intercept);
+
+                			// Save slope and intercept values
+                			switch(GetBoardHWID()) {
+                                case AZ:
+                                    kvstore_put_float(FLASH_PARAM_COMMUTATION_SLOPE_AZ, calibration_slope);
+                                    kvstore_put_float(FLASH_PARAM_COMMUTATION_ICEPT_AZ, calibration_intercept);
+                                    break;
+                                case ROLL:
+                                    kvstore_put_float(FLASH_PARAM_COMMUTATION_SLOPE_ROLL, calibration_slope);
+                                    kvstore_put_float(FLASH_PARAM_COMMUTATION_ICEPT_ROLL, calibration_intercept);
+                                    break;
+                                case EL:
+                                    kvstore_put_float(FLASH_PARAM_COMMUTATION_SLOPE_EL, calibration_slope);
+                                    kvstore_put_float(FLASH_PARAM_COMMUTATION_ICEPT_EL, calibration_intercept);
+                                    break;
+                            }
+
     						cc_parms.calibration_state = COMMUTATION_CALIBRATION_STATE_TEST;
 
     						calibration_progress = 90;
@@ -269,8 +288,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         	break;
 
         case COMMUTATION_CALIBRATION_STATE_COMPLETE:
-		    encoder_parms->calibration_slope = flash_params.commutation_slope[GetBoardHWID()];
-		    encoder_parms->calibration_intercept = flash_params.commutation_icept[GetBoardHWID()];
+            load_commutations_params_from_kvstore(encoder_parms);
+
 		    md_parms->motor_drive_state = STATE_HOMING;
 		    if (GetBoardHWID() != AZ) {
                 IntOrFloat float_converter;
@@ -279,8 +298,8 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 float_converter.float_val = encoder_parms->calibration_intercept;
 		    	cand_tx_response(CAND_ID_AZ,CAND_PID_COMMUTATION_CALIBRATION_INTERCEPT,float_converter.uint32_val);
 		    } else {
-        		flash_params.commutation_slope[AZ] = encoder_parms->calibration_slope;
-        		flash_params.commutation_icept[AZ] = encoder_parms->calibration_intercept;
+		        kvstore_put_float(FLASH_PARAM_COMMUTATION_SLOPE_AZ, encoder_parms->calibration_slope);
+		        kvstore_put_float(FLASH_PARAM_COMMUTATION_ICEPT_AZ, encoder_parms->calibration_intercept);
         		write_flash();
 		    }
 
@@ -298,5 +317,22 @@ static void send_calibration_progress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_ST
         send_mavlink_calibration_progress(progress, GIMBAL_AXIS_YAW, calibration_status);
     } else {
         CANSendCalibrationProgress(progress, calibration_status);
+    }
+}
+
+void load_commutations_params_from_kvstore(EncoderParms* encoder_parms) {
+    switch(GetBoardHWID()) {
+        case AZ:
+            encoder_parms->calibration_slope = kvstore_get_float(FLASH_PARAM_COMMUTATION_SLOPE_AZ);
+            encoder_parms->calibration_intercept = kvstore_get_float(FLASH_PARAM_COMMUTATION_ICEPT_AZ);
+            break;
+        case ROLL:
+            encoder_parms->calibration_slope = kvstore_get_float(FLASH_PARAM_COMMUTATION_SLOPE_ROLL);
+            encoder_parms->calibration_intercept = kvstore_get_float(FLASH_PARAM_COMMUTATION_ICEPT_ROLL);
+            break;
+        case EL:
+            encoder_parms->calibration_slope = kvstore_get_float(FLASH_PARAM_COMMUTATION_SLOPE_EL);
+            encoder_parms->calibration_intercept = kvstore_get_float(FLASH_PARAM_COMMUTATION_ICEPT_EL);
+            break;
     }
 }

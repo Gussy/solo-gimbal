@@ -4,7 +4,7 @@
 #include "hardware/device_init.h"
 #include "hardware/encoder.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
-#include "parameters/flash_params.h"
+#include "parameters/kvstore.h"
 
 static const int EncoderSignMap[AXIS_CNT] = {
         1, // EL
@@ -65,11 +65,11 @@ int16 getAxisJointOffset(GimbalAxis axis)
 {
 	switch (axis) {
 	case ROLL:
-		return RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[X_AXIS]);
+		return RAD_TO_ENCODER_FORMAT(kvstore_get_float(FLASH_PARAM_OFFSET_JOINT_X));
 	case EL:
-		return RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[Y_AXIS]);
+		return RAD_TO_ENCODER_FORMAT(kvstore_get_float(FLASH_PARAM_OFFSET_JOINT_Y));
 	case AZ:
-		return RAD_TO_ENCODER_FORMAT(flash_params.offset_joint[Z_AXIS]);
+		return RAD_TO_ENCODER_FORMAT(kvstore_get_float(FLASH_PARAM_OFFSET_JOINT_Z));
 	default:
 		return 0;
 	}

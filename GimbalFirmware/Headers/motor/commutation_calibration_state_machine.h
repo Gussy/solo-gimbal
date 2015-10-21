@@ -43,5 +43,6 @@ typedef struct {
 } CommutationCalibrationParms;
 
 void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* encoder_parms, AxisParms* axis_parms, ControlBoardParms* cb_parms);
+void load_commutations_params_from_kvstore(EncoderParms* encoder_parms);
 
 #endif /* COMMUTATION_CALIBRATION_STATE_MACHINE_H_ */

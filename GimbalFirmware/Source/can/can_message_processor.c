@@ -5,6 +5,7 @@
 #include "can/cand.h"
 #include "hardware/device_init.h"
 #include "parameters/flash_params.h"
+#include "parameters/kvstore.h"
 #include "hardware/HWSpecific.h"
 #include "control/PID.h"
 #include "gopro/gopro_interface.h"
@@ -318,7 +319,7 @@ void Process_CAN_Messages(AxisParms* axis_parms,
 
                             // Update the parameter in flash_params then copy it to the local values
                             gimbal_param_update(param_id, value, cb_parms);
-                            update_local_params_from_flash(md_parms);
+                            update_local_params_from_kvstore(md_parms);
                         }
                         break;
 
@@ -433,7 +434,17 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                 		// commutation calibration.  These need to be updated in flash
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                		flash_params.commutation_slope[msg.sender_id] = float_converter.float_val;
+                		switch(msg.sender_id) {
+                		    case AZ:
+                		        kvstore_put_float(FLASH_PARAM_COMMUTATION_SLOPE_AZ, float_converter.float_val);
+                		        break;
+                		    case ROLL:
+                                kvstore_put_float(FLASH_PARAM_COMMUTATION_SLOPE_ROLL, float_converter.float_val);
+                                break;
+                		    case EL:
+                                kvstore_put_float(FLASH_PARAM_COMMUTATION_SLOPE_EL, float_converter.float_val);
+                                break;
+                		}
                 	}
                     break;
 
@@ -443,7 +454,17 @@ void Process_CAN_Messages(AxisParms* axis_parms,
 						// commutation calibration.  These need to be updated in flash
                         IntOrFloat float_converter;
                         float_converter.uint32_val = msg.param_response[msg.param_response_cnt - 1];
-                		flash_params.commutation_icept[msg.sender_id] = float_converter.float_val;
+                		switch(msg.sender_id) {
+                            case AZ:
+                                kvstore_put_float(FLASH_PARAM_COMMUTATION_ICEPT_AZ, float_converter.float_val);
+                                break;
+                            case ROLL:
+                                kvstore_put_float(FLASH_PARAM_COMMUTATION_ICEPT_ROLL, float_converter.float_val);
+                                break;
+                            case EL:
+                                kvstore_put_float(FLASH_PARAM_COMMUTATION_ICEPT_EL, float_converter.float_val);
+                                break;
+                        }
                 		// intercept comes after slope, so we commit the new values to flash here
                 		write_flash();
                 	}

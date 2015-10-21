@@ -8,12 +8,13 @@
 #include "motor/commutation_calibration_state_machine.h"
 #include "control/PID.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
-#include "parameters/flash_params.h"
+#include "parameters/kvstore.h"
 #include "PeripheralHeaderIncludes.h"
 
 #include <string.h>
 
 static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms);
+static float get_commutation_slope_from_kvstore(GimbalAxis axis);
 
 void MotorDriveStateMachine(AxisParms* axis_parms,
         ControlBoardParms* cb_parms,
@@ -77,7 +78,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         case STATE_LOAD_OWN_INIT_PARAMS:
             // This state is only run on the AZ board to load torque loop PID gains
             // The rate loop PID gains are only needed on the EL board, so these are loaded over CAN
-            update_local_params_from_flash(md_parms);
+            update_local_params_from_kvstore(md_parms);
 
             // After we've loaded our own init parameters, make a note of it, so we can continue later when we're waiting for
             // all axes to have received their init parameters
@@ -96,7 +97,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // If we've completed requesting and receiving the params from AZ,
             // we can continue with our init sequence
             if (load_ap_state_info->axis_parms_load_complete) {
-            	update_local_params_from_flash(md_parms);
+                update_local_params_from_kvstore(md_parms);
 
                 axis_parms->all_init_params_recvd = TRUE;
                 md_parms->motor_drive_state = STATE_CALIBRATING_CURRENT_MEASUREMENTS;
@@ -131,7 +132,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 if(GetBoardHWID() == AZ) {
                     md_parms->motor_drive_state = STATE_CHECK_AXIS_CALIBRATION;
                 } else {
-                    if(flash_params.commutation_slope[GetBoardHWID()] != 0.0f) {
+                    if(get_commutation_slope_from_kvstore((GimbalAxis)GetBoardHWID()) != 0.0f) {
                         md_parms->motor_drive_state = STATE_HOMING;
                     } else {
                         md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
@@ -145,9 +146,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             /* The commutation_slope values default to 0.0f on an uncalibrated gimbal.
              * Values which do not equal 0.0f implies a calibration exists
              */
-            if(flash_params.commutation_slope[EL] == 0.0f ||
-               flash_params.commutation_slope[AZ] == 0.0f ||
-               flash_params.commutation_slope[ROLL] == 0.0f) {
+            if(get_commutation_slope_from_kvstore(EL) == 0.0f ||
+                    get_commutation_slope_from_kvstore(AZ) == 0.0f ||
+                    get_commutation_slope_from_kvstore(ROLL) == 0.0f) {
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
                 CANUpdateBeaconState(LED_MODE_BREATHING, rgba_red, 0);
             } else {
@@ -175,8 +176,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         // AZ, ROLL, EL
         case STATE_HOMING:
             // Load the runtime values from the stored calibration values
-            encoder_parms->calibration_slope = flash_params.commutation_slope[GetBoardHWID()];
-            encoder_parms->calibration_intercept = flash_params.commutation_icept[GetBoardHWID()];
+            load_commutations_params_from_kvstore(encoder_parms);
 
             cb_parms->axes_homed[GetBoardHWID()] = TRUE;
             if (GetBoardHWID() == EL) {
@@ -311,7 +311,7 @@ static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDr
     cb_parms->param_set[CAND_PID_TORQUE].sema = false;
 }
 
-void update_local_params_from_flash(MotorDriveParms* md_parms)
+void update_local_params_from_kvstore(MotorDriveParms* md_parms)
 {
     // Copy the parameters we need from our local copy of the flash params struct
     // into the runtime locations they need to be at
@@ -319,41 +319,41 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
 
     if (my_axis == EL) {
         // Turn HeroBus charging on or off based on setting in flash
-        if (flash_params.gopro_charging_enabled == 0.0) {
+        if (kvstore_get_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED) == 0.0) {
             gp_disable_charging();
         } else {
             gp_enable_charging();
         }
 
         // Program the EEPROM if the gimbal serial number is not set (ie. uncalibrated in the factory)
-        if(flash_params.ser_num_1 == 0.0f && flash_params.ser_num_2 == 0.0f && flash_params.ser_num_3 == 0.0f) {
+        if(kvstore_get_float(FLASH_PARAM_SER_NUM_1) == 0.0f && kvstore_get_float(FLASH_PARAM_SER_NUM_2) == 0.0f && kvstore_get_float(FLASH_PARAM_SER_NUM_3) == 0.0f) {
             gp_write_eeprom();
         }
 
         // Enable or disable the gimbal interface
-        if(flash_params.gopro_enabled == 1.0f && !gp_enabled()) {
+        if(kvstore_get_float(FLASH_PARAM_GOPRO_CONTROL) == 1.0f && !gp_enabled()) {
             gp_init();
-        } else if(flash_params.gopro_enabled == 0.0f && gp_enabled()) {
+        } else if(kvstore_get_float(FLASH_PARAM_GOPRO_CONTROL) == 0.0f && gp_enabled()) {
             gp_disable();
         }
 
         // If this is the elevation axis, we also need to load rate loop PID gains,
         // if the param "GMB_CUST_GAINS" is set to 1.0
-        if (flash_params.use_custom_gains == 1.0) {
-            rate_pid_loop_float[AZ].gainP = flash_params.rate_pid_p[AZ];
-            rate_pid_loop_float[AZ].gainI = flash_params.rate_pid_i[AZ];
-            rate_pid_loop_float[AZ].gainD = flash_params.rate_pid_d[AZ];
-            rate_pid_loop_float[AZ].dTermAlpha = flash_params.rate_pid_d_alpha[AZ];
+        if (kvstore_get_float(FLASH_PARAM_USE_CUSTOM_GAINS) == 1.0) {
+            rate_pid_loop_float[AZ].gainP = kvstore_get_float(FLASH_PARAM_RATE_PID_P_AZ);
+            rate_pid_loop_float[AZ].gainI = kvstore_get_float(FLASH_PARAM_RATE_PID_I_AZ);
+            rate_pid_loop_float[AZ].gainD = kvstore_get_float(FLASH_PARAM_RATE_PID_D_AZ);
+            rate_pid_loop_float[AZ].dTermAlpha = kvstore_get_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ);
 
-            rate_pid_loop_float[EL].gainP = flash_params.rate_pid_p[EL];
-            rate_pid_loop_float[EL].gainI = flash_params.rate_pid_i[EL];
-            rate_pid_loop_float[EL].gainD = flash_params.rate_pid_d[EL];
-            rate_pid_loop_float[EL].dTermAlpha = flash_params.rate_pid_d_alpha[EL];
+            rate_pid_loop_float[EL].gainP = kvstore_get_float(FLASH_PARAM_RATE_PID_P_EL);
+            rate_pid_loop_float[EL].gainI = kvstore_get_float(FLASH_PARAM_RATE_PID_I_EL);
+            rate_pid_loop_float[EL].gainD = kvstore_get_float(FLASH_PARAM_RATE_PID_D_EL);
+            rate_pid_loop_float[EL].dTermAlpha = kvstore_get_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL);
 
-            rate_pid_loop_float[ROLL].gainP = flash_params.rate_pid_p[ROLL];
-            rate_pid_loop_float[ROLL].gainI = flash_params.rate_pid_i[ROLL];
-            rate_pid_loop_float[ROLL].gainD = flash_params.rate_pid_d[ROLL];
-            rate_pid_loop_float[ROLL].dTermAlpha = flash_params.rate_pid_d_alpha[ROLL];
+            rate_pid_loop_float[ROLL].gainP = kvstore_get_float(FLASH_PARAM_RATE_PID_P_ROLL);
+            rate_pid_loop_float[ROLL].gainI = kvstore_get_float(FLASH_PARAM_RATE_PID_I_ROLL);
+            rate_pid_loop_float[ROLL].gainD = kvstore_get_float(FLASH_PARAM_RATE_PID_D_ROLL);
+            rate_pid_loop_float[ROLL].dTermAlpha = kvstore_get_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL);
         } else {
             rate_pid_loop_float[AZ].gainP = DEFAULT_GMB_YAW_P;
             rate_pid_loop_float[AZ].gainI = DEFAULT_GMB_YAW_I;
@@ -379,4 +379,19 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
     md_parms->pid_iq.param.Kp = DEFAULT_GMB_TRQ_P;
     md_parms->pid_iq.param.Ki = DEFAULT_GMB_TRQ_I;
     md_parms->pid_iq.param.R = DEFAULT_GMB_TRQ_R;
+}
+
+static float get_commutation_slope_from_kvstore(GimbalAxis axis) {
+    switch(axis) {
+        case AZ:
+            return kvstore_get_float(FLASH_PARAM_COMMUTATION_SLOPE_AZ);
+
+        case ROLL:
+            return kvstore_get_float(FLASH_PARAM_COMMUTATION_SLOPE_ROLL);
+
+        case EL:
+            return kvstore_get_float(FLASH_PARAM_COMMUTATION_SLOPE_EL);
+    }
+
+    return 0.0f;
 }

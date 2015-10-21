@@ -386,7 +386,7 @@ void handle_param_set(mavlink_message_t* received_msg, MotorDriveParms* md_parms
                     payload[4] = (float_converter.uint32_val >>  0) & 0x000000FF;
                     cand_tx_extended_param(CAND_ID_ALL_AXES, CAND_EPID_MAVLINK_PARAM, payload, sizeof(payload));
 
-                    update_local_params_from_flash(md_parms);
+                    update_local_params_from_kvstore(md_parms);
 
                     // Echo the new value of the param back to acknowledge receipt of the param
                     send_gimbal_param(param_found);

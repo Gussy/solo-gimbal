@@ -53,6 +53,6 @@ typedef struct {
 } MotorDriveParms;
 
 void MotorDriveStateMachine(AxisParms* axis_parms, ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms, LoadAxisParmsStateInfo* load_ap_state_info);
-void update_local_params_from_flash(MotorDriveParms* md_parms);
+void update_local_params_from_kvstore(MotorDriveParms* md_parms);
 
 #endif /* MOTOR_DRIVE_STATE_MACHINE_H_ */

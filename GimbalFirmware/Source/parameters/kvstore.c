@@ -11,7 +11,6 @@ void kvstore_init(void)
     for(i = 0; i < FLASH_PARAM_KEY_COUNT; i++) {
         memset(&kvstore[i].as_bytes, 0, sizeof(kvstore[i].as_bytes));
     }
-
 }
 
 float kvstore_get_float(const flash_param_keys_t key)
