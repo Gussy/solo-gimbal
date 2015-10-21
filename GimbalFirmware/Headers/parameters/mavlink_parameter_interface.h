@@ -1,11 +1,12 @@
 #ifndef MAVLINK_PARAMETER_INTERFACE_H_
 #define MAVLINK_PARAMETER_INTERFACE_H_
 
+#include "PM_Sensorless-Settings.h"
+
 #include "can/cand_BitFields.h"
 #include "mavlink_interface/gimbal_mavlink.h"
-#include "PM_Sensorless-Settings.h"
 #include "motor/motor_drive_state_machine.h"
-
+#include "parameters/kvstore.h"
 
 typedef enum {
     MAVLINK_GIMBAL_PARAM_PID_YAW_P = 0,
@@ -76,6 +77,7 @@ typedef union {
 typedef struct {
     uint8_t param_type;
     float* float_data_ptr;
+    flash_param_keys_t kvstore_key;
     uint32_t* uint32_data_ptr;
     GimbalParameterAccessType access_type;
     char param_id[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1];

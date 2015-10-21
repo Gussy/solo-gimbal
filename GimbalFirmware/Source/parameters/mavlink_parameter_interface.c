@@ -31,254 +31,265 @@ void init_default_mavlink_params()
 {
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_P].param_id, "GMB_YAW_P", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_P].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_P].float_data_ptr = &(flash_params.rate_pid_p[AZ]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_P].kvstore_key = FLASH_PARAM_RATE_PID_P_AZ;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_P].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_I].param_id, "GMB_YAW_I", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_I].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_I].float_data_ptr = &(flash_params.rate_pid_i[AZ]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_I].kvstore_key = FLASH_PARAM_RATE_PID_I_AZ;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_I].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D].param_id, "GMB_YAW_D", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D].float_data_ptr = &(flash_params.rate_pid_d[AZ]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D].kvstore_key = FLASH_PARAM_RATE_PID_D_AZ;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D_A].param_id, "GMB_YAW_D_A", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D_A].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D_A].float_data_ptr = &(flash_params.rate_pid_d_alpha[AZ]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D_A].kvstore_key = FLASH_PARAM_RATE_PID_D_ALPHA_AZ;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_YAW_D_A].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_P].param_id, "GMB_PITCH_P", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_P].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_P].float_data_ptr = &(flash_params.rate_pid_p[EL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_P].kvstore_key = FLASH_PARAM_RATE_PID_P_EL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_P].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_I].param_id, "GMB_PITCH_I", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_I].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_I].float_data_ptr = &(flash_params.rate_pid_i[EL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_I].kvstore_key = FLASH_PARAM_RATE_PID_I_EL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_I].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D].param_id, "GMB_PITCH_D", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D].float_data_ptr = &(flash_params.rate_pid_d[EL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D].kvstore_key = FLASH_PARAM_RATE_PID_D_EL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D_A].param_id, "GMB_PITCH_D_A", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D_A].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D_A].float_data_ptr = &(flash_params.rate_pid_d_alpha[EL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D_A].kvstore_key = FLASH_PARAM_RATE_PID_D_ALPHA_EL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_PITCH_D_A].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_P].param_id, "GMB_ROLL_P", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_P].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_P].float_data_ptr = &(flash_params.rate_pid_p[ROLL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_P].kvstore_key = FLASH_PARAM_RATE_PID_P_ROLL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_P].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_I].param_id, "GMB_ROLL_I", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_I].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_I].float_data_ptr = &(flash_params.rate_pid_i[ROLL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_I].kvstore_key = FLASH_PARAM_RATE_PID_I_ROLL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_I].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D].param_id, "GMB_ROLL_D", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D].float_data_ptr = &(flash_params.rate_pid_d[ROLL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D].kvstore_key = FLASH_PARAM_RATE_PID_D_ROLL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D_A].param_id, "GMB_ROLL_D_A", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D_A].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D_A].float_data_ptr = &(flash_params.rate_pid_d_alpha[ROLL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D_A].kvstore_key = FLASH_PARAM_RATE_PID_D_ALPHA_ROLL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_PID_ROLL_D_A].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].param_id, "GMB_YAW_SLOPE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].float_data_ptr = &(flash_params.commutation_slope[AZ]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].kvstore_key = FLASH_PARAM_COMMUTATION_SLOPE_AZ;
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_SLOPE].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].param_id, "GMB_YAW_ICEPT", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].float_data_ptr = &(flash_params.commutation_icept[AZ]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].kvstore_key = FLASH_PARAM_COMMUTATION_ICEPT_AZ;
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_YAW_INTERCEPT].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].param_id, "GMB_PITCH_SLOPE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].float_data_ptr = &(flash_params.commutation_slope[EL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].kvstore_key = FLASH_PARAM_COMMUTATION_SLOPE_EL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_SLOPE].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].param_id, "GMB_PITCH_ICEPT", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].float_data_ptr = &(flash_params.commutation_icept[EL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].kvstore_key = FLASH_PARAM_COMMUTATION_ICEPT_EL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_PITCH_INTERCEPT].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].param_id, "GMB_ROLL_SLOPE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].float_data_ptr = &(flash_params.commutation_slope[ROLL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].kvstore_key = FLASH_PARAM_COMMUTATION_SLOPE_ROLL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_SLOPE].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].param_id, "GMB_ROLL_ICEPT", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].float_data_ptr = &(flash_params.commutation_icept[ROLL]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].kvstore_key = FLASH_PARAM_COMMUTATION_ICEPT_ROLL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_COMMUTATION_CALIBRATION_ROLL_INTERCEPT].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_P].param_id, "GMB_TRQ_P", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_P].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_P].float_data_ptr = &(flash_params.torque_pid_kp);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_P].kvstore_key = FLASH_PARAM_TORQUE_PID_KP;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_P].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].param_id, "GMB_TRQ_I", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].float_data_ptr = &(flash_params.torque_pid_ki);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].kvstore_key = FLASH_PARAM_TORQUE_PID_KI;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_I].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].param_id, "GMB_TRQ_R", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].float_data_ptr = &(flash_params.torque_pid_kr);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].kvstore_key = FLASH_PARAM_TORQUE_PID_KR;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_TRQ_R].access_type = GIMBAL_PARAM_READ_WRITE;
-
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_id, "GMB_SWVER", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].float_data_ptr = &sys_swver;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].access_type = GIMBAL_PARAM_READ_ONLY;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_DATE].param_id, "GMB_ASM_TIME", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_DATE].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_DATE].float_data_ptr = &(flash_params.assy_time);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_DATE].kvstore_key = FLASH_PARAM_ASSY_TIME;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_ASSEMBLY_DATE].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].param_id, "GMB_SER_NUM_1", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].float_data_ptr = &(flash_params.ser_num_1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].kvstore_key = FLASH_PARAM_SER_NUM_1;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_1].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].param_id, "GMB_SER_NUM_2", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].float_data_ptr = &(flash_params.ser_num_2);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].kvstore_key = FLASH_PARAM_SER_NUM_2;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_2].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].param_id, "GMB_SER_NUM_3", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].float_data_ptr = &(flash_params.ser_num_3);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].kvstore_key = FLASH_PARAM_SER_NUM_3;
     gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SERIAL_NUM_PART_3].access_type = GIMBAL_PARAM_READ_WRITE;
-
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].param_id, "GMB_FLASH", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].float_data_ptr = &commit_to_flash_status;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].access_type = GIMBAL_PARAM_READ_WRITE;
-
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].param_id, "GMB_POS_HOLD", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].param_type = MAV_PARAM_TYPE_REAL32;
-	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].float_data_ptr = &pos_hold;
-	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].access_type = GIMBAL_PARAM_READ_WRITE;
-
-	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].param_id, "GMB_MAX_TORQUE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].param_type = MAV_PARAM_TYPE_REAL32;
-	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].float_data_ptr = &max_torque;
-	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].access_type = GIMBAL_PARAM_READ_WRITE;
 
 	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].param_id, "GMB_GP_CHARGE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].param_type = MAV_PARAM_TYPE_REAL32;
-	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].float_data_ptr = &(flash_params.gopro_charging_enabled);
+	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].kvstore_key = FLASH_PARAM_GOPRO_CHARGING_ENABLED;
 	gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CHARGE].access_type = GIMBAL_PARAM_READ_WRITE;
 
 	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].param_id, "GMB_CUST_GAINS", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].float_data_ptr = &(flash_params.use_custom_gains);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].kvstore_key = FLASH_PARAM_USE_CUSTOM_GAINS;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].access_type = GIMBAL_PARAM_READ_WRITE;
-
-	strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_id, "GMB_SND_TORQUE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].float_data_ptr = &send_torques;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL].param_id, "GMB_GP_CTRL", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL].float_data_ptr = &(flash_params.gopro_enabled);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL].kvstore_key = FLASH_PARAM_GOPRO_CONTROL;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GP_CTRL].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].param_id, "GMB_OFF_JNT_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].float_data_ptr = &(flash_params.offset_joint[X_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].kvstore_key = FLASH_PARAM_OFFSET_JOINT_X;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_X].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Y].param_id, "GMB_OFF_JNT_Y", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Y].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Y].float_data_ptr = &(flash_params.offset_joint[Y_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Y].kvstore_key = FLASH_PARAM_OFFSET_JOINT_Y;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Y].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Z].param_id, "GMB_OFF_JNT_Z", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Z].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Z].float_data_ptr = &(flash_params.offset_joint[Z_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Z].kvstore_key = FLASH_PARAM_OFFSET_JOINT_Z;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_JNT_Z].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].param_id, "GMB_OFF_ACC_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].float_data_ptr = &(flash_params.offset_accelerometer[X_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].kvstore_key = FLASH_PARAM_OFFSET_ACCELEROMETER_X;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_X].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].param_id, "GMB_OFF_ACC_Y", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].float_data_ptr = &(flash_params.offset_accelerometer[Y_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].kvstore_key = FLASH_PARAM_OFFSET_ACCELEROMETER_Y;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Y].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].param_id, "GMB_OFF_ACC_Z", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].float_data_ptr = &(flash_params.offset_accelerometer[Z_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].kvstore_key = FLASH_PARAM_OFFSET_ACCELEROMETER_Z;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_ACC_Z].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].param_id, "GMB_GN_ACC_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].float_data_ptr = &(flash_params.gain_accelerometer[X_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].kvstore_key = FLASH_PARAM_GAIN_ACCELEROMETER_X;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_X].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].param_id, "GMB_GN_ACC_Y", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].float_data_ptr = &(flash_params.gain_accelerometer[Y_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].kvstore_key = FLASH_PARAM_GAIN_ACCELEROMETER_Y;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Y].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].param_id, "GMB_GN_ACC_Z", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].float_data_ptr = &(flash_params.gain_accelerometer[Z_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].kvstore_key = FLASH_PARAM_GAIN_ACCELEROMETER_Z;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_GN_ACC_Z].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].param_id, "GMB_ALN_ACC_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].float_data_ptr = &(flash_params.alignment_accelerometer[X_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].kvstore_key = FLASH_PARAM_ALIGNMENT_ACCELEROMETER_X;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_X].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].param_id, "GMB_ALN_ACC_Y", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].float_data_ptr = &(flash_params.alignment_accelerometer[Y_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].kvstore_key = FLASH_PARAM_ALIGNMENT_ACCELEROMETER_Y;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Y].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].param_id, "GMB_ALN_ACC_Z", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].float_data_ptr = &(flash_params.alignment_accelerometer[Z_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].kvstore_key = FLASH_PARAM_ALIGNMENT_ACCELEROMETER_Z;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_ALN_ACC_Z].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_X].param_id, "GMB_OFF_GYRO_X", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_X].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_X].float_data_ptr = &(flash_params.offset_gyro[X_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_X].kvstore_key = FLASH_PARAM_OFFSET_GYRO_X;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_X].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Y].param_id, "GMB_OFF_GYRO_Y", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Y].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Y].float_data_ptr = &(flash_params.offset_gyro[Y_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Y].kvstore_key = FLASH_PARAM_OFFSET_GYRO_Y;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Y].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Z].param_id, "GMB_OFF_GYRO_Z", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Z].param_type = MAV_PARAM_TYPE_REAL32;
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Z].float_data_ptr = &(flash_params.offset_gyro[Z_AXIS]);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Z].kvstore_key = FLASH_PARAM_OFFSET_GYRO_Z;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_OFF_GYRO_Z].access_type = GIMBAL_PARAM_READ_WRITE;
 
-    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].param_id, "GMB_K_RATE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].param_type = MAV_PARAM_TYPE_REAL32;
-    // If GMB_CUST_GAINS is set to 1.0, use the K_RATE from flash params, otherwise use the hard-coded volatile value declared above
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].float_data_ptr = (flash_params.use_custom_gains == 1.0 ? &(flash_params.k_rate) : &k_rate);
-    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].access_type = GIMBAL_PARAM_READ_WRITE;
+    // Volatile parameters (key of FLASH_PARAM_KEY_COUNT indicates it is a volatile parameter)
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_id, "GMB_SWVER", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].float_data_ptr = &sys_swver;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].kvstore_key = FLASH_PARAM_KEY_COUNT;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_SYSID_SWVER].access_type = GIMBAL_PARAM_READ_ONLY;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].param_id, "GMB_FLASH", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].float_data_ptr = &commit_to_flash_status;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].kvstore_key = FLASH_PARAM_KEY_COUNT;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_COMMIT_TO_FLASH].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].param_id, "GMB_POS_HOLD", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].float_data_ptr = &pos_hold;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].kvstore_key = FLASH_PARAM_KEY_COUNT;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_POS_HOLD].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].param_id, "GMB_MAX_TORQUE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].float_data_ptr = &max_torque;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].kvstore_key = FLASH_PARAM_KEY_COUNT;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_MAX_TORQUE].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_id, "GMB_SND_TORQUE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].param_type = MAV_PARAM_TYPE_REAL32;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].float_data_ptr = &send_torques;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].kvstore_key = FLASH_PARAM_KEY_COUNT;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].access_type = GIMBAL_PARAM_READ_WRITE;
 
     strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].param_id, "GMB_SYSID", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].param_type = MAV_PARAM_TYPE_REAL32;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].float_data_ptr = &sysid;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SND_TORQUE].kvstore_key = FLASH_PARAM_KEY_COUNT;
     gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_SYSID].access_type = GIMBAL_PARAM_READ_WRITE;
+
+    // Hybrid volatile/non-volatile parameters
+    strncpy(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].param_id, "GMB_K_RATE", MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].param_type = MAV_PARAM_TYPE_REAL32;
+    // If GMB_CUST_GAINS is set to 1.0, use the K_RATE from flash params, otherwise use the hard-coded volatile value declared above
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].float_data_ptr = &k_rate;
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].kvstore_key = (flash_params.use_custom_gains == 1.0 ? FLASH_PARAM_K_RATE : FLASH_PARAM_KEY_COUNT);
+    gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_K_RATE].access_type = GIMBAL_PARAM_READ_WRITE;
+
+
 }
 
 void handle_param_set(mavlink_message_t* received_msg, MotorDriveParms* md_parms)
@@ -313,8 +324,8 @@ void handle_param_set(mavlink_message_t* received_msg, MotorDriveParms* md_parms
             	// Special case the position hold flag param since we need to validate it against the valid settings
             	// and need to send it to the EL board over CAN
             	if ((decoded_msg.param_value == CONTROL_TYPE_POS) || (decoded_msg.param_value == CONTROL_TYPE_RATE)) {
-            		*(param->float_data_ptr) = decoded_msg.param_value;
-            		if (*(param->float_data_ptr) == CONTROL_TYPE_POS) {
+            	    *(param->float_data_ptr) = decoded_msg.param_value;
+            		if (decoded_msg.param_value == CONTROL_TYPE_POS) {
             			// If we switch to position mode, we want to hold position no matter if we're receiving rate commands or not,
             			// so mark the gimbal as inactive for the purposes of mavlink control here
             			SetMavlinkGimbalDisabled();
@@ -324,7 +335,7 @@ void handle_param_set(mavlink_message_t* received_msg, MotorDriveParms* md_parms
 						// Enable ourselves
             			EnableAZAxis();
             			cand_tx_command(CAND_ID_EL, CAND_CMD_POS_MODE);
-            		} else if (*(param->float_data_ptr) == CONTROL_TYPE_RATE) {
+            		} else if (decoded_msg.param_value == CONTROL_TYPE_RATE) {
             			// In rate mode, we want to disable the gimbal if we lose rate commands from the copter, so we mark
             			// the gimbal as active for the purposes of mavlink control here
             			SetMavlinkGimbalEnabled();
@@ -344,7 +355,7 @@ void handle_param_set(mavlink_message_t* received_msg, MotorDriveParms* md_parms
 				} else {
 					new_sysid = floor(decoded_msg.param_value);
 				}
-				*(param->float_data_ptr) = new_sysid;
+				*(param->float_data_ptr) = decoded_msg.param_value;
 				update_mavlink_sysid(new_sysid);
 				send_gimbal_param(param_found);
 
@@ -358,16 +369,19 @@ void handle_param_set(mavlink_message_t* received_msg, MotorDriveParms* md_parms
                     // So if the param is actually a float, we can just use the param value
                     // If the param is actually an integer, we need to convert it first
                     if (decoded_msg.param_type == MAV_PARAM_TYPE_REAL32) {
-                        *(param->float_data_ptr) = decoded_msg.param_value;
+                        float_converter.float_val = decoded_msg.param_value;
+                        if(param->kvstore_key < FLASH_PARAM_KEY_COUNT) {
+                            kvstore_put_float(param->kvstore_key, decoded_msg.param_value);
+                        } else {
+                            *(param->float_data_ptr) = decoded_msg.param_value;
+                        }
                     } else if (decoded_msg.param_type == MAV_PARAM_TYPE_UINT32) {
                         float_converter.float_val = decoded_msg.param_value;
-                        *(param->uint32_data_ptr) = float_converter.uint32_val;
-                    }
-
-                    if (param->param_type == MAV_PARAM_TYPE_REAL32) {
-                        float_converter.float_val = *(param->float_data_ptr);
-                    } else if (param->param_type == MAV_PARAM_TYPE_UINT32) {
-                        float_converter.uint32_val = *(param->uint32_data_ptr);
+                        if(param->kvstore_key < FLASH_PARAM_KEY_COUNT) {
+                            kvstore_put_uint32(param->kvstore_key, float_converter.uint32_val);
+                        } else {
+                            *(param->uint32_data_ptr) = float_converter.uint32_val;
+                        }
                     }
 
                     // Send the param out over CAN to the other two boards
@@ -426,9 +440,19 @@ void send_gimbal_param(int param_num)
 
     // If the parameter is already a float, we can just send it.  Otherwise, it's an integer, so we have to convert it to a float first
     if (param->param_type == MAV_PARAM_TYPE_REAL32) {
-        param_val = *(param->float_data_ptr);
+        if(param->kvstore_key < FLASH_PARAM_KEY_COUNT) {
+            param_val = kvstore_get_float(param->kvstore_key);
+        } else {
+            param_val = *(param->float_data_ptr);
+        }
+
     } else {
-        float_converter.uint32_val = *(param->uint32_data_ptr);
+        if(param->kvstore_key < FLASH_PARAM_KEY_COUNT) {
+            float_converter.uint32_val = kvstore_get_uint32(param->kvstore_key);
+        } else {
+            float_converter.uint32_val = *(param->uint32_data_ptr);
+        }
+
         param_val = float_converter.float_val;
     }
 
@@ -444,9 +468,17 @@ void gimbal_param_update(GimbalMavlinkParameterID param_id, Uint32 value, Contro
     // Update the flash_param field with the new value
     if(param->param_type == MAV_PARAM_TYPE_REAL32) {
         float_converter.uint32_val = value;
-        *(param->float_data_ptr) = float_converter.float_val;
+        if(param->kvstore_key < FLASH_PARAM_KEY_COUNT) {
+            kvstore_put_float(param->kvstore_key, float_converter.float_val);
+        } else {
+            *(param->float_data_ptr) = float_converter.float_val;
+        }
     } else {
-        *(param->uint32_data_ptr) = value;
+        if(param->kvstore_key < FLASH_PARAM_KEY_COUNT) {
+            kvstore_put_uint32(param->kvstore_key, value);
+        } else {
+            *(param->uint32_data_ptr) = value;
+        }
     }
 
     // Special case handling of mavlink params on the EL board

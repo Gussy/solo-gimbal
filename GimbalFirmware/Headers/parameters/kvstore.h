@@ -55,6 +55,7 @@ typedef enum {
 typedef union {
     float as_float;
     uint16_t as_words[2];
+    uint32_t as_dword;
     uint8_t as_bytes[4];
 } kv_value_t;
 
@@ -67,9 +68,12 @@ void kvstore_init(void);
 
 float kvstore_get_float(const flash_param_keys_t key);
 uint16_t kvstore_get_uint16(const flash_param_keys_t key);
+uint32_t kvstore_get_uint32(const flash_param_keys_t key);
 
 void kvstore_put_float(const flash_param_keys_t key, const float value);
 void kvstore_put_uint16(const flash_param_keys_t key, const uint16_t value);
+void kvstore_put_uint32(const flash_param_keys_t key, const uint32_t value);
+
 
 
 #endif /* HEADERS_PARAMETERS_KVSTORE_H_ */
