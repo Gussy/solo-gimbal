@@ -23,6 +23,7 @@
 #include "parameters/flash_params.h"
 #include "parameters/load_axis_parms_state_machine.h"
 #include "parameters/mavlink_parameter_interface.h"
+#include "parameters/kvstore.h"
 #include "flash/flash.h"
 #include "flash/flash_init.h"
 #include "hardware/watchdog.h"
@@ -221,6 +222,7 @@ void main(void)
 	// Initialize flash (must be after CAN, in case the migration fails and resets all axes)
 	if (board_hw_id == AZ) {
         init_flash();
+        kvstore_init();
     }
 
 	init_param_set(control_board_parms.param_set);

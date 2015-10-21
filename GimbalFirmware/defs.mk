@@ -22,7 +22,7 @@ OBJS = \
     $(PROJ_ROOT)/Source/can/cand.o 														\
     $(PROJ_ROOT)/Source/can/cb.o														\
     $(PROJ_ROOT)/Source/gopro/gopro_interface.o 										\
-    $(PROJ_ROOT)/Source/gopro/gopro_helpers.o 										\
+    $(PROJ_ROOT)/Source/gopro/gopro_helpers.o 											\
     $(PROJ_ROOT)/Source/gopro/gopro_i2c.o												\
     $(PROJ_ROOT)/Source/gopro/gopro_hero3p.o											\
     $(PROJ_ROOT)/Source/gopro/gopro_hero4.o												\
@@ -30,10 +30,10 @@ OBJS = \
     $(PROJ_ROOT)/Source/control/gyro_kinematics_correction.o 							\
     $(PROJ_ROOT)/Source/control/PID.o 													\
     $(PROJ_ROOT)/Source/control/filt2p.o 												\
-    $(PROJ_ROOT)/Source/control/temp_control.o 												\
+    $(PROJ_ROOT)/Source/control/temp_control.o 											\
     $(PROJ_ROOT)/Source/control/rate_loops.o 											\
     $(PROJ_ROOT)/Source/control/running_average_filter.o 								\
-    $(PROJ_ROOT)/Source/control/current_controller.o 								\
+    $(PROJ_ROOT)/Source/control/current_controller.o 									\
     $(SHARED_ROOT)/src/flash/flash_csm_keys.o											\
     $(SHARED_ROOT)/src/flash/flash.o 													\
     $(SHARED_ROOT)/src/flash/flash_helpers.o											\
@@ -51,7 +51,7 @@ OBJS = \
     $(SHARED_ROOT)/src/hardware/pll.o 													\
     $(SHARED_ROOT)/src/hardware/watchdog.o												\
     $(SHARED_ROOT)/src/hardware/interrupts.o											\
-    $(PROJ_ROOT)/Source/hardware/timing.o											\
+    $(PROJ_ROOT)/Source/hardware/timing.o												\
     $(SHARED_ROOT)/src/flash/flash_init.o											    \
     $(PROJ_ROOT)/Source/helpers/fault_handling.o 										\
     $(PROJ_ROOT)/Source/helpers/lib_gmtimer.o 											\
@@ -63,6 +63,7 @@ OBJS = \
     $(PROJ_ROOT)/Source/parameters/flash_params.o 										\
     $(PROJ_ROOT)/Source/parameters/load_axis_parms_state_machine.o 						\
     $(PROJ_ROOT)/Source/parameters/mavlink_parameter_interface.o 						\
+    $(PROJ_ROOT)/Source/parameters/kvstore.o 											\
     $(PROJ_ROOT)/Source/F2806x_GlobalVariableDefs.o 									\
     $(F2806X_COMMON)/source/F2806x_usDelay.o                                            \
     $(F2806X_COMMON)/source/F2806x_CodeStartBranch.o                                    \
