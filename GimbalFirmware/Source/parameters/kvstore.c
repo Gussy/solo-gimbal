@@ -38,9 +38,9 @@ void kvstore_load(void)
 
     // Extract keys and values from the flat uint16_t buffer
     for(i = KVSTORE_HEADER_WORDS; i < (WORDS_IN_FLASH_BUFFER / sizeof(keyvalue_t)); i++) {
-        key = flash_buffer[i + 0];
-        kvstore[key].as_words[0] = flash_buffer[key + 1];
-        kvstore[key].as_words[1] = flash_buffer[key + 2];
+        key = flash_buffer[i];
+        kvstore[key].as_words[0] = flash_buffer[i + 1];
+        kvstore[key].as_words[1] = flash_buffer[i + 2];
     }
 }
 
@@ -76,7 +76,7 @@ int16_t kvstore_save(void)
     memcpy(&flash_buffer, &kvstore_header, sizeof(kvstore_header));
 
     // Copy keys and values into a flat uint16_t buffer
-    for(key = KVSTORE_HEADER_WORDS; key < (WORDS_IN_FLASH_BUFFER / sizeof(keyvalue_t)); key++) {
+    for(key = 0; key < FLASH_PARAM_KEY_COUNT; key++) {
         flash_buffer[KVSTORE_HEADER_WORDS + key + 0] = key;
         flash_buffer[KVSTORE_HEADER_WORDS + key + 1] = kvstore[key].as_words[0];
         flash_buffer[KVSTORE_HEADER_WORDS + key + 2] = kvstore[key].as_words[1];
