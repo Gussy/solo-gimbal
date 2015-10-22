@@ -60,7 +60,6 @@ OBJS = \
     $(PROJ_ROOT)/Source/motor/commutation_calibration_state_machine.o 					\
     $(PROJ_ROOT)/Source/motor/motor_commutation.o 										\
     $(PROJ_ROOT)/Source/motor/motor_drive_state_machine.o 								\
-    $(PROJ_ROOT)/Source/parameters/flash_params.o 										\
     $(PROJ_ROOT)/Source/parameters/load_axis_parms_state_machine.o 						\
     $(PROJ_ROOT)/Source/parameters/mavlink_parameter_interface.o 						\
     $(PROJ_ROOT)/Source/parameters/kvstore.o 											\
