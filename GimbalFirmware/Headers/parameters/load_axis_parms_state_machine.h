@@ -10,12 +10,12 @@
 #define REQUEST_RETRY_PERIOD 1000
 
 typedef struct {
-    int request_retry_counter;
-    Uint16 axis_parms_load_complete;
-    Uint16 axis_parms_checksum_verified;
-    Uint16 current_load_offset;
-    Uint16 current_request_load_offset;
-    Uint16 total_words_to_load;
+    bool load_complete;
+    bool header_received;
+    uint16_t current_key;
+    uint16_t current_request_key;
+    uint16_t total_keys_to_load;
+    uint16_t request_retry_counter;
 } LoadAxisParmsStateInfo;
 
 void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info);

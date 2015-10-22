@@ -125,6 +125,7 @@ typedef union {
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define CLAMP_TO_BOUNDS(x, bound_lower, bound_upper) (((x) < (bound_lower)) ? (bound_lower) : (((x) > (bound_upper)) ? (bound_upper) : (x)))
+#define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))
 
 #define IndexTimeOutLimit 268
 

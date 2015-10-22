@@ -96,7 +96,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // If we've completed requesting and receiving the params from AZ,
             // we can continue with our init sequence
-            if (load_ap_state_info->axis_parms_load_complete) {
+            if (load_ap_state_info->load_complete) {
                 update_local_params_from_kvstore(md_parms);
 
                 axis_parms->all_init_params_recvd = TRUE;

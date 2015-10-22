@@ -4,7 +4,6 @@
 #include "can/cb.h"
 #include "can/cand.h"
 #include "hardware/device_init.h"
-#include "parameters/flash_params.h"
 #include "parameters/kvstore.h"
 #include "hardware/HWSpecific.h"
 #include "control/PID.h"
@@ -243,69 +242,75 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                         }
                     	break;
 
-                    case CAND_EPID_PARAMS_LOAD:
-                    	if (GetBoardHWID() == AZ) {
-                    	    /*Uint8 i;
-                    		// This means the parameter was a request, so load up the necessary data and broadcast it to the other two boards
-                    		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF);
-                    		CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[2];
-                    		Uint16 params_size = sizeof(flash_params);
-                    		Uint8 words_to_send = MIN(2, params_size - start_offset);
-                    		Uint8 params[7];
-                    		params[0] = msg.extended_param[0];
-                    		params[1] = msg.extended_param[1];
-                    		params[2] = words_to_send;
-                    		// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
-                    		for (i = 0; i < words_to_send; i++) {
-                    			params[(2 * i) + 3] = ((((Uint16*)(&flash_params))[start_offset + i]) >> 8) & 0x00FF;
-                    			params[(2 * i) + 4] = ((((Uint16*)(&flash_params))[start_offset + i]) & 0x00FF);
-                    		}
-                    		cand_tx_extended_param(sender_id, CAND_EPID_PARAMS_LOAD, params, (words_to_send * 2) + 3);*/
-                    	} else {
-                    		/*// This means the parameter was a response
-                    		// First make sure this isn't data we've already received, and if not, load it into our copy of the flash params struct
-                    		Uint16 start_offset = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
-                    		Uint8 words_received = msg.extended_param[2];
-                    		if (load_ap_state_info->current_load_offset == start_offset && (start_offset + words_received) <= sizeof(flash_params)) {
-                    			// We need to do this instead of a memcpy to account for the fact that Uint8's on this architecture are actually 16-bits
-                    		    Uint8 i;
-                    			for (i = 0; i < words_received; i++) {
-                    				Uint16 received_word = ((((Uint16)msg.extended_param[(2 * i) + 3]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[(2 * i) + 4]) & 0x00FF);
-                    				((Uint16*)(&flash_params))[start_offset + i] = received_word;
-                    			}
-                    			load_ap_state_info->current_load_offset += words_received;
-                    		}
+                        case CAND_EPID_KVSTORE_LOAD:
+                            if (GetBoardHWID() == AZ) { // The parameter was a request, so load up the necessary data and broadcast it to the other two boards
+                                uint16_t key_to_send = ((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF);
+                                CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[2];
+                                kv_value_t value_to_send = kvstore_get_value((flash_param_keys_t)key_to_send);
 
-                    		// If we have received all of the params, preload the request_retry_counter to ask for the checksum immediately on the next cycle
-                    		if (load_ap_state_info->current_load_offset == sizeof(flash_params)) {
-                    		    load_ap_state_info->request_retry_counter = REQUEST_RETRY_PERIOD;
-                    		}*/
-                    	}
-                    	break;
+                                /* Packet format is as follows:
+                                * byte:0...1   - uint8_t key[2]
+                                * byte:2...5   - uint8_t value[4]
+                                */
 
-                    case CAND_EPID_PARAMS_CHECKSUM:
-                    	/*if (GetBoardHWID() == AZ) {
-                    		// This means the parameter was a request, so compute the checksum of the flash params struct and broadcast it
-                    		CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[0];
-                    		Uint16 checksum = compute_flash_params_checksum();
-                    		Uint8 params[2];
-                    		params[0] = ((checksum >> 8) & 0x00FF);
-                    		params[1] = (checksum & 0x00FF);
-                    		cand_tx_extended_param(sender_id, CAND_EPID_PARAMS_CHECKSUM, params, 2);
-                    	} else {
-                    		// This means the parameter was a response, so extract the checksum reply,
-                    		// compare it against our own checksum of the flash params, and set the result appropriately
-                    		Uint16 received_checksum = ((((Uint16)msg.extended_param[0]) << 8) & 0xFF00) | (((Uint16)msg.extended_param[1]) & 0x00FF);
-                    		Uint16 calculated_checksum = compute_flash_params_checksum();
-                    		if (received_checksum == calculated_checksum) {
-                    			load_ap_state_info->axis_parms_checksum_verified = TRUE;
-                    		} else {
-                    			// If we failed checksum check, re-request the entire flash params struct
-                    			load_ap_state_info->current_load_offset = 0;
-                    			load_ap_state_info->current_request_load_offset = 0;
-                    		}
-                    	}*/
-                    	break;
+                                uint8_t params[7];
+                                params[0] = msg.extended_param[0];
+                                params[1] = msg.extended_param[1];
+                                params[2] = value_to_send.as_bytes[0];
+                                params[3] = value_to_send.as_bytes[1];
+                                params[4] = value_to_send.as_bytes[2];
+                                params[5] = value_to_send.as_bytes[3];
+
+                                cand_tx_extended_param(sender_id, CAND_EPID_KVSTORE_LOAD, params, ARRAY_LENGTH(params));
+                            } else { // This means the parameter was a response
+                                // First make sure this isn't data we've already received, and if not, load it into our copy of the flash params struct
+                                uint16_t received_key = ((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF);
+                                if (load_ap_state_info->current_key == received_key && received_key <= load_ap_state_info->total_keys_to_load) {
+                                    kv_value_t recevied_value;
+                                    recevied_value.as_bytes[0] = msg.extended_param[2];
+                                    recevied_value.as_bytes[0] = msg.extended_param[3];
+                                    recevied_value.as_bytes[0] = msg.extended_param[4];
+                                    recevied_value.as_bytes[0] = msg.extended_param[5];
+
+                                    kvstore_put_value((flash_param_keys_t)received_key, recevied_value);
+
+                                    load_ap_state_info->current_key++;
+                                }
+
+                                // If we have received all of the params, preload the request_retry_counter to ask for the checksum immediately on the next cycle
+                                if (load_ap_state_info->current_key == load_ap_state_info->total_keys_to_load) {
+                                    load_ap_state_info->request_retry_counter = REQUEST_RETRY_PERIOD;
+                                }
+                            }
+                            break;
+
+                        case CAND_EPID_KVSTORE_HEADER:
+                            if (GetBoardHWID() == AZ) { // The parameter was a request
+                                CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[0];
+
+                                kvstore_header_t header;
+                                kvstore_get_header(&header);
+
+                                uint8_t params[7];
+
+                                // Magic
+                                params[0] = ((header.magic >> 8) & 0x00FF);
+                                params[1] = ((header.magic >> 0) & 0x00FF);
+
+                                // Unused[0]
+                                params[2] = ((header.unused[0] >> 8) & 0x00FF);
+                                params[3] = ((header.unused[0] >> 0) & 0x00FF);
+
+                                // Unused[1]
+                                params[4] = ((header.unused[1] >> 8) & 0x00FF);
+                                params[5] = ((header.unused[1] >> 0) & 0x00FF);
+
+                                cand_tx_extended_param(sender_id, CAND_EPID_KVSTORE_HEADER, params, ARRAY_LENGTH(params));
+                            } else { // This means the parameter was a response
+                                // TODO: Add a kvstore checksum the the header and check it here
+                                load_ap_state_info->header_received = true;
+                            }
+                            break;
 
                     case CAND_EPID_MAVLINK_PARAM:
                         if (msg.extended_param_length == 5 && GetBoardHWID() != AZ) {

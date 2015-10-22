@@ -117,6 +117,16 @@ void kvstore_get_header(kvstore_header_t* header)
     memcpy(header, (Uint16 *)PARAMS_START, sizeof(kvstore_header_t));
 }
 
+kv_value_t kvstore_get_value(const flash_param_keys_t key)
+{
+    kv_value_t result;
+    if(key < FLASH_PARAM_KEY_COUNT) {
+        result = kvstore[key];
+    }
+
+    return result;
+}
+
 float kvstore_get_float(const flash_param_keys_t key)
 {
     if(key < FLASH_PARAM_KEY_COUNT) {
@@ -133,6 +143,11 @@ uint16_t kvstore_get_uint16(const flash_param_keys_t key)
     }
 
     return 0;
+}
+
+void kvstore_put_value(const flash_param_keys_t key, const kv_value_t value)
+{
+    kvstore[key] = value;
 }
 
 void kvstore_put_float(const flash_param_keys_t key, const float value)

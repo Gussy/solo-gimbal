@@ -68,7 +68,7 @@ typedef struct {
 
 typedef union {
     uint16_t magic;
-    uint16_t unused[3];
+    uint16_t unused[2];
 } kvstore_header_t;
 
 void kvstore_init(void);
@@ -78,9 +78,11 @@ int16_t kvstore_reset(void);
 
 void kvstore_get_header(kvstore_header_t* header);
 
+kv_value_t kvstore_get_value(const flash_param_keys_t key);
 float kvstore_get_float(const flash_param_keys_t key);
 uint16_t kvstore_get_uint16(const flash_param_keys_t key);
 
+void kvstore_put_value(const flash_param_keys_t key, const kv_value_t value);
 void kvstore_put_float(const flash_param_keys_t key, const float value);
 void kvstore_put_uint16(const flash_param_keys_t key, const uint16_t value);
 

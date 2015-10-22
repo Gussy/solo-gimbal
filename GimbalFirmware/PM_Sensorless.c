@@ -114,12 +114,12 @@ ControlBoardParms control_board_parms = {
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
-	.current_load_offset = 0,
-	.current_request_load_offset = 0,
-	.total_words_to_load = 0,
+    .load_complete = false,
+	.current_key = 0,
+    .current_request_key = 0,
+	.total_keys_to_load = 0,
     .request_retry_counter = REQUEST_RETRY_PERIOD,
-	.axis_parms_checksum_verified = FALSE,
-    .axis_parms_load_complete = FALSE
+	.header_received = false
 };
 
 MavlinkGimbalInfo mavlink_gimbal_info = {
