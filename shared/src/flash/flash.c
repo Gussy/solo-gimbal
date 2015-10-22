@@ -69,24 +69,21 @@ int init_flash(void)
 
 	if(kvstore_header.magic == 0xFFFF) { // Ignore an unprogrammed kvstore (0xFFFF)
 	    return 1;
-	} else if(kvstore_header.magic != KVSTORE_HEADER_MAGIC) { // Handle an invalid header magic byte (0x0000 to 0x0008)
+	} else if(kvstore_header.magic == KVSTORE_HEADER_MAGIC) {
+        // Load the kvstore if it already exists
+        kvstore_load();
+        return 1;
+    } else {
 	    // Flash verification will fail only if the flash has become corrupt, in which case no migrations can take place
         if (verify_checksum((Uint16 *)PARAMS_START)) {
             // Run the flash migration operation. 'kvstore_header.magic' is the same as the old flash param struct version
             flash_migration_run(kvstore_header.magic);
-
-            // Update the value of FLASH_PARAM_STRUCT_ID
-            kvstore_put_uint16(FLASH_PARAM_STRUCT_ID, (FINAL_FLASH_PARAM_STRUCT_ID + 1));
 
             // Save the kvstore
             kvstore_save();
 
             return 1;
         }
-	} else {
-	    // Load the kvstore if it already exists
-	    kvstore_load();
-	    return 1;
 	}
 
 	return -1;
