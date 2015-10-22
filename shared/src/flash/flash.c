@@ -77,42 +77,7 @@ int erase_param_flash()
 
 int write_flash(void)
 {
-	/*Uint16  i;
-	Uint16  Status;
-	Uint16  *Flash_ptr;     // Pointer to a location in flash
-	Uint32  Length;         // Number of 16-bit values to be programmed
-	Uint16  VersionHex;     // Version of the API in decimal encoded hex
-
-	EALLOW;
-	Flash_CPUScaleFactor = SCALE_FACTOR;
-	EDIS;
-
-	VersionHex = Flash_APIVersionHex();
-	if(VersionHex != 0x0100)
-	{
-	    // Unexpected API version
-	    // Make a decision based on this info.
-	    asm("    ESTOP0");
-	}
-
-	flash_csm_unlock();
-
-	Status = Flash_Erase(SECTORH, &FlashStatus);
-	if (Status != STATUS_SUCCESS) {
-		return -1;
-	}
-    for(i=0;i<WORDS_IN_FLASH_BUFFER;i++)
-    {
-        Buffer[i] = ((Uint16 *)&flash_params)[i];
-    }
-    make_checksum(Buffer);
-    Flash_ptr = (Uint16 *)PARAMS_START;
-    Length = WORDS_IN_FLASH_BUFFER*sizeof(Buffer[0]);
-    Status = Flash_Program(Flash_ptr,Buffer,Length,&FlashStatus);
-    if(Status != STATUS_SUCCESS)
-    {
-    	return -2;
-    }*/
+	//TODO: remove usage of this function from codebase, once journaling is complete
     return 1;
 }
 
@@ -122,7 +87,7 @@ int init_flash(void)
 	kvstore_init();
 
 	// Migrate from the flash_params struct to the kvstore
-	if(kvstore_get_uint16(FLASH_PARAM_STRUCT_ID) < 9) {
+	if(kvstore_get_uint16(FLASH_PARAM_STRUCT_ID) <= LAST_FLASH_PARAM_STRUCT_ID) {
 	    // Flash verification will fail only if the flash has become corrupt, in which case no migrations can take place
         if (verify_checksum((Uint16 *)PARAMS_START)) {
             // Get the current flash_struct_id from flash
