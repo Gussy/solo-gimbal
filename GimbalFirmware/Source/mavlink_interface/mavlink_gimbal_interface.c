@@ -17,6 +17,7 @@
 #include "hardware/encoder.h"
 #include "hardware/timing.h"
 #include "hardware/gyro.h"
+#include "helpers/macros.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -305,10 +306,10 @@ static void handle_gopro_set_request(mavlink_message_t* received_msg)
     // Make sure the message was for us.  If it was, package up the command and send it over CAN
     if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
         gp_can_mav_set_req_t req;
-        memset(req.bytes, 0, sizeof(req.bytes));
+        STATIC_ASSERT(sizeof(req.mav.value) == sizeof(decoded_msg.value));
 
         req.mav.cmd_id = decoded_msg.cmd_id;
-        req.mav.value[0] = decoded_msg.value;
+        memcpy(req.mav.value, decoded_msg.value, sizeof req.mav.value);
 
         cand_tx_extended_param(CAND_ID_EL, CAND_PID_GOPRO_SET_REQUEST, req.bytes, sizeof(req.bytes));
     }
@@ -470,16 +471,16 @@ void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status)
 
 void send_mavlink_gopro_get_response(const gp_can_mav_get_rsp_t *rsp)
 {
-    // XXX: only sending first byte for now, until we update the
-    //      mavlink interface to send multiple bytes.
-    //      also need to add status field to mavlink response.
+    mavlink_gopro_get_response_t mavrsp;
+    STATIC_ASSERT(sizeof(rsp->mav.value) == sizeof(mavrsp.value));
+
     mavlink_message_t gopro_get_response_msg;
     mavlink_msg_gopro_get_response_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_get_response_msg,
                                     rsp->mav.cmd_id,
                                     rsp->mav.status,
-                                    rsp->mav.value[0]);
+                                    rsp->mav.value);
     send_mavlink_message(&gopro_get_response_msg);
 }
 
