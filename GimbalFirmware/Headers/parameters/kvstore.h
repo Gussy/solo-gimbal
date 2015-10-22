@@ -3,6 +3,8 @@
 
 #include "f2806x_int8.h"
 
+#define KVSTORE_HEADER_MAGIC 0xA5A5
+
 typedef enum {
     FLASH_PARAM_STRUCT_ID = 0,
     FLASH_PARAM_ASSY_TIME = 1,
@@ -64,10 +66,17 @@ typedef struct {
     kv_value_t value;
 } keyvalue_t;
 
+typedef union {
+    uint16_t magic;
+    uint16_t unused[3];
+} kvstore_header_t;
+
 void kvstore_init(void);
 void kvstore_load(void);
 int16_t kvstore_save(void);
 int16_t kvstore_reset(void);
+
+void kvstore_get_header(kvstore_header_t* header);
 
 float kvstore_get_float(const flash_param_keys_t key);
 uint16_t kvstore_get_uint16(const flash_param_keys_t key);

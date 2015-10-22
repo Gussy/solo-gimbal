@@ -8,8 +8,10 @@
 
 static FLASH_ST flash_status;
 
+#define KVSTORE_HEADER_WORDS sizeof(kvstore_header_t)
+
 // Buffer used for calculating flash checksums
-#define WORDS_IN_FLASH_BUFFER (FLASH_PARAM_KEY_COUNT * sizeof(keyvalue_t))
+#define WORDS_IN_FLASH_BUFFER (KVSTORE_HEADER_WORDS + (FLASH_PARAM_KEY_COUNT * sizeof(keyvalue_t)))
 static uint16_t flash_buffer[WORDS_IN_FLASH_BUFFER];
 
 static kv_value_t kvstore[FLASH_PARAM_KEY_COUNT];
@@ -35,7 +37,7 @@ void kvstore_load(void)
     memcpy(&flash_buffer, (Uint16 *)PARAMS_START, sizeof(flash_buffer));
 
     // Extract keys and values from the flat uint16_t buffer
-    for(i = 0; i < (WORDS_IN_FLASH_BUFFER / sizeof(keyvalue_t)); i++) {
+    for(i = KVSTORE_HEADER_WORDS; i < (WORDS_IN_FLASH_BUFFER / sizeof(keyvalue_t)); i++) {
         key = flash_buffer[i + 0];
         kvstore[key].as_words[0] = flash_buffer[key + 1];
         kvstore[key].as_words[1] = flash_buffer[key + 2];
@@ -48,6 +50,7 @@ int16_t kvstore_save(void)
     uint16_t result;
     uint16_t *flash_ptr;        // Pointer to a location in flash
     uint16_t version_hex;       // Version of the API in decimal encoded hex
+    kvstore_header_t kvstore_header;
 
     EALLOW;
     Flash_CPUScaleFactor = SCALE_FACTOR;
@@ -68,11 +71,15 @@ int16_t kvstore_save(void)
         return -1;
     }
 
+    // Copy the kvstore header into the buffer
+    kvstore_header.magic = KVSTORE_HEADER_MAGIC;
+    memcpy(&flash_buffer, &kvstore_header, sizeof(kvstore_header));
+
     // Copy keys and values into a flat uint16_t buffer
-    for(key = 0; key < (WORDS_IN_FLASH_BUFFER / sizeof(keyvalue_t)); key++) {
-        flash_buffer[key + 0] = key;
-        flash_buffer[key + 1] = kvstore[key].as_words[0];
-        flash_buffer[key + 2] = kvstore[key].as_words[1];
+    for(key = KVSTORE_HEADER_WORDS; key < (WORDS_IN_FLASH_BUFFER / sizeof(keyvalue_t)); key++) {
+        flash_buffer[KVSTORE_HEADER_WORDS + key + 0] = key;
+        flash_buffer[KVSTORE_HEADER_WORDS + key + 1] = kvstore[key].as_words[0];
+        flash_buffer[KVSTORE_HEADER_WORDS + key + 2] = kvstore[key].as_words[1];
     }
 
     // Write the buffer into flash
@@ -103,6 +110,11 @@ static void kvstore_set_defaults(void)
 
     // GoPro control is enabled by default
     kvstore_put_float(FLASH_PARAM_GOPRO_CONTROL, 1.0f);
+}
+
+void kvstore_get_header(kvstore_header_t* header)
+{
+    memcpy(header, (Uint16 *)PARAMS_START, sizeof(kvstore_header_t));
 }
 
 float kvstore_get_float(const flash_param_keys_t key)

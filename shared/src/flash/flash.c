@@ -59,22 +59,24 @@ int write_flash(void)
 
 int init_flash(void)
 {
+    kvstore_header_t kvstore_header = {0};
+
 	// Initialise the kvstore
 	kvstore_init();
 
-	// Migrate from the flash_params struct to the kvstore
-	if(kvstore_get_uint16(FLASH_PARAM_STRUCT_ID) <= LAST_FLASH_PARAM_STRUCT_ID) {
+	/* Load the header of the kvstore to determine if a valid kvstore has been saved */
+	kvstore_get_header(&kvstore_header);
+
+	if(kvstore_header.magic == 0xFFFF) { // Ignore an unprogrammed kvstore (0xFFFF)
+	    return 1;
+	} else if(kvstore_header.magic != KVSTORE_HEADER_MAGIC) { // Handle an invalid header magic byte (0x0000 to 0x0008)
 	    // Flash verification will fail only if the flash has become corrupt, in which case no migrations can take place
         if (verify_checksum((Uint16 *)PARAMS_START)) {
-            // Get the current flash_struct_id from flash
-            Uint16 current_flash_param_rev = 0xFFFF;
-            memcpy(&current_flash_param_rev, (Uint16 *)PARAMS_START, sizeof(Uint16));
+            // Run the flash migration operation. 'kvstore_header.magic' is the same as the old flash param struct version
+            flash_migration_run(kvstore_header.magic);
 
-            // Run the flash migration operation
-            flash_migration_run(current_flash_param_rev);
-
-            // Update the value of FLASH_PARAM_STRUCT_ID so this migration code is not run again
-            kvstore_put_uint16(FLASH_PARAM_STRUCT_ID, (LAST_FLASH_PARAM_STRUCT_ID + 1));
+            // Update the value of FLASH_PARAM_STRUCT_ID
+            kvstore_put_uint16(FLASH_PARAM_STRUCT_ID, (FINAL_FLASH_PARAM_STRUCT_ID + 1));
 
             // Save the kvstore
             kvstore_save();

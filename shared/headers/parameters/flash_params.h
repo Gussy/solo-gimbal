@@ -4,7 +4,7 @@
 #include "hardware/HWSpecific.h"
 #include "Flash2806x_API_Library.h"
 
-#define LAST_FLASH_PARAM_STRUCT_ID 9
+#define FINAL_FLASH_PARAM_STRUCT_ID 9
 
 struct flash_param_struct_0009 {
     Uint16 flash_struct_id;
