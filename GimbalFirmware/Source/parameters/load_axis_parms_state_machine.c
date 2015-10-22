@@ -9,7 +9,7 @@
 
 void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info)
 {
-	load_parms_state_info->total_words_to_load = sizeof(flash_params);
+	//load_parms_state_info->total_words_to_load = sizeof(flash_params);
 	load_parms_state_info->current_load_offset = 0;
 	load_parms_state_info->current_request_load_offset = 0;
 }

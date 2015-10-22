@@ -6,13 +6,6 @@
 
 #define CURRENT_FLASH_PARAM_STRUCT_VERSION 0009
 
-// Generate the name of the current flash_param_struct by appending _VERSION
-// This makes for fewer mistakes (only one place to increment the current version)
-#define PPCAT_NX(A, B) A ## B
-#define PPCAT(A, B) PPCAT_NX(A, B)
-#define FLASH_PARAM_STRUCT_PREFIX flash_param_struct_
-#define CURRENT_FLASH_PARAM_STRUCT PPCAT(FLASH_PARAM_STRUCT_PREFIX, CURRENT_FLASH_PARAM_STRUCT_VERSION)
-
 struct flash_param_struct_0009 {
     Uint16 flash_struct_id;
     float assy_time;
@@ -281,7 +274,5 @@ struct flash_param_struct_0000 {
 	float balance_axis;
 	float balance_step_duration;
 };
-
-extern struct CURRENT_FLASH_PARAM_STRUCT flash_params;
 
 #endif /* FLASH_PARAMS_H_ */

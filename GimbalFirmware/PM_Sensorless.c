@@ -222,7 +222,6 @@ void main(void)
 	// Initialize flash (must be after CAN, in case the migration fails and resets all axes)
 	if (board_hw_id == AZ) {
         init_flash();
-        kvstore_init();
     }
 
 	init_param_set(control_board_parms.param_set);
