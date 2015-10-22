@@ -250,7 +250,6 @@ static void flash_migration_from_0007(void) {
 
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KP, flash_params_0007.torque_pid_kp[0]);
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KI, flash_params_0007.torque_pid_ki[0]);
-    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0007.torque_pid_kr[0]);
 
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_AZ, flash_params_0007.rate_pid_p[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_ROLL, flash_params_0007.rate_pid_p[ROLL]);
@@ -291,6 +290,8 @@ static void flash_migration_from_0007(void) {
     kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, flash_params_0007.gopro_charging_enabled);
     kvstore_put_float(FLASH_PARAM_USE_CUSTOM_GAINS, flash_params_0007.use_custom_gains);
 
+    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0007.torque_pid_kr[0]);
+
     /* Removed parameters:
      *  rate_pid_windup
      * Added parameters:
@@ -319,7 +320,7 @@ static void flash_migration_from_0006(void) {
 
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KP, flash_params_0006.torque_pid_kp[0]);
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KI, flash_params_0006.torque_pid_ki[0]);
-    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0006.torque_pid_kr[0]);
+
 
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_AZ, flash_params_0006.rate_pid_p[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_ROLL, flash_params_0006.rate_pid_p[ROLL]);
@@ -332,10 +333,6 @@ static void flash_migration_from_0006(void) {
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_AZ, flash_params_0006.rate_pid_d[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_ROLL, flash_params_0006.rate_pid_d[ROLL]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_EL, flash_params_0006.rate_pid_d[EL]);
-
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0006.rate_pid_d_alpha[AZ]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0006.rate_pid_d_alpha[ROLL]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0006.rate_pid_d_alpha[EL]);
 
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_X, flash_params_0006.offset_joint[X_AXIS]);
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_Y, flash_params_0006.offset_joint[Y_AXIS]);
@@ -359,6 +356,12 @@ static void flash_migration_from_0006(void) {
 
     kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, 1.0f);
     kvstore_put_float(FLASH_PARAM_USE_CUSTOM_GAINS, flash_params_0006.use_custom_gains);
+
+    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0006.torque_pid_kr[0]);
+
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0006.rate_pid_d_alpha[AZ]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0006.rate_pid_d_alpha[ROLL]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0006.rate_pid_d_alpha[EL]);
 
     /* Removed parameters:
      *  rate_pid_windup
@@ -388,7 +391,6 @@ static void flash_migration_from_0005(void) {
 
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KP, flash_params_0005.torque_pid_kp[0]);
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KI, flash_params_0005.torque_pid_ki[0]);
-    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0005.torque_pid_kr[0]);
 
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_AZ, flash_params_0005.rate_pid_p[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_ROLL, flash_params_0005.rate_pid_p[ROLL]);
@@ -401,10 +403,6 @@ static void flash_migration_from_0005(void) {
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_AZ, flash_params_0005.rate_pid_d[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_ROLL, flash_params_0005.rate_pid_d[ROLL]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_EL, flash_params_0005.rate_pid_d[EL]);
-
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0005.rate_pid_d_alpha[AZ]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0005.rate_pid_d_alpha[ROLL]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0005.rate_pid_d_alpha[EL]);
 
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_X, flash_params_0005.offset_joint[X_AXIS]);
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_Y, flash_params_0005.offset_joint[Y_AXIS]);
@@ -428,6 +426,13 @@ static void flash_migration_from_0005(void) {
 
     kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, 1.0f);
     kvstore_put_float(FLASH_PARAM_USE_CUSTOM_GAINS, flash_params_0005.use_custom_gains);
+
+    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0005.torque_pid_kr[0]);
+
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0005.rate_pid_d_alpha[AZ]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0005.rate_pid_d_alpha[ROLL]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0005.rate_pid_d_alpha[EL]);
+
     /* Removed parameters:
      *  sys_swver
      */
@@ -454,7 +459,6 @@ static void flash_migration_from_0004(void) {
 
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KP, flash_params_0004.torque_pid_kp[0]);
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KI, flash_params_0004.torque_pid_ki[0]);
-    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0004.torque_pid_kr[0]);
 
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_AZ, flash_params_0004.rate_pid_p[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_ROLL, flash_params_0004.rate_pid_p[ROLL]);
@@ -467,10 +471,6 @@ static void flash_migration_from_0004(void) {
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_AZ, flash_params_0004.rate_pid_d[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_ROLL, flash_params_0004.rate_pid_d[ROLL]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_EL, flash_params_0004.rate_pid_d[EL]);
-
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0004.rate_pid_d_alpha[AZ]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0004.rate_pid_d_alpha[ROLL]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0004.rate_pid_d_alpha[EL]);
 
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_X, flash_params_0004.offset_joint[X_AXIS]);
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_Y, flash_params_0004.offset_joint[Y_AXIS]);
@@ -493,6 +493,13 @@ static void flash_migration_from_0004(void) {
     kvstore_put_float(FLASH_PARAM_ALIGNMENT_ACCELEROMETER_Z, flash_params_0004.alignment_accelerometer[Z_AXIS]);
 
     kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, 1.0f);
+
+    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0004.torque_pid_kr[0]);
+
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0004.rate_pid_d_alpha[AZ]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0004.rate_pid_d_alpha[ROLL]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0004.rate_pid_d_alpha[EL]);
+
     //kvstore_put_float(FLASH_PARAM_USE_CUSTOM_GAINS, flash_params_0004.use_custom_gains);
 
     /* Added parameters:
@@ -521,7 +528,6 @@ static void flash_migration_from_0003(void) {
 
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KP, flash_params_0003.torque_pid_kp[0]);
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KI, flash_params_0003.torque_pid_ki[0]);
-    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0003.torque_pid_kr[0]);
 
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_AZ, flash_params_0003.rate_pid_p[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_ROLL, flash_params_0003.rate_pid_p[ROLL]);
@@ -534,10 +540,6 @@ static void flash_migration_from_0003(void) {
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_AZ, flash_params_0003.rate_pid_d[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_ROLL, flash_params_0003.rate_pid_d[ROLL]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_EL, flash_params_0003.rate_pid_d[EL]);
-
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0003.rate_pid_d_alpha[AZ]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0003.rate_pid_d_alpha[ROLL]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0003.rate_pid_d_alpha[EL]);
 
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_X, flash_params_0003.offset_joint[X_AXIS]);
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_Y, flash_params_0003.offset_joint[Y_AXIS]);
@@ -560,6 +562,13 @@ static void flash_migration_from_0003(void) {
     kvstore_put_float(FLASH_PARAM_ALIGNMENT_ACCELEROMETER_Z, flash_params_0003.alignment_accelerometer[Z_AXIS]);
 
     kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, 1.0f);
+
+    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0003.torque_pid_kr[0]);
+
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0003.rate_pid_d_alpha[AZ]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0003.rate_pid_d_alpha[ROLL]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0003.rate_pid_d_alpha[EL]);
+
     //kvstore_put_float(FLASH_PARAM_USE_CUSTOM_GAINS, flash_params_0003.use_custom_gains);
 
     /* Removed parameters:
@@ -588,7 +597,6 @@ static void flash_migration_from_0002(void) {
 
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KP, flash_params_0002.torque_pid_kp[0]);
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KI, flash_params_0002.torque_pid_ki[0]);
-    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0002.torque_pid_kr[0]);
 
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_AZ, flash_params_0002.rate_pid_p[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_ROLL, flash_params_0002.rate_pid_p[ROLL]);
@@ -601,10 +609,6 @@ static void flash_migration_from_0002(void) {
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_AZ, flash_params_0002.rate_pid_d[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_ROLL, flash_params_0002.rate_pid_d[ROLL]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_EL, flash_params_0002.rate_pid_d[EL]);
-
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0002.rate_pid_d_alpha[AZ]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0002.rate_pid_d_alpha[ROLL]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0002.rate_pid_d_alpha[EL]);
 
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_X, flash_params_0002.offset_joint[X_AXIS]);
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_Y, flash_params_0002.offset_joint[Y_AXIS]);
@@ -627,6 +631,13 @@ static void flash_migration_from_0002(void) {
     kvstore_put_float(FLASH_PARAM_ALIGNMENT_ACCELEROMETER_Z, flash_params_0002.alignment_accelerometer[Z_AXIS]);
 
     kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, 1.0f);
+
+    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0002.torque_pid_kr[0]);
+
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0002.rate_pid_d_alpha[AZ]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0002.rate_pid_d_alpha[ROLL]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0002.rate_pid_d_alpha[EL]);
+
     //kvstore_put_float(FLASH_PARAM_USE_CUSTOM_GAINS, flash_params_0002.use_custom_gains);
 
     /* Added parameters:
@@ -655,7 +666,6 @@ static void flash_migration_from_0001(void) {
 
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KP, flash_params_0001.torque_pid_kp[0]);
     kvstore_put_float(FLASH_PARAM_TORQUE_PID_KI, flash_params_0001.torque_pid_ki[0]);
-    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0001.torque_pid_kr[0]);
 
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_AZ, flash_params_0001.rate_pid_p[AZ]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_P_ROLL, flash_params_0001.rate_pid_p[ROLL]);
@@ -669,10 +679,6 @@ static void flash_migration_from_0001(void) {
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_ROLL, flash_params_0001.rate_pid_d[ROLL]);
     kvstore_put_float(FLASH_PARAM_RATE_PID_D_EL, flash_params_0001.rate_pid_d[EL]);
 
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0001.rate_pid_d_alpha[AZ]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0001.rate_pid_d_alpha[ROLL]);
-    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0001.rate_pid_d_alpha[EL]);
-
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_X, flash_params_0001.offset_joint[X_AXIS]);
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_Y, flash_params_0001.offset_joint[Y_AXIS]);
     kvstore_put_float(FLASH_PARAM_OFFSET_JOINT_Z, flash_params_0001.offset_joint[Z_AXIS]);
@@ -685,6 +691,14 @@ static void flash_migration_from_0001(void) {
     kvstore_put_float(FLASH_PARAM_OFFSET_ACCELEROMETER_Y, flash_params_0001.offset_accelerometer[Y_AXIS]);
     kvstore_put_float(FLASH_PARAM_OFFSET_ACCELEROMETER_Z, flash_params_0001.offset_accelerometer[Z_AXIS]);
 
+    kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, 1.0f);
+
+    //kvstore_put_float(FLASH_PARAM_TORQUE_PID_KR, flash_params_0001.torque_pid_kr[0]);
+
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_AZ, flash_params_0001.rate_pid_d_alpha[AZ]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_ROLL, flash_params_0001.rate_pid_d_alpha[ROLL]);
+    //kvstore_put_float(FLASH_PARAM_RATE_PID_D_ALPHA_EL, flash_params_0001.rate_pid_d_alpha[EL]);
+
     //kvstore_put_float(FLASH_PARAM_GAIN_ACCELEROMETER_X, flash_params_0001.gain_accelerometer[X_AXIS]);
     //kvstore_put_float(FLASH_PARAM_GAIN_ACCELEROMETER_Y, flash_params_0001.gain_accelerometer[Y_AXIS]);
     //kvstore_put_float(FLASH_PARAM_GAIN_ACCELEROMETER_Z, flash_params_0001.gain_accelerometer[Z_AXIS]);
@@ -693,7 +707,6 @@ static void flash_migration_from_0001(void) {
     //kvstore_put_float(FLASH_PARAM_ALIGNMENT_ACCELEROMETER_Y, flash_params_0001.alignment_accelerometer[Y_AXIS]);
     //kvstore_put_float(FLASH_PARAM_ALIGNMENT_ACCELEROMETER_Z, flash_params_0001.alignment_accelerometer[Z_AXIS]);
 
-    kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, 1.0f);
     //kvstore_put_float(FLASH_PARAM_USE_CUSTOM_GAINS, flash_params_0001.use_custom_gains);
 
     /* Added parameters:

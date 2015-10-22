@@ -65,6 +65,7 @@ typedef struct {
 } keyvalue_t;
 
 void kvstore_init(void);
+void kvstore_load(void);
 int16_t kvstore_save(void);
 int16_t kvstore_reset(void);
 

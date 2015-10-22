@@ -27,6 +27,11 @@ void kvstore_init(void)
     kvstore_set_defaults();
 }
 
+void kvstore_load(void)
+{
+    // TODO: Load kvstore from flash
+}
+
 int16_t kvstore_save(void)
 {
     uint16_t key;
@@ -71,7 +76,8 @@ int16_t kvstore_save(void)
 }
 
 // Re-initialise the kvstore to all empty values and write to to flash
-int16_t kvstore_reset(void) {
+int16_t kvstore_reset(void)
+{
     int16_t result;
 
     kvstore_init();
@@ -80,7 +86,8 @@ int16_t kvstore_reset(void) {
     return result;
 }
 
-static void kvstore_set_defaults(void) {
+static void kvstore_set_defaults(void)
+{
     // GoPro charging is enabled by default
     kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, 1.0f);
 

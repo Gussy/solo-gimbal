@@ -6,6 +6,5 @@
 int erase_our_flash(void);
 int write_flash(void);
 int init_flash(void);
-Uint16 compute_flash_params_checksum(void);
 
 #endif /* FLASH_H_ */

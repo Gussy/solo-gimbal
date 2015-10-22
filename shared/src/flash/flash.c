@@ -73,11 +73,18 @@ int init_flash(void)
             // Run the flash migration operation
             flash_migration_run(current_flash_param_rev);
 
+            // Update the value of FLASH_PARAM_STRUCT_ID so this migration code is not run again
+            kvstore_put_uint16(FLASH_PARAM_STRUCT_ID, (LAST_FLASH_PARAM_STRUCT_ID + 1));
+
             // Save the kvstore
             kvstore_save();
 
             return 1;
         }
+	} else {
+	    // Load the kvstore if it already exists
+	    kvstore_load();
+	    return 1;
 	}
 
 	return -1;
