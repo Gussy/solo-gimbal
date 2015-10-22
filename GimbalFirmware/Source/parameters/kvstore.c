@@ -14,12 +14,17 @@ static uint16_t flash_buffer[WORDS_IN_FLASH_BUFFER];
 
 static kv_value_t kvstore[FLASH_PARAM_KEY_COUNT];
 
+static void kvstore_set_defaults(void);
+
 void kvstore_init(void)
 {
     uint16_t i;
     for(i = 0; i < FLASH_PARAM_KEY_COUNT; i++) {
         memset(&kvstore[i].as_bytes, 0, sizeof(kvstore[i].as_bytes));
     }
+
+    // Set the default values
+    kvstore_set_defaults();
 }
 
 int16_t kvstore_save(void)
@@ -63,6 +68,24 @@ int16_t kvstore_save(void)
     }
 
     return 1;
+}
+
+// Re-initialise the kvstore to all empty values and write to to flash
+int16_t kvstore_reset(void) {
+    int16_t result;
+
+    kvstore_init();
+    result = kvstore_save();
+
+    return result;
+}
+
+static void kvstore_set_defaults(void) {
+    // GoPro charging is enabled by default
+    kvstore_put_float(FLASH_PARAM_GOPRO_CHARGING_ENABLED, 1.0f);
+
+    // GoPro control is enabled by default
+    kvstore_put_float(FLASH_PARAM_GOPRO_CONTROL, 1.0f);
 }
 
 float kvstore_get_float(const flash_param_keys_t key)

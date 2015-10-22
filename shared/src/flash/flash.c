@@ -51,30 +51,6 @@ int erase_our_flash()
 	return 1;
 }
 
-int erase_param_flash()
-{
-    Uint16  Status;
-    Uint16  VersionHex;     // Version of the API in decimal encoded hex
-    EALLOW;
-    Flash_CPUScaleFactor = SCALE_FACTOR;
-    EDIS;
-
-    VersionHex = Flash_APIVersionHex();
-    if(VersionHex != 0x0100) {
-        // Unexpected API version
-        // Make a decision based on this info.
-        asm("    ESTOP0");
-    }
-
-    flash_csm_unlock();
-    Status = Flash_Erase(SECTORH, &FlashStatus);
-    if (Status != STATUS_SUCCESS) {
-        return -1;
-    }
-
-    return 1;
-}
-
 int write_flash(void)
 {
 	//TODO: remove usage of this function from codebase, once journaling is complete

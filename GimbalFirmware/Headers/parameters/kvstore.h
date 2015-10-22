@@ -66,6 +66,7 @@ typedef struct {
 
 void kvstore_init(void);
 int16_t kvstore_save(void);
+int16_t kvstore_reset(void);
 
 float kvstore_get_float(const flash_param_keys_t key);
 uint16_t kvstore_get_uint16(const flash_param_keys_t key);

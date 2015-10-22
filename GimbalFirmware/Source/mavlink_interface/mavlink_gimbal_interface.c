@@ -7,6 +7,7 @@
 #include "parameters/mavlink_parameter_interface.h"
 #include "parameters/load_axis_parms_state_machine.h"
 #include "parameters/flash_params.h"
+#include "parameters/kvstore.h"
 #include "mavlink_interface/mavlink_gimbal_interface.h"
 #include "motor/motor_drive_state_machine.h"
 #include "gopro/gopro_interface.h"
@@ -386,7 +387,7 @@ static void handle_full_reset_gimbal(void)
 
     // erase program and param flash
     erase_our_flash();
-    erase_param_flash();
+    kvstore_reset();
 
     // reset now
     watchdog_immediate_reset();
