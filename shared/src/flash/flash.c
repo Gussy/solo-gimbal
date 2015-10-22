@@ -133,7 +133,7 @@ int init_flash(void)
             flash_migration_run(current_flash_param_rev);
 
             // Save the kvstore
-            write_flash();
+            kvstore_save();
 
             return 1;
         }

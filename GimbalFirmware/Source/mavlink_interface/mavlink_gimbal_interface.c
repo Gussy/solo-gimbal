@@ -287,7 +287,7 @@ static void handle_gopro_get_request(mavlink_message_t* received_msg)
 	mavlink_gopro_get_request_t decoded_msg;
     mavlink_msg_gopro_get_request_decode(received_msg, &decoded_msg);
 
-    if(flash_params.gopro_enabled == 0.0f) {
+    if(kvstore_get_float(FLASH_PARAM_GOPRO_CONTROL) == 0.0f) {
         // Send a result of GP_CMD_STATUS_FAILURE
         mavlink_message_t set_response_msg;
         mavlink_msg_gopro_set_response_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &set_response_msg, decoded_msg.cmd_id, GP_CMD_STATUS_FAILURE);
@@ -310,7 +310,7 @@ static void handle_gopro_set_request(mavlink_message_t* received_msg)
 	mavlink_gopro_set_request_t decoded_msg;
     mavlink_msg_gopro_set_request_decode(received_msg, &decoded_msg);
 
-    if(flash_params.gopro_enabled == 0.0f) {
+    if(kvstore_get_float(FLASH_PARAM_GOPRO_CONTROL) == 0.0f) {
         // Send a result of GP_CMD_STATUS_FAILURE
         mavlink_message_t set_response_msg;
         mavlink_msg_gopro_set_response_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &set_response_msg, decoded_msg.cmd_id, GP_CMD_STATUS_FAILURE);
