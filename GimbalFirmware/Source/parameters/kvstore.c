@@ -29,7 +29,17 @@ void kvstore_init(void)
 
 void kvstore_load(void)
 {
-    // TODO: Load kvstore from flash
+    uint16_t i, key;
+
+    // Load the kvstore from flash into the flat uint16_t buffer
+    memcpy(&flash_buffer, (Uint16 *)PARAMS_START, sizeof(flash_buffer));
+
+    // Extract keys and values from the flat uint16_t buffer
+    for(i = 0; i < (WORDS_IN_FLASH_BUFFER / sizeof(keyvalue_t)); i++) {
+        key = flash_buffer[i + 0];
+        kvstore[key].as_words[0] = flash_buffer[key + 1];
+        kvstore[key].as_words[1] = flash_buffer[key + 2];
+    }
 }
 
 int16_t kvstore_save(void)
