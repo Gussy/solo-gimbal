@@ -12,10 +12,17 @@
 #define GP_H3P_MAX_PACKET        256
 #define GP_H3P_MAX_PAYLOAD       (GP_H3P_MAX_PACKET - 5)
 
+// a bit unclean, but use a free mavlink cmd id
+// to represent the Entire Camera Status command,
+// since we want to use this command internally,
+// but don't want to expose it in the mavlink interface
+#define GP_H3P_COMMAND_ENTIRE_CAM_STATUS    0xfe
+
 // Hero 3 related state
 typedef struct {
     bool gccb_version_queried;
     bool pending_recording_state;   // requested record state, latched on response from gopro
+    bool sd_card_inserted;
 } gp_h3p_t;
 
 // Hero 3+ packet formats
