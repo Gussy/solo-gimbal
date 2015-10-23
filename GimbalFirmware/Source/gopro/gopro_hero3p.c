@@ -191,10 +191,16 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
                 gp_pend_capture_mode(mode);
             } else {
                 gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
             }
         } break;
 
         case GOPRO_COMMAND_SHUTTER:
+            if (!h3p->sd_card_inserted) {
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
+            }
+
             c->cmd1 = 'S';
             c->cmd2 = 'H';
             c->payload[0] = request->mav.value[0];
