@@ -329,6 +329,38 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                             update_local_params_from_flash(md_parms);
                         }
                         break;
+
+                    case CAND_PID_GOPRO_SET_REQUEST:
+                        if (msg.extended_param_length <= sizeof(gp_can_mav_set_req_t) && GetBoardHWID() == EL) {
+                            gp_can_mav_set_req_t setreq;
+                            memcpy(setreq.bytes, msg.extended_param, msg.extended_param_length);
+                            gp_set_request(&setreq);
+                        }
+                        break;
+
+                    case CAND_PID_GOPRO_GET_REQUEST:
+                        if (msg.extended_param_length <= sizeof(gp_can_mav_get_req_t) && GetBoardHWID() == EL) {
+                            gp_can_mav_get_req_t req;
+                            memcpy(req.bytes, msg.extended_param, msg.extended_param_length);
+                            gp_get_request(&req, false);
+                        }
+                        break;
+
+                    case CAND_PID_GOPRO_GET_RESPONSE:
+                        if (msg.extended_param_length <= sizeof(gp_can_mav_get_rsp_t) && GetBoardHWID() == AZ) {
+                            gp_can_mav_get_rsp_t rsp;
+                            memcpy(rsp.bytes, msg.extended_param, msg.extended_param_length);
+                            send_mavlink_gopro_get_response(&rsp);
+                        }
+                        break;
+
+                    case CAND_PID_GOPRO_SET_RESPONSE:
+                        if (msg.extended_param_length <= sizeof(gp_can_mav_set_rsp_t) && GetBoardHWID() == AZ) {
+                            gp_can_mav_set_rsp_t rsp;
+                            memcpy(rsp.bytes, msg.extended_param, msg.extended_param_length);
+                            send_mavlink_gopro_set_response(&rsp);
+                        }
+                        break;
                 }
             } else {
                 // Not an extended parameter, parse normally
@@ -399,26 +431,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                 {
                 	GPHeartbeatStatus gp_heartbeat_state = (GPHeartbeatStatus)msg.param_response[msg.param_response_cnt - 1];
                     send_mavlink_gopro_heartbeat(gp_heartbeat_state);
-                }
-                break;
-
-                case CAND_PID_GOPRO_GET_RESPONSE:
-                {
-                	GPGetResponse gp_get_response;
-					Uint32 packed_param = msg.param_response[msg.param_response_cnt - 1];
-					gp_get_response.cmd_id = (packed_param >> 8) & 0x000000FF;
-					gp_get_response.value = (packed_param >> 0) & 0x000000FF;
-					send_mavlink_gopro_get_response(gp_get_response);
-                }
-                break;
-
-                case CAND_PID_GOPRO_SET_RESPONSE:
-                {
-                	GPSetResponse gp_set_response;
-                    Uint32 packed_param = msg.param_response[msg.param_response_cnt - 1];
-                    gp_set_response.cmd_id = (packed_param >> 8) & 0x000000FF;
-                    gp_set_response.result = (packed_param >> 0) & 0x000000FF;
-                    send_mavlink_gopro_set_response(gp_set_response);
                 }
                 break;
 

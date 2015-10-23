@@ -3,6 +3,7 @@
 
 #include "hardware/i2c.h"
 #include "gopro/gopro_hero_common.h"
+#include "gopro_mavlink_can.h"
 #include "PM_Sensorless-Settings.h"
 
 #include <stdbool.h>
@@ -53,25 +54,20 @@ typedef enum{
     GP_CAPTURE_MODE_UNKNOWN //= 99
 } GPCaptureMode;
 
-// XXX: what should this actually be?
-#define GP_MAX_RESP_LEN     32
-
 // represents a command/response transaction
 typedef struct {
-    GPRequestType reqtype;      // what kind of transaction is this
-    uint16_t mav_cmd;           // which msg was set/gotten (see GOPRO_COMMAND)
-    uint16_t status;            // was this set/get operation successful (see ...)
-    uint16_t payload[GP_MAX_RESP_LEN];  // response payload
-    uint16_t len;                       // response payload len
-    bool is_internal;           // determines if a response over MAVLink is warranted
+    GPRequestType reqtype;          // what kind of transaction is this
+    gp_can_mav_get_rsp_t response;  // get is superset of get/set
+    uint16_t len;                   // response payload len
+    bool is_internal;               // determines if a response over MAVLink is warranted
 } gp_transaction_t;
 
 // public interface
 void gp_init();
 void gp_fast_update();
 void gp_update();
-int gp_get_request(Uint8 cmd_id, bool txn_is_internal);
-int gp_set_request(GPSetRequest* request);
+int gp_get_request(const gp_can_mav_get_req_t *req, bool txn_is_internal);
+int gp_set_request(const gp_can_mav_set_req_t *req);
 GPHeartbeatStatus gp_get_heartbeat_status();
 void gp_enable_charging();
 void gp_disable_charging();

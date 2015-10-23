@@ -5,8 +5,9 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-bool gp_send_mav_get_response(uint8_t cmd_id, uint8_t value);
-bool gp_send_mav_set_response(uint8_t cmd_id, uint8_t result);
+#include "gopro_interface.h"
+
+bool gp_send_mav_can_response(const gp_transaction_t *t);
 
 // get and set state of bp_detect pin
 void gp_set_bp_detect_asserted_out(bool assert);

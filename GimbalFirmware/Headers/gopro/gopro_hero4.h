@@ -109,7 +109,7 @@ bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len);
 bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len);
 gp_h4_err_t gp_h4_handle_rx(gp_h4_t *h4, const gp_h4_pkt_t *p, gp_h4_pkt_t *rsp);
 
-bool gp_h4_produce_get_request(gp_h4_t *h4, Uint8 cmd_id, gp_h4_pkt_t *p);
-bool gp_h4_produce_set_request(gp_h4_t *h4, const GPSetRequest* request, gp_h4_pkt_t *p);
+bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p);
+bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t *request, gp_h4_pkt_t *p);
 
 #endif // _GOPRO_HERO4_H
