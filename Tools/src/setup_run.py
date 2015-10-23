@@ -233,7 +233,7 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
     setup_param.low_torque_mode(link, False)
 
     start_time = time.time()
-    if timeout is not None:
+    if timeout is not None and test == 'wobble':
         timeout = timeout + WOBBLE_TEST_ALIGNMENT_TIME
 
     # For align and wobble tests
@@ -327,9 +327,9 @@ def runTest(link, test, stopTestsCallback=None, eventCallback=None, reportCallba
         current_angle = Vector3(*Tvg.to_euler312())
 
         if test == 'run':
-            target.y = 0.4 * (sin(i * 12.5) - 1)
-            target.x = 0.2 * cos(i * 2.5)
-            target.z = 0.1 * cos(i * 0.5)
+            target.y = 1 * (sin(i * 0.1) - 1) + 0.5*sin(i*10)
+            target.x = 0.4 * cos(i * 1)
+            target.z = 0.3 * cos(i * 0.2)
             rate = 5 * (target - current_angle)
         elif test == 'align':
             rate = 5 * (target - current_angle)
