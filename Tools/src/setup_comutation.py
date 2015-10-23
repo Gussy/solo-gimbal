@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """
 Utility for loading firmware into the 3DR Gimbal.
