@@ -25,7 +25,7 @@ static void gp_on_txn_complete();
 static bool handle_rx_data(uint16_t *buf, uint16_t len);
 static bool gp_begin_cmd_send(uint16_t len);
 static bool gp_ready_for_cmd();
-static bool gp_request_capture_mode();
+static bool gp_poll_camera_state();
 static bool gp_handshake_complete();
 static GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status();
 static bool gp_is_valid_capture_mode(uint8_t mode);
@@ -73,7 +73,7 @@ typedef struct {
     GPModel model;
     GOPRO_CAPTURE_MODE capture_mode;
     GOPRO_CAPTURE_MODE pending_capture_mode;
-    uint16_t capture_mode_polling_counter;
+    uint16_t camera_poll_counter;       // periodically poll the camera for state changes, it doesn't send events
     bool recording;
 
     gp_h3p_t h3p;
@@ -109,7 +109,7 @@ void gp_reset()
     gp.power_status = GP_POWER_UNKNOWN;
     gp.capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN;
     gp.pending_capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN;
-    gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
+    gp.camera_poll_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
     gp.txn.response.mav.status = GP_CMD_STATUS_INCOMPLETE;
@@ -312,12 +312,26 @@ bool gp_request_power_on()
     return false;
 }
 
-bool gp_request_capture_mode()
+bool gp_poll_camera_state()
 {
+    /*
+     * Called from the update ticker.
+     *
+     * If a user manually changes the camera mode (or any other setting),
+     * the camera does not notify us, so we periodically poll for that state.
+     *
+     * On hero 3, we can grab all state in a single msg,
+     * on hero 4 we just get camera mode for now.
+     */
+
     if (gp_ready_for_cmd() && !gp_is_recording()) {
         gp_can_mav_get_req_t req;
-        req.mav.cmd_id = GOPRO_COMMAND_CAPTURE_MODE;
-        gp_get_request(&req, false);                  // not internal since currently there is no other method to notify when the capture mode changes, besides addressing a request
+        if (gp.model == GP_MODEL_HERO3P) {
+            req.mav.cmd_id = GP_H3P_COMMAND_ENTIRE_CAM_STATUS;
+        } else {
+            req.mav.cmd_id = GOPRO_COMMAND_CAPTURE_MODE;
+        }
+        gp_get_request(&req, true); // internal txn for our own consumption
         return true;
     }
 
@@ -525,10 +539,10 @@ void gp_update()
         }
 
         // request an update on GoPro's current capture mode, infrequently to avoid freezing the GoPro
-        if (gp.capture_mode_polling_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
-            gp.capture_mode_polling_counter = 0;
+        if (gp.camera_poll_counter++ >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS)) {
+            gp.camera_poll_counter = 0;
 
-            gp_request_capture_mode();
+            gp_poll_camera_state();
         }
     }
 

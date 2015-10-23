@@ -1,10 +1,14 @@
 #include "gopro_hero3p.h"
 #include "gopro_hero_common.h"
 #include "gopro_interface.h"
+#include "helpers/macros.h"
 
 #include <ctype.h>
 
 #include "mavlink_interface/gimbal_mavlink.h"
+
+// index of the start of photo info in the 'entire camera status' response
+#define SE_RSP_PHOTO_INFO_IDX   20
 
 typedef enum {
     H3P_CAPTURE_MODE_VIDEO      = 0,
@@ -21,8 +25,13 @@ static void gp_h3p_finalize_command(gp_h3p_cmd_t *c);
 
 void gp_h3p_init(gp_h3p_t *h3p)
 {
+    // ensure our little bit of cheating is OK,
+    // verify GP_H3P_COMMAND_ENTIRE_CAM_STATUS is not used in mavlink interface
+    STATIC_ASSERT(GP_H3P_COMMAND_ENTIRE_CAM_STATUS >= GOPRO_COMMAND_ENUM_END);
+
     h3p->gccb_version_queried = false;
     h3p->pending_recording_state = false;
+    h3p->sd_card_inserted = false;
 }
 
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
@@ -112,6 +121,11 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
         case GOPRO_COMMAND_FIELD_OF_VIEW:
             c->cmd1 = 'f';
             c->cmd2 = 'v';
+            break;
+
+        case GP_H3P_COMMAND_ENTIRE_CAM_STATUS:
+            c->cmd1 = 's';
+            c->cmd2 = 'e';
             break;
 
         default:
@@ -303,6 +317,18 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
             gp_set_recording_state(h3p->pending_recording_state);
         }
         break;
+
+    case GP_H3P_COMMAND_ENTIRE_CAM_STATUS:
+        /*
+         * Try to detect whether the SD card is inserted, so we can respond
+         * reasonably to shutter commands, as described above.
+         *
+         * Test whether the 2 fields of photo info are empty.
+         */
+        gp_set_capture_mode(rsp->payload[0]);
+        const uint8_t empty[] = { 0xff, 0xff, 0xff, 0xff };
+        h3p->sd_card_inserted = memcmp(&rsp->payload[SE_RSP_PHOTO_INFO_IDX], empty, sizeof empty) != 0;
+        break;
     }
 
     gp_set_transaction_result(&rsp->payload[0], 1, (GPCmdStatus)rsp->status);
@@ -350,4 +376,3 @@ void gp_h3p_finalize_command(gp_h3p_cmd_t *c)
 void gp_h3p_sanitize_buf_len(uint16_t *buf) { // TODO: inline?
     buf[0] &= 0x7f;     // remove most significant bit representing sender id (camera or BacPac)
 }
-
