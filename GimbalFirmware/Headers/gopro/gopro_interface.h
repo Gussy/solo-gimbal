@@ -34,13 +34,6 @@ typedef enum {
     GP_POWER_WAIT
 } GPPowerStatus;
 
-typedef enum {
-    GP_HEARTBEAT_DISCONNECTED = 0,
-    GP_HEARTBEAT_INCOMPATIBLE = 1,
-    GP_HEARTBEAT_CONNECTED = 2,
-    GP_HEARTBEAT_RECORDING = 3
-} GPHeartbeatStatus;
-
 typedef enum{
     GP_MODEL_HERO3P,
     GP_MODEL_HERO4,
@@ -61,7 +54,7 @@ void gp_fast_update();
 void gp_update();
 int gp_get_request(const gp_can_mav_get_req_t *req, bool txn_is_internal);
 int gp_set_request(const gp_can_mav_set_req_t *req);
-GPHeartbeatStatus gp_get_heartbeat_status();
+void gp_get_heartbeat(gp_can_mav_heartbeat_t *hb);
 void gp_enable_charging();
 void gp_disable_charging();
 

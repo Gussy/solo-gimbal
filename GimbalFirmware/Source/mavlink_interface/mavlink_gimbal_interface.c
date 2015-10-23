@@ -459,13 +459,15 @@ void send_cmd_long_ack(uint16_t cmd_id, uint8_t result)
     send_mavlink_message(&msg);
 }
 
-void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status)
+void send_mavlink_gopro_heartbeat(const gp_can_mav_heartbeat_t *hb)
 {
     mavlink_message_t gopro_heartbeat_msg;
     mavlink_msg_gopro_heartbeat_pack(gimbal_sysid,
                                     MAV_COMP_ID_GIMBAL,
                                     &gopro_heartbeat_msg,
-                                    (uint8_t)status);
+                                    hb->mav.hb_status,
+                                    hb->mav.capture_mode,
+                                    hb->mav.flags);
     send_mavlink_message(&gopro_heartbeat_msg);
 }
 

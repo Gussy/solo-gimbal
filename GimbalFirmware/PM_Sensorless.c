@@ -455,7 +455,9 @@ static void send_can_heartbeat(void)
 
 static void send_gp_heartbeat(void) {
     if (board_hw_id == EL) {
-        cand_tx_response(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, (uint32_t)gp_get_heartbeat_status());
+        gp_can_mav_heartbeat_t hb;
+        gp_get_heartbeat(&hb);
+        cand_tx_extended_param(CAND_ID_AZ, CAND_PID_GOPRO_HEARTBEAT, hb.bytes, sizeof(hb.bytes));
     }
 }
 

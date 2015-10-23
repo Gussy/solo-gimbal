@@ -16,11 +16,11 @@ extern "C" {
 // MESSAGE LENGTHS AND CRCS
 
 #ifndef MAVLINK_MESSAGE_LENGTHS
-#define MAVLINK_MESSAGE_LENGTHS {9, 31, 12, 0, 14, 28, 3, 32, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 20, 2, 25, 23, 30, 101, 22, 26, 16, 14, 28, 32, 28, 28, 22, 22, 21, 6, 6, 37, 4, 4, 2, 2, 4, 2, 2, 3, 13, 12, 37, 0, 0, 0, 27, 25, 0, 0, 0, 0, 0, 68, 26, 185, 229, 42, 6, 4, 0, 11, 18, 0, 0, 37, 20, 35, 33, 3, 0, 0, 0, 22, 39, 37, 53, 51, 53, 51, 0, 28, 56, 42, 33, 0, 0, 0, 0, 0, 0, 0, 26, 32, 32, 20, 32, 62, 44, 64, 84, 9, 254, 16, 12, 36, 44, 64, 22, 6, 14, 12, 97, 2, 2, 113, 35, 6, 79, 35, 35, 22, 13, 255, 14, 18, 43, 8, 22, 14, 36, 43, 41, 207, 7, 0, 0, 0, 0, 36, 60, 14, 42, 8, 4, 12, 15, 13, 6, 15, 14, 0, 12, 3, 8, 28, 44, 3, 9, 22, 12, 18, 34, 66, 98, 8, 48, 19, 3, 20, 24, 29, 45, 4, 40, 2, 0, 0, 29, 0, 0, 0, 0, 27, 44, 22, 25, 0, 0, 0, 0, 0, 42, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 1, 3, 6, 7, 2, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 254, 36, 30, 18, 18, 51, 9, 0}
+#define MAVLINK_MESSAGE_LENGTHS {9, 31, 12, 0, 14, 28, 3, 32, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 20, 2, 25, 23, 30, 101, 22, 26, 16, 14, 28, 32, 28, 28, 22, 22, 21, 6, 6, 37, 4, 4, 2, 2, 4, 2, 2, 3, 13, 12, 37, 0, 0, 0, 27, 25, 0, 0, 0, 0, 0, 68, 26, 185, 229, 42, 6, 4, 0, 11, 18, 0, 0, 37, 20, 35, 33, 3, 0, 0, 0, 22, 39, 37, 53, 51, 53, 51, 0, 28, 56, 42, 33, 0, 0, 0, 0, 0, 0, 0, 26, 32, 32, 20, 32, 62, 44, 64, 84, 9, 254, 16, 12, 36, 44, 64, 22, 6, 14, 12, 97, 2, 2, 113, 35, 6, 79, 35, 35, 22, 13, 255, 14, 18, 43, 8, 22, 14, 36, 43, 41, 207, 7, 0, 0, 0, 0, 36, 60, 14, 42, 8, 4, 12, 15, 13, 6, 15, 14, 0, 12, 3, 8, 28, 44, 3, 9, 22, 12, 18, 34, 66, 98, 8, 48, 19, 3, 20, 24, 29, 45, 4, 40, 2, 0, 0, 29, 0, 0, 0, 0, 27, 44, 22, 25, 0, 0, 0, 0, 0, 42, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 3, 3, 6, 7, 2, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 254, 36, 30, 18, 18, 51, 9, 0}
 #endif
 
 #ifndef MAVLINK_MESSAGE_CRCS
-#define MAVLINK_MESSAGE_CRCS {50, 124, 137, 0, 237, 217, 104, 119, 0, 0, 0, 89, 0, 0, 0, 0, 0, 0, 0, 0, 214, 159, 220, 168, 24, 23, 170, 144, 67, 115, 39, 246, 185, 104, 237, 244, 222, 212, 9, 254, 230, 28, 28, 132, 221, 232, 11, 153, 41, 39, 78, 0, 0, 0, 15, 3, 0, 0, 0, 0, 0, 153, 183, 51, 59, 118, 148, 21, 0, 243, 124, 0, 0, 38, 20, 158, 152, 143, 0, 0, 0, 106, 49, 22, 143, 140, 5, 150, 0, 231, 183, 63, 54, 0, 0, 0, 0, 0, 0, 0, 175, 102, 158, 208, 56, 93, 138, 108, 32, 185, 84, 34, 174, 124, 237, 4, 76, 128, 56, 116, 134, 237, 203, 250, 87, 203, 220, 25, 226, 46, 29, 223, 85, 6, 229, 203, 1, 195, 109, 168, 181, 34, 0, 0, 0, 0, 0, 154, 178, 255, 134, 219, 208, 188, 84, 22, 19, 21, 134, 0, 78, 68, 189, 127, 154, 21, 21, 144, 1, 234, 73, 181, 22, 83, 167, 138, 234, 240, 47, 189, 52, 174, 229, 85, 0, 0, 72, 0, 0, 0, 0, 92, 36, 71, 98, 0, 0, 0, 0, 0, 134, 205, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 69, 77, 50, 202, 17, 162, 0, 0, 0, 0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 204, 49, 170, 44, 83, 46, 0}
+#define MAVLINK_MESSAGE_CRCS {50, 124, 137, 0, 237, 217, 104, 119, 0, 0, 0, 89, 0, 0, 0, 0, 0, 0, 0, 0, 214, 159, 220, 168, 24, 23, 170, 144, 67, 115, 39, 246, 185, 104, 237, 244, 222, 212, 9, 254, 230, 28, 28, 132, 221, 232, 11, 153, 41, 39, 78, 0, 0, 0, 15, 3, 0, 0, 0, 0, 0, 153, 183, 51, 59, 118, 148, 21, 0, 243, 124, 0, 0, 38, 20, 158, 152, 143, 0, 0, 0, 106, 49, 22, 143, 140, 5, 150, 0, 231, 183, 63, 54, 0, 0, 0, 0, 0, 0, 0, 175, 102, 158, 208, 56, 93, 138, 108, 32, 185, 84, 34, 174, 124, 237, 4, 76, 128, 56, 116, 134, 237, 203, 250, 87, 203, 220, 25, 226, 46, 29, 223, 85, 6, 229, 203, 1, 195, 109, 168, 181, 34, 0, 0, 0, 0, 0, 154, 178, 255, 134, 219, 208, 188, 84, 22, 19, 21, 134, 0, 78, 68, 189, 127, 154, 21, 21, 144, 1, 234, 73, 181, 22, 83, 167, 138, 234, 240, 47, 189, 52, 174, 229, 85, 0, 0, 72, 0, 0, 0, 0, 92, 36, 71, 98, 0, 0, 0, 0, 0, 134, 205, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 69, 101, 50, 202, 17, 162, 0, 0, 0, 0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 204, 49, 170, 44, 83, 46, 0}
 #endif
 
 #ifndef MAVLINK_MESSAGE_INFO
@@ -280,9 +280,19 @@ typedef enum GOPRO_HEARTBEAT_STATUS
 	GOPRO_HEARTBEAT_STATUS_DISCONNECTED=0, /* No GoPro connected | */
 	GOPRO_HEARTBEAT_STATUS_INCOMPATIBLE=1, /* The detected GoPro is not HeroBus compatible | */
 	GOPRO_HEARTBEAT_STATUS_CONNECTED=2, /* A HeroBus compatible GoPro is connected | */
-	GOPRO_HEARTBEAT_STATUS_RECORDING=3, /* A HeroBus compatible GoPro is connected and recording | */
+	GOPRO_HEARTBEAT_STATUS_ERROR=3, /* An unrecoverable error was encountered with the connected GoPro, it may require a power cycle | */
 	GOPRO_HEARTBEAT_STATUS_ENUM_END=4, /*  | */
 } GOPRO_HEARTBEAT_STATUS;
+#endif
+
+/** @brief  */
+#ifndef HAVE_ENUM_GOPRO_HEARTBEAT_FLAGS
+#define HAVE_ENUM_GOPRO_HEARTBEAT_FLAGS
+typedef enum GOPRO_HEARTBEAT_FLAGS
+{
+	GOPRO_FLAG_RECORDING=1, /* GoPro is currently recording | */
+	GOPRO_HEARTBEAT_FLAGS_ENUM_END=2, /*  | */
+} GOPRO_HEARTBEAT_FLAGS;
 #endif
 
 /** @brief  */
@@ -309,8 +319,7 @@ typedef enum GOPRO_COMMAND
 	GOPRO_COMMAND_RESOLUTION=5, /* (___/Set) | */
 	GOPRO_COMMAND_FRAME_RATE=6, /* (___/Set) | */
 	GOPRO_COMMAND_FIELD_OF_VIEW=7, /* (___/Set) | */
-	GOPRO_COMMAND_REQUEST_FAILED=254, /* (Get/___) | */
-	GOPRO_COMMAND_ENUM_END=255, /*  | */
+	GOPRO_COMMAND_ENUM_END=8, /*  | */
 } GOPRO_COMMAND;
 #endif
 
@@ -319,15 +328,15 @@ typedef enum GOPRO_COMMAND
 #define HAVE_ENUM_GOPRO_CAPTURE_MODE
 typedef enum GOPRO_CAPTURE_MODE
 {
-	GOPRO_CAPTURE_MODE_UNKNOWN=0, /* Mode not yet known | */
-	GOPRO_CAPTURE_MODE_VIDEO=1, /* Video mode | */
-	GOPRO_CAPTURE_MODE_PHOTO=2, /* Photo mode | */
-	GOPRO_CAPTURE_MODE_BURST=3, /* Burst mode, hero 3 only | */
-	GOPRO_CAPTURE_MODE_TIME_LAPSE=4, /* Time lapse mode, hero 3 only | */
-	GOPRO_CAPTURE_MODE_MULTI_SHOT=5, /* Multi shot mode, hero 4 only | */
-	GOPRO_CAPTURE_MODE_PLAYBACK=6, /* Playback mode, hero 4 only, silver only except when LCD or HDMI is connected to black | */
-	GOPRO_CAPTURE_MODE_SETUP=7, /* Playback mode, hero 4 only | */
-	GOPRO_CAPTURE_MODE_ENUM_END=8, /*  | */
+	GOPRO_CAPTURE_MODE_VIDEO=0, /* Video mode | */
+	GOPRO_CAPTURE_MODE_PHOTO=1, /* Photo mode | */
+	GOPRO_CAPTURE_MODE_BURST=2, /* Burst mode, hero 3 only | */
+	GOPRO_CAPTURE_MODE_TIME_LAPSE=3, /* Time lapse mode, hero 3 only | */
+	GOPRO_CAPTURE_MODE_MULTI_SHOT=4, /* Multi shot mode, hero 4 only | */
+	GOPRO_CAPTURE_MODE_PLAYBACK=5, /* Playback mode, hero 4 only, silver only except when LCD or HDMI is connected to black | */
+	GOPRO_CAPTURE_MODE_SETUP=6, /* Playback mode, hero 4 only | */
+	GOPRO_CAPTURE_MODE_UNKNOWN=255, /* Mode not yet known | */
+	GOPRO_CAPTURE_MODE_ENUM_END=256, /*  | */
 } GOPRO_CAPTURE_MODE;
 #endif
 
@@ -341,13 +350,15 @@ typedef enum GOPRO_RESOLUTION
 	GOPRO_RESOLUTION_960p=2, /* 1280 x 960 (960p) | */
 	GOPRO_RESOLUTION_1080p=3, /* 1920 x 1080 (1080p) | */
 	GOPRO_RESOLUTION_1440p=4, /* 1920 x 1440 (1440p) | */
-	GOPRO_RESOLUTION_2_7k_16_9=5, /* 2704 x 1524 (2.7k-16:9) | */
-	GOPRO_RESOLUTION_4k_16_9=6, /* 3840 x 2160 (4k-16:9) | */
-	GOPRO_RESOLUTION_2_7k_17_9=7, /* 2704 x 1440 (2.7k-17:9) | */
-	GOPRO_RESOLUTION_4k_17_9=8, /* 4096 x 2160 (4k-17:9) | */
-	GOPRO_RESOLUTION_1080p_SUPERVIEW=9, /* 1920 x 1080 (1080p-SuperView) | */
+	GOPRO_RESOLUTION_2_7k_17_9=5, /* 2704 x 1440 (2.7k-17:9) | */
+	GOPRO_RESOLUTION_2_7k_16_9=6, /* 2704 x 1524 (2.7k-16:9) | */
+	GOPRO_RESOLUTION_2_7k_4_3=7, /* 2704 x 2028 (2.7k-4:3) | */
+	GOPRO_RESOLUTION_4k_16_9=8, /* 3840 x 2160 (4k-16:9) | */
+	GOPRO_RESOLUTION_4k_17_9=9, /* 4096 x 2160 (4k-17:9) | */
 	GOPRO_RESOLUTION_720p_SUPERVIEW=10, /* 1280 x 720 (720p-SuperView) | */
-	GOPRO_RESOLUTION_ENUM_END=11, /*  | */
+	GOPRO_RESOLUTION_1080p_SUPERVIEW=11, /* 1920 x 1080 (1080p-SuperView) | */
+	GOPRO_RESOLUTION_4k_SUPERVIEW=12, /* 3840 x 2160 (4k-SuperView) | */
+	GOPRO_RESOLUTION_ENUM_END=13, /*  | */
 } GOPRO_RESOLUTION;
 #endif
 
@@ -364,11 +375,13 @@ typedef enum GOPRO_FRAME_RATE
 	GOPRO_FRAME_RATE_48=5, /* 48 FPS | */
 	GOPRO_FRAME_RATE_50=6, /* 50 FPS | */
 	GOPRO_FRAME_RATE_60=7, /* 60 FPS | */
-	GOPRO_FRAME_RATE_100=8, /* 100 FPS | */
-	GOPRO_FRAME_RATE_120=9, /* 120 FPS | */
-	GOPRO_FRAME_RATE_240=10, /* 240 FPS | */
-	GOPRO_FRAME_RATE_12_5=11, /* 12.5 FPS | */
-	GOPRO_FRAME_RATE_ENUM_END=12, /*  | */
+	GOPRO_FRAME_RATE_80=8, /* 80 FPS | */
+	GOPRO_FRAME_RATE_90=9, /* 90 FPS | */
+	GOPRO_FRAME_RATE_100=10, /* 100 FPS | */
+	GOPRO_FRAME_RATE_120=11, /* 120 FPS | */
+	GOPRO_FRAME_RATE_240=12, /* 240 FPS | */
+	GOPRO_FRAME_RATE_12_5=13, /* 12.5 FPS | */
+	GOPRO_FRAME_RATE_ENUM_END=14, /*  | */
 } GOPRO_FRAME_RATE;
 #endif
 

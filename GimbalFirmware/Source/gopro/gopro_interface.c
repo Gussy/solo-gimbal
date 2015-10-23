@@ -27,6 +27,7 @@ static bool gp_begin_cmd_send(uint16_t len);
 static bool gp_ready_for_cmd();
 static bool gp_request_capture_mode();
 static bool gp_handshake_complete();
+static GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status();
 static bool gp_is_valid_capture_mode(uint8_t mode);
 static bool gp_is_recording();
 static void gp_write_eeprom();
@@ -246,30 +247,40 @@ bool gp_handshake_complete()
     }
 }
 
-GPHeartbeatStatus gp_get_heartbeat_status()
+void gp_get_heartbeat(gp_can_mav_heartbeat_t *hb)
+{
+    /*
+     * Populate the given heartbeat struct with
+     * the current state.
+     */
+
+    hb->mav.hb_status = gp_get_heartbeat_status();
+    hb->mav.capture_mode = gp_capture_mode();
+    hb->mav.flags = 0;
+    if (gp_is_recording()) {
+        hb->mav.flags |= GOPRO_FLAG_RECORDING;
+    }
+}
+
+GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status()
 {
     // A GoPro is connected, ready for action and had queried the gccb version
     if (gp_get_power_status() == GP_POWER_ON && gp_handshake_complete() && !init_timed_out()) {
-	    // The connected state is overloaded with the recording state
-        if (gp_is_recording()) {
-            return GP_HEARTBEAT_RECORDING;
-        } else {
-            return GP_HEARTBEAT_CONNECTED;
-        }
+        return GOPRO_HEARTBEAT_STATUS_CONNECTED;
 	}
 
 	// A GoPro is not in a "connected" state, but we can see something is plugged in
 	if (gp_get_power_status() != GP_POWER_ON && gp_get_von_asserted_in() && init_timed_out()) {
-	    return GP_HEARTBEAT_INCOMPATIBLE;
+        return GOPRO_HEARTBEAT_STATUS_INCOMPATIBLE;
 	}
 
 	// A GoPro is connected, but it's not talking to us, or we're not talking to it
 	if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
-	    return GP_HEARTBEAT_INCOMPATIBLE;
+        return GOPRO_HEARTBEAT_STATUS_INCOMPATIBLE;
 	}
 
 	// Either a GoPro is no connected, or there is no electrical way of detecting it
-	return GP_HEARTBEAT_DISCONNECTED;
+    return GOPRO_HEARTBEAT_STATUS_DISCONNECTED;
 }
 
 bool gp_request_power_on()

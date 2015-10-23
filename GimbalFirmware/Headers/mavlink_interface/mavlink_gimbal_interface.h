@@ -53,7 +53,7 @@ void send_mavlink_heartbeat(MAV_STATE mav_state, MAV_MODE_GIMBAL mav_mode);
 void send_mavlink_gimbal_feedback();
 void send_mavlink_torque_cmd_feedback(int16 az_torque_cmd, int16 el_torque_cmd, int16 rl_torque_cmd);
 void send_mavlink_debug_data(DebugData* debug_data);
-void send_mavlink_gopro_heartbeat(GPHeartbeatStatus status);
+void send_mavlink_gopro_heartbeat(const gp_can_mav_heartbeat_t *hb);
 void send_mavlink_gopro_get_response(const gp_can_mav_get_rsp_t *rsp);
 void send_mavlink_gopro_set_response(const gp_can_mav_set_rsp_t *rsp);
 void send_mavlink_axis_error(CAND_DestinationID axis, CAND_FaultCode fault_code, CAND_FaultType fault_type);

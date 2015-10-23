@@ -53,7 +53,6 @@ typedef enum  {
     // One Byte Parameters
     CAND_PID_2_BYTE_CUTOFF,
     CAND_PID_BIT,
-	CAND_PID_GOPRO_HEARTBEAT,
     CAND_PID_EXTENDED,
 
     CAND_PID_LAST
@@ -82,6 +81,7 @@ typedef enum {
     CAND_PID_GOPRO_SET_REQUEST,
     CAND_PID_GOPRO_SET_RESPONSE,
     CAND_PID_GOPRO_GET_REQUEST,
+    CAND_PID_GOPRO_HEARTBEAT
 } CAND_ExtendedParameterID;
 
 #define CAND_DIR_RESPONSE   0
