@@ -58,7 +58,6 @@ typedef union {
     float as_float;
     uint16_t as_words[2];
     uint32_t as_dword;
-    uint8_t as_bytes[4];
 } kv_value_t;
 
 typedef struct {

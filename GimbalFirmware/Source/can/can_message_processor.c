@@ -248,33 +248,29 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                                 CAND_DestinationID sender_id = (CAND_DestinationID)msg.extended_param[2];
                                 kv_value_t value_to_send = kvstore_get_value((flash_param_keys_t)key_to_send);
 
-                                /* Packet format is as follows:
-                                * byte:0...1   - uint8_t key[2]
-                                * byte:2...5   - uint8_t value[4]
-                                */
-
                                 uint8_t params[7];
                                 params[0] = msg.extended_param[0];
                                 params[1] = msg.extended_param[1];
-                                params[2] = value_to_send.as_bytes[0];
-                                params[3] = value_to_send.as_bytes[1];
-                                params[4] = value_to_send.as_bytes[2];
-                                params[5] = value_to_send.as_bytes[3];
+                                params[2] = ((Uint32)value_to_send.as_dword >> 24) & 0x000000FF;
+                                params[3] = ((Uint32)value_to_send.as_dword >> 16) & 0x000000FF;
+                                params[4] = ((Uint32)value_to_send.as_dword >>  8) & 0x000000FF;
+                                params[5] = ((Uint32)value_to_send.as_dword >>  0) & 0x000000FF;
 
                                 cand_tx_extended_param(sender_id, CAND_EPID_KVSTORE_LOAD, params, ARRAY_LENGTH(params));
                             } else { // This means the parameter was a response
-                                // First make sure this isn't data we've already received, and if not, load it into our copy of the flash params struct
-                                uint16_t received_key = ((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF);
-                                if (load_ap_state_info->current_key == received_key && received_key <= load_ap_state_info->total_keys_to_load) {
-                                    kv_value_t recevied_value;
-                                    recevied_value.as_bytes[0] = msg.extended_param[2];
-                                    recevied_value.as_bytes[0] = msg.extended_param[3];
-                                    recevied_value.as_bytes[0] = msg.extended_param[4];
-                                    recevied_value.as_bytes[0] = msg.extended_param[5];
+                                flash_param_keys_t received_key = (flash_param_keys_t)(((((Uint16)msg.extended_param[0]) >> 8) & 0x00FF) | (((Uint16)msg.extended_param[1]) & 0x00FF));
+                                if (load_ap_state_info->current_key == received_key) {
 
-                                    kvstore_put_value((flash_param_keys_t)received_key, recevied_value);
+                                    kv_value_t received_value;
+                                    received_value.as_dword = 0;
+                                    received_value.as_dword |= ((Uint32)msg.extended_param[2] << 24) & 0xFF000000;
+                                    received_value.as_dword |= ((Uint32)msg.extended_param[3] << 16) & 0x00FF0000;
+                                    received_value.as_dword |= ((Uint32)msg.extended_param[4] <<  8) & 0x0000FF00;
+                                    received_value.as_dword |= ((Uint32)msg.extended_param[5] <<  0) & 0x000000FF;
 
-                                    load_ap_state_info->current_key++;
+                                    kvstore_put_value(received_key, received_value);
+
+                                    load_ap_state_info->current_key = (uint16_t)received_key + 1;
                                 }
 
                                 // If we have received all of the params, preload the request_retry_counter to ask for the checksum immediately on the next cycle

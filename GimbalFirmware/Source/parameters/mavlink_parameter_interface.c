@@ -359,26 +359,26 @@ void handle_param_set(mavlink_message_t* received_msg, MotorDriveParms* md_parms
                     IntOrFloat float_converter;
                     Uint8 payload[5];
 
+                    // Special case K_RATE configuration, since it can be either volatile or non-volatile
                     if (param_found == MAVLINK_GIMBAL_PARAM_GMB_K_RATE) {
-                        // Special case K_RATE configuration, since it can be either volatile or non-volatile
                         float kvstore_cust_gains = kvstore_get_float(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].kvstore_key);
 
                         // K_RATE is non-volatile if CUST_GAINS is 0.0 in the key-value store
                         if(kvstore_cust_gains == 0.0f) {
-                            kvstore_put_float(param->kvstore_key, decoded_msg.param_value);
+                            param->param_type = GIMBAL_PARAM_NON_VOLATILE;
                         } else {
-                            *(param->float_data_ptr) = decoded_msg.param_value;
-                        }
-                    } else {
-                        float_converter.float_val = decoded_msg.param_value;
-                        if(param->param_type == GIMBAL_PARAM_NON_VOLATILE) {
-                            kvstore_put_float(param->kvstore_key, decoded_msg.param_value);
-                        } else {
-                            *(param->float_data_ptr) = decoded_msg.param_value;
+                            param->param_type = GIMBAL_PARAM_VOLATILE;
                         }
                     }
 
+                    if(param->param_type == GIMBAL_PARAM_NON_VOLATILE) {
+                        kvstore_put_float(param->kvstore_key, decoded_msg.param_value);
+                    } else {
+                        *(param->float_data_ptr) = decoded_msg.param_value;
+                    }
+
                     // Send the param out over CAN to the other two boards
+                    float_converter.float_val = decoded_msg.param_value;
                     payload[0] = param_found;
                     payload[1] = (float_converter.uint32_val >> 24) & 0x000000FF;
                     payload[2] = (float_converter.uint32_val >> 16) & 0x000000FF;
@@ -424,15 +424,15 @@ void handle_param_read(mavlink_message_t* received_msg)
     }
 }
 
-void send_gimbal_param(int param_num)
+void send_gimbal_param(uint16_t param_num)
 {
-    GimbalMavlinkParameter* param = &(gimbal_params[param_num]);
+    GimbalMavlinkParameter* param = &gimbal_params[param_num];
 
-    static mavlink_message_t param_msg;
+    mavlink_message_t param_msg;
     float param_val;
 
+    // Special case K_RATE configuration, since it can be either volatile or non-volatile
     if (param_num == MAVLINK_GIMBAL_PARAM_GMB_K_RATE) {
-        // Special case K_RATE configuration, since it can be either volatile or non-volatile
         float kvstore_cust_gains = kvstore_get_float(gimbal_params[MAVLINK_GIMBAL_PARAM_GMB_CUST_GAINS].kvstore_key);
 
         // K_RATE is non-volatile if CUST_GAINS is 0.0 in the key-value store
@@ -449,7 +449,8 @@ void send_gimbal_param(int param_num)
         param_val = *(param->float_data_ptr);
     }
 
-    mavlink_msg_param_value_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &param_msg, param->param_id, param_val, param->param_type, MAVLINK_GIMBAL_PARAM_MAX, param_num);
+    // All mavlink parameters are MAV_PARAM_TYPE_REAL32
+    mavlink_msg_param_value_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &param_msg, param->param_id, param_val, MAV_PARAM_TYPE_REAL32, MAVLINK_GIMBAL_PARAM_MAX, param_num);
     send_mavlink_message(&param_msg);
 }
 

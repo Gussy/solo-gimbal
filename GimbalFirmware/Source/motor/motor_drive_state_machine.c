@@ -94,8 +94,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             // Run the load init parms state machine to sequence through requesting the axis parms
             LoadAxisParmsStateMachine(load_ap_state_info);
 
-            // If we've completed requesting and receiving the params from AZ,
-            // we can continue with our init sequence
+            // If we've completed requesting and receiving the params from AZ, we can continue with our init sequence
             if (load_ap_state_info->load_complete) {
                 update_local_params_from_kvstore(md_parms);
 

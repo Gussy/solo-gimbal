@@ -54,8 +54,7 @@ int erase_our_flash()
 int write_flash(void)
 {
 	//TODO: remove usage of this function from codebase, once journaling is complete
-    kvstore_save();
-    return 1;
+    return kvstore_save();
 }
 
 int init_flash(void)

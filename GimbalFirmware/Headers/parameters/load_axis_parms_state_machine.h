@@ -18,7 +18,6 @@ typedef struct {
     uint16_t request_retry_counter;
 } LoadAxisParmsStateInfo;
 
-void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info);
 void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* init_parms_state_info);
 
 #endif /* INIT_AXIS_PARMS_STATE_MACHINE_H_ */

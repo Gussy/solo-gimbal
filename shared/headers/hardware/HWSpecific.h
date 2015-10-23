@@ -16,13 +16,6 @@ typedef enum {
     Y_AXIS,
     Z_AXIS
 } GyroAxis;
-
-extern float AxisCalibrationSlopes[AXIS_CNT];
-extern float AxisCalibrationIntercepts[AXIS_CNT];
-extern float AxisTorqueLoopKp[AXIS_CNT];
-extern float AxisTorqueLoopKi[AXIS_CNT];
-extern float AxisTorqueLoopKd[AXIS_CNT];
-
 #endif
 
 #endif /* HWSPECIFIC_H_ */

@@ -7,20 +7,13 @@
 #include "can/cb.h"
 #include "PM_Sensorless-Settings.h"
 
-void InitAxisParmsLoader(LoadAxisParmsStateInfo* load_parms_state_info)
-{
-	load_parms_state_info->total_keys_to_load = FLASH_PARAM_KEY_COUNT;
-	load_parms_state_info->current_key = 0;
-	load_parms_state_info->current_request_key = 0;
-}
-
 void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 {
-    // Step 1 - kvstore transmitting
+    // Step 1 - kvstore requesting
 	if (load_parms_state_info->current_key < load_parms_state_info->total_keys_to_load) {
 		if (load_parms_state_info->current_key != load_parms_state_info->current_request_key) {
 			// We've received the last batch of param data that we requested, so request the next batch
-			load_parms_state_info->current_request_key++;
+			load_parms_state_info->current_request_key = load_parms_state_info->current_key;
 
 			// Pre-load the retry counter so we immediately ask for the next batch of param data
             load_parms_state_info->request_retry_counter = REQUEST_RETRY_PERIOD;
@@ -30,8 +23,8 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
         if (load_parms_state_info->request_retry_counter++ >= REQUEST_RETRY_PERIOD) {
             // Send a request for the key and value
             uint8_t params[3];
-            params[0] = (load_parms_state_info->current_key >> 8) & 0x00FF;
-            params[1] = (load_parms_state_info->current_key & 0x00FF);
+            params[0] = (load_parms_state_info->current_request_key >> 8) & 0x00FF;
+            params[1] = (load_parms_state_info->current_request_key & 0x00FF);
             params[2] = GetBoardHWID();
             cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_KVSTORE_LOAD, params, ARRAY_LENGTH(params));
 

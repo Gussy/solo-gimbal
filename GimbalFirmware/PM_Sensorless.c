@@ -117,8 +117,8 @@ LoadAxisParmsStateInfo load_ap_state_info = {
     .load_complete = false,
 	.current_key = 0,
     .current_request_key = 0,
-	.total_keys_to_load = 0,
-    .request_retry_counter = REQUEST_RETRY_PERIOD,
+	.total_keys_to_load = FLASH_PARAM_KEY_COUNT,
+    .request_retry_counter = REQUEST_RETRY_PERIOD, // Pre-load this counter so it overflows on the first state cycle
 	.header_received = false
 };
 
@@ -228,10 +228,6 @@ void main(void)
 
 	init_param_set(control_board_parms.param_set);
 
-	// Only El and Roll load parameters over CAN
-	if ((board_hw_id == EL) || (board_hw_id == ROLL)) {
-	    InitAxisParmsLoader(&load_ap_state_info);
-	}
     timer_init();
     scheduler_init(scheduled_tasks, sizeof(scheduled_tasks)/sizeof(struct SchedTask));
 

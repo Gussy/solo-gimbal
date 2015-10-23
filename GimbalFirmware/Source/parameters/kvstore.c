@@ -9,9 +9,10 @@
 static FLASH_ST flash_status;
 
 #define KVSTORE_HEADER_WORDS sizeof(kvstore_header_t)
+#define KVSTORE_KV_WORDS sizeof(keyvalue_t)
 
 // Buffer used for calculating flash checksums
-#define WORDS_IN_FLASH_BUFFER (KVSTORE_HEADER_WORDS + (FLASH_PARAM_KEY_COUNT * sizeof(keyvalue_t)))
+#define WORDS_IN_FLASH_BUFFER (KVSTORE_HEADER_WORDS + (FLASH_PARAM_KEY_COUNT * 3))
 static uint16_t flash_buffer[WORDS_IN_FLASH_BUFFER];
 
 static kv_value_t kvstore[FLASH_PARAM_KEY_COUNT];
@@ -20,9 +21,9 @@ static void kvstore_set_defaults(void);
 
 void kvstore_init(void)
 {
-    uint16_t i;
-    for(i = 0; i < FLASH_PARAM_KEY_COUNT; i++) {
-        memset(&kvstore[i].as_bytes, 0, sizeof(kvstore[i].as_bytes));
+    uint16_t key;
+    for(key = 0; key < FLASH_PARAM_KEY_COUNT; key++) {
+        kvstore[key].as_dword = 0;
     }
 
     // Set the default values
@@ -38,20 +39,18 @@ void kvstore_load(void)
     memcpy(&flash_buffer, (Uint16 *)PARAMS_START, sizeof(flash_buffer));
 
     // Extract keys and values from the flat uint16_t buffer
-    for(i = KVSTORE_HEADER_WORDS; i < (WORDS_IN_FLASH_BUFFER / sizeof(keyvalue_t)); i++) {
-        key = flash_buffer[i];
-        kvstore[key].as_words[0] = flash_buffer[i + 1];
-        kvstore[key].as_words[1] = flash_buffer[i + 2];
+    for(i = 0; i < FLASH_PARAM_KEY_COUNT; i++) {
+        key = flash_buffer[KVSTORE_HEADER_WORDS + (i * KVSTORE_KV_WORDS) + 0];
+        kvstore[key].as_words[0] = flash_buffer[KVSTORE_HEADER_WORDS + (i * KVSTORE_KV_WORDS) + 1];
+        kvstore[key].as_words[1] = flash_buffer[KVSTORE_HEADER_WORDS + (i * KVSTORE_KV_WORDS) + 2];
     }
 }
 
 int16_t kvstore_save(void)
 {
-    uint16_t key;
-    uint16_t result;
-    uint16_t *flash_ptr;        // Pointer to a location in flash
-    uint16_t version_hex;       // Version of the API in decimal encoded hex
-    kvstore_header_t kvstore_header;
+    uint16_t key, result, version_hex;
+    uint16_t *flash_ptr;
+    kvstore_header_t kvstore_header = {0};
 
     EALLOW;
     Flash_CPUScaleFactor = SCALE_FACTOR;
@@ -78,14 +77,14 @@ int16_t kvstore_save(void)
 
     // Copy keys and values into a flat uint16_t buffer
     for(key = 0; key < FLASH_PARAM_KEY_COUNT; key++) {
-        flash_buffer[KVSTORE_HEADER_WORDS + key + 0] = key;
-        flash_buffer[KVSTORE_HEADER_WORDS + key + 1] = kvstore[key].as_words[0];
-        flash_buffer[KVSTORE_HEADER_WORDS + key + 2] = kvstore[key].as_words[1];
+        flash_buffer[KVSTORE_HEADER_WORDS + (key * KVSTORE_KV_WORDS) + 0] = key;
+        flash_buffer[KVSTORE_HEADER_WORDS + (key * KVSTORE_KV_WORDS) + 1] = kvstore[key].as_words[0];
+        flash_buffer[KVSTORE_HEADER_WORDS + (key * KVSTORE_KV_WORDS) + 2] = kvstore[key].as_words[1];
     }
 
     // Write the buffer into flash
-    flash_ptr = (Uint16 *)PARAMS_START;
-    result = Flash_Program(flash_ptr, flash_buffer, sizeof(flash_buffer), &flash_status);
+    flash_ptr = (uint16_t *)PARAMS_START;
+    result = Flash_Program(flash_ptr, flash_buffer, WORDS_IN_FLASH_BUFFER*sizeof(flash_buffer[0]), &flash_status);
     if(result != STATUS_SUCCESS) {
         return -2;
     }
@@ -120,7 +119,8 @@ void kvstore_get_header(kvstore_header_t* header)
 
 kv_value_t kvstore_get_value(const flash_param_keys_t key)
 {
-    kv_value_t result;
+    kv_value_t result = {0};
+
     if(key < FLASH_PARAM_KEY_COUNT) {
         result = kvstore[key];
     }
@@ -148,15 +148,21 @@ uint16_t kvstore_get_uint16(const flash_param_keys_t key)
 
 void kvstore_put_value(const flash_param_keys_t key, const kv_value_t value)
 {
-    kvstore[key] = value;
+    if(key < FLASH_PARAM_KEY_COUNT) {
+        kvstore[key] = value;
+    }
 }
 
 void kvstore_put_float(const flash_param_keys_t key, const float value)
 {
-    kvstore[key].as_float = value;
+    if(key < FLASH_PARAM_KEY_COUNT) {
+        kvstore[key].as_float = value;
+    }
 }
 
 void kvstore_put_uint16(const flash_param_keys_t key, const uint16_t value)
 {
-    kvstore[key].as_words[0] = value;
+    if(key < FLASH_PARAM_KEY_COUNT) {
+        kvstore[key].as_words[0] = value;
+    }
 }
