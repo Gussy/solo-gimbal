@@ -846,7 +846,19 @@ GOPRO_CAPTURE_MODE gp_capture_mode()
 }
 
 bool gp_is_valid_capture_mode(uint8_t mode) {
-    return GOPRO_CAPTURE_MODE_UNKNOWN < mode && mode < GOPRO_CAPTURE_MODE_ENUM_END;
+    switch (mode) {
+    case GOPRO_CAPTURE_MODE_VIDEO:
+    case GOPRO_CAPTURE_MODE_PHOTO:
+    case GOPRO_CAPTURE_MODE_BURST:
+    case GOPRO_CAPTURE_MODE_TIME_LAPSE:
+    case GOPRO_CAPTURE_MODE_MULTI_SHOT:
+    case GOPRO_CAPTURE_MODE_PLAYBACK:
+    case GOPRO_CAPTURE_MODE_SETUP:
+        return true;
+
+    default:
+        return false;
+    }
 }
 
 void gp_latch_pending_capture_mode()
