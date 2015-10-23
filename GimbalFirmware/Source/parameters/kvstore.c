@@ -34,6 +34,7 @@ void kvstore_load(void)
     uint16_t i, key;
 
     // Load the kvstore from flash into the flat uint16_t buffer
+    memset(&flash_buffer, 0, sizeof(flash_buffer));
     memcpy(&flash_buffer, (Uint16 *)PARAMS_START, sizeof(flash_buffer));
 
     // Extract keys and values from the flat uint16_t buffer
