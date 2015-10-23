@@ -38,6 +38,39 @@ typedef enum {
     H4_CAPTURE_MODE_UNKNOWN     = 0xee  // arbitrary invalid value
 } GP_H4_CAPTURE_MODE;
 
+typedef enum {
+    H4_RESOLUTION_4k_17_9           = 0x0,
+    H4_RESOLUTION_4k                = 0x1,
+    H4_RESOLUTION_4k_SUPERVIEW      = 0x2,
+    H4_RESOLUTION_2_7k_17_9         = 0x3,
+    H4_RESOLUTION_2_7k_16_9         = 0x4,
+    H4_RESOLUTION_2_7k_SUPERVIEW    = 0x5,
+    H4_RESOLUTION_2_7k_4_3          = 0x6,
+    H4_RESOLUTION_1440p             = 0x7,
+    H4_RESOLUTION_1080p_SUPERVIEW   = 0x8,
+    H4_RESOLUTION_1080p             = 0x9,
+    H4_RESOLUTION_960p              = 0xa,
+    H4_RESOLUTION_720p_SUPERVIEW    = 0xb,
+    H4_RESOLUTION_720p              = 0xc,
+    H4_RESOLUTION_480p              = 0xd,
+} H4_RESOLUTION;
+
+typedef enum {
+    H4_FRAMERATE_240fps     = 0x0,
+    H4_FRAMERATE_120fps     = 0x1,
+    H4_FRAMERATE_100fps     = 0x2,
+    H4_FRAMERATE_90fps      = 0x3,
+    H4_FRAMERATE_80fps      = 0x4,
+    H4_FRAMERATE_60fps      = 0x5,
+    H4_FRAMERATE_50fps      = 0x6,
+    H4_FRAMERATE_48fps      = 0x7,
+    H4_FRAMERATE_30fps      = 0x8,
+    H4_FRAMERATE_25fps      = 0x9,
+    H4_FRAMERATE_24fps      = 0xa,
+    H4_FRAMERATE_15fps      = 0xb,
+    H4_FRAMERATE_12_5fps    = 0xc
+} H4_FRAMERATE;
+
 enum GP_H4_API_GROUP {
     API_GRP_GEN_CMDS        = 0,
     API_GRP_MODE_CAM        = 1,

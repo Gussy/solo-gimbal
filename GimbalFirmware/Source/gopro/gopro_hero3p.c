@@ -1,4 +1,5 @@
 #include "gopro_hero3p.h"
+#include "gopro_hero3p_defs.h"
 #include "gopro_hero_common.h"
 #include "gopro_interface.h"
 #include "helpers/macros.h"
@@ -9,14 +10,6 @@
 
 // index of the start of photo info in the 'entire camera status' response
 #define SE_RSP_PHOTO_INFO_IDX   20
-
-typedef enum {
-    H3P_CAPTURE_MODE_VIDEO      = 0,
-    H3P_CAPTURE_MODE_PHOTO      = 1,
-    H3P_CAPTURE_MODE_BURST      = 2,
-    H3P_CAPTURE_MODE_TIME_LAPSE = 3,
-    H3P_CAPTURE_MODE_UNKNOWN    = 0xee  // arbitrary invalid value
-} H3P_CAPTURE_MODE;
 
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
 static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
