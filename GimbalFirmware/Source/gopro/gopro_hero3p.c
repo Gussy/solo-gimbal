@@ -331,7 +331,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
          *
          * Test whether the 2 fields of photo info are empty.
          */
-        gp_set_capture_mode(rsp->payload[0]);
+        gp_set_capture_mode(h3p_to_mav_cap_mode(rsp->payload[0]));
         const uint8_t empty[] = { 0xff, 0xff, 0xff, 0xff };
         h3p->sd_card_inserted = memcmp(&rsp->payload[SE_RSP_PHOTO_INFO_IDX], empty, sizeof empty) != 0;
         break;
