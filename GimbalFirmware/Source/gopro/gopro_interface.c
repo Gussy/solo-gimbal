@@ -7,9 +7,6 @@
 #include "gopro_helpers.h"
 #include "PeripheralHeaderIncludes.h"
 
-// Include for GOPRO_COMMAND enum
-#include "mavlink_interface/mavlink_gimbal_interface.h"
-
 #include <ctype.h>
 
 
@@ -30,7 +27,8 @@ static bool gp_begin_cmd_send(uint16_t len);
 static bool gp_ready_for_cmd();
 static bool gp_request_capture_mode();
 static bool gp_handshake_complete();
-static bool gp_is_valid_capture_mode(Uint8 capture_mode);
+static GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status();
+static bool gp_is_valid_capture_mode(uint8_t mode);
 static bool gp_is_recording();
 static void gp_write_eeprom();
 
@@ -73,8 +71,8 @@ typedef struct {
     bool intr_pending;                  // is an intr assertion pending?
     uint32_t i2c_stop_timestamp_us;     // last time we saw an i2c stop condition. related to GP_INTR_DELAY_US
     GPModel model;
-    GPCaptureMode capture_mode;
-    GPCaptureMode pending_capture_mode;
+    GOPRO_CAPTURE_MODE capture_mode;
+    GOPRO_CAPTURE_MODE pending_capture_mode;
     uint16_t capture_mode_polling_counter;
     bool recording;
 
@@ -109,8 +107,8 @@ void gp_reset()
     gp.intr_pending = false;
     gp.model = GP_MODEL_UNKNOWN;
     gp.power_status = GP_POWER_UNKNOWN;
-    gp.capture_mode = GP_CAPTURE_MODE_UNKNOWN;
-    gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+    gp.capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN;
+    gp.pending_capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN;
     gp.capture_mode_polling_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
@@ -199,11 +197,14 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdSt
 
     memcpy(gp.txn.response.mav.value, resp_bytes, len);
 
-    // XXX: probably want to:
-    //      - unify the values of GPCmdStatus and GOPRO_SET_RESPONSE_RESULT, currently they're opposites
-    //      - make GOPRO_SET_RESPONSE_RESULT more general (GOPRO_RESPONSE_RESULT or similar)
+    // not strictly necessary, but set remaining payload bytes to 0
+    const size_t valsz = sizeof(gp.txn.response.mav.value);
+    if (len < valsz) {
+        memset(&gp.txn.response.mav.value[len], 0, valsz - len);
+    }
+
     gp.txn.len = len;
-    gp.txn.response.mav.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_SET_RESPONSE_RESULT_SUCCESS : GOPRO_SET_RESPONSE_RESULT_FAILURE;
+    gp.txn.response.mav.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_REQUEST_SUCCESS : GOPRO_REQUEST_FAILED;
 
     // result transmitted via gp_send_mav_response()
 }
@@ -252,30 +253,40 @@ bool gp_handshake_complete()
     }
 }
 
-GPHeartbeatStatus gp_get_heartbeat_status()
+void gp_get_heartbeat(gp_can_mav_heartbeat_t *hb)
+{
+    /*
+     * Populate the given heartbeat struct with
+     * the current state.
+     */
+
+    hb->mav.hb_status = gp_get_heartbeat_status();
+    hb->mav.capture_mode = gp_capture_mode();
+    hb->mav.flags = 0;
+    if (gp_is_recording()) {
+        hb->mav.flags |= GOPRO_FLAG_RECORDING;
+    }
+}
+
+GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status()
 {
     // A GoPro is connected, ready for action and had queried the gccb version
     if (gp_get_power_status() == GP_POWER_ON && gp_handshake_complete() && !init_timed_out()) {
-	    // The connected state is overloaded with the recording state
-        if (gp_is_recording()) {
-            return GP_HEARTBEAT_RECORDING;
-        } else {
-            return GP_HEARTBEAT_CONNECTED;
-        }
+        return GOPRO_HEARTBEAT_STATUS_CONNECTED;
 	}
 
 	// A GoPro is not in a "connected" state, but we can see something is plugged in
 	if (gp_get_power_status() != GP_POWER_ON && gp_get_von_asserted_in() && init_timed_out()) {
-	    return GP_HEARTBEAT_INCOMPATIBLE;
+        return GOPRO_HEARTBEAT_STATUS_INCOMPATIBLE;
 	}
 
 	// A GoPro is connected, but it's not talking to us, or we're not talking to it
 	if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
-	    return GP_HEARTBEAT_INCOMPATIBLE;
+        return GOPRO_HEARTBEAT_STATUS_INCOMPATIBLE;
 	}
 
 	// Either a GoPro is no connected, or there is no electrical way of detecting it
-	return GP_HEARTBEAT_DISCONNECTED;
+    return GOPRO_HEARTBEAT_STATUS_DISCONNECTED;
 }
 
 bool gp_request_power_on()
@@ -835,23 +846,35 @@ void gp_timeout()
     gp.hb_txn_phase = HB_TXN_IDLE;
 }
 
-GPCaptureMode gp_capture_mode()
+GOPRO_CAPTURE_MODE gp_capture_mode()
 {
     return gp.capture_mode;
 }
 
-bool gp_is_valid_capture_mode(Uint8 capture_mode) {
-    return (capture_mode == GP_CAPTURE_MODE_VIDEO || capture_mode == GP_CAPTURE_MODE_PHOTO || capture_mode == GP_CAPTURE_MODE_BURST);
+bool gp_is_valid_capture_mode(uint8_t mode) {
+    switch (mode) {
+    case GOPRO_CAPTURE_MODE_VIDEO:
+    case GOPRO_CAPTURE_MODE_PHOTO:
+    case GOPRO_CAPTURE_MODE_BURST:
+    case GOPRO_CAPTURE_MODE_TIME_LAPSE:
+    case GOPRO_CAPTURE_MODE_MULTI_SHOT:
+    case GOPRO_CAPTURE_MODE_PLAYBACK:
+    case GOPRO_CAPTURE_MODE_SETUP:
+        return true;
+
+    default:
+        return false;
+    }
 }
 
 void gp_latch_pending_capture_mode()
 {
-    if (gp.pending_capture_mode != GP_CAPTURE_MODE_UNKNOWN) {
+    if (gp.pending_capture_mode != GOPRO_CAPTURE_MODE_UNKNOWN) {
         gp_set_capture_mode(gp.pending_capture_mode);
     }
 }
 
-bool gp_pend_capture_mode(Uint8 capture_mode)
+bool gp_pend_capture_mode(uint8_t capture_mode)
 {
     /*
      * Called when a 'SET capture mode' cmd, which contains the new capture
@@ -866,18 +889,18 @@ bool gp_pend_capture_mode(Uint8 capture_mode)
      */
 
     if (gp_is_valid_capture_mode(capture_mode)) {
-        gp.pending_capture_mode = (GPCaptureMode)capture_mode;
+        gp.pending_capture_mode = (GOPRO_CAPTURE_MODE)capture_mode;
         return true;
     }
 
     return false;
 }
 
-bool gp_set_capture_mode(Uint8 capture_mode)
+bool gp_set_capture_mode(uint8_t capture_mode)
 {
     if (gp_is_valid_capture_mode(capture_mode)) {
-        gp.capture_mode = (GPCaptureMode)capture_mode;
-        gp.pending_capture_mode = GP_CAPTURE_MODE_UNKNOWN;
+        gp.capture_mode = (GOPRO_CAPTURE_MODE)capture_mode;
+        gp.pending_capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN;
         return true;
     }
 

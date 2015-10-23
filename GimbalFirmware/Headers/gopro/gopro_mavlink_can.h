@@ -19,6 +19,15 @@
 
 typedef union {
     struct {
+        uint8_t hb_status;
+        uint8_t capture_mode;
+        uint8_t flags;      // see GOPRO_HEARTBEAT_FLAGS
+    } mav;
+    uint8_t bytes[3];
+} gp_can_mav_heartbeat_t;   // corresponds to mavlink_gopro_heartbeat_t
+
+typedef union {
+    struct {
         uint8_t cmd_id;
     } mav;
     uint8_t bytes[1];

@@ -13,6 +13,30 @@ static gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
 static bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r);
 static void gp_h4_finalize_yy_cmd(gp_h4_t *h4, uint16_t payloadlen, gp_h4_yy_cmd_t *c);
 
+static GOPRO_CAPTURE_MODE h4_to_mav_cap_mode(uint8_t h4_mode) {
+    // translate between mavlink and hero 4 values
+    switch (h4_mode) {
+    case H4_CAPTURE_MODE_VIDEO:         return GOPRO_CAPTURE_MODE_VIDEO;
+    case H4_CAPTURE_MODE_PHOTO:         return GOPRO_CAPTURE_MODE_PHOTO;
+    case H4_CAPTURE_MODE_MULTI_SHOT:    return GOPRO_CAPTURE_MODE_MULTI_SHOT;
+    case H4_CAPTURE_MODE_PLAYBACK:      return GOPRO_CAPTURE_MODE_PLAYBACK;
+    case H4_CAPTURE_MODE_SETUP:         return GOPRO_CAPTURE_MODE_SETUP;
+    default:                            return GOPRO_CAPTURE_MODE_UNKNOWN;
+    }
+}
+
+static GP_H4_CAPTURE_MODE mav_to_h4_cap_mode(uint8_t mav_mode) {
+    // translate between hero 4 and mavlink values
+    switch (mav_mode) {
+    case GOPRO_CAPTURE_MODE_VIDEO:      return H4_CAPTURE_MODE_VIDEO;
+    case GOPRO_CAPTURE_MODE_PHOTO:      return H4_CAPTURE_MODE_PHOTO;
+    case GOPRO_CAPTURE_MODE_MULTI_SHOT: return H4_CAPTURE_MODE_MULTI_SHOT;
+    case GOPRO_CAPTURE_MODE_PLAYBACK:   return H4_CAPTURE_MODE_PLAYBACK;
+    case GOPRO_CAPTURE_MODE_SETUP:      return H4_CAPTURE_MODE_SETUP;
+    default:                            return H4_CAPTURE_MODE_UNKNOWN;
+    }
+}
+
 void gp_h4_init(gp_h4_t *h4)
 {
     unsigned i;
@@ -231,10 +255,10 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
     if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
         if (gp_transaction_direction() == GP_REQUEST_GET) {
             if (len >= 1) {
-                gp_set_capture_mode(rsp->payload[0]);                          // Set capture mode state with capture mode received from GoPro
+                gp_set_capture_mode(h4_to_mav_cap_mode(rsp->payload[0]));
             }
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
-            gp_latch_pending_capture_mode();                                  // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
+            gp_latch_pending_capture_mode();
         }
     }
 
@@ -360,19 +384,23 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             }
             break;
 
-        case GOPRO_COMMAND_CAPTURE_MODE:
+        case GOPRO_COMMAND_CAPTURE_MODE: {
             yy->api_group = API_GRP_MODE_CAM;
             yy->api_id = API_ID_SET_CAM_MAIN_MODE;
-            // TODO: verify this is a valid GPH4Power value
-            yy->payload[0] = request->mav.value[0];
-            payloadlen = 1;
-
-            gp_pend_capture_mode(request->mav.value[0]);
-            break;
+            uint8_t mode = mav_to_h4_cap_mode(request->mav.value[0]);
+            if (mode != H4_CAPTURE_MODE_UNKNOWN) {
+                yy->payload[0] = mode;
+                payloadlen = 1;
+                gp_pend_capture_mode(mode);
+            }else {
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
+            }
+        } break;
 
         case GOPRO_COMMAND_SHUTTER:
             switch (gp_capture_mode()) {
-            case GP_CAPTURE_MODE_VIDEO:
+            case GOPRO_CAPTURE_MODE_VIDEO:
                 yy->api_group = API_GRP_MODE_VID;
                 switch (request->mav.value[0]) {
                 case GP_RECORDING_START:
@@ -391,7 +419,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 }
                 break;
 
-            case GP_CAPTURE_MODE_PHOTO:
+            case GOPRO_CAPTURE_MODE_PHOTO:
                 yy->api_group = API_GRP_MODE_PHOTO;
                 switch (request->mav.value[0]) {
                 case GP_RECORDING_START:
@@ -408,7 +436,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 }
                 break;
 
-            case GP_CAPTURE_MODE_BURST:
+            case GOPRO_CAPTURE_MODE_BURST:
                 yy->api_group = API_GRP_MODE_MULTISHOT;
                 switch (request->mav.value[0]) {
                 case GP_RECORDING_START:

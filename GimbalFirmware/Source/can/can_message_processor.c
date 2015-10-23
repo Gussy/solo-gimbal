@@ -361,6 +361,14 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                             send_mavlink_gopro_set_response(&rsp);
                         }
                         break;
+
+                    case CAND_PID_GOPRO_HEARTBEAT:
+                        if (msg.extended_param_length == sizeof(gp_can_mav_heartbeat_t) && GetBoardHWID() == AZ) {
+                            gp_can_mav_heartbeat_t hb;
+                            memcpy(hb.bytes, msg.extended_param, msg.extended_param_length);
+                            send_mavlink_gopro_heartbeat(&hb);
+                        }
+                        break;
                 }
             } else {
                 // Not an extended parameter, parse normally
@@ -424,13 +432,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                     if (bit_value & CAND_BIT_AXIS_PARMS_RECVD) {
                         axis_parms->other_axis_init_params_recvd[msg.sender_id] = TRUE;
                     }
-                }
-                break;
-
-                case CAND_PID_GOPRO_HEARTBEAT:
-                {
-                	GPHeartbeatStatus gp_heartbeat_state = (GPHeartbeatStatus)msg.param_response[msg.param_response_cnt - 1];
-                    send_mavlink_gopro_heartbeat(gp_heartbeat_state);
                 }
                 break;
 
