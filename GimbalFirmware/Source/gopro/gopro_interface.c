@@ -197,6 +197,12 @@ void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdSt
 
     memcpy(gp.txn.response.mav.value, resp_bytes, len);
 
+    // not strictly necessary, but set remaining payload bytes to 0
+    const size_t valsz = sizeof(gp.txn.response.mav.value);
+    if (len < valsz) {
+        memset(&gp.txn.response.mav.value[len], 0, valsz - len);
+    }
+
     gp.txn.len = len;
     gp.txn.response.mav.status = (status == GP_CMD_STATUS_SUCCESS) ? GOPRO_REQUEST_SUCCESS : GOPRO_REQUEST_FAILED;
 
