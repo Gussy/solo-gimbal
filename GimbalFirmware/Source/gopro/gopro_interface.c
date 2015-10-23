@@ -221,8 +221,10 @@ static void gp_send_mav_response()
 
     i2c_disable_scd_isr();  // critical section
 
-    if (gp.txn.response.mav.status != GP_CMD_STATUS_INCOMPLETE && !gp.txn.is_internal) {
-        gp_send_mav_can_response(&gp.txn);
+    if (gp.txn.response.mav.status != GP_CMD_STATUS_INCOMPLETE) {
+        if (!gp.txn.is_internal) {
+            gp_send_mav_can_response(&gp.txn);
+        }
         gp.txn.response.mav.status = GP_CMD_STATUS_INCOMPLETE;
     }
 
