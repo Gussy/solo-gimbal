@@ -382,54 +382,30 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             switch (gp_capture_mode()) {
             case GOPRO_CAPTURE_MODE_VIDEO:
                 yy->api_group = API_GRP_MODE_VID;
-                switch (request->mav.value[0]) {
-                case GP_RECORDING_START:
+                if (request->mav.value[0]) {
                     yy->api_id = API_ID_TRIGGER_VID_START;
                     h4->pending_recording_state = true;
-                    break;
-
-                case GP_RECORDING_STOP:
+                } else {
                     yy->api_id = API_ID_TRIGGER_VID_STOP;
                     h4->pending_recording_state = false;
-                    break;
-
-                default:
-                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                    return false;
                 }
                 break;
 
             case GOPRO_CAPTURE_MODE_PHOTO:
                 yy->api_group = API_GRP_MODE_PHOTO;
-                switch (request->mav.value[0]) {
-                case GP_RECORDING_START:
+                if (request->mav.value[0]) {
                     yy->api_id = API_ID_TRIGGER_PHOTO_START;
-                    break;
-
-                case GP_RECORDING_STOP:
+                } else {
                     yy->api_id = API_ID_TRIGGER_PHOTO_STOP;
-                    break;
-
-                default:
-                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                    return false;
                 }
                 break;
 
             case GOPRO_CAPTURE_MODE_BURST:
                 yy->api_group = API_GRP_MODE_MULTISHOT;
-                switch (request->mav.value[0]) {
-                case GP_RECORDING_START:
+                if (request->mav.value[0]) {
                     yy->api_id = API_ID_TRIGGER_MULTI_START;
-                    break;
-
-                case GP_RECORDING_STOP:
+                } else {
                     yy->api_id = API_ID_TRIGGER_MULTI_STOP;
-                    break;
-
-                default:
-                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                    return false;
                 }
                 break;
 

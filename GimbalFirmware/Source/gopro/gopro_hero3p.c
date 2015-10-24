@@ -180,16 +180,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
 
             // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
             if (gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
-                switch (request->mav.value[0]) {
-                case GP_RECORDING_START:
-                case GP_RECORDING_STOP:
-                    h3p->pending_recording_state = (request->mav.value[0] == GP_RECORDING_START);
-                    break;
-
-                default:
-                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                    return false;
-                }
+                h3p->pending_recording_state = (request->mav.value[0] != 0);
             }
             break;
 
