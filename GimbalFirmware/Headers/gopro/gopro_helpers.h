@@ -4,10 +4,13 @@
 #include "f2806x_int8.h"
 #include <inttypes.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "gopro_interface.h"
 
 bool gp_send_mav_can_response(const gp_transaction_t *t);
+
+time_t gp_time_from_mav(const gp_can_mav_set_req_t* request);
 
 // get and set state of bp_detect pin
 void gp_set_bp_detect_asserted_out(bool assert);

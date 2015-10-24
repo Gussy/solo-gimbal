@@ -24,6 +24,14 @@ bool gp_send_mav_can_response(const gp_transaction_t *t)
     return (ret == CAND_SUCCESS);
 }
 
+time_t gp_time_from_mav(const gp_can_mav_set_req_t* request)
+{
+    return ((uint32_t)request->mav.value[3] << 24) |
+           ((uint32_t)request->mav.value[2] << 16) |
+           ((uint32_t)request->mav.value[1] << 8) |
+            (uint32_t)request->mav.value[0];
+}
+
 void gp_set_bp_detect_asserted_out(bool assert) {
     if (assert) {
         GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;
