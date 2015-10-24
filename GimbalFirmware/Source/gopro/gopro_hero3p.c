@@ -15,7 +15,7 @@
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
 static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
 static void gp_h3p_sanitize_buf_len(uint8_t *buf);
-static void gp_h3p_finalize_command(gp_h3p_cmd_t *c);
+static void gp_h3p_finalize_command(gp_h3p_cmd_t *c, uint8_t payloadlen);
 
 void gp_h3p_init(gp_h3p_t *h3p)
 {
@@ -48,29 +48,6 @@ bool gp_h3p_recognize_packet(const uint8_t *buf, uint16_t len)
     }
 
     return false;
-}
-
-static bool gp_h3p_cmd_has_param(const gp_h3p_cmd_t *c)
-{
-    /*
-     * For the most part, commands have a parameter, queries never do.
-     * Commands are 2 uppercase characters, queries are 2 lowercase characters
-     */
-
-    if (islower(c->cmd1)) {
-        return false;
-    }
-
-    // Need to special case 'DL', 'DA', and 'FO' commands, since they don't have parameters
-    if ((c->cmd1 == 'F') && (c->cmd2 == 'O')) {
-        return false;
-    }
-
-    if (c->cmd1 == 'D' && (c->cmd2 == 'L' || c->cmd2 == 'A')) {
-        return false;
-    }
-
-    return true;
 }
 
 bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
@@ -113,7 +90,7 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
             return false;
     }
 
-    gp_h3p_finalize_command(c);
+    gp_h3p_finalize_command(c, 0);
     return true;
 }
 
@@ -124,11 +101,14 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
      * Return true if we produced data to send, false otherwise.
      */
 
+    uint8_t payloadlen;
+
     switch (request->mav.cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->mav.value[0] == 0x00 && gp_get_power_status() == GP_POWER_ON) {
                 c->cmd1 = 'P';
                 c->cmd2 = 'W';
+                payloadlen = 1;
                 c->payload[0] = 0x00;
             } else {
                 // gp_request_power_on() does not require a herobus transaction,
@@ -145,6 +125,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             bool ok;
             uint8_t mode = mav_to_h3p_cap_mode(request->mav.value[0], &ok);
             if (ok) {
+                payloadlen = 1;
                 c->payload[0] = mode;
                 gp_pend_capture_mode(mode);
             } else {
@@ -161,6 +142,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
 
             c->cmd1 = 'S';
             c->cmd2 = 'H';
+            payloadlen = 1;
             c->payload[0] = request->mav.value[0];
 
             // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
@@ -175,7 +157,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             return false;
     }
 
-    gp_h3p_finalize_command(c);
+    gp_h3p_finalize_command(c, payloadlen);
     return true;
 }
 
@@ -320,14 +302,17 @@ bool gp_h3p_rx_data_is_valid(const uint8_t *buf, uint16_t len, bool *from_camera
     return true;
 }
 
-void gp_h3p_finalize_command(gp_h3p_cmd_t *c)
+void gp_h3p_finalize_command(gp_h3p_cmd_t *c, uint8_t payloadlen)
 {
-    // first byte is len, upper bit clear to indicate command originated from the gimbal (not the GoPro)
-    if (gp_h3p_cmd_has_param(c)) {
-        c->len = 0x3;
-    } else {
-        c->len = 0x2;
-    }
+    /*
+     * length field specifies length of packet, not including length byte.
+     * always have at least 2 bytes for the cmd id.
+     *
+     * leave upper bit of length byte clear to indicate command originated
+     * from the gimbal (not the GoPro)
+     */
+
+    c->len = 2 + payloadlen;
 }
 
 void gp_h3p_sanitize_buf_len(uint8_t *buf) { // TODO: inline?
