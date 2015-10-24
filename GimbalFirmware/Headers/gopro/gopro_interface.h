@@ -65,7 +65,7 @@ void gp_on_i2c_stop_condition();
 void gp_on_slave_address(bool addressed_as_tx);
 uint16_t gp_transaction_cmd();
 GPRequestType gp_transaction_direction();
-void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status);
+void gp_set_transaction_result(const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
 GOPRO_CAPTURE_MODE gp_capture_mode();
 void gp_latch_pending_capture_mode();
 bool gp_pend_capture_mode(uint8_t capture_mode);

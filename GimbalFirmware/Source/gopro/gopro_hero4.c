@@ -88,7 +88,7 @@ bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
     return false;
 }
 
-bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len)
+bool gp_h4_recognize_packet(const uint8_t *buf, uint16_t len)
 {
     /*
      * Called when we don't yet know what kind of camera we're talking to.
@@ -100,7 +100,7 @@ bool gp_h4_recognize_packet(const uint16_t *buf, uint16_t len)
     return gp_h4_rx_data_is_valid(buf, len) && len >= 6 && buf[1] == 'Z' && buf[2] == 'Z';
 }
 
-bool gp_h4_rx_data_is_valid(const uint16_t *buf, uint16_t len)
+bool gp_h4_rx_data_is_valid(const uint8_t *buf, uint16_t len)
 {
     /*
      * Called when an i2c rx transaction has completed successfully,
@@ -313,7 +313,7 @@ bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r)
     r->tid = 0;
     // all ZZ responses indicate that they are the final (and only) frame
     r->tcb = TCB_RSP_FINAL_FRAME;
-    memcpy(r->payload, c->payload, (c->len - GP_H4_HDR_LEN) * sizeof(uint16_t));
+    memcpy(r->payload, c->payload, (c->len - GP_H4_HDR_LEN));
 
     return true;
 }

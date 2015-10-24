@@ -20,9 +20,9 @@
 static void gp_reset();
 static void gp_timeout();
 
-static void gp_detect_camera_model(const uint16_t *buf, uint16_t len);
+static void gp_detect_camera_model(const uint8_t *buf, uint16_t len);
 static void gp_on_txn_complete();
-static bool handle_rx_data(uint16_t *buf, uint16_t len);
+static bool handle_rx_data(uint8_t *buf, uint16_t len);
 static bool gp_begin_cmd_send(uint16_t len);
 static bool gp_ready_for_cmd();
 static bool gp_poll_camera_state();
@@ -41,7 +41,7 @@ struct pktbuf {
     union {
         gp_h3p_pkt_t h3p;
         gp_h4_pkt_t h4p;
-        uint16_t bytes[MAX(sizeof(gp_h3p_pkt_t), sizeof(gp_h4_pkt_t))];
+        uint8_t bytes[MAX(sizeof(gp_h3p_pkt_t), sizeof(gp_h4_pkt_t))];
     };
 
     uint16_t len;
@@ -187,7 +187,7 @@ GPRequestType gp_transaction_direction() {
     return gp.txn.reqtype;
 }
 
-void gp_set_transaction_result(const uint16_t *resp_bytes, uint16_t len, GPCmdStatus status)
+void gp_set_transaction_result(const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status)
 {
     /*
      * Called from a gopro protocol handler to indicate
@@ -583,7 +583,7 @@ void gp_on_txn_complete()
     }
 }
 
-void gp_detect_camera_model(const uint16_t *buf, uint16_t len)
+void gp_detect_camera_model(const uint8_t *buf, uint16_t len)
 {
     /*
      * Called when we've received an i2c packet but we don't yet
@@ -599,7 +599,7 @@ void gp_detect_camera_model(const uint16_t *buf, uint16_t len)
     }
 }
 
-bool handle_rx_data(uint16_t *buf, uint16_t len)
+bool handle_rx_data(uint8_t *buf, uint16_t len)
 {
     /*
      * Called when an i2c rx transaction has completed.

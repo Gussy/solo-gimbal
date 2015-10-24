@@ -20,7 +20,7 @@ bool gopro_i2c_in_progress()
     return i2c_get_bb() || !i2c_get_scd();
 }
 
-void gopro_i2c_send(const uint16_t *buf, Uint8 len)
+void gopro_i2c_send(const uint8_t *buf, uint8_t len)
 {
     /*
      * Send pending data, and clear INTR line

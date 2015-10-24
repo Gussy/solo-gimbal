@@ -24,8 +24,8 @@ Uint16 i2c_get_aas();
 Uint16 i2c_get_bb();
 Uint16 i2c_get_scd();
 void i2c_clr_scd();
-void i2c_begin_tx(const uint16_t* data, int length);
-void i2c_begin_rx(uint16_t* data, int maxlen);
+void i2c_begin_tx(const uint8_t *data, int length);
+void i2c_begin_rx(uint8_t* data, int maxlen);
 int i2c_get_rx_len();
 
 void i2c_enable_scd_isr();

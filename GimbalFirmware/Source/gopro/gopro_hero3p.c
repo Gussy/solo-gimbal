@@ -20,7 +20,7 @@ typedef enum {
 
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
 static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
-static void gp_h3p_sanitize_buf_len(uint16_t *buf);
+static void gp_h3p_sanitize_buf_len(uint8_t *buf);
 static void gp_h3p_finalize_command(gp_h3p_cmd_t *c);
 
 void gp_h3p_init(gp_h3p_t *h3p)
@@ -39,7 +39,7 @@ bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
     return h3p->gccb_version_queried;
 }
 
-bool gp_h3p_recognize_packet(const uint16_t *buf, uint16_t len)
+bool gp_h3p_recognize_packet(const uint8_t *buf, uint16_t len)
 {
     /*
      * Called when we don't yet know what kind of camera we're talking to.
@@ -341,7 +341,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
 }
 
 
-bool gp_h3p_rx_data_is_valid(const uint16_t *buf, uint16_t len, bool *from_camera)
+bool gp_h3p_rx_data_is_valid(const uint8_t *buf, uint16_t len, bool *from_camera)
 {
     /*
      * Called when an i2c rx transaction has completed successfully,
@@ -379,6 +379,6 @@ void gp_h3p_finalize_command(gp_h3p_cmd_t *c)
     }
 }
 
-void gp_h3p_sanitize_buf_len(uint16_t *buf) { // TODO: inline?
+void gp_h3p_sanitize_buf_len(uint8_t *buf) { // TODO: inline?
     buf[0] &= 0x7f;     // remove most significant bit representing sender id (camera or BacPac)
 }
