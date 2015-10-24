@@ -34,8 +34,7 @@ typedef enum {
     H4_CAPTURE_MODE_PHOTO       = 1,
     H4_CAPTURE_MODE_MULTI_SHOT  = 2,
     H4_CAPTURE_MODE_PLAYBACK    = 4,
-    H4_CAPTURE_MODE_SETUP       = 5,
-    H4_CAPTURE_MODE_UNKNOWN     = 0xee  // arbitrary invalid value
+    H4_CAPTURE_MODE_SETUP       = 5
 } GP_H4_CAPTURE_MODE;
 
 typedef enum {

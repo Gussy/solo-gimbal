@@ -9,8 +9,7 @@ typedef enum {
     H3P_CAPTURE_MODE_VIDEO      = 0,
     H3P_CAPTURE_MODE_PHOTO      = 1,
     H3P_CAPTURE_MODE_BURST      = 2,
-    H3P_CAPTURE_MODE_TIME_LAPSE = 3,
-    H3P_CAPTURE_MODE_UNKNOWN    = 0xee  // arbitrary invalid value
+    H3P_CAPTURE_MODE_TIME_LAPSE = 3
 } H3P_CAPTURE_MODE;
 
 typedef enum {
