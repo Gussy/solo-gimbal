@@ -226,28 +226,42 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
     if (rsp->api_group == API_GRP_GEN_CMDS && rsp->api_id == API_ID_OPEN_CHAN && len == 1) {
         h4->channel_id = rsp->payload[0];
         h4->handshake_step = GP_H4_HANDSHAKE_CHANNEL_OPEN;
-        return err; // TODO: update with new bool for internal transactions
+        return err;
     }
 
-    if (gp_transaction_cmd() == GOPRO_COMMAND_CAPTURE_MODE) {
-        if (gp_transaction_direction() == GP_REQUEST_GET) {
-            if (len >= 1) {
-                bool ok;
-                uint8_t mode = h4_to_mav_cap_mode(rsp->payload[0], &ok);
-                gp_set_capture_mode(ok ? mode : GOPRO_CAPTURE_MODE_UNKNOWN);
-            }
-        } else if (gp_transaction_direction() == GP_REQUEST_SET) {
+    uint8_t mav_rsp_len = 0;
+    gp_can_mav_get_rsp_t mav_rsp;   // collect mavlink-translated payload vals
+
+    // capture mode
+    if (rsp->api_group == API_GRP_MODE_CAM) {
+        if (rsp->api_id == API_ID_GET_CAM_MAIN_MODE) {
+            bool ok;
+            uint8_t mode = h4_to_mav_cap_mode(rsp->payload[0], &ok);
+            if (!ok) { mode = GOPRO_CAPTURE_MODE_UNKNOWN; }
+
+            gp_set_capture_mode(mode);
+
+            mav_rsp.mav.value[0] = mode;
+            mav_rsp_len = 1;
+        } else if (rsp->api_id == API_ID_SET_CAM_MAIN_MODE) {
             gp_latch_pending_capture_mode();
         }
     }
-
-    if (rsp->api_group == API_GRP_MODE_VID &&
+    // battery level
+    else if (rsp->api_group == API_GRP_CAM_SETTINGS && rsp->api_id == API_ID_GET_BATTERY_LVL) {
+        if (len == 1) {
+            mav_rsp.mav.value[0] = rsp->payload[0];
+            mav_rsp_len = 1;
+        }
+    }
+    // trigger shutter
+    else if (rsp->api_group == API_GRP_MODE_VID &&
        (rsp->api_id == API_ID_TRIGGER_VID_START || rsp->api_id == API_ID_TRIGGER_VID_STOP))
     {
         gp_set_recording_state(h4->pending_recording_state);
     }
 
-    gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_SUCCESS);
+    gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
     return err;
 }
 
