@@ -266,24 +266,32 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
 {
     /*
      * Process a response to one of our commands.
+     *
+     * Payload values being passed back via mavlink
+     * must be converted from HeroBus values to mavlink values.
      */
 
-//    case GOPRO_COMMAND_SHUTTER:
-//    case GOPRO_COMMAND_CAPTURE_MODE:
-//    case GOPRO_COMMAND_MODEL:
-//    case GOPRO_COMMAND_BATTERY:
-//    case GOPRO_COMMAND_RESOLUTION:
-//    case GOPRO_COMMAND_FRAME_RATE:
-//    case GOPRO_COMMAND_FIELD_OF_VIEW:
-//    case GP_H3P_COMMAND_ENTIRE_CAM_STATUS:
+    uint8_t mav_rsp_len = 0;
+    gp_can_mav_get_rsp_t mav_rsp;   // collect mavlink-translated payload vals
 
     // Special Handling of responses
     switch (gp_transaction_cmd()) {
+    case GOPRO_COMMAND_BATTERY:
+        mav_rsp.mav.value[0] = rsp->payload[0];
+        mav_rsp_len = 1;
+        break;
+
     case GOPRO_COMMAND_CAPTURE_MODE:
         if (gp_transaction_direction() == GP_REQUEST_GET) {
             bool ok;
             uint8_t mode = h3p_to_mav_cap_mode(rsp->payload[0], &ok);
-            gp_set_capture_mode(ok ? mode : GOPRO_CAPTURE_MODE_UNKNOWN);   // Set capture mode state with capture mode received from GoPro
+            if (!ok) { mode = GOPRO_CAPTURE_MODE_UNKNOWN; }
+
+            gp_set_capture_mode(mode);
+
+            mav_rsp.mav.value[0] = mode;
+            mav_rsp_len = 1;
+
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
             gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
@@ -309,12 +317,13 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         bool ok;
         uint8_t mode = h3p_to_mav_cap_mode(rsp->payload[0], &ok);
         gp_set_capture_mode(ok ? mode : GOPRO_CAPTURE_MODE_UNKNOWN);
+
         const uint8_t empty[] = { 0xff, 0xff, 0xff, 0xff };
         h3p->sd_card_inserted = memcmp(&rsp->payload[SE_RSP_PHOTO_INFO_IDX], empty, sizeof empty) != 0;
     } break;
     }
 
-    gp_set_transaction_result(&rsp->payload[0], 1, (GPCmdStatus)rsp->status);
+    gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, (GPCmdStatus)rsp->status);
 }
 
 
