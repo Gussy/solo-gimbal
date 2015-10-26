@@ -1,6 +1,8 @@
 #include "gopro_hero3p.h"
+#include "gopro_hero3p_defs.h"
 #include "gopro_hero_common.h"
 #include "gopro_interface.h"
+#include "gopro_mav_converters.h"
 #include "helpers/macros.h"
 
 #include <ctype.h>
@@ -9,14 +11,6 @@
 
 // index of the start of photo info in the 'entire camera status' response
 #define SE_RSP_PHOTO_INFO_IDX   20
-
-typedef enum {
-    H3P_CAPTURE_MODE_VIDEO      = 0,
-    H3P_CAPTURE_MODE_PHOTO      = 1,
-    H3P_CAPTURE_MODE_BURST      = 2,
-    H3P_CAPTURE_MODE_TIME_LAPSE = 3,
-    H3P_CAPTURE_MODE_UNKNOWN    = 0xee  // arbitrary invalid value
-} H3P_CAPTURE_MODE;
 
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
 static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
@@ -138,28 +132,6 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
     return true;
 }
 
-static GOPRO_CAPTURE_MODE h3p_to_mav_cap_mode(uint8_t h3p_mode) {
-    // translate between mavlink and hero 3+ values
-    switch (h3p_mode) {
-    case H3P_CAPTURE_MODE_VIDEO:        return GOPRO_CAPTURE_MODE_VIDEO;
-    case H3P_CAPTURE_MODE_PHOTO:        return GOPRO_CAPTURE_MODE_PHOTO;
-    case H3P_CAPTURE_MODE_BURST:        return GOPRO_CAPTURE_MODE_BURST;
-    case H3P_CAPTURE_MODE_TIME_LAPSE:   return GOPRO_CAPTURE_MODE_TIME_LAPSE;
-    default:                            return GOPRO_CAPTURE_MODE_UNKNOWN;
-    }
-}
-
-static H3P_CAPTURE_MODE mav_to_h3p_cap_mode(uint8_t mav_mode) {
-    // translate between hero 3+ and mavlink values
-    switch (mav_mode) {
-    case GOPRO_CAPTURE_MODE_VIDEO:      return H3P_CAPTURE_MODE_VIDEO;
-    case GOPRO_CAPTURE_MODE_PHOTO:      return H3P_CAPTURE_MODE_PHOTO;
-    case GOPRO_CAPTURE_MODE_BURST:      return H3P_CAPTURE_MODE_BURST;
-    case GOPRO_CAPTURE_MODE_TIME_LAPSE: return H3P_CAPTURE_MODE_TIME_LAPSE;
-    default:                            return H3P_CAPTURE_MODE_UNKNOWN;
-    }
-}
-
 bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* request, gp_h3p_cmd_t *c)
 {
     /*
@@ -185,8 +157,9 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
         case GOPRO_COMMAND_CAPTURE_MODE: {
             c->cmd1 = 'C';
             c->cmd2 = 'M';
-            uint8_t mode = mav_to_h3p_cap_mode(request->mav.value[0]);
-            if (mode != H3P_CAPTURE_MODE_UNKNOWN) {
+            bool ok;
+            uint8_t mode = mav_to_h3p_cap_mode(request->mav.value[0], &ok);
+            if (ok) {
                 c->payload[0] = mode;
                 gp_pend_capture_mode(mode);
             } else {
@@ -207,16 +180,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
 
             // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
             if (gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
-                switch (request->mav.value[0]) {
-                case GP_RECORDING_START:
-                case GP_RECORDING_STOP:
-                    h3p->pending_recording_state = (request->mav.value[0] == GP_RECORDING_START);
-                    break;
-
-                default:
-                    gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                    return false;
-                }
+                h3p->pending_recording_state = (request->mav.value[0] != 0);
             }
             break;
 
@@ -302,13 +266,32 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
 {
     /*
      * Process a response to one of our commands.
+     *
+     * Payload values being passed back via mavlink
+     * must be converted from HeroBus values to mavlink values.
      */
+
+    uint8_t mav_rsp_len = 0;
+    gp_can_mav_get_rsp_t mav_rsp;   // collect mavlink-translated payload vals
 
     // Special Handling of responses
     switch (gp_transaction_cmd()) {
+    case GOPRO_COMMAND_BATTERY:
+        mav_rsp.mav.value[0] = rsp->payload[0];
+        mav_rsp_len = 1;
+        break;
+
     case GOPRO_COMMAND_CAPTURE_MODE:
         if (gp_transaction_direction() == GP_REQUEST_GET) {
-            gp_set_capture_mode(h3p_to_mav_cap_mode(rsp->payload[0]));   // Set capture mode state with capture mode received from GoPro
+            bool ok;
+            uint8_t mode = h3p_to_mav_cap_mode(rsp->payload[0], &ok);
+            if (!ok) { mode = GOPRO_CAPTURE_MODE_UNKNOWN; }
+
+            gp_set_capture_mode(mode);
+
+            mav_rsp.mav.value[0] = mode;
+            mav_rsp_len = 1;
+
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
             gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
@@ -324,20 +307,23 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         }
         break;
 
-    case GP_H3P_COMMAND_ENTIRE_CAM_STATUS:
+    case GP_H3P_COMMAND_ENTIRE_CAM_STATUS: {
         /*
          * Try to detect whether the SD card is inserted, so we can respond
          * reasonably to shutter commands, as described above.
          *
          * Test whether the 2 fields of photo info are empty.
          */
-        gp_set_capture_mode(h3p_to_mav_cap_mode(rsp->payload[0]));
+        bool ok;
+        uint8_t mode = h3p_to_mav_cap_mode(rsp->payload[0], &ok);
+        gp_set_capture_mode(ok ? mode : GOPRO_CAPTURE_MODE_UNKNOWN);
+
         const uint8_t empty[] = { 0xff, 0xff, 0xff, 0xff };
         h3p->sd_card_inserted = memcmp(&rsp->payload[SE_RSP_PHOTO_INFO_IDX], empty, sizeof empty) != 0;
-        break;
+    } break;
     }
 
-    gp_set_transaction_result(&rsp->payload[0], 1, (GPCmdStatus)rsp->status);
+    gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, (GPCmdStatus)rsp->status);
 }
 
 

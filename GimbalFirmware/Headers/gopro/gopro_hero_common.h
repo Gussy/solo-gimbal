@@ -16,10 +16,4 @@ typedef enum {
     GP_REQUEST_SET
 } GPRequestType;
 
-// TODO: the use of this struct might change based on pending changes to how information is passed through MAVLink
-typedef enum {
-    GP_RECORDING_STOP,
-    GP_RECORDING_START,
-} GPRecording;
-
 #endif
