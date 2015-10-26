@@ -147,6 +147,9 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_CHECK_AXIS_CALIBRATION:
+            /* The commutation_slope values default to 0.0f on an uncalibrated gimbal.
+             * Values which do not equal 0.0f implies a calibration exists
+             */
             if(flash_params.commutation_slope[EL] == 0.0f ||
                flash_params.commutation_slope[AZ] == 0.0f ||
                flash_params.commutation_slope[ROLL] == 0.0f) {
@@ -159,7 +162,10 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             break;
 
         case STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND:
-            // Wait until a calibration command is sent
+            /* Both the ROLL and EL boards will wait until a calibration command is sent
+             * either by the AZ board after it's checked the values exist, or from the AZ
+             * board when a MAVLink message triggers a calibration.
+             */
             break;
 
         case STATE_TAKE_COMMUTATION_CALIBRATION_DATA:
