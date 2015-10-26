@@ -253,8 +253,17 @@ def command_interface():
             print("Gimbal in bootloader, only firmware loading is available")
             sys.exit(0)
     else:
-        print("No gimbal messages received, exiting.")
-        sys.exit(1)
+        # If the gimbal is using a different mavlink definitions version to
+        #  what this script is using, try detecting the gimbal using a
+        #  standard mavlink message that will not have changed.
+        # Standard mavlink heartbeats could be used, but are usually not
+        #  propogated through the pixhawk in Solo
+        ver = setup_factory_pub.read_software_version(link, timeout=2)
+        if ver:
+            print("Possible mismatch in gimbal mavlink definitions, continuing anyway")
+        else:
+            print("No gimbal messages received, exiting.")
+            sys.exit(1)
 
     if args.file:
         handle_file(args, link)
