@@ -255,6 +255,20 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
             mav_rsp_len = 1;
         }
     }
+    // get camera time
+    else if (rsp->api_group == API_GRP_PLAYBACK_MODE && rsp->api_id == API_ID_GET_CAM_TIME) {
+
+        struct tm ti;
+        ti.tm_year = ((rsp->payload[0] << 8) | rsp->payload[1]) - 1900;
+        ti.tm_mon = rsp->payload[2] - 1;
+        ti.tm_mday = rsp->payload[3];
+        ti.tm_hour = rsp->payload[4];
+        ti.tm_min = rsp->payload[5];
+        ti.tm_sec = rsp->payload[6];
+
+        gp_time_to_mav(&mav_rsp, &ti);
+        mav_rsp_len = 4;
+    }
     // trigger shutter
     else if (rsp->api_group == API_GRP_MODE_VID &&
        (rsp->api_id == API_ID_TRIGGER_VID_START || rsp->api_id == API_ID_TRIGGER_VID_STOP))
@@ -332,6 +346,11 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
     case GOPRO_COMMAND_BATTERY:
         yy->api_group = API_GRP_CAM_SETTINGS;
         yy->api_id    = API_ID_GET_BATTERY_LVL;
+        break;
+
+    case GOPRO_COMMAND_TIME:
+        yy->api_group = API_GRP_PLAYBACK_MODE;
+        yy->api_id = API_ID_GET_CAM_TIME;
         break;
 
     default:
