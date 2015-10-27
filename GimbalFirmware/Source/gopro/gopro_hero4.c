@@ -1,8 +1,9 @@
 #include "gopro_hero4.h"
 #include "gopro_hero4_defs.h"
-#include "hardware/i2c.h"
 #include "gopro_interface.h"
 #include "gopro_mav_converters.h"
+#include "gopro_helpers.h"
+#include "helpers/gmtime.h"
 
 #include <string.h>
 
@@ -424,6 +425,29 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
 
             payloadlen = 0;
             break;
+
+        case GOPRO_COMMAND_TIME: {
+            yy->api_group = API_GRP_PLAYBACK_MODE;
+            yy->api_id = API_ID_SET_CAM_TIME;
+            payloadlen = 7;
+
+            struct tm utc;
+            time_t t = gp_time_from_mav(request);
+
+            if (gmtime_r(&t, &utc) == NULL) {
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
+            }
+
+            uint16_t year = utc.tm_year + 1900;
+            yy->payload[0] = (year >> 8) & 0xff;
+            yy->payload[1] = year & 0xff;
+            yy->payload[2] = utc.tm_mon + 1;    // not specified, but appears to be 1-based
+            yy->payload[3] = utc.tm_mday;
+            yy->payload[4] = utc.tm_hour;
+            yy->payload[5] = utc.tm_min;
+            yy->payload[6] = utc.tm_sec;
+        } break;
 
         default:
             // Unsupported Command ID
