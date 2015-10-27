@@ -67,6 +67,11 @@ def handle_file(args, link):
         sys.stdout.flush();
         if result == loader_results.Success:
             print("Upload successful")
+
+            # If the script is being run on a Solo, make sure custom gains are diabled
+            if setup_factory_private is None:
+                setup_mavlink.wait_for_gimbal_message(link)
+                setup_param.set_use_custom_gains(link, 0)
         elif result == loader_results.NoResponse:
             print("No response from gimbal, exiting.")
             sys.exit(1)
@@ -192,6 +197,14 @@ def printValidation(link):
         print("Accelerometer\t- FAIL - redo accelerometer calibration (-a)")
     else:
         print("Accelerometer\t- ERROR")
+
+    valid = setup_validate.validate_gains(link)
+    if valid == setup_validate.Results.Pass:
+        print("Gains   \t- PASS")
+    elif valid == setup_validate.Results.Fail:
+        print("Gains   \t- WARNING - custom gains are enabled (disable with --customgains=0)")
+    else:
+        print("Gains   \t- ERROR")
 
 # Main method when called directly
 def command_interface():

@@ -120,7 +120,6 @@ def set_use_custom_gains(link, value):
         if current_param.param_value != new_value:
             set_param(link, "GMB_CUST_GAINS", new_value)
             commit_to_flash(link)
-            print("The gimbal must be restarted after changing GMB_CUST_GAINS")
         else:
             print("GMB_CUST_GAINS is already set to %0.1f" % new_value)
 
