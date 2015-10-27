@@ -70,6 +70,7 @@ def handle_file(args, link):
 
             # If the script is being run on a Solo, make sure custom gains are diabled
             if setup_factory_private is None:
+                setup_mavlink.wait_for_gimbal_message(link)
                 setup_param.set_use_custom_gains(link, 0)
         elif result == loader_results.NoResponse:
             print("No response from gimbal, exiting.")
