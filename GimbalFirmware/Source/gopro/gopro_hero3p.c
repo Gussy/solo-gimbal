@@ -151,6 +151,27 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             }
             break;
 
+        case GOPRO_COMMAND_TIME: {
+            c->cmd1 = 'T';
+            c->cmd2 = 'M';
+            payloadlen = 6;
+
+            struct tm utc;
+            time_t t = gp_time_from_mav(request);
+
+            if (gmtime_r(&t, &utc) == NULL) {
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
+            }
+
+            c->payload[0] = utc.tm_year - 100;  // year since 2000, rather than 1900
+            c->payload[1] = utc.tm_mon + 1;     // (Jan = 0x01)
+            c->payload[2] = utc.tm_mday;
+            c->payload[3] = utc.tm_hour;
+            c->payload[4] = utc.tm_min;
+            c->payload[5] = utc.tm_sec;
+        } break;
+
         default:
             // Unsupported Command ID
             gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
