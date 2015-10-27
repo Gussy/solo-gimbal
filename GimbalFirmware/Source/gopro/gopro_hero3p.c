@@ -3,7 +3,9 @@
 #include "gopro_hero_common.h"
 #include "gopro_interface.h"
 #include "gopro_mav_converters.h"
+#include "gopro_helpers.h"
 #include "helpers/macros.h"
+#include "helpers/gmtime.h"
 
 #include <ctype.h>
 
@@ -82,6 +84,11 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
         case GP_H3P_COMMAND_ENTIRE_CAM_STATUS:
             c->cmd1 = 's';
             c->cmd2 = 'e';
+            break;
+
+        case GOPRO_COMMAND_TIME:
+            c->cmd1 = 't';
+            c->cmd2 = 'm';
             break;
 
         default:
@@ -288,6 +295,20 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
 
         const uint8_t empty[] = { 0xff, 0xff, 0xff, 0xff };
         h3p->sd_card_inserted = memcmp(&rsp->payload[SE_RSP_PHOTO_INFO_IDX], empty, sizeof empty) != 0;
+    } break;
+
+    case GOPRO_COMMAND_TIME: {
+        struct tm ti;
+
+        ti.tm_year = rsp->payload[0] + 2000 - 1900; // years since 2000
+        ti.tm_mon = rsp->payload[1] - 1;            // (Jan = 0x01)
+        ti.tm_mday = rsp->payload[2];
+        ti.tm_hour = rsp->payload[3];
+        ti.tm_min = rsp->payload[4];
+        ti.tm_sec = rsp->payload[5];
+
+        gp_time_to_mav(&mav_rsp, &ti);
+        mav_rsp_len = 4;
     } break;
     }
 
