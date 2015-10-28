@@ -24,6 +24,60 @@ bool gp_send_mav_can_response(const gp_transaction_t *t)
     return (ret == CAND_SUCCESS);
 }
 
+// from http://www.catb.org/esr/time-programming
+// released to public domain
+static time_t timegm(const struct tm * t)
+{
+    #define MONTHS_PER_YEAR 12
+    static const int cumdays[MONTHS_PER_YEAR] = {
+        0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+    };
+
+    long year;
+    time_t result;
+
+    year = 1900 + t->tm_year + t->tm_mon / MONTHS_PER_YEAR;
+    result = (year - 1970) * 365 + cumdays[t->tm_mon % MONTHS_PER_YEAR];
+    result += (year - 1968) / 4;
+    result -= (year - 1900) / 100;
+    result += (year - 1600) / 400;
+    if ((year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0) &&
+        (t->tm_mon % MONTHS_PER_YEAR) < 2)
+        result--;
+
+    result += t->tm_mday - 1;
+    result *= 24;
+
+    result += t->tm_hour;
+    result *= 60;
+
+    result += t->tm_min;
+    result *= 60;
+
+    result += t->tm_sec;
+    if (t->tm_isdst == 1)
+        result -= 3600;
+
+    return (result);
+}
+
+void gp_time_to_mav(gp_can_mav_get_rsp_t *rsp, const struct tm *ti)
+{
+    time_t t = timegm(ti);
+    rsp->mav.value[0] = t & 0xff;
+    rsp->mav.value[1] = (t >> 8) & 0xff;
+    rsp->mav.value[2] = (t >> 16) & 0xff;
+    rsp->mav.value[3] = (t >> 24) & 0xff;
+}
+
+time_t gp_time_from_mav(const gp_can_mav_set_req_t* request)
+{
+    return ((uint32_t)request->mav.value[3] << 24) |
+           ((uint32_t)request->mav.value[2] << 16) |
+           ((uint32_t)request->mav.value[1] << 8) |
+            (uint32_t)request->mav.value[0];
+}
+
 void gp_set_bp_detect_asserted_out(bool assert) {
     if (assert) {
         GpioDataRegs.GPACLEAR.bit.GPIO28 = 1;

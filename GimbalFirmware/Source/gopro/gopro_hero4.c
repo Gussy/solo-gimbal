@@ -1,8 +1,9 @@
 #include "gopro_hero4.h"
 #include "gopro_hero4_defs.h"
-#include "hardware/i2c.h"
 #include "gopro_interface.h"
 #include "gopro_mav_converters.h"
+#include "gopro_helpers.h"
+#include "helpers/gmtime.h"
 
 #include <string.h>
 
@@ -254,6 +255,20 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
             mav_rsp_len = 1;
         }
     }
+    // get camera time
+    else if (rsp->api_group == API_GRP_PLAYBACK_MODE && rsp->api_id == API_ID_GET_CAM_TIME) {
+
+        struct tm ti;
+        ti.tm_year = ((rsp->payload[0] << 8) | rsp->payload[1]) - 1900;
+        ti.tm_mon = rsp->payload[2] - 1;
+        ti.tm_mday = rsp->payload[3];
+        ti.tm_hour = rsp->payload[4];
+        ti.tm_min = rsp->payload[5];
+        ti.tm_sec = rsp->payload[6];
+
+        gp_time_to_mav(&mav_rsp, &ti);
+        mav_rsp_len = 4;
+    }
     // trigger shutter
     else if (rsp->api_group == API_GRP_MODE_VID &&
        (rsp->api_id == API_ID_TRIGGER_VID_START || rsp->api_id == API_ID_TRIGGER_VID_STOP))
@@ -331,6 +346,11 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
     case GOPRO_COMMAND_BATTERY:
         yy->api_group = API_GRP_CAM_SETTINGS;
         yy->api_id    = API_ID_GET_BATTERY_LVL;
+        break;
+
+    case GOPRO_COMMAND_TIME:
+        yy->api_group = API_GRP_PLAYBACK_MODE;
+        yy->api_id = API_ID_GET_CAM_TIME;
         break;
 
     default:
@@ -424,6 +444,29 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
 
             payloadlen = 0;
             break;
+
+        case GOPRO_COMMAND_TIME: {
+            yy->api_group = API_GRP_PLAYBACK_MODE;
+            yy->api_id = API_ID_SET_CAM_TIME;
+            payloadlen = 7;
+
+            struct tm utc;
+            time_t t = gp_time_from_mav(request);
+
+            if (gmtime_r(&t, &utc) == NULL) {
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
+            }
+
+            uint16_t year = utc.tm_year + 1900;
+            yy->payload[0] = (year >> 8) & 0xff;
+            yy->payload[1] = year & 0xff;
+            yy->payload[2] = utc.tm_mon + 1;    // not specified, but appears to be 1-based
+            yy->payload[3] = utc.tm_mday;
+            yy->payload[4] = utc.tm_hour;
+            yy->payload[5] = utc.tm_min;
+            yy->payload[6] = utc.tm_sec;
+        } break;
 
         default:
             // Unsupported Command ID

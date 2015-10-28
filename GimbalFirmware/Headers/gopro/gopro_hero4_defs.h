@@ -138,10 +138,10 @@ enum GP_H4_API_ID {
     API_ID_GET_DEFAULT_SUB_MODE     = 0x2,
     API_ID_SET_QUICK_CAP_MODE       = 0xd,
     API_ID_GET_QUICK_CAP_MODE       = 0xc,
-    API_ID_SET_AUTO_PWR_OFF_DELAY   = 0x17, // XXX: auto power off & camera time both have the same group/id combo in datasheet
-    API_ID_GET_AUTO_PWR_OFF_DELAY   = 0x16, //      still need to figure out which is correct
-    API_ID_SET_CAM_TIME             = 0x17,
-    API_ID_GET_CAM_TIME             = 0x16,
+    API_ID_SET_AUTO_PWR_OFF_DELAY   = 0x17,
+    API_ID_GET_AUTO_PWR_OFF_DELAY   = 0x16,
+    API_ID_SET_CAM_TIME             = 0x1b, // datasheet has a typo for group/id for set/get time
+    API_ID_GET_CAM_TIME             = 0x1a,
     API_ID_SET_LOCATE_CAM_ON        = 0xd,
     API_ID_SET_LOCATE_CAM_OFF       = 0xc
 };
