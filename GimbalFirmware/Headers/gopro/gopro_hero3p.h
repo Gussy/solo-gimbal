@@ -59,6 +59,7 @@ typedef union {
 void gp_h3p_init(gp_h3p_t *h3p);
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p);
 bool gp_h3p_recognize_packet(const uint8_t *buf, uint16_t len);
+bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p);
 
 bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c);
 bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t *request, gp_h3p_cmd_t *c);

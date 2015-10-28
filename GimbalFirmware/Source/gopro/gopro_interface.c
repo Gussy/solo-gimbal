@@ -621,15 +621,17 @@ void gp_on_txn_complete()
 
     switch (gp.model) {
     case GP_MODEL_HERO3P:
-        // do nothing
+        if (gp_h3p_on_transaction_complete(&gp.h3p, &txbuf.h3p)) {
+            gp_begin_cmd_send(txbuf.h3p.cmd.len + 1);
+        }
         break;
+
     case GP_MODEL_HERO4:
         if (gp_h4_on_txn_complete(&gp.h4, &txbuf.h4p)) {
             gp_begin_cmd_send(txbuf.h4p.cmd.len + 1);
         }
         break;
 
-    case GP_MODEL_UNKNOWN:
     default:
         break;
     }

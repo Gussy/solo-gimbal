@@ -62,6 +62,64 @@ bool gp_h3p_recognize_packet(const uint8_t *buf, uint16_t len)
     return false;
 }
 
+bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
+{
+    /*
+     * Called when an i2c transaction with the camera has completed.
+     * Use this to drive the next step of any ongoing multi msg commands.
+     */
+
+    gp_h3p_cmd_t *c = &p->cmd;
+    uint8_t payloadlen = 0;
+
+    switch (h3p->multi_msg_cmd.state) {
+    case H3_MULTIMSG_RESOLUTION: {
+        // next step is frame rate
+        bool ok;
+        uint8_t rate = mav_to_h3p_framerate(h3p->multi_msg_cmd.payload[1], &ok);
+        if (ok) {
+            c->cmd1 = 'F';
+            c->cmd2 = 'S';
+            c->payload[0] = rate;
+            payloadlen = 1;
+            h3p->multi_msg_cmd.state = H3_MULTIMSG_FRAME_RATE;
+        } else {
+            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+            return false;
+        }
+    } break;
+
+    case H3_MULTIMSG_FRAME_RATE:
+        // next step is field of view
+        c->cmd1 = 'F';
+        c->cmd2 = 'V';
+        // fov values do not require mavlink<->herobus conversion
+        c->payload[0] = h3p->multi_msg_cmd.payload[2];
+        payloadlen = 1;
+        h3p->multi_msg_cmd.state = H3_MULTIMSG_FOV;
+        break;
+
+    case H3_MULTIMSG_FOV:
+        // next step is tv mode
+        c->cmd1 = 'V';
+        c->cmd2 = 'M';
+        if (h3p->multi_msg_cmd.payload[3] & GOPRO_VIDEO_SETTINGS_TV_MODE) {
+            c->payload[0] = H3P_TV_PAL;
+        } else {
+            c->payload[0] = H3P_TV_NTSC;
+        }
+        payloadlen = 1;
+        h3p->multi_msg_cmd.state = H3_MULTIMSG_TV_MODE;
+        break;
+
+    default:
+        return false;
+    }
+
+    gp_h3p_finalize_command(c, payloadlen);
+    return true;
+}
+
 bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
 {
     /*
@@ -187,6 +245,24 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             c->payload[3] = utc.tm_hour;
             c->payload[4] = utc.tm_min;
             c->payload[5] = utc.tm_sec;
+        } break;
+
+        case GOPRO_COMMAND_VIDEO_SETTINGS: {
+            bool ok;
+            uint8_t res = mav_to_h3p_res(request->mav.value[0], &ok);
+            if (ok) {
+                // store the payload so we can continue sending subsequent messages in
+                memcpy(h3p->multi_msg_cmd.payload, request->mav.value, sizeof request->mav.value);
+                h3p->multi_msg_cmd.state = H3_MULTIMSG_RESOLUTION;
+
+                c->cmd1 = 'V';
+                c->cmd2 = 'V';
+                c->payload[0] = res;
+                payloadlen = 1;
+            } else {
+                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
+            }
         } break;
 
         default:
@@ -325,6 +401,15 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         gp_time_to_mav(&mav_rsp, &ti);
         mav_rsp_len = 4;
     } break;
+
+    case GOPRO_COMMAND_VIDEO_SETTINGS:
+        // don't mark the command as complete until we get a response to the final cmd
+        // (or if we got an error, which is handled above)
+        if (h3p->multi_msg_cmd.state != H3_MULTIMSG_TV_MODE) {
+            return;
+        }
+        h3p->multi_msg_cmd.state = H3_MULTIMSG_NONE;
+        break;
     }
 
     gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
