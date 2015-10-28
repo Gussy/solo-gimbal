@@ -407,7 +407,7 @@ int gp_get_request(const gp_can_mav_get_req_t *req, bool txn_is_internal)
 
     switch (gp.model) {
     case GP_MODEL_HERO3P:
-        if (gp_h3p_produce_get_request(req->mav.cmd_id, &txbuf.h3p.cmd)) {
+        if (gp_h3p_produce_get_request(&gp.h3p, req->mav.cmd_id, &txbuf.h3p.cmd)) {
             gp_begin_cmd_send(txbuf.h3p.cmd.len + 1);
         }
         break;
@@ -616,7 +616,6 @@ void gp_on_txn_complete()
     /*
      * Called after a HeroBus request/response transaction
      * has been completed.
-     *
      */
 
     switch (gp.model) {
