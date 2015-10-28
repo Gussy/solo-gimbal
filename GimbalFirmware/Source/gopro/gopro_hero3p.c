@@ -246,6 +246,11 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
      * must be converted from HeroBus values to mavlink values.
      */
 
+    if (rsp->status != GP_CMD_STATUS_SUCCESS) {
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        return;
+    }
+
     uint8_t mav_rsp_len = 0;
     gp_can_mav_get_rsp_t mav_rsp;   // collect mavlink-translated payload vals
 
@@ -277,7 +282,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
          * as the camera responds with success status even if the SD card is not inserted.
          * Need to check for SD card presence before sending shutter trigger cmd.
          */
-        if (rsp->status == GP_CMD_STATUS_SUCCESS && gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
+        if (gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
             gp_set_recording_state(h3p->pending_recording_state);
         }
         break;
@@ -312,7 +317,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
     } break;
     }
 
-    gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, (GPCmdStatus)rsp->status);
+    gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
 }
 
 
