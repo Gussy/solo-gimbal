@@ -17,10 +17,11 @@
 // track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
 enum H3P_MULTIMSG_STATE {
     H3_MULTIMSG_NONE,           // not performing a multi msg command
+    H3_MULTIMSG_TV_MODE,        // ntsc/pal sent
     H3_MULTIMSG_RESOLUTION,     // resolution sent
     H3_MULTIMSG_FRAME_RATE,     // frame rate sent
     H3_MULTIMSG_FOV,            // field of view sent
-    H3_MULTIMSG_TV_MODE         // ntsc/pal sent
+    H3_MULTIMSG_FINAL = H3_MULTIMSG_FOV // last msg in the sequence
 };
 
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
@@ -73,6 +74,22 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
     uint8_t payloadlen = 0;
 
     switch (h3p->multi_msg_cmd.state) {
+    case H3_MULTIMSG_TV_MODE: {
+        // next step is resolution
+        bool ok;
+        uint8_t res = mav_to_h3p_res(h3p->multi_msg_cmd.payload[0], &ok);
+        if (ok) {
+            c->cmd1 = 'V';
+            c->cmd2 = 'V';
+            c->payload[0] = res;
+            payloadlen = 1;
+            h3p->multi_msg_cmd.state = H3_MULTIMSG_RESOLUTION;
+        } else {
+            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+            return false;
+        }
+    } break;
+
     case H3_MULTIMSG_RESOLUTION: {
         // next step is frame rate
         bool ok;
@@ -97,19 +114,6 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
         c->payload[0] = h3p->multi_msg_cmd.payload[2];
         payloadlen = 1;
         h3p->multi_msg_cmd.state = H3_MULTIMSG_FOV;
-        break;
-
-    case H3_MULTIMSG_FOV:
-        // next step is tv mode
-        c->cmd1 = 'V';
-        c->cmd2 = 'M';
-        if (h3p->multi_msg_cmd.payload[3] & GOPRO_VIDEO_SETTINGS_TV_MODE) {
-            c->payload[0] = H3P_TV_PAL;
-        } else {
-            c->payload[0] = H3P_TV_NTSC;
-        }
-        payloadlen = 1;
-        h3p->multi_msg_cmd.state = H3_MULTIMSG_TV_MODE;
         break;
 
     default:
@@ -248,21 +252,19 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
         } break;
 
         case GOPRO_COMMAND_VIDEO_SETTINGS: {
-            bool ok;
-            uint8_t res = mav_to_h3p_res(request->mav.value[0], &ok);
-            if (ok) {
-                // store the payload so we can continue sending subsequent messages in
-                memcpy(h3p->multi_msg_cmd.payload, request->mav.value, sizeof request->mav.value);
-                h3p->multi_msg_cmd.state = H3_MULTIMSG_RESOLUTION;
+            // video settings is a multi msg command, first msg is tv mode
+            // store the payload so we can continue sending subsequent messages in
+            memcpy(h3p->multi_msg_cmd.payload, request->mav.value, sizeof request->mav.value);
+            h3p->multi_msg_cmd.state = H3_MULTIMSG_TV_MODE;
 
-                c->cmd1 = 'V';
-                c->cmd2 = 'V';
-                c->payload[0] = res;
-                payloadlen = 1;
+            c->cmd1 = 'V';
+            c->cmd2 = 'M';
+            if (h3p->multi_msg_cmd.payload[3] & GOPRO_VIDEO_SETTINGS_TV_MODE) {
+                c->payload[0] = H3P_TV_PAL;
             } else {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-                return false;
+                c->payload[0] = H3P_TV_NTSC;
             }
+            payloadlen = 1;
         } break;
 
         default:
@@ -405,7 +407,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
     case GOPRO_COMMAND_VIDEO_SETTINGS:
         // don't mark the command as complete until we get a response to the final cmd
         // (or if we got an error, which is handled above)
-        if (h3p->multi_msg_cmd.state != H3_MULTIMSG_TV_MODE) {
+        if (h3p->multi_msg_cmd.state != H3_MULTIMSG_FINAL) {
             return;
         }
         h3p->multi_msg_cmd.state = H3_MULTIMSG_NONE;
