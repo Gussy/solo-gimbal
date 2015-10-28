@@ -23,6 +23,11 @@ typedef struct {
     bool gccb_version_queried;
     bool pending_recording_state;   // requested record state, latched on response from gopro
     bool sd_card_inserted;
+
+    struct {
+        uint8_t state;
+        uint8_t payload[GP_CAN_MAV_MAX_PAYLOAD_BYTES];
+    } multi_msg_cmd;
 } gp_h3p_t;
 
 // Hero 3+ packet formats

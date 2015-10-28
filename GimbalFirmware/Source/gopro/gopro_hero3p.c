@@ -14,6 +14,15 @@
 // index of the start of photo info in the 'entire camera status' response
 #define SE_RSP_PHOTO_INFO_IDX   20
 
+// track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
+enum H3P_MULTIMSG_STATE {
+    H3_MULTIMSG_NONE,           // not performing a multi msg command
+    H3_MULTIMSG_RESOLUTION,     // resolution sent
+    H3_MULTIMSG_FRAME_RATE,     // frame rate sent
+    H3_MULTIMSG_FOV,            // field of view sent
+    H3_MULTIMSG_TV_MODE         // ntsc/pal sent
+};
+
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
 static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
 static void gp_h3p_sanitize_buf_len(uint8_t *buf);
@@ -25,6 +34,7 @@ void gp_h3p_init(gp_h3p_t *h3p)
     // verify GP_H3P_COMMAND_ENTIRE_CAM_STATUS is not used in mavlink interface
     STATIC_ASSERT(GP_H3P_COMMAND_ENTIRE_CAM_STATUS >= GOPRO_COMMAND_ENUM_END);
 
+    h3p->multi_msg_cmd.state = H3_MULTIMSG_NONE;
     h3p->gccb_version_queried = false;
     h3p->pending_recording_state = false;
     h3p->sd_card_inserted = false;
