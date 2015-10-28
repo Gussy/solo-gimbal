@@ -99,7 +99,6 @@ typedef struct {
     CAND_FaultCode last_axis_fault[AXIS_CNT];
     Uint8 encoder_value_received[AXIS_CNT];
     Uint16 axes_homed[AXIS_CNT];
-    GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_status[AXIS_CNT];
     float rate_cmd_inject[AXIS_CNT];
     float rate_cmd_inject_filtered[AXIS_CNT];
     Uint8 rate_loop_step;

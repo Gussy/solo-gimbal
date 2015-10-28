@@ -223,14 +223,6 @@ void Process_CAN_Messages(AxisParms* axis_parms,
                         }
                         break;
 
-                    case CAND_EPID_CALIBRATION_REQUIRED_STATUS:
-                        if (msg.extended_param_length == 2) {
-                            GIMBAL_AXIS_CALIBRATION_REQUIRED calibration_required_status = (GIMBAL_AXIS_CALIBRATION_REQUIRED)(msg.extended_param[0] & 0x00FF);
-                            GimbalAxis axis = (GimbalAxis)(msg.extended_param[1] & 0x00FF);
-                            cb_parms->calibration_status[axis] = calibration_required_status;
-                        }
-                        break;
-
                     case CAND_EPID_BEACON_CONTROL:
                         {
                             LED_RGBA color;

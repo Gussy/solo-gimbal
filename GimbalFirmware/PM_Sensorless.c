@@ -102,11 +102,6 @@ ControlBoardParms control_board_parms = {
     .last_axis_fault = {CAND_FAULT_NONE, CAND_FAULT_NONE, CAND_FAULT_NONE},
     .encoder_value_received = {FALSE, FALSE, FALSE},
     .axes_homed = {FALSE, FALSE, FALSE},
-    .calibration_status = {
-        GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN,
-        GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN,
-        GIMBAL_AXIS_CALIBRATION_REQUIRED_UNKNOWN
-    },
     .rate_cmd_inject = {0, 0, 0},
     .rate_cmd_inject_filtered = {0, 0, 0},
     .rate_loop_step = 0,
