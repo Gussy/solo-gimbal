@@ -44,10 +44,10 @@ def clear_comutation_params(link):
     # Set all commutation calibration parameters to 0
     parameters.mavset(link.file, "GMB_YAW_SLOPE", 0.0, 3)
     parameters.mavset(link.file, "GMB_YAW_ICEPT", 0.0, 3)
-    parameters.mavset(link.file, "GMB_ROLL_SLOPE", 0.0, 3)
-    parameters.mavset(link.file, "GMB_ROLL_ICEPT", 0.0, 3)
-    parameters.mavset(link.file, "GMB_PITCH_SLOPE", 0.0, 3)
-    parameters.mavset(link.file, "GMB_PITCH_ICEPT", 0.0, 3)
+    #parameters.mavset(link.file, "GMB_ROLL_SLOPE", 0.0, 3)
+    #parameters.mavset(link.file, "GMB_ROLL_ICEPT", 0.0, 3)
+    #parameters.mavset(link.file, "GMB_PITCH_SLOPE", 0.0, 3)
+    #parameters.mavset(link.file, "GMB_PITCH_ICEPT", 0.0, 3)
     commit_to_flash(link)
 
 def set_offsets(link, kind, offsets):
