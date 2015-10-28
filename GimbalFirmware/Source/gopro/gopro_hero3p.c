@@ -102,21 +102,6 @@ bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c)
             c->cmd2 = 'l';
             break;
 
-        case GOPRO_COMMAND_RESOLUTION:
-            c->cmd1 = 'v';
-            c->cmd2 = 'v';
-            break;
-
-        case GOPRO_COMMAND_FRAME_RATE:
-            c->cmd1 = 'f';
-            c->cmd2 = 's';
-            break;
-
-        case GOPRO_COMMAND_FIELD_OF_VIEW:
-            c->cmd1 = 'f';
-            c->cmd2 = 'v';
-            break;
-
         case GP_H3P_COMMAND_ENTIRE_CAM_STATUS:
             c->cmd1 = 's';
             c->cmd2 = 'e';
@@ -183,26 +168,6 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
                 h3p->pending_recording_state = (request->mav.value[0] != 0);
             }
             break;
-
-        /* Unsupported commands */
-        case GOPRO_COMMAND_RESOLUTION:
-            c->cmd1 = 'V';
-            c->cmd2 = 'V';
-            c->payload[0] = request->mav.value[0];
-            break;
-
-        case GOPRO_COMMAND_FRAME_RATE:
-            c->cmd1 = 'F';
-            c->cmd2 = 'S';
-            c->payload[0] = request->mav.value[0];
-            break;
-
-        case GOPRO_COMMAND_FIELD_OF_VIEW:
-            c->cmd1 = 'F';
-            c->cmd2 = 'V';
-            c->payload[0] = request->mav.value[0];
-            break;
-        /* End of unsupported commands */
 
         default:
             // Unsupported Command ID

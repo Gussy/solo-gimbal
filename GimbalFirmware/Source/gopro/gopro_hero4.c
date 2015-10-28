@@ -333,13 +333,6 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
         yy->api_id    = API_ID_GET_BATTERY_LVL;
         break;
 
-    case GOPRO_COMMAND_RESOLUTION:
-    case GOPRO_COMMAND_FRAME_RATE:
-    case GOPRO_COMMAND_FIELD_OF_VIEW:
-        yy->api_group = API_GRP_MODE_VID;
-        yy->api_id    = API_ID_GET_RES_FR_FOV;
-        break;
-
     default:
         // Unsupported Command ID
         gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
@@ -430,30 +423,6 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             }
 
             payloadlen = 0;
-            break;
-
-        case GOPRO_COMMAND_RESOLUTION: // TODO: how do we know the other values? new MAVLink message type might be needed here
-            yy->payload[0] = request->mav.value[0];  // resolution
-            yy->payload[1] = 0;               // fps
-            yy->payload[2] = 0;               // fov
-        case GOPRO_COMMAND_FIELD_OF_VIEW:
-            yy->payload[0] = 0;
-            yy->payload[1] = request->mav.value[0];
-            yy->payload[2] = 0;
-        case GOPRO_COMMAND_FRAME_RATE:
-            yy->payload[0] = 0;
-            yy->payload[1] = 0;
-            yy->payload[2] = request->mav.value[0];
-
-            /* TODO set to default while we figure this out */
-            // TODO: current defaults: 1080p (enum:9) @ 30 FPS (enum:8), wide (enum:0)
-            yy->payload[0] = 9;
-            yy->payload[1] = 8;
-            yy->payload[2] = 0;
-
-            payloadlen = 3;
-            yy->api_group = API_GRP_MODE_VID;
-            yy->api_id = API_ID_SET_RES_FR_FOV;
             break;
 
         default:
