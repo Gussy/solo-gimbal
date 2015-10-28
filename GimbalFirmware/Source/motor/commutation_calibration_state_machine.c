@@ -36,7 +36,7 @@ static void calc_slope_intercept(CommutationCalibrationParms* cc_parms, int star
 	*intercept = average_intercept;
 }
 
-_iq IdRefLockCommutationCalibration = _IQ(0.495/MAX_CURRENT); // = 0.495A
+_iq IdRefLockCommutationCalibration = _IQ(1.95/MAX_CURRENT); // = 0.495A
 
 Uint8 calibration_progress = 0;
 
