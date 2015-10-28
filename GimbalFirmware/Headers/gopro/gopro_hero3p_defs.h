@@ -41,6 +41,11 @@ typedef enum {
     H3P_FRAMERATE_12_5fps   = 0xb,
 } H3P_FRAMERATE;
 
+enum H3P_TV_MODE {
+    H3P_TV_NTSC     = 0x0,
+    H3P_TV_PAL      = 0x1
+};
+
 // for now, mavlink defs for Field of View match hero bus, no need to convert
 
 #endif // GOPRO_HERO3P_DEFS_H
