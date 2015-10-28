@@ -69,15 +69,6 @@ void CANSendCalibrationProgress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS c
     }
 }
 
-void CANSendAxisCalibrationStatus(GIMBAL_AXIS_CALIBRATION_REQUIRED status)
-{
-    Uint8 params[2];
-    params[0] = status;
-    params[1] = GetBoardHWID();
-
-    cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_CALIBRATION_REQUIRED_STATUS, params, 2);
-}
-
 void CANUpdateBeaconState(LED_MODE mode, LED_RGBA color, Uint8 duration)
 {
 	Uint8 params[6];
