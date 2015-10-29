@@ -16,6 +16,7 @@ enum H4_MULTIMSG_STATE {
     H4_MULTIMSG_FINAL = H4_MULTIMSG_VID_SETTINGS // last msg in the sequence
 };
 
+static void gp_h4_set_transaction_result(gp_h4_t *h4, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
 static void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t *c, gp_h4_pkt_t *rsp);
 static gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
 static bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r);
@@ -64,6 +65,18 @@ bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p)
     return false;
 }
 
+void gp_h4_set_transaction_result(gp_h4_t *h4, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status)
+{
+    /*
+     * wrapper around gp_set_transaction_result() to ensure
+     * we always clear our multi msg state, in case we error
+     * out before the entire command completes successfully.
+     */
+
+    h4->multi_msg_cmd.state = H4_MULTIMSG_NONE;
+    gp_set_transaction_result(resp_bytes, len, status);
+}
+
 static bool gp_h4_produce_set_video_settings(gp_h4_t *h4, gp_h4_yy_cmd_t *yy)
 {
     /*
@@ -105,7 +118,7 @@ bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
                 h4->multi_msg_cmd.state = H4_MULTIMSG_VID_SETTINGS;
                 return true;
             }
-            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+            gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
         } else {
             gp_h4_yy_cmd_t *yy = &p->yy_cmd;
             yy->api_group = API_GRP_MODE_VID;
@@ -272,7 +285,7 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
 
     gp_h4_err_t err = gp_h4_get_rsp_err(rsp);
     if (err != GP_H4_ERR_OK) {
-        gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_FAILURE);
+        gp_h4_set_transaction_result(h4, rsp->payload, len, GP_CMD_STATUS_FAILURE);
         return err;
     }
 
@@ -359,7 +372,7 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         }
     }
 
-    gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
+    gp_h4_set_transaction_result(h4, mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
     return err;
 }
 
@@ -446,7 +459,7 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
 
     default:
         // Unsupported Command ID
-        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
         return false;
     }
 
@@ -476,7 +489,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 // no supported command to power on.
                 // have tried gp_request_power_on(), which is implemented based on hero3 docs,
                 // but does not appear to power up the camera.
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
             break;
@@ -491,7 +504,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 payloadlen = 1;
                 gp_pend_capture_mode(mode);
             }else {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
         } break;
@@ -529,7 +542,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
 
             default:
                 // unknown capture mode
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
 
@@ -545,7 +558,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             time_t t = gp_time_from_mav(request);
 
             if (gmtime_r(&t, &utc) == NULL) {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
 
@@ -577,7 +590,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
 
         default:
             // Unsupported Command ID
-            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+            gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
             return false;
     }
 
