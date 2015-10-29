@@ -17,6 +17,9 @@
  * name them and deal with the extra typing.
  */
 
+// size of largest can mav payload
+#define GP_CAN_MAV_MAX_PAYLOAD_BYTES    4
+
 typedef union {
     struct {
         uint8_t hb_status;
@@ -36,7 +39,7 @@ typedef union {
 typedef union {
     struct {
         uint8_t cmd_id;
-        uint8_t value[4];
+        uint8_t value[GP_CAN_MAV_MAX_PAYLOAD_BYTES];
     } mav;
     uint8_t bytes[5];
 } gp_can_mav_set_req_t;     // corresponds to mavlink_gopro_set_request_t
@@ -45,7 +48,7 @@ typedef union {
     struct {
         uint8_t cmd_id;
         uint8_t status;
-        uint8_t value[4];
+        uint8_t value[GP_CAN_MAV_MAX_PAYLOAD_BYTES];
     } mav;
     uint8_t bytes[6];
 } gp_can_mav_get_rsp_t;     // corresponds to mavlink_gopro_get_response_t

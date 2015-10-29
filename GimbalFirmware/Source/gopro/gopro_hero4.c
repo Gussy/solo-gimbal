@@ -4,12 +4,19 @@
 #include "gopro_mav_converters.h"
 #include "gopro_helpers.h"
 #include "helpers/gmtime.h"
+#include "mavlink_interface/gimbal_mavlink.h"
 
 #include <string.h>
 
-// Include for GOPRO_COMMAND enum
-#include "mavlink_interface/mavlink_gimbal_interface.h"
+// track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
+enum H4_MULTIMSG_STATE {
+    H4_MULTIMSG_NONE,           // not performing a multi msg command
+    H4_MULTIMSG_TV_MODE,        // ntsc/pal sent
+    H4_MULTIMSG_VID_SETTINGS,   // resolution/frame rate/fov sent
+    H4_MULTIMSG_FINAL = H4_MULTIMSG_VID_SETTINGS // last msg in the sequence
+};
 
+static void gp_h4_set_transaction_result(gp_h4_t *h4, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
 static void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t *c, gp_h4_pkt_t *rsp);
 static gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
 static bool gp_h4_handle_handshake(gp_h4_t *h4, const gp_h4_cmd_t *c, gp_h4_rsp_t *r);
@@ -21,6 +28,8 @@ void gp_h4_init(gp_h4_t *h4)
     for (i = 0; i < GP_H4_PROTO_NUM_BYTES; ++i) {
         h4->camera_proto_version[i] = 0xff;
     }
+
+    h4->multi_msg_cmd.state = H4_MULTIMSG_NONE;
 
     h4->channel_id = 0; // defaults to 0
     h4->handshake_step = GP_H4_HANDSHAKE_NONE;
@@ -56,11 +65,68 @@ bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p)
     return false;
 }
 
+void gp_h4_set_transaction_result(gp_h4_t *h4, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status)
+{
+    /*
+     * wrapper around gp_set_transaction_result() to ensure
+     * we always clear our multi msg state, in case we error
+     * out before the entire command completes successfully.
+     */
+
+    h4->multi_msg_cmd.state = H4_MULTIMSG_NONE;
+    gp_set_transaction_result(resp_bytes, len, status);
+}
+
+static bool gp_h4_produce_set_video_settings(gp_h4_t *h4, gp_h4_yy_cmd_t *yy)
+{
+    /*
+     * Helper to pack yy with a video settings set command.
+     */
+
+    bool ok;
+
+    yy->payload[0] = mav_to_h4_resolution(h4->multi_msg_cmd.payload[0], &ok);
+    if (!ok) {
+        return false;
+    }
+
+    yy->payload[1] = mav_to_h4_framerate(h4->multi_msg_cmd.payload[1], &ok);
+    if (!ok) {
+        return false;
+    }
+
+    yy->payload[2] = h4->multi_msg_cmd.payload[2];
+
+    yy->api_group = API_GRP_MODE_VID;
+    yy->api_id = API_ID_SET_RES_FR_FOV;
+    gp_h4_finalize_yy_cmd(h4, 3, yy);
+    return true;
+}
+
 bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
 {
     // must kick off final step of handshake sequence on hero4
     if (!gp_h4_handshake_complete(h4)) {
         return gp_h4_finish_handshake(h4, p);
+    }
+
+    switch (h4->multi_msg_cmd.state) {
+    case H4_MULTIMSG_TV_MODE:
+        // vid settings is next
+        if (gp_transaction_direction() == GP_REQUEST_SET) {
+            if (gp_h4_produce_set_video_settings(h4, &p->yy_cmd)) {
+                h4->multi_msg_cmd.state = H4_MULTIMSG_VID_SETTINGS;
+                return true;
+            }
+            gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
+        } else {
+            gp_h4_yy_cmd_t *yy = &p->yy_cmd;
+            yy->api_group = API_GRP_MODE_VID;
+            yy->api_id = API_ID_GET_RES_FR_FOV;
+            gp_h4_finalize_yy_cmd(h4, 0, yy);
+            h4->multi_msg_cmd.state = H4_MULTIMSG_VID_SETTINGS;
+            return true;
+        }
     }
 
     return false;
@@ -219,7 +285,7 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
 
     gp_h4_err_t err = gp_h4_get_rsp_err(rsp);
     if (err != GP_H4_ERR_OK) {
-        gp_set_transaction_result(rsp->payload, len, GP_CMD_STATUS_FAILURE);
+        gp_h4_set_transaction_result(h4, rsp->payload, len, GP_CMD_STATUS_FAILURE);
         return err;
     }
 
@@ -275,8 +341,38 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
     {
         gp_set_recording_state(h4->pending_recording_state);
     }
+    // tv mode
+    else if (rsp->api_group == API_GRP_PLAYBACK_MODE) {
+        // if this is being sent as part of a multi msg,
+        // ensure we don't complete the transaction until the final msg is completed.
+        if (rsp->api_id == API_ID_SET_NTSC_PAL) {
+            return err;
+        }
 
-    gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
+        if (rsp->api_id == API_ID_GET_NTSC_PAL) {
+            if (rsp->payload[0] == H4_TV_PAL) {
+                h4->multi_msg_cmd.payload[3] |= GOPRO_VIDEO_SETTINGS_TV_MODE;
+            }
+            return err;
+        }
+    }
+    // vid settings
+    else if (rsp->api_group == API_GRP_MODE_VID) {
+        if (rsp->api_id == API_ID_SET_RES_FR_FOV) {
+            h4->multi_msg_cmd.state  = H4_MULTIMSG_NONE;
+
+        } else if (rsp->api_id == API_ID_GET_RES_FR_FOV) {
+            bool ok;
+            mav_rsp.mav.value[0] = h4_to_mav_resolution(rsp->payload[0], &ok);
+            mav_rsp.mav.value[1] = h4_to_mav_framerate(rsp->payload[1], &ok);
+            mav_rsp.mav.value[2] = rsp->payload[2]; // field of view does not require conversion
+            mav_rsp.mav.value[3] = h4->multi_msg_cmd.payload[3];
+            mav_rsp_len = 4;
+            h4->multi_msg_cmd.state  = H4_MULTIMSG_NONE;
+        }
+    }
+
+    gp_h4_set_transaction_result(h4, mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
     return err;
 }
 
@@ -353,9 +449,17 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
         yy->api_id = API_ID_GET_CAM_TIME;
         break;
 
+    case GOPRO_COMMAND_VIDEO_SETTINGS:
+        yy->api_group = API_GRP_PLAYBACK_MODE;
+        yy->api_id = API_ID_GET_NTSC_PAL;
+
+        h4->multi_msg_cmd.payload[3] = 0;  // init flags to 0
+        h4->multi_msg_cmd.state = H4_MULTIMSG_TV_MODE;
+        break;
+
     default:
         // Unsupported Command ID
-        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
         return false;
     }
 
@@ -385,7 +489,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 // no supported command to power on.
                 // have tried gp_request_power_on(), which is implemented based on hero3 docs,
                 // but does not appear to power up the camera.
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
             break;
@@ -400,7 +504,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 payloadlen = 1;
                 gp_pend_capture_mode(mode);
             }else {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
         } break;
@@ -438,7 +542,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
 
             default:
                 // unknown capture mode
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
 
@@ -454,7 +558,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             time_t t = gp_time_from_mav(request);
 
             if (gmtime_r(&t, &utc) == NULL) {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
 
@@ -468,9 +572,25 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             yy->payload[6] = utc.tm_sec;
         } break;
 
+        case GOPRO_COMMAND_VIDEO_SETTINGS:
+            // video settings is a multi msg command, first msg is tv mode
+            // store the payload so we can continue sending subsequent messages in
+            memcpy(h4->multi_msg_cmd.payload, request->mav.value, sizeof request->mav.value);
+            h4->multi_msg_cmd.state = H4_MULTIMSG_TV_MODE;
+
+            yy->api_group = API_GRP_PLAYBACK_MODE;
+            yy->api_id = API_ID_SET_NTSC_PAL;
+            if (h4->multi_msg_cmd.payload[3] & GOPRO_VIDEO_SETTINGS_TV_MODE) {
+                yy->payload[0] = H4_TV_PAL;
+            } else {
+                yy->payload[0] = H4_TV_NTSC;
+            }
+            payloadlen = 1;
+            break;
+
         default:
             // Unsupported Command ID
-            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+            gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
             return false;
     }
 

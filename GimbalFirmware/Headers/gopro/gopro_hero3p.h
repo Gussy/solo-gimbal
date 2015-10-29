@@ -23,6 +23,11 @@ typedef struct {
     bool gccb_version_queried;
     bool pending_recording_state;   // requested record state, latched on response from gopro
     bool sd_card_inserted;
+
+    struct {
+        uint8_t state;
+        uint8_t payload[GP_CAN_MAV_MAX_PAYLOAD_BYTES];
+    } multi_msg_cmd;
 } gp_h3p_t;
 
 // Hero 3+ packet formats
@@ -54,8 +59,9 @@ typedef union {
 void gp_h3p_init(gp_h3p_t *h3p);
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p);
 bool gp_h3p_recognize_packet(const uint8_t *buf, uint16_t len);
+bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p);
 
-bool gp_h3p_produce_get_request(uint8_t cmd_id, gp_h3p_cmd_t *c);
+bool gp_h3p_produce_get_request(gp_h3p_t *h3p, uint8_t cmd_id, gp_h3p_cmd_t *c);
 bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t *request, gp_h3p_cmd_t *c);
 
 bool gp_h3p_handle_rx(gp_h3p_t *h3p, gp_h3p_pkt_t *p, bool from_camera, gp_h3p_rsp_t *rsp);
