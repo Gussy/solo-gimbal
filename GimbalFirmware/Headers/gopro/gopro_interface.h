@@ -51,6 +51,7 @@ typedef struct {
 // public interface
 void gp_init();
 void gp_reset();
+void gp_disable(void);
 bool gp_enabled();
 void gp_fast_update();
 void gp_update();
