@@ -20,6 +20,11 @@ typedef struct {
     uint8_t channel_id;
     uint8_t handshake_step;                                 // GP_H4_HANDSHAKE_STEPS
     bool pending_recording_state;   // latched based on response from camera
+
+    struct {
+        uint8_t state;
+        uint8_t payload[GP_CAN_MAV_MAX_PAYLOAD_BYTES];
+    } multi_msg_cmd;
 } gp_h4_t;
 
 // hero 4 packet formats

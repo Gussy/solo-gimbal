@@ -4,11 +4,17 @@
 #include "gopro_mav_converters.h"
 #include "gopro_helpers.h"
 #include "helpers/gmtime.h"
+#include "mavlink_interface/gimbal_mavlink.h"
 
 #include <string.h>
 
-// Include for GOPRO_COMMAND enum
-#include "mavlink_interface/mavlink_gimbal_interface.h"
+// track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
+enum H4_MULTIMSG_STATE {
+    H4_MULTIMSG_NONE,           // not performing a multi msg command
+    H4_MULTIMSG_TV_MODE,        // ntsc/pal sent
+    H4_MULTIMSG_VID_SETTINGS,   // resolution/frame rate/fov sent
+    H4_MULTIMSG_FINAL = H4_MULTIMSG_VID_SETTINGS // last msg in the sequence
+};
 
 static void gp_h4_handle_cmd(gp_h4_t *h4, const gp_h4_pkt_t *c, gp_h4_pkt_t *rsp);
 static gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t *p);
@@ -21,6 +27,8 @@ void gp_h4_init(gp_h4_t *h4)
     for (i = 0; i < GP_H4_PROTO_NUM_BYTES; ++i) {
         h4->camera_proto_version[i] = 0xff;
     }
+
+    h4->multi_msg_cmd.state = H4_MULTIMSG_NONE;
 
     h4->channel_id = 0; // defaults to 0
     h4->handshake_step = GP_H4_HANDSHAKE_NONE;
@@ -56,11 +64,49 @@ bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p)
     return false;
 }
 
+static bool gp_h4_produce_set_video_settings(gp_h4_t *h4, gp_h4_yy_cmd_t *yy)
+{
+    /*
+     * Helper to pack yy with a video settings set command.
+     */
+
+    bool ok;
+
+    yy->payload[0] = mav_to_h4_resolution(h4->multi_msg_cmd.payload[0], &ok);
+    if (!ok) {
+        return false;
+    }
+
+    yy->payload[1] = mav_to_h4_framerate(h4->multi_msg_cmd.payload[1], &ok);
+    if (!ok) {
+        return false;
+    }
+
+    yy->payload[2] = h4->multi_msg_cmd.payload[2];
+
+    yy->api_group = API_GRP_MODE_VID;
+    yy->api_id = API_ID_SET_RES_FR_FOV;
+    gp_h4_finalize_yy_cmd(h4, 3, yy);
+    return true;
+}
+
 bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
 {
     // must kick off final step of handshake sequence on hero4
     if (!gp_h4_handshake_complete(h4)) {
         return gp_h4_finish_handshake(h4, p);
+    }
+
+    switch (h4->multi_msg_cmd.state) {
+    case H4_MULTIMSG_TV_MODE:
+        // vid settings is next
+        if (gp_transaction_direction() == GP_REQUEST_SET) {
+            if (gp_h4_produce_set_video_settings(h4, &p->yy_cmd)) {
+                h4->multi_msg_cmd.state = H4_MULTIMSG_VID_SETTINGS;
+                return true;
+            }
+            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        }
     }
 
     return false;
@@ -275,6 +321,20 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
     {
         gp_set_recording_state(h4->pending_recording_state);
     }
+    // tv mode
+    else if (rsp->api_group == API_GRP_PLAYBACK_MODE && rsp->api_id == API_ID_SET_NTSC_PAL) {
+        // if this is being sent as part of a multi msg,
+        // ensure we don't complete the transaction until the final msg is completed.
+        if (h4->multi_msg_cmd.state == H4_MULTIMSG_TV_MODE) {
+            return err;
+        }
+    }
+    // vid settings
+    else if (rsp->api_group == API_GRP_MODE_VID && rsp->api_id == API_ID_SET_RES_FR_FOV) {
+        if (h4->multi_msg_cmd.state == H4_MULTIMSG_VID_SETTINGS) {
+            h4->multi_msg_cmd.state  = H4_MULTIMSG_NONE;
+        }
+    }
 
     gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
     return err;
@@ -467,6 +527,22 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             yy->payload[5] = utc.tm_min;
             yy->payload[6] = utc.tm_sec;
         } break;
+
+        case GOPRO_COMMAND_VIDEO_SETTINGS:
+            // video settings is a multi msg command, first msg is tv mode
+            // store the payload so we can continue sending subsequent messages in
+            memcpy(h4->multi_msg_cmd.payload, request->mav.value, sizeof request->mav.value);
+            h4->multi_msg_cmd.state = H4_MULTIMSG_TV_MODE;
+
+            yy->api_group = API_GRP_PLAYBACK_MODE;
+            yy->api_id = API_ID_SET_NTSC_PAL;
+            if (h4->multi_msg_cmd.payload[3] & GOPRO_VIDEO_SETTINGS_TV_MODE) {
+                yy->payload[0] = H4_TV_PAL;
+            } else {
+                yy->payload[0] = H4_TV_NTSC;
+            }
+            payloadlen = 1;
+            break;
 
         default:
             // Unsupported Command ID
