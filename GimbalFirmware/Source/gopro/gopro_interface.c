@@ -31,10 +31,6 @@ static bool gp_is_valid_capture_mode(uint8_t mode);
 static bool gp_is_recording();
 static void gp_write_eeprom();
 
-
-static Uint32 gp_power_on_counter = 0;
-static volatile Uint32 timeout_counter = 0;
-
 // Data to write into EEPROM
 static const uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
 
@@ -80,6 +76,9 @@ typedef struct {
     uint16_t camera_poll_counter;       // periodically poll the camera for state changes, it doesn't send events
     bool recording;
 
+    uint32_t gp_power_on_counter;
+    volatile uint32_t timeout_counter;
+
     gp_h3p_t h3p;
     gp_h4_t h4;
 
@@ -103,6 +102,9 @@ static gopro_t gp = {
     .pending_capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN,
     .camera_poll_counter = GP_CAPTURE_MODE_POLLING_INTERVAL,     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     .recording = false,
+
+    .gp_power_on_counter = 0,
+    .timeout_counter = 0,
 
     .txn.response.mav.status = GP_CMD_STATUS_INCOMPLETE,
     .hb_txn_phase = HB_TXN_IDLE
@@ -214,7 +216,7 @@ bool gp_begin_cmd_send(uint16_t len)
     gp_pend_intr_assertion();
 
     // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
-    timeout_counter = 0;
+    gp.timeout_counter = 0;
     gp.hb_txn_phase = HB_TXN_WAIT_FOR_CMD_START;
 
     return true;
@@ -347,7 +349,7 @@ bool gp_request_power_on()
 
     if (!gp_get_pwron_asserted_out()) {
         gp_set_pwron_asserted_out(true);
-        gp_power_on_counter = 0;
+        gp.gp_power_on_counter = 0;
         return true;
     }
 
@@ -564,13 +566,13 @@ void gp_update()
     gp_check_intr_timeout();
 
     if (gp.i2c_txn.in_progress) {
-        if (timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+        if (gp.timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
             gp_timeout();
         }
     }
 
     if (gp_get_pwron_asserted_out()) {
-        if (gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+        if (gp.gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
             gp_set_pwron_asserted_out(false);
         }
     }
@@ -778,7 +780,7 @@ void gp_on_slave_address(bool addressed_as_tx)
 
     gp_set_intr_asserted_out(false);
 
-    timeout_counter = 0;
+    gp.timeout_counter = 0;
     gp.i2c_txn.in_progress = true;
     gp.i2c_txn.direction_is_tx = addressed_as_tx;
 
@@ -848,7 +850,7 @@ void gp_on_i2c_stop_condition()
     }
 
     gp.i2c_txn.in_progress = false;
-    timeout_counter = 0;
+    gp.timeout_counter = 0;
 
     if (gp.i2c_txn.direction_is_tx) {
         switch (gp.hb_txn_phase) {
@@ -897,7 +899,7 @@ void gp_timeout()
 
     gp.i2c_txn.in_progress = false;
 
-    timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
+    gp.timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
     gp_set_intr_asserted_out(false); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
 
     i2c_disable_scd_isr();  // critical section
