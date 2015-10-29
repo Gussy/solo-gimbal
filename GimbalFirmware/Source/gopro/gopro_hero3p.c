@@ -14,6 +14,9 @@
 // index of the start of photo info in the 'entire camera status' response
 #define SE_RSP_PHOTO_INFO_IDX   20
 
+// number of bytes required for id in a gp_h3p_cmd_t
+#define CMD_ID_NUM_BYTES        2
+
 // track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
 enum H3P_MULTIMSG_STATE {
     H3_MULTIMSG_NONE,           // not performing a multi msg command
@@ -29,7 +32,6 @@ static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p
 static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
 static bool gp_h3p_handle_video_settings_rsp(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
 static void gp_h3p_sanitize_buf_len(uint8_t *buf);
-static void gp_h3p_finalize_command(gp_h3p_cmd_t *c, uint8_t payloadlen);
 
 void gp_h3p_init(gp_h3p_t *h3p)
 {
@@ -46,6 +48,33 @@ void gp_h3p_init(gp_h3p_t *h3p)
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
 {
     return h3p->gccb_version_queried;
+}
+
+static void cmd_init(gp_h3p_cmd_t *c, const char *cmd_id)
+{
+    /*
+     * Set the cmd and initial length of this cmd.
+     * cmd_id must be 2 bytes, but we do not verify here.
+     * c->len specifies packet length minus the length byte,
+     * so we init to a payload len of 0.
+     * add payload bytes with cmd_add_byte()
+     */
+
+    c->len = CMD_ID_NUM_BYTES;
+    c->cmd1 = cmd_id[0];
+    c->cmd2 = cmd_id[1];
+}
+
+static void cmd_add_byte(gp_h3p_cmd_t *c, uint8_t b)
+{
+    /*
+     * Add a byte to the payload of c
+     * Expects c to have been init'd with cmd_init(),
+     * such that c->len is valid.
+     */
+
+    c->payload[c->len - CMD_ID_NUM_BYTES] = b;
+    c->len++;
 }
 
 bool gp_h3p_recognize_packet(const uint8_t *buf, uint16_t len)
@@ -85,23 +114,19 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
      */
 
     gp_h3p_cmd_t *c = &p->cmd;
-    uint8_t payloadlen = 0;
 
     switch (h3p->multi_msg_cmd.state) {
     case H3_MULTIMSG_TV_MODE:
         // next step is resolution
         if (gp_transaction_direction() == GP_REQUEST_GET) {
-            c->cmd1 = 'v';
-            c->cmd2 = 'v';
+            cmd_init(c, "vv");
             h3p->multi_msg_cmd.state = H3_MULTIMSG_RESOLUTION;
         } else {
             bool ok;
             uint8_t res = mav_to_h3p_res(h3p->multi_msg_cmd.payload[0], &ok);
             if (ok) {
-                c->cmd1 = 'V';
-                c->cmd2 = 'V';
-                c->payload[0] = res;
-                payloadlen = 1;
+                cmd_init(c, "VV");
+                cmd_add_byte(c, res);
                 h3p->multi_msg_cmd.state = H3_MULTIMSG_RESOLUTION;
             } else {
                 gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
@@ -113,17 +138,14 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
     case H3_MULTIMSG_RESOLUTION:
         // next step is frame rate
         if (gp_transaction_direction() == GP_REQUEST_GET) {
-            c->cmd1 = 'f';
-            c->cmd2 = 's';
+            cmd_init(c, "fs");
             h3p->multi_msg_cmd.state = H3_MULTIMSG_FRAME_RATE;
         } else {
             bool ok;
             uint8_t rate = mav_to_h3p_framerate(h3p->multi_msg_cmd.payload[1], &ok);
             if (ok) {
-                c->cmd1 = 'F';
-                c->cmd2 = 'S';
-                c->payload[0] = rate;
-                payloadlen = 1;
+                cmd_init(c, "FS");
+                cmd_add_byte(c, rate);
                 h3p->multi_msg_cmd.state = H3_MULTIMSG_FRAME_RATE;
             } else {
                 gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
@@ -135,14 +157,11 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
     case H3_MULTIMSG_FRAME_RATE:
         // next step is field of view
         if (gp_transaction_direction() == GP_REQUEST_GET) {
-            c->cmd1 = 'f';
-            c->cmd2 = 'v';
+            cmd_init(c, "fv");
         } else {
-            c->cmd1 = 'F';
-            c->cmd2 = 'V';
+            cmd_init(c, "FV");
             // fov values do not require mavlink<->herobus conversion
-            c->payload[0] = h3p->multi_msg_cmd.payload[2];
-            payloadlen = 1;
+            cmd_add_byte(c, h3p->multi_msg_cmd.payload[2]);
         }
         h3p->multi_msg_cmd.state = H3_MULTIMSG_FOV;
         break;
@@ -151,7 +170,6 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
         return false;
     }
 
-    gp_h3p_finalize_command(c, payloadlen);
     return true;
 }
 
@@ -164,40 +182,33 @@ bool gp_h3p_produce_get_request(gp_h3p_t *h3p, uint8_t cmd_id, gp_h3p_cmd_t *c)
 
     switch (cmd_id) {
         case GOPRO_COMMAND_SHUTTER:
-            c->cmd1 = 's';
-            c->cmd2 = 'h';
+            cmd_init(c, "sh");
             // TODO: not sure if this command should be called directly, since don't want to be sending commands to GoPro while recording (spec document)
             break;
 
         case GOPRO_COMMAND_CAPTURE_MODE:
-            c->cmd1 = 'c';
-            c->cmd2 = 'm';
+            cmd_init(c, "cm");
             break;
 
         case GOPRO_COMMAND_MODEL:
-            c->cmd1 = 'c';
-            c->cmd2 = 'v';
+            cmd_init(c, "cv");
             break;
 
         case GOPRO_COMMAND_BATTERY:
-            c->cmd1 = 'b';
-            c->cmd2 = 'l';
+            cmd_init(c, "bl");
             break;
 
         case GP_H3P_COMMAND_ENTIRE_CAM_STATUS:
-            c->cmd1 = 's';
-            c->cmd2 = 'e';
+            cmd_init(c, "se");
             break;
 
         case GOPRO_COMMAND_TIME:
-            c->cmd1 = 't';
-            c->cmd2 = 'm';
+            cmd_init(c, "tm");
             break;
 
         case GOPRO_COMMAND_VIDEO_SETTINGS:
             // video settings is a multi msg command, first msg is tv mode
-            c->cmd1 = 'v';
-            c->cmd2 = 'm';
+            cmd_init(c, "vm");
             h3p->multi_msg_cmd.payload[3] = 0;  // init flags to 0
             h3p->multi_msg_cmd.state = H3_MULTIMSG_TV_MODE;
             break;
@@ -208,7 +219,6 @@ bool gp_h3p_produce_get_request(gp_h3p_t *h3p, uint8_t cmd_id, gp_h3p_cmd_t *c)
             return false;
     }
 
-    gp_h3p_finalize_command(c, 0);
     return true;
 }
 
@@ -219,15 +229,11 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
      * Return true if we produced data to send, false otherwise.
      */
 
-    uint8_t payloadlen;
-
     switch (request->mav.cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->mav.value[0] == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                c->cmd1 = 'P';
-                c->cmd2 = 'W';
-                payloadlen = 1;
-                c->payload[0] = 0x00;
+                cmd_init(c, "PW");
+                cmd_add_byte(c, 0x00);
             } else {
                 // gp_request_power_on() does not require a herobus transaction,
                 // so mark it complete immediately
@@ -238,13 +244,11 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             break;
 
         case GOPRO_COMMAND_CAPTURE_MODE: {
-            c->cmd1 = 'C';
-            c->cmd2 = 'M';
             bool ok;
             uint8_t mode = mav_to_h3p_cap_mode(request->mav.value[0], &ok);
             if (ok) {
-                payloadlen = 1;
-                c->payload[0] = mode;
+                cmd_init(c, "CM");
+                cmd_add_byte(c, mode);
                 gp_pend_capture_mode(mode);
             } else {
                 gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
@@ -258,10 +262,8 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
                 return false;
             }
 
-            c->cmd1 = 'S';
-            c->cmd2 = 'H';
-            payloadlen = 1;
-            c->payload[0] = request->mav.value[0];
+            cmd_init(c, "SH");
+            cmd_add_byte(c, request->mav.value[0]);
 
             // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
             if (gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
@@ -270,10 +272,6 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             break;
 
         case GOPRO_COMMAND_TIME: {
-            c->cmd1 = 'T';
-            c->cmd2 = 'M';
-            payloadlen = 6;
-
             struct tm utc;
             time_t t = gp_time_from_mav(request);
 
@@ -282,12 +280,13 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
                 return false;
             }
 
-            c->payload[0] = utc.tm_year - 100;  // year since 2000, rather than 1900
-            c->payload[1] = utc.tm_mon + 1;     // (Jan = 0x01)
-            c->payload[2] = utc.tm_mday;
-            c->payload[3] = utc.tm_hour;
-            c->payload[4] = utc.tm_min;
-            c->payload[5] = utc.tm_sec;
+            cmd_init(c, "TM");
+            cmd_add_byte(c, utc.tm_year - 100);  // year since 2000, rather than 1900
+            cmd_add_byte(c, utc.tm_mon + 1);     // (Jan = 0x01)
+            cmd_add_byte(c, utc.tm_mday);
+            cmd_add_byte(c, utc.tm_hour);
+            cmd_add_byte(c, utc.tm_min);
+            cmd_add_byte(c, utc.tm_sec);
         } break;
 
         case GOPRO_COMMAND_VIDEO_SETTINGS: {
@@ -296,14 +295,12 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             memcpy(h3p->multi_msg_cmd.payload, request->mav.value, sizeof request->mav.value);
             h3p->multi_msg_cmd.state = H3_MULTIMSG_TV_MODE;
 
-            c->cmd1 = 'V';
-            c->cmd2 = 'M';
+            cmd_init(c, "VM");
             if (h3p->multi_msg_cmd.payload[3] & GOPRO_VIDEO_SETTINGS_TV_MODE) {
-                c->payload[0] = H3P_TV_PAL;
+                cmd_add_byte(c, H3P_TV_PAL);
             } else {
-                c->payload[0] = H3P_TV_NTSC;
+                cmd_add_byte(c, H3P_TV_NTSC);
             }
-            payloadlen = 1;
         } break;
 
         default:
@@ -312,7 +309,6 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             return false;
     }
 
-    gp_h3p_finalize_command(c, payloadlen);
     return true;
 }
 
@@ -535,19 +531,6 @@ bool gp_h3p_rx_data_is_valid(const uint8_t *buf, uint16_t len, bool *from_camera
     }
 
     return true;
-}
-
-void gp_h3p_finalize_command(gp_h3p_cmd_t *c, uint8_t payloadlen)
-{
-    /*
-     * length field specifies length of packet, not including length byte.
-     * always have at least 2 bytes for the cmd id.
-     *
-     * leave upper bit of length byte clear to indicate command originated
-     * from the gimbal (not the GoPro)
-     */
-
-    c->len = 2 + payloadlen;
 }
 
 void gp_h3p_sanitize_buf_len(uint8_t *buf) { // TODO: inline?
