@@ -151,7 +151,7 @@ void gp_reset()
     gp.camera_poll_counter = GP_CAPTURE_MODE_POLLING_INTERVAL;     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     gp.recording = false;
 
-    gp.txn.response.mav.status = GP_CMD_STATUS_INCOMPLETE;
+    gp.txn.response.mav.status = GP_CMD_STATUS_IDLE;
     gp.hb_txn_phase = HB_TXN_IDLE;
 
     gp_set_intr_asserted_out(false);
@@ -192,7 +192,14 @@ static bool init_timed_out()
 
 bool gp_ready_for_cmd()
 {
-    return (gp.hb_txn_phase == HB_TXN_IDLE) && !i2c_get_bb();
+    /*
+     * Are we ready to begin a new mavlink command?
+     *
+     * mavlink commands can include multiple herobus commands,
+     * so ensure both previous mavlink cmd and any herobus transactions are complete.
+     */
+
+    return (gp.txn.response.mav.status == GP_CMD_STATUS_IDLE && gp.hb_txn_phase == HB_TXN_IDLE);
 }
 
 bool gp_begin_cmd_send(uint16_t len)
@@ -260,11 +267,13 @@ static void gp_send_mav_response()
 
     i2c_disable_scd_isr();  // critical section
 
-    if (gp.txn.response.mav.status != GP_CMD_STATUS_INCOMPLETE) {
+    if (gp.txn.response.mav.status != GP_CMD_STATUS_IDLE &&
+        gp.txn.response.mav.status != GP_CMD_STATUS_IN_PROGRESS)
+    {
         if (!gp.txn.is_internal) {
             gp_send_mav_can_response(&gp.txn);
         }
-        gp.txn.response.mav.status = GP_CMD_STATUS_INCOMPLETE;
+        gp.txn.response.mav.status = GP_CMD_STATUS_IDLE;
     }
 
     i2c_enable_scd_isr();  // end critical section

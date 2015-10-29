@@ -5,9 +5,10 @@
 #include "PeripheralHeaderIncludes.h"
 
 typedef enum {
-    GP_CMD_STATUS_SUCCESS = 0,
-    GP_CMD_STATUS_FAILURE = 1,
-    GP_CMD_STATUS_INCOMPLETE = 2    // either not started, or in progress
+    GP_CMD_STATUS_SUCCESS       = 0,
+    GP_CMD_STATUS_FAILURE       = 1,
+    GP_CMD_STATUS_IDLE          = 2,
+    GP_CMD_STATUS_IN_PROGRESS   = 3
 } GPCmdStatus;
 
 typedef enum {
