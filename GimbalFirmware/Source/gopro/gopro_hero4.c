@@ -106,6 +106,13 @@ bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
                 return true;
             }
             gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        } else {
+            gp_h4_yy_cmd_t *yy = &p->yy_cmd;
+            yy->api_group = API_GRP_MODE_VID;
+            yy->api_id = API_ID_GET_RES_FR_FOV;
+            gp_h4_finalize_yy_cmd(h4, 0, yy);
+            h4->multi_msg_cmd.state = H4_MULTIMSG_VID_SETTINGS;
+            return true;
         }
     }
 
@@ -322,16 +329,32 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         gp_set_recording_state(h4->pending_recording_state);
     }
     // tv mode
-    else if (rsp->api_group == API_GRP_PLAYBACK_MODE && rsp->api_id == API_ID_SET_NTSC_PAL) {
+    else if (rsp->api_group == API_GRP_PLAYBACK_MODE) {
         // if this is being sent as part of a multi msg,
         // ensure we don't complete the transaction until the final msg is completed.
-        if (h4->multi_msg_cmd.state == H4_MULTIMSG_TV_MODE) {
+        if (rsp->api_id == API_ID_SET_NTSC_PAL) {
+            return err;
+        }
+
+        if (rsp->api_id == API_ID_GET_NTSC_PAL) {
+            if (rsp->payload[0] == H4_TV_PAL) {
+                h4->multi_msg_cmd.payload[3] |= GOPRO_VIDEO_SETTINGS_TV_MODE;
+            }
             return err;
         }
     }
     // vid settings
-    else if (rsp->api_group == API_GRP_MODE_VID && rsp->api_id == API_ID_SET_RES_FR_FOV) {
-        if (h4->multi_msg_cmd.state == H4_MULTIMSG_VID_SETTINGS) {
+    else if (rsp->api_group == API_GRP_MODE_VID) {
+        if (rsp->api_id == API_ID_SET_RES_FR_FOV) {
+            h4->multi_msg_cmd.state  = H4_MULTIMSG_NONE;
+
+        } else if (rsp->api_id == API_ID_GET_RES_FR_FOV) {
+            bool ok;
+            mav_rsp.mav.value[0] = h4_to_mav_resolution(rsp->payload[0], &ok);
+            mav_rsp.mav.value[1] = h4_to_mav_framerate(rsp->payload[1], &ok);
+            mav_rsp.mav.value[2] = rsp->payload[2]; // field of view does not require conversion
+            mav_rsp.mav.value[3] = h4->multi_msg_cmd.payload[3];
+            mav_rsp_len = 4;
             h4->multi_msg_cmd.state  = H4_MULTIMSG_NONE;
         }
     }
@@ -411,6 +434,14 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
     case GOPRO_COMMAND_TIME:
         yy->api_group = API_GRP_PLAYBACK_MODE;
         yy->api_id = API_ID_GET_CAM_TIME;
+        break;
+
+    case GOPRO_COMMAND_VIDEO_SETTINGS:
+        yy->api_group = API_GRP_PLAYBACK_MODE;
+        yy->api_id = API_ID_GET_NTSC_PAL;
+
+        h4->multi_msg_cmd.payload[3] = 0;  // init flags to 0
+        h4->multi_msg_cmd.state = H4_MULTIMSG_TV_MODE;
         break;
 
     default:
