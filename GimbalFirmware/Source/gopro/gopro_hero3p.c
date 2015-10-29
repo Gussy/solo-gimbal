@@ -24,6 +24,7 @@ enum H3P_MULTIMSG_STATE {
     H3_MULTIMSG_FINAL = H3_MULTIMSG_FOV // last msg in the sequence
 };
 
+static void gp_h3p_set_transaction_result(gp_h3p_t *h3p, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
 static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p_rsp_t *rsp);
 static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
 static bool gp_h3p_handle_video_settings_rsp(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
@@ -64,6 +65,18 @@ bool gp_h3p_recognize_packet(const uint8_t *buf, uint16_t len)
     return false;
 }
 
+void gp_h3p_set_transaction_result(gp_h3p_t *h3p, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status)
+{
+    /*
+     * wrapper around gp_set_transaction_result() to ensure
+     * we always clear our multi msg state, in case we error
+     * out before the entire command completes successfully.
+     */
+
+    h3p->multi_msg_cmd.state = H3_MULTIMSG_NONE;
+    gp_set_transaction_result(resp_bytes, len, status);
+}
+
 bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
 {
     /*
@@ -91,7 +104,7 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
                 payloadlen = 1;
                 h3p->multi_msg_cmd.state = H3_MULTIMSG_RESOLUTION;
             } else {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
         }
@@ -113,7 +126,7 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
                 payloadlen = 1;
                 h3p->multi_msg_cmd.state = H3_MULTIMSG_FRAME_RATE;
             } else {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
         }
@@ -191,7 +204,7 @@ bool gp_h3p_produce_get_request(gp_h3p_t *h3p, uint8_t cmd_id, gp_h3p_cmd_t *c)
 
         default:
             // Unsupported Command ID
-            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+            gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
             return false;
     }
 
@@ -219,7 +232,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
                 // gp_request_power_on() does not require a herobus transaction,
                 // so mark it complete immediately
                 gp_request_power_on();
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_SUCCESS);
+                gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_SUCCESS);
                 return false;
             }
             break;
@@ -234,14 +247,14 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
                 c->payload[0] = mode;
                 gp_pend_capture_mode(mode);
             } else {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
         } break;
 
         case GOPRO_COMMAND_SHUTTER:
             if (!h3p->sd_card_inserted) {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
 
@@ -265,7 +278,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             time_t t = gp_time_from_mav(request);
 
             if (gmtime_r(&t, &utc) == NULL) {
-                gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
 
@@ -295,7 +308,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
 
         default:
             // Unsupported Command ID
-            gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+            gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
             return false;
     }
 
@@ -361,7 +374,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
      */
 
     if (rsp->status != GP_CMD_STATUS_SUCCESS) {
-        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
         return;
     }
 
@@ -442,7 +455,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         break;
     }
 
-    gp_set_transaction_result(mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
+    gp_h3p_set_transaction_result(h3p, mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
 }
 
 bool gp_h3p_handle_video_settings_rsp(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
