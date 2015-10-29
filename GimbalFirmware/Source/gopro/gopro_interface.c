@@ -17,7 +17,6 @@
 // the gopro appears to miss the edge and fail to respond.
 #define GP_INTR_DELAY_US    500
 
-static void gp_reset();
 static void gp_timeout();
 
 static void gp_detect_camera_model(const uint8_t *buf, uint16_t len);
@@ -57,6 +56,8 @@ struct i2c_txn_t {
 };
 
 typedef struct {
+    bool enabled;
+
     struct i2c_txn_t i2c_txn;
 
     volatile herobus_txn_phase_t hb_txn_phase;
@@ -82,7 +83,9 @@ typedef struct {
 } gopro_t;
 
 // global gopro instance
-static gopro_t gp;
+static gopro_t gp = {
+    .enabled = false
+};
 
 
 void gp_init()
@@ -90,9 +93,16 @@ void gp_init()
     gp_write_eeprom();
     gp_reset();
     gp_set_pwron_asserted_out(false);
+    gp.enabled = true;
 
     // bacpac detect is enabled once we know the camera is powered on
 }
+
+bool gp_enabled()
+{
+    return gp.enabled;
+}
+
 
 void gp_reset()
 {
@@ -122,6 +132,8 @@ void gp_reset()
     gp_h4_init(&gp.h4);
 
     gopro_i2c_init();   // resets the i2c device
+
+    gp.enabled = false;
 }
 
 static void gp_pend_intr_assertion()

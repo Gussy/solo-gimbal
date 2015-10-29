@@ -50,6 +50,8 @@ typedef struct {
 
 // public interface
 void gp_init();
+void gp_reset();
+bool gp_enabled();
 void gp_fast_update();
 void gp_update();
 int gp_get_request(const gp_can_mav_get_req_t *req, bool txn_is_internal);
