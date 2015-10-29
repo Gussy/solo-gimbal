@@ -38,5 +38,6 @@ struct CURRENT_FLASH_PARAM_STRUCT flash_params =
         .alignment_accelerometer = { 0.0, 0.0, 0.0 },
 
         .gopro_charging_enabled = 1.0,
-        .use_custom_gains = 0.0
+        .use_custom_gains = 0.0,
+        .gopro_enabled = 1.0
 };
