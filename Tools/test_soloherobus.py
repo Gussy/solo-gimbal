@@ -6,7 +6,7 @@ Utility for reading the software version from a 3DR Gimbal.
 @author: Angus Peart (angus@3dr.com)
 """
 
-import sys, argparse, struct
+import sys, argparse, struct, time
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega as mavlink
 
@@ -58,7 +58,7 @@ def show_gopro(m):
         elif msg.get_type() == "GOPRO_GET_RESPONSE":
             print("%s: '%s' = %u" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.value))
         elif msg.get_type() == "GOPRO_SET_RESPONSE":
-            print("%s: '%s' = %u" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.result))
+            print("%s: '%s' = %u" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.status))
         elif msg.get_type().startswith("GOPRO"):
             print(msg)
 
@@ -80,7 +80,7 @@ mavserial = mavutil.mavserial(
 link = mavlink.MAVLink(mavserial, 0, 0)
 
 # Request the model
-link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_MODEL)
+#link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_MODEL)
 
 #link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_BATTERY)
 
@@ -88,10 +88,10 @@ link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOP
 #link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_CAPTURE_MODE, 0)
 
 #link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_SHUTTER, 1)
-#link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_SHUTTER, 0)
+#link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_SHUTTER, [0, 0, 0, 0])
 #link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_SHUTTER)
-
-#link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_POWER, 1)
+#time.sleep(1)
+link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, mavlink.GOPRO_COMMAND_POWER, [0, 0, 0, 0])
 
 #print_heartbeats(mavserial)
 
