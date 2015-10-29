@@ -17,7 +17,6 @@
 // the gopro appears to miss the edge and fail to respond.
 #define GP_INTR_DELAY_US    500
 
-static void gp_reset();
 static void gp_timeout();
 
 static void gp_detect_camera_model(const uint8_t *buf, uint16_t len);
@@ -32,9 +31,8 @@ static bool gp_is_valid_capture_mode(uint8_t mode);
 static bool gp_is_recording();
 static void gp_write_eeprom();
 
-
-Uint32 gp_power_on_counter = 0;
-volatile Uint32 timeout_counter = 0;
+// Data to write into EEPROM
+static const uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
 
 // buffers for i2c transactions
 struct pktbuf {
@@ -57,6 +55,8 @@ struct i2c_txn_t {
 };
 
 typedef struct {
+    bool enabled;
+
     struct i2c_txn_t i2c_txn;
 
     volatile herobus_txn_phase_t hb_txn_phase;
@@ -76,23 +76,62 @@ typedef struct {
     uint16_t camera_poll_counter;       // periodically poll the camera for state changes, it doesn't send events
     bool recording;
 
+    uint32_t gp_power_on_counter;
+    volatile uint32_t timeout_counter;
+
     gp_h3p_t h3p;
     gp_h4_t h4;
 
 } gopro_t;
 
 // global gopro instance
-static gopro_t gp;
+static gopro_t gp = {
+    .enabled = false,
+    .i2c_txn.in_progress = false,
+
+    // txn is not initialized
+
+    .handshake_timeout_count = 0,
+    .intr_timeout_count = 0,
+    .intr_retry_pulse_in_progress = false,
+    .i2c_stop_timestamp_us = 0,
+    .intr_pending = false,
+    .model = GP_MODEL_UNKNOWN,
+    .power_status = GP_POWER_UNKNOWN,
+    .capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN,
+    .pending_capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN,
+    .camera_poll_counter = GP_CAPTURE_MODE_POLLING_INTERVAL,     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
+    .recording = false,
+
+    .gp_power_on_counter = 0,
+    .timeout_counter = 0,
+
+    .txn.response.mav.status = GP_CMD_STATUS_INCOMPLETE,
+    .hb_txn_phase = HB_TXN_IDLE
+};
 
 
 void gp_init()
 {
+    gp.enabled = true;
+
     gp_write_eeprom();
     gp_reset();
     gp_set_pwron_asserted_out(false);
 
     // bacpac detect is enabled once we know the camera is powered on
 }
+
+void gp_disable(void)
+{
+    gp.enabled = false;
+}
+
+bool gp_enabled()
+{
+    return gp.enabled;
+}
+
 
 void gp_reset()
 {
@@ -177,7 +216,7 @@ bool gp_begin_cmd_send(uint16_t len)
     gp_pend_intr_assertion();
 
     // Reset the timeout counter, and transition to waiting for the GoPro to start reading the command from us
-    timeout_counter = 0;
+    gp.timeout_counter = 0;
     gp.hb_txn_phase = HB_TXN_WAIT_FOR_CMD_START;
 
     return true;
@@ -272,6 +311,11 @@ void gp_get_heartbeat(gp_can_mav_heartbeat_t *hb)
 
 GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status()
 {
+    // The HeroBus interface is not enabled
+    if(!gp.enabled) {
+        return GOPRO_HEARTBEAT_STATUS_DISCONNECTED;
+    }
+
     // A GoPro is connected, ready for action and had queried the gccb version
     if (gp_get_power_status() == GP_POWER_ON && gp_handshake_complete() && !init_timed_out()) {
         return GOPRO_HEARTBEAT_STATUS_CONNECTED;
@@ -305,7 +349,7 @@ bool gp_request_power_on()
 
     if (!gp_get_pwron_asserted_out()) {
         gp_set_pwron_asserted_out(true);
-        gp_power_on_counter = 0;
+        gp.gp_power_on_counter = 0;
         return true;
     }
 
@@ -496,6 +540,10 @@ void gp_fast_update()
      * Called directly from the main loop (ie, not via the scheduler).
      */
 
+    if(!gp.enabled) {
+        return;
+    }
+
     gp_send_mav_response();
 
     // handle pending intr requests
@@ -511,16 +559,20 @@ void gp_update()
 {
     GPPowerStatus new_power_status;
 
+    if(!gp.enabled) {
+        return;
+    }
+
     gp_check_intr_timeout();
 
     if (gp.i2c_txn.in_progress) {
-        if (timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+        if (gp.timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
             gp_timeout();
         }
     }
 
     if (gp_get_pwron_asserted_out()) {
-        if (gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+        if (gp.gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
             gp_set_pwron_asserted_out(false);
         }
     }
@@ -663,8 +715,6 @@ static void gp_write_eeprom()
 {
     // This function writes to the 24LC00 EEPROM which the GoPro reads from
     // as specified in the hero bus datasheet
-    // Data to write into EEPROM
-    uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
     uint8_t i;
 
     // if gopro is on, don't write EEPROM because this may crash the gopro
@@ -730,7 +780,7 @@ void gp_on_slave_address(bool addressed_as_tx)
 
     gp_set_intr_asserted_out(false);
 
-    timeout_counter = 0;
+    gp.timeout_counter = 0;
     gp.i2c_txn.in_progress = true;
     gp.i2c_txn.direction_is_tx = addressed_as_tx;
 
@@ -800,7 +850,7 @@ void gp_on_i2c_stop_condition()
     }
 
     gp.i2c_txn.in_progress = false;
-    timeout_counter = 0;
+    gp.timeout_counter = 0;
 
     if (gp.i2c_txn.direction_is_tx) {
         switch (gp.hb_txn_phase) {
@@ -849,7 +899,7 @@ void gp_timeout()
 
     gp.i2c_txn.in_progress = false;
 
-    timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
+    gp.timeout_counter = 0; // Reset the timeout counter so it doesn't have an old value in it the next time we want to use it
     gp_set_intr_asserted_out(false); // De-assert the interrupt request (even if it wasn't previously asserted, in idle the interrupt request should always be deasserted)
 
     i2c_disable_scd_isr();  // critical section

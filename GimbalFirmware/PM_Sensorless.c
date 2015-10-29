@@ -249,9 +249,6 @@ void main(void)
         // Initialize Gyro
         InitGyro();
 
-        // Initialize the HeroBus interface
-        gp_init();
-
         // Initialize the beacon LED
         init_led();
 

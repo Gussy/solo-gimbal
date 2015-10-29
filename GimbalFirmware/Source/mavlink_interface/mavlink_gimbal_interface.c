@@ -287,14 +287,21 @@ static void handle_gopro_get_request(mavlink_message_t* received_msg)
 	mavlink_gopro_get_request_t decoded_msg;
     mavlink_msg_gopro_get_request_decode(received_msg, &decoded_msg);
 
-    // Make sure the message was for us.  If it was, package up the command and send it over CAN
-    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
-        gp_can_mav_get_req_t req;
-        memset(req.bytes, 0, sizeof(req.bytes));
+    if(flash_params.gopro_enabled == 0.0f) {
+        // Send a result of GP_CMD_STATUS_FAILURE
+        mavlink_message_t set_response_msg;
+        mavlink_msg_gopro_set_response_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &set_response_msg, decoded_msg.cmd_id, GP_CMD_STATUS_FAILURE);
+        send_mavlink_message(&set_response_msg);
+    } else {
+        // Make sure the message was for us.  If it was, package up the command and send it over CAN
+        if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+            gp_can_mav_get_req_t req;
+            memset(req.bytes, 0, sizeof(req.bytes));
 
-        req.mav.cmd_id = decoded_msg.cmd_id;
+            req.mav.cmd_id = decoded_msg.cmd_id;
 
-        cand_tx_extended_param(CAND_ID_EL, CAND_PID_GOPRO_GET_REQUEST, req.bytes, sizeof(req.bytes));
+            cand_tx_extended_param(CAND_ID_EL, CAND_PID_GOPRO_GET_REQUEST, req.bytes, sizeof(req.bytes));
+        }
     }
 }
 
@@ -303,15 +310,22 @@ static void handle_gopro_set_request(mavlink_message_t* received_msg)
 	mavlink_gopro_set_request_t decoded_msg;
     mavlink_msg_gopro_set_request_decode(received_msg, &decoded_msg);
 
-    // Make sure the message was for us.  If it was, package up the command and send it over CAN
-    if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
-        gp_can_mav_set_req_t req;
-        STATIC_ASSERT(sizeof(req.mav.value) == sizeof(decoded_msg.value));
+    if(flash_params.gopro_enabled == 0.0f) {
+        // Send a result of GP_CMD_STATUS_FAILURE
+        mavlink_message_t set_response_msg;
+        mavlink_msg_gopro_set_response_pack(gimbal_sysid, MAV_COMP_ID_GIMBAL, &set_response_msg, decoded_msg.cmd_id, GP_CMD_STATUS_FAILURE);
+        send_mavlink_message(&set_response_msg);
+    } else {
+        // Make sure the message was for us.  If it was, package up the command and send it over CAN
+        if ((decoded_msg.target_component == MAV_COMP_ID_GIMBAL)) {
+            gp_can_mav_set_req_t req;
+            STATIC_ASSERT(sizeof(req.mav.value) == sizeof(decoded_msg.value));
 
-        req.mav.cmd_id = decoded_msg.cmd_id;
-        memcpy(req.mav.value, decoded_msg.value, sizeof req.mav.value);
+            req.mav.cmd_id = decoded_msg.cmd_id;
+            memcpy(req.mav.value, decoded_msg.value, sizeof req.mav.value);
 
-        cand_tx_extended_param(CAND_ID_EL, CAND_PID_GOPRO_SET_REQUEST, req.bytes, sizeof(req.bytes));
+            cand_tx_extended_param(CAND_ID_EL, CAND_PID_GOPRO_SET_REQUEST, req.bytes, sizeof(req.bytes));
+        }
     }
 }
 
