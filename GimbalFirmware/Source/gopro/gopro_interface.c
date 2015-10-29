@@ -106,7 +106,7 @@ static gopro_t gp = {
     .gp_power_on_counter = 0,
     .timeout_counter = 0,
 
-    .txn.response.mav.status = GP_CMD_STATUS_INCOMPLETE,
+    .txn.response.mav.status = GP_CMD_STATUS_IDLE,
     .hb_txn_phase = HB_TXN_IDLE
 };
 
