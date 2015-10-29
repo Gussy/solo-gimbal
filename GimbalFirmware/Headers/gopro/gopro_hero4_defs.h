@@ -70,6 +70,11 @@ typedef enum {
     H4_FRAMERATE_12_5fps    = 0xc
 } H4_FRAMERATE;
 
+enum H4_TV_MODE {
+    H4_TV_NTSC      = 0x0,
+    H4_TV_PAL       = 0x1
+};
+
 enum GP_H4_API_GROUP {
     API_GRP_GEN_CMDS        = 0,
     API_GRP_MODE_CAM        = 1,
