@@ -321,6 +321,13 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
             gp_enable_charging();
         }
 
+        // Enable or disable the gimbal interface
+        if(flash_params.gopro_enabled == 1.0f && !gp_enabled()) {
+            gp_init();
+        } else if(flash_params.gopro_enabled == 0.0f && gp_enabled()) {
+            gp_disable();
+        }
+
         // If this is the elevation axis, we also need to load rate loop PID gains,
         // if the param "GMB_CUST_GAINS" is set to 1.0
         if (flash_params.use_custom_gains == 1.0) {
