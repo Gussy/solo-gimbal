@@ -252,6 +252,9 @@ void main(void)
         // Initialize the beacon LED
         init_led();
 
+        // Power on the GoPro
+        gp_request_power_on();
+
         InitRateLoops();
     }
 
