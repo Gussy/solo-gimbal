@@ -32,4 +32,7 @@ H4_RESOLUTION mav_to_h4_resolution(uint8_t rate, bool *ok);
 GOPRO_FRAME_RATE h4_to_mav_framerate(uint8_t rate, bool *ok);
 H4_FRAMERATE mav_to_h4_framerate(uint8_t rate, bool *ok);
 
+GOPRO_PHOTO_RESOLUTION h4_to_mav_photo_res(uint8_t res, bool *ok);
+H4_PHOTO_RESOLUTION mav_to_h4_photo_res(uint8_t res, bool *ok);
+
 #endif // GOPRO_MAV_CONVERTERS_H

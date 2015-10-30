@@ -70,6 +70,13 @@ typedef enum {
     H4_FRAMERATE_12_5fps    = 0xc
 } H4_FRAMERATE;
 
+typedef enum {
+    H4_PHOTO_RES_12MP_WIDE      = 0x0,
+    H4_PHOTO_RES_7MP_WIDE       = 0x1,
+    H4_PHOTO_RES_7MP_MEDIUM     = 0x2,
+    H4_PHOTO_RES_5MP_MEDIUM     = 0x3
+} H4_PHOTO_RESOLUTION;
+
 enum H4_TV_MODE {
     H4_TV_NTSC      = 0x0,
     H4_TV_PAL       = 0x1
