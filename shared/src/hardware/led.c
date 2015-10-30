@@ -7,6 +7,7 @@ static void enable_epwm_interrupts(void);
 static void disable_epwm_interrupts(void);
 static void update_compare_fade_in();
 static void update_compare_breathing();
+static void update_compare_breathing_halloween();
 static void update_compare_disco(LED_EPWM_INFO *epwm_info);
 
 // Pointer to update function. Point to disco by default
@@ -203,6 +204,17 @@ void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 durati
             EPwm6Regs.ETSEL.bit.INTEN = 0;
             break;
 
+        case LED_MODE_BREATHING_HALLOWEEN:
+            state_rgba = color;
+            breathing_x = 64; // Start at the high point, ready to fade out
+            blink_toggle = 0;
+            update_function = &update_compare_breathing_halloween;
+            // Only enable 1 of the ePWM interrupts,
+            // which we use to step to fade alpha up
+            EPwm5Regs.ETSEL.bit.INTEN = 1;
+            EPwm6Regs.ETSEL.bit.INTEN = 0;
+            break;
+
 		// Cycle through RGB colours. Useful for testing.
 		case LED_MODE_DISCO:
 		    set_rgba(0, 0xff, 0, 0xff);
@@ -319,6 +331,41 @@ static void update_compare_breathing()
         // Wolframalpha link: http://www.wolframalpha.com/input/?i=%28exp%28sin%28%28x%2F128.0%29+*+PI%29%29+-+0.36787944%29+*+108.492061351+x%3D0+to+255
         alpha = (exp(sin(((float)breathing_x++/128.0f) * M_PI)) - 0.36787944f) * 108.492061351f;
         set_rgba(state_rgba.red, state_rgba.green, state_rgba.blue, (Uint8)alpha);
+    } else {
+        breathing_step_counter++;
+    }
+
+    return;
+}
+
+static void update_compare_breathing_halloween()
+{
+    // Every 255th interrupt, change the alpha value
+    if(breathing_step_counter == 0xff) {
+        float alpha;
+        breathing_step_counter = 0;
+
+        // Breathing pattern is f(x) = e^sin(x), altered to have a period of 255 and a min/max of 0/255
+        // Constants:
+        // 108.492061351 = 255/(e - 1/e)
+        // 0.36787944 = 1/e
+        // 128.0 = period/2
+        // Wolframalpha link: http://www.wolframalpha.com/input/?i=%28exp%28sin%28%28x%2F128.0%29+*+PI%29%29+-+0.36787944%29+*+108.492061351+x%3D0+to+255
+        alpha = (exp(sin(((float)breathing_x++/128.0f) * M_PI)) - 0.36787944f) * 108.492061351f;
+
+        // Halloween fun
+        if(blink_toggle <= 128) {
+            // Orange
+            set_rgba(0xff, 32, 0, (Uint8)alpha);
+        } else {
+            if(blink_toggle >= 256) {
+                blink_toggle = 0;
+            }
+            // Green
+            set_rgba(0, 0xff, 0, (Uint8)alpha);
+        }
+        blink_toggle++;
+
     } else {
         breathing_step_counter++;
     }

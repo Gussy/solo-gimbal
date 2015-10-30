@@ -407,7 +407,7 @@ static void update_LEDs(void)
                     break;
 
                 case BLINK_RUNNING:
-                    led_set_mode(LED_MODE_BREATHING, rgba_green, 0);
+                    led_set_mode(LED_MODE_BREATHING_HALLOWEEN, rgba_green, 0);
                     break;
 
                 case BLINK_ERROR:
