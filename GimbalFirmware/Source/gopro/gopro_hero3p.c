@@ -217,6 +217,10 @@ bool gp_h3p_produce_get_request(gp_h3p_t *h3p, uint8_t cmd_id, gp_h3p_cmd_t *c)
             cmd_init(c, "lw");
             break;
 
+        case GOPRO_COMMAND_PHOTO_RESOLUTION:
+            cmd_init(c, "pr");
+            break;
+
         default:
             // Unsupported Command ID
             gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
@@ -311,6 +315,15 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             cmd_init(c, "LW");
             cmd_add_byte(c, request->mav.value[0] ? 1 : 0);
             break;
+
+        case GOPRO_COMMAND_PHOTO_RESOLUTION: {
+            bool ok;
+            uint8_t res = mav_to_h3p_photo_res(request->mav.value[0], &ok);
+            if (ok) {
+                cmd_init(c, "PR");
+                cmd_add_byte(c, res);
+            }
+        } break;
 
         default:
             // Unsupported Command ID
@@ -463,6 +476,17 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         if (gp_transaction_direction() == GP_REQUEST_GET) {
             mav_rsp.mav.value[0] = rsp->payload[0];
             mav_rsp_len = 1;
+        }
+        break;
+
+    case GOPRO_COMMAND_PHOTO_RESOLUTION:
+        if (gp_transaction_direction() == GP_REQUEST_GET) {
+            bool ok;
+            uint8_t res = h3p_to_mav_photo_res(rsp->payload[0], &ok);
+            if (ok) {
+                mav_rsp.mav.value[0] = res;
+                mav_rsp_len = 1;
+            }
         }
         break;
     }
