@@ -380,6 +380,20 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
             h4->multi_msg_cmd.state  = H4_MULTIMSG_NONE;
         }
     }
+    // photo
+    else if (rsp->api_group == API_GRP_MODE_PHOTO) {
+        switch (rsp->api_id) {
+        // photo resolution
+        case API_ID_GET_PHOTO_RES: {
+            bool ok;
+            uint8_t res = h4_to_mav_photo_res(rsp->payload[0], &ok);
+            if (ok) {
+                mav_rsp.mav.value[0] = res;
+                mav_rsp_len = 1;
+            }
+        } break;
+        }
+    }
 
     gp_h4_set_transaction_result(h4, mav_rsp.mav.value, mav_rsp_len, GP_CMD_STATUS_SUCCESS);
     return err;
@@ -469,6 +483,11 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
     case GOPRO_COMMAND_LOW_LIGHT:
         yy->api_group = API_GRP_MODE_VID;
         yy->api_id = API_ID_GET_VID_LOW_LIGHT;
+        break;
+
+    case GOPRO_COMMAND_PHOTO_RESOLUTION:
+        yy->api_group = API_GRP_MODE_PHOTO;
+        yy->api_id = API_ID_GET_PHOTO_RES;
         break;
 
     default:
@@ -608,6 +627,20 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             yy->payload[0] = request->mav.value[0];
             payloadlen = 1;
             break;
+
+        case GOPRO_COMMAND_PHOTO_RESOLUTION: {
+            bool ok;
+            uint8_t res = mav_to_h4_photo_res(request->mav.value[0], &ok);
+            if (ok) {
+                yy->api_group = API_GRP_MODE_PHOTO;
+                yy->api_id = API_ID_SET_PHOTO_RES;
+                yy->payload[0] = res;
+                payloadlen = 1;
+            } else {
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
+            }
+        } break;
 
         default:
             // Unsupported Command ID
