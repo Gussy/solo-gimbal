@@ -1,7 +1,7 @@
-import time, datetime
+import os, time, datetime, json
 from PySide.QtCore import Slot, QTimer
 from qtasync import AsyncTask, coroutine
-import setup_run
+import setup_run, setup_factory_pub
 import gui_utils
 
 class testsUI(object):
@@ -32,6 +32,15 @@ class testsUI(object):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.timerUpdate)
+        
+        self.time_delta = "0:00:00"
+        
+        self.run_time_delta = "0:00:00"
+        self.run_Faults = 255
+        
+        self.align_time_delta = "0:00:00"
+        self.align_Faults = 255
+        
 
     @Slot()
     def handleTestsRun(self):
@@ -64,7 +73,10 @@ class testsUI(object):
         self.testStart()
         result = yield AsyncTask(self.testsRun)
         self.testStop()
-
+        self.run_Faults = self.faults
+        self.run_time_delta = self.time_delta
+        self.logTest()
+        
     @coroutine
     def runAsyncTestsWobble(self):
         self.testStart(delay=setup_run.WOBBLE_TEST_ALIGNMENT_TIME)
@@ -96,7 +108,10 @@ class testsUI(object):
         self.testStart()
         result = yield AsyncTask(self.testsAlign)
         self.testStop()
-
+        self.align_Faults = self.faults
+        self.align_time_delta = self.time_delta
+        self.logTest()
+        
     def stopTestsCallback(self):
         return self.stopTests
 
@@ -186,6 +201,7 @@ class testsUI(object):
         if time_delta < 0:
             h, m, s = 0, 0, abs(time_delta)
         self.ui.lblTestsRunTime.setText("%d:%02d:%02d" % (h, m, s))
+        self.time_delta = ("%d:%02d:%02d"%(h, m, s))
         for i in range(len(self.logMessages)):
             self.ui.txtTestsLog.appendPlainText(self.logMessages.pop(0))
         self.ui.lblTestsFaults.setText(str(self.faults))
@@ -204,3 +220,21 @@ class testsUI(object):
         if timeout == 0:
             return None
         return timeout
+
+    def logTest(self):
+        serial_number = setup_factory_pub.get_serial_number(self.connection.getLink())
+        date_time = time.localtime(setup_factory_pub.get_assembly_time(self.connection.getLink()))
+        assembly_date_time=str(date_time.tm_year)+"-"+str.format("%02d"%date_time.tm_mon)+"-"+str.format("%02d"%date_time.tm_mday)+"_"+str.format("%02d"%date_time.tm_hour)+"-"+str.format("%02d"%date_time.tm_min)+"-"+str.format("%02d"%date_time.tm_sec)
+        filePath = os.path.join('logs', '%s_%s.json' % (serial_number,assembly_date_time))
+
+        if os.path.exists(filePath):  
+            with open(filePath, 'r') as f:
+                tmpStr = f.read()
+
+            logTestJson = json.loads(tmpStr)
+            logTestJson['run'] = {'runTime':self.run_time_delta,'runFaults':self.run_Faults}
+            logTestJson['align'] = {'alignTime':self.align_time_delta,'alignFaults':self.align_Faults}
+
+            logTestPrettyJson = json.dumps(logTestJson,indent=4,sort_keys=True)
+            with open(filePath, 'w') as f:
+                json.dump(logTestJson, f)
