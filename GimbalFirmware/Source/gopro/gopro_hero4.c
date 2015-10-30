@@ -335,11 +335,20 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         gp_time_to_mav(&mav_rsp, &ti);
         mav_rsp_len = 4;
     }
-    // trigger shutter
-    else if (rsp->api_group == API_GRP_MODE_VID &&
-       (rsp->api_id == API_ID_TRIGGER_VID_START || rsp->api_id == API_ID_TRIGGER_VID_STOP))
-    {
-        gp_set_recording_state(h4->pending_recording_state);
+    else if (rsp->api_group == API_GRP_MODE_VID) {
+        switch (rsp->api_id) {
+        // trigger shutter
+        case API_ID_TRIGGER_VID_START:
+        case API_ID_TRIGGER_VID_STOP:
+            gp_set_recording_state(h4->pending_recording_state);
+            break;
+
+        // low light
+        case API_ID_GET_VID_LOW_LIGHT:
+            mav_rsp.mav.value[0] = rsp->payload[0];
+            mav_rsp_len = 1;
+            break;
+        }
     }
     // tv mode
     else if (rsp->api_group == API_GRP_PLAYBACK_MODE) {
@@ -455,6 +464,11 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
 
         h4->multi_msg_cmd.payload[3] = 0;  // init flags to 0
         h4->multi_msg_cmd.state = H4_MULTIMSG_TV_MODE;
+        break;
+
+    case GOPRO_COMMAND_LOW_LIGHT:
+        yy->api_group = API_GRP_MODE_VID;
+        yy->api_id = API_ID_GET_VID_LOW_LIGHT;
         break;
 
     default:
@@ -585,6 +599,13 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             } else {
                 yy->payload[0] = H4_TV_NTSC;
             }
+            payloadlen = 1;
+            break;
+
+        case GOPRO_COMMAND_LOW_LIGHT:
+            yy->api_group = API_GRP_MODE_VID;
+            yy->api_id = API_ID_SET_VID_LOW_LIGHT;
+            yy->payload[0] = request->mav.value[0];
             payloadlen = 1;
             break;
 
