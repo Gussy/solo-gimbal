@@ -114,6 +114,7 @@ ControlBoardParms control_board_parms = {
 };
 
 LoadAxisParmsStateInfo load_ap_state_info = {
+    .source = CAND_ID_AZ,
     .load_complete = false,
 	.current_key = 0,
     .current_request_key = 0,
@@ -220,10 +221,13 @@ void main(void)
 	}
 
 	// Initialize flash (must be after CAN, in case the migration fails and resets all axes)
-	if (board_hw_id == AZ) {
+	kvstore_init();
+	if (board_hw_id == AZ && kvstore_state() == KVSTORE_NOT_MIGRATED) {
         init_flash();
-    } else {
-        kvstore_init();
+        load_ap_state_info.source = CAND_ID_AZ;
+    } else if(board_hw_id == EL && kvstore_state() == KVSTORE_EXISTS) {
+        kvstore_load();
+        load_ap_state_info.source = CAND_ID_EL;
     }
 
 	init_param_set(control_board_parms.param_set);

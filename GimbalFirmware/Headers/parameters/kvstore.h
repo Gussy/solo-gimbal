@@ -70,12 +70,19 @@ typedef union {
     uint16_t unused[2];
 } kvstore_header_t;
 
+typedef enum  {
+    KVSTORE_EMPTY,
+    KVSTORE_NOT_MIGRATED,
+    KVSTORE_EXISTS
+} kvstore_state_t;
+
 void kvstore_init(void);
 void kvstore_load(void);
 int16_t kvstore_save(void);
 int16_t kvstore_reset(void);
 
 void kvstore_get_header(kvstore_header_t* header);
+kvstore_state_t kvstore_state(void);
 
 kv_value_t kvstore_get_value(const flash_param_keys_t key);
 float kvstore_get_float(const flash_param_keys_t key);

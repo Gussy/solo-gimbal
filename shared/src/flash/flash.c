@@ -10,6 +10,8 @@
 
 static FLASH_ST FlashStatus;
 
+static int erase_flash_sector(Uint16 sectors);
+
 // Buffer used for calculating flash checksums
 #define  WORDS_IN_FLASH_BUFFER 0x100
 //static Uint16  Buffer[WORDS_IN_FLASH_BUFFER];
@@ -25,30 +27,35 @@ static int verify_checksum(Uint16 *start_addr)
 	return 0;
 }
 
+static int erase_flash_sector(Uint16 sectors)
+{
+    Uint16  Status;
+    Uint16  VersionHex;     // Version of the API in decimal encoded hex
+    EALLOW;
+    Flash_CPUScaleFactor = SCALE_FACTOR;
+    EDIS;
+
+    VersionHex = Flash_APIVersionHex();
+    if(VersionHex != 0x0100)
+    {
+        // Unexpected API version
+        // Make a decision based on this info.
+        asm("    ESTOP0");
+    }
+
+    flash_csm_unlock();
+    /* only need to erase B, everything else will be erased again later. */
+    Status = Flash_Erase(SECTORB, &FlashStatus);
+    Status = Flash_Erase(SECTORG, &FlashStatus);
+    if (Status != STATUS_SUCCESS) {
+        return -1;
+    }
+    return 1;
+}
+
 int erase_our_flash()
 {
-	Uint16  Status;
-	Uint16  VersionHex;     // Version of the API in decimal encoded hex
-	EALLOW;
-	Flash_CPUScaleFactor = SCALE_FACTOR;
-	EDIS;
-
-	VersionHex = Flash_APIVersionHex();
-	if(VersionHex != 0x0100)
-	{
-	    // Unexpected API version
-	    // Make a decision based on this info.
-	    asm("    ESTOP0");
-	}
-
-	flash_csm_unlock();
-	/* only need to erase B, everything else will be erased again later. */
-	Status = Flash_Erase(SECTORB, &FlashStatus);
-	Status = Flash_Erase(SECTORG, &FlashStatus);
-	if (Status != STATUS_SUCCESS) {
-		return -1;
-	}
-	return 1;
+	return erase_flash_sector(SECTORB | SECTORG);
 }
 
 int write_flash(void)
@@ -59,32 +66,19 @@ int write_flash(void)
 
 int init_flash(void)
 {
-    kvstore_header_t kvstore_header = {0};
+    // Flash verification will fail only if the flash has become corrupt, in which case no migrations can take place
+    if (verify_checksum((Uint16 *)PARAMS_START)) {
+        kvstore_header_t kvstore_header = {0};
+        kvstore_get_header(&kvstore_header);
 
-	// Initialise the kvstore
-	kvstore_init();
+        // Run the flash migration operation. 'kvstore_header.magic' is the same as the old flash param struct version
+        flash_migration_run(kvstore_header.magic);
 
-	/* Load the header of the kvstore to determine if a valid kvstore has been saved */
-	kvstore_get_header(&kvstore_header);
+        // Erase the parameter flash on the AZ board so we know it's been migrated
+        erase_flash_sector(SECTORH);
 
-	if(kvstore_header.magic == 0xFFFF) { // Ignore an unprogrammed kvstore (0xFFFF)
-	    return 1;
-	} else if(kvstore_header.magic == KVSTORE_HEADER_MAGIC) {
-        // Load the kvstore if it already exists
-        kvstore_load();
         return 1;
-    } else {
-	    // Flash verification will fail only if the flash has become corrupt, in which case no migrations can take place
-        if (verify_checksum((Uint16 *)PARAMS_START)) {
-            // Run the flash migration operation. 'kvstore_header.magic' is the same as the old flash param struct version
-            flash_migration_run(kvstore_header.magic);
+    }
 
-            // Save the kvstore
-            kvstore_save();
-
-            return 1;
-        }
-	}
-
-	return -1;
+    return -1;
 }

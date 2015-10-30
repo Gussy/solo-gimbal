@@ -26,7 +26,7 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
             params[0] = (load_parms_state_info->current_request_key >> 8) & 0x00FF;
             params[1] = (load_parms_state_info->current_request_key & 0x00FF);
             params[2] = GetBoardHWID();
-            cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_KVSTORE_LOAD, params, ARRAY_LENGTH(params));
+            cand_tx_extended_param(load_parms_state_info->source, CAND_EPID_KVSTORE_LOAD, params, ARRAY_LENGTH(params));
 
             load_parms_state_info->request_retry_counter = 0;
         }
@@ -35,7 +35,7 @@ void LoadAxisParmsStateMachine(LoadAxisParmsStateInfo* load_parms_state_info)
 		// Keep periodically requesting the header until we get it
 		if (load_parms_state_info->request_retry_counter++ >= REQUEST_RETRY_PERIOD) {
 			uint8_t param = GetBoardHWID();
-			cand_tx_extended_param(CAND_ID_AZ, CAND_EPID_KVSTORE_HEADER, &param, 1);
+			cand_tx_extended_param(load_parms_state_info->source, CAND_EPID_KVSTORE_HEADER, &param, 1);
 			load_parms_state_info->request_retry_counter = 0;
 		}
     // Step 3 - load complete

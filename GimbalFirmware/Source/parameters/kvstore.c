@@ -117,6 +117,24 @@ void kvstore_get_header(kvstore_header_t* header)
     memcpy(header, (Uint16 *)PARAMS_START, sizeof(kvstore_header_t));
 }
 
+kvstore_state_t kvstore_state(void)
+{
+    kvstore_header_t kvstore_header = {0};
+    kvstore_get_header(&kvstore_header);
+
+    switch(kvstore_header.magic) {
+        case 0xFFFF:
+            return KVSTORE_EMPTY;
+
+        case KVSTORE_HEADER_MAGIC:
+            return KVSTORE_EXISTS;
+
+        default:
+            return KVSTORE_NOT_MIGRATED;
+
+    }
+}
+
 kv_value_t kvstore_get_value(const flash_param_keys_t key)
 {
     kv_value_t result = {0};
