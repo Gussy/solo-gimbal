@@ -46,6 +46,14 @@ enum H3P_TV_MODE {
     H3P_TV_PAL      = 0x1
 };
 
+typedef enum {
+    H3P_PHOTO_RES_5MP_MEDIUM    = 0x3,
+    H3P_PHOTO_RES_7MP_WIDE      = 0x4,
+    H3P_PHOTO_RES_12MP_WIDE     = 0x5,
+    H3P_PHOTO_RES_7MP_MEDIUM    = 0x6,
+    H3P_PHOTO_RES_10MP_WIDE     = 0x8
+} H3P_PHOTO_RESOLUTION;
+
 // for now, mavlink defs for Field of View match hero bus, no need to convert
 
 #endif // GOPRO_HERO3P_DEFS_H

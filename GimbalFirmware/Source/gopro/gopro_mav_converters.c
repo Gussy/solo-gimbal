@@ -118,6 +118,34 @@ H3P_FRAMERATE mav_to_h3p_framerate(uint8_t rate, bool *ok)
 }
 
 ////////////////////////////
+// hero 3 photo resolution
+////////////////////////////
+
+GOPRO_PHOTO_RESOLUTION h3p_to_mav_photo_res(uint8_t res, bool *ok)
+{
+    default_true_open_switch(res) {
+    case H3P_PHOTO_RES_5MP_MEDIUM:  return GOPRO_PHOTO_RESOLUTION_5MP_MEDIUM;
+    case H3P_PHOTO_RES_7MP_WIDE:    return GOPRO_PHOTO_RESOLUTION_7MP_WIDE;
+    case H3P_PHOTO_RES_12MP_WIDE:   return GOPRO_PHOTO_RESOLUTION_12MP_WIDE;
+    case H3P_PHOTO_RES_7MP_MEDIUM:  return GOPRO_PHOTO_RESOLUTION_7MP_MEDIUM;
+    case H3P_PHOTO_RES_10MP_WIDE:   return GOPRO_PHOTO_RESOLUTION_10MP_WIDE;
+    close_switch_return_default(GOPRO_PHOTO_RESOLUTION);
+    }
+}
+
+H3P_PHOTO_RESOLUTION mav_to_h3p_photo_res(uint8_t res, bool *ok)
+{
+    default_true_open_switch(res) {
+    case GOPRO_PHOTO_RESOLUTION_5MP_MEDIUM:     return H3P_PHOTO_RES_5MP_MEDIUM;
+    case GOPRO_PHOTO_RESOLUTION_7MP_WIDE:       return H3P_PHOTO_RES_7MP_WIDE;
+    case GOPRO_PHOTO_RESOLUTION_12MP_WIDE:      return H3P_PHOTO_RES_12MP_WIDE;
+    case GOPRO_PHOTO_RESOLUTION_7MP_MEDIUM:     return H3P_PHOTO_RES_7MP_MEDIUM;
+    case GOPRO_PHOTO_RESOLUTION_10MP_WIDE:      return H3P_PHOTO_RES_10MP_WIDE;
+    close_switch_return_default(H3P_PHOTO_RESOLUTION);
+    }
+}
+
+////////////////////////////
 // hero 4 capture mode
 ////////////////////////////
 
