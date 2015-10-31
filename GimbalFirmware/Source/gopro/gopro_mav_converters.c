@@ -118,6 +118,94 @@ H3P_FRAMERATE mav_to_h3p_framerate(uint8_t rate, bool *ok)
 }
 
 ////////////////////////////
+// hero 3 photo resolution
+////////////////////////////
+
+GOPRO_PHOTO_RESOLUTION h3p_to_mav_photo_res(uint8_t res, bool *ok)
+{
+    default_true_open_switch(res) {
+    case H3P_PHOTO_RES_5MP_MEDIUM:  return GOPRO_PHOTO_RESOLUTION_5MP_MEDIUM;
+    case H3P_PHOTO_RES_7MP_WIDE:    return GOPRO_PHOTO_RESOLUTION_7MP_WIDE;
+    case H3P_PHOTO_RES_12MP_WIDE:   return GOPRO_PHOTO_RESOLUTION_12MP_WIDE;
+    case H3P_PHOTO_RES_7MP_MEDIUM:  return GOPRO_PHOTO_RESOLUTION_7MP_MEDIUM;
+    case H3P_PHOTO_RES_10MP_WIDE:   return GOPRO_PHOTO_RESOLUTION_10MP_WIDE;
+    close_switch_return_default(GOPRO_PHOTO_RESOLUTION);
+    }
+}
+
+H3P_PHOTO_RESOLUTION mav_to_h3p_photo_res(uint8_t res, bool *ok)
+{
+    default_true_open_switch(res) {
+    case GOPRO_PHOTO_RESOLUTION_5MP_MEDIUM:     return H3P_PHOTO_RES_5MP_MEDIUM;
+    case GOPRO_PHOTO_RESOLUTION_7MP_WIDE:       return H3P_PHOTO_RES_7MP_WIDE;
+    case GOPRO_PHOTO_RESOLUTION_12MP_WIDE:      return H3P_PHOTO_RES_12MP_WIDE;
+    case GOPRO_PHOTO_RESOLUTION_7MP_MEDIUM:     return H3P_PHOTO_RES_7MP_MEDIUM;
+    case GOPRO_PHOTO_RESOLUTION_10MP_WIDE:      return H3P_PHOTO_RES_10MP_WIDE;
+    close_switch_return_default(H3P_PHOTO_RESOLUTION);
+    }
+}
+
+////////////////////////////
+// hero 3 exposure
+////////////////////////////
+
+GOPRO_PROTUNE_EXPOSURE h3p_to_mav_exposure(uint8_t exp, bool *ok)
+{
+    default_true_open_switch(exp) {
+    case H3P_PROTUNE_EXPOSURE_NEG_5_0:  return GOPRO_PROTUNE_EXPOSURE_NEG_5_0;
+    case H3P_PROTUNE_EXPOSURE_NEG_4_5:  return GOPRO_PROTUNE_EXPOSURE_NEG_4_5;
+    case H3P_PROTUNE_EXPOSURE_NEG_4_0:  return GOPRO_PROTUNE_EXPOSURE_NEG_4_0;
+    case H3P_PROTUNE_EXPOSURE_NEG_3_5:  return GOPRO_PROTUNE_EXPOSURE_NEG_3_5;
+    case H3P_PROTUNE_EXPOSURE_NEG_3_0:  return GOPRO_PROTUNE_EXPOSURE_NEG_3_0;
+    case H3P_PROTUNE_EXPOSURE_NEG_2_5:  return GOPRO_PROTUNE_EXPOSURE_NEG_2_5;
+    case H3P_PROTUNE_EXPOSURE_NEG_2_0:  return GOPRO_PROTUNE_EXPOSURE_NEG_2_0;
+    case H3P_PROTUNE_EXPOSURE_NEG_1_5:  return GOPRO_PROTUNE_EXPOSURE_NEG_1_5;
+    case H3P_PROTUNE_EXPOSURE_NEG_1_0:  return GOPRO_PROTUNE_EXPOSURE_NEG_1_0;
+    case H3P_PROTUNE_EXPOSURE_NEG_0_5:  return GOPRO_PROTUNE_EXPOSURE_NEG_0_5;
+    case H3P_PROTUNE_EXPOSURE_ZERO:     return GOPRO_PROTUNE_EXPOSURE_ZERO;
+    case H3P_PROTUNE_EXPOSURE_POS_0_5:  return GOPRO_PROTUNE_EXPOSURE_POS_0_5;
+    case H3P_PROTUNE_EXPOSURE_POS_1_0:  return GOPRO_PROTUNE_EXPOSURE_POS_1_0;
+    case H3P_PROTUNE_EXPOSURE_POS_1_5:  return GOPRO_PROTUNE_EXPOSURE_POS_1_5;
+    case H3P_PROTUNE_EXPOSURE_POS_2_0:  return GOPRO_PROTUNE_EXPOSURE_POS_2_0;
+    case H3P_PROTUNE_EXPOSURE_POS_2_5:  return GOPRO_PROTUNE_EXPOSURE_POS_2_5;
+    case H3P_PROTUNE_EXPOSURE_POS_3_0:  return GOPRO_PROTUNE_EXPOSURE_POS_3_0;
+    case H3P_PROTUNE_EXPOSURE_POS_3_5:  return GOPRO_PROTUNE_EXPOSURE_POS_3_5;
+    case H3P_PROTUNE_EXPOSURE_POS_4_0:  return GOPRO_PROTUNE_EXPOSURE_POS_4_0;
+    case H3P_PROTUNE_EXPOSURE_POS_4_5:  return GOPRO_PROTUNE_EXPOSURE_POS_4_5;
+    case H3P_PROTUNE_EXPOSURE_POS_5_0:  return GOPRO_PROTUNE_EXPOSURE_POS_5_0;
+    close_switch_return_default(GOPRO_PROTUNE_EXPOSURE);
+    }
+}
+
+H3P_PROTUNE_EXPOSURE mav_to_h3p_exposure(uint8_t exp, bool *ok)
+{
+    default_true_open_switch(exp) {
+    case GOPRO_PROTUNE_EXPOSURE_NEG_5_0:    return H3P_PROTUNE_EXPOSURE_NEG_5_0;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_4_5:    return H3P_PROTUNE_EXPOSURE_NEG_4_5;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_4_0:    return H3P_PROTUNE_EXPOSURE_NEG_4_0;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_3_5:    return H3P_PROTUNE_EXPOSURE_NEG_3_5;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_3_0:    return H3P_PROTUNE_EXPOSURE_NEG_3_0;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_2_5:    return H3P_PROTUNE_EXPOSURE_NEG_2_5;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_2_0:    return H3P_PROTUNE_EXPOSURE_NEG_2_0;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_1_5:    return H3P_PROTUNE_EXPOSURE_NEG_1_5;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_1_0:    return H3P_PROTUNE_EXPOSURE_NEG_1_0;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_0_5:    return H3P_PROTUNE_EXPOSURE_NEG_0_5;
+    case GOPRO_PROTUNE_EXPOSURE_ZERO:       return H3P_PROTUNE_EXPOSURE_ZERO;
+    case GOPRO_PROTUNE_EXPOSURE_POS_0_5:    return H3P_PROTUNE_EXPOSURE_POS_0_5;
+    case GOPRO_PROTUNE_EXPOSURE_POS_1_0:    return H3P_PROTUNE_EXPOSURE_POS_1_0;
+    case GOPRO_PROTUNE_EXPOSURE_POS_1_5:    return H3P_PROTUNE_EXPOSURE_POS_1_5;
+    case GOPRO_PROTUNE_EXPOSURE_POS_2_0:    return H3P_PROTUNE_EXPOSURE_POS_2_0;
+    case GOPRO_PROTUNE_EXPOSURE_POS_2_5:    return H3P_PROTUNE_EXPOSURE_POS_2_5;
+    case GOPRO_PROTUNE_EXPOSURE_POS_3_0:    return H3P_PROTUNE_EXPOSURE_POS_3_0;
+    case GOPRO_PROTUNE_EXPOSURE_POS_3_5:    return H3P_PROTUNE_EXPOSURE_POS_3_5;
+    case GOPRO_PROTUNE_EXPOSURE_POS_4_0:    return H3P_PROTUNE_EXPOSURE_POS_4_0;
+    case GOPRO_PROTUNE_EXPOSURE_POS_4_5:    return H3P_PROTUNE_EXPOSURE_POS_4_5;
+    case GOPRO_PROTUNE_EXPOSURE_POS_5_0:    return H3P_PROTUNE_EXPOSURE_POS_5_0;
+    close_switch_return_default(H3P_PROTUNE_EXPOSURE);
+    }
+}
+
+////////////////////////////
 // hero 4 capture mode
 ////////////////////////////
 
@@ -232,5 +320,67 @@ H4_FRAMERATE mav_to_h4_framerate(uint8_t rate, bool *ok)
     case GOPRO_FRAME_RATE_15:       return H4_FRAMERATE_15fps;
     case GOPRO_FRAME_RATE_12_5:     return H4_FRAMERATE_12_5fps;
     close_switch_return_default(H4_FRAMERATE);
+    }
+}
+
+////////////////////////////
+// hero 4 photo resolution
+////////////////////////////
+
+GOPRO_PHOTO_RESOLUTION h4_to_mav_photo_res(uint8_t res, bool *ok)
+{
+    default_true_open_switch(res) {
+    case H4_PHOTO_RES_5MP_MEDIUM:  return GOPRO_PHOTO_RESOLUTION_5MP_MEDIUM;
+    case H4_PHOTO_RES_7MP_WIDE:    return GOPRO_PHOTO_RESOLUTION_7MP_WIDE;
+    case H4_PHOTO_RES_12MP_WIDE:   return GOPRO_PHOTO_RESOLUTION_12MP_WIDE;
+    case H4_PHOTO_RES_7MP_MEDIUM:  return GOPRO_PHOTO_RESOLUTION_7MP_MEDIUM;
+    close_switch_return_default(GOPRO_PHOTO_RESOLUTION);
+    }
+}
+
+H4_PHOTO_RESOLUTION mav_to_h4_photo_res(uint8_t res, bool *ok)
+{
+    default_true_open_switch(res) {
+    case GOPRO_PHOTO_RESOLUTION_5MP_MEDIUM:     return H4_PHOTO_RES_5MP_MEDIUM;
+    case GOPRO_PHOTO_RESOLUTION_7MP_WIDE:       return H4_PHOTO_RES_7MP_WIDE;
+    case GOPRO_PHOTO_RESOLUTION_12MP_WIDE:      return H4_PHOTO_RES_12MP_WIDE;
+    case GOPRO_PHOTO_RESOLUTION_7MP_MEDIUM:     return H4_PHOTO_RES_7MP_MEDIUM;
+    close_switch_return_default(H4_PHOTO_RESOLUTION);
+    }
+}
+
+////////////////////////////
+// hero 4 protune exposure
+////////////////////////////
+
+GOPRO_PROTUNE_EXPOSURE h4_to_mav_exposure(uint8_t exp, bool *ok)
+{
+    default_true_open_switch(exp) {
+    case H4_PROTUNE_EXPOSURE_NEG_2_0:   return GOPRO_PROTUNE_EXPOSURE_NEG_2_0;
+    case H4_PROTUNE_EXPOSURE_NEG_1_5:   return GOPRO_PROTUNE_EXPOSURE_NEG_1_5;
+    case H4_PROTUNE_EXPOSURE_NEG_1_0:   return GOPRO_PROTUNE_EXPOSURE_NEG_1_0;
+    case H4_PROTUNE_EXPOSURE_NEG_0_5:   return GOPRO_PROTUNE_EXPOSURE_NEG_0_5;
+    case H4_PROTUNE_EXPOSURE_ZERO:      return GOPRO_PROTUNE_EXPOSURE_ZERO;
+    case H4_PROTUNE_EXPOSURE_POS_0_5:   return GOPRO_PROTUNE_EXPOSURE_POS_0_5;
+    case H4_PROTUNE_EXPOSURE_POS_1_0:   return GOPRO_PROTUNE_EXPOSURE_POS_1_0;
+    case H4_PROTUNE_EXPOSURE_POS_1_5:   return GOPRO_PROTUNE_EXPOSURE_POS_1_5;
+    case H4_PROTUNE_EXPOSURE_POS_2_0:   return GOPRO_PROTUNE_EXPOSURE_POS_2_0;
+    close_switch_return_default(GOPRO_PROTUNE_EXPOSURE);
+    }
+}
+
+H4_PROTUNE_EXPOSURE mav_to_h4_exposure(uint8_t exp, bool *ok)
+{
+    default_true_open_switch(exp) {
+    case GOPRO_PROTUNE_EXPOSURE_NEG_2_0:    return H4_PROTUNE_EXPOSURE_NEG_2_0;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_1_5:    return H4_PROTUNE_EXPOSURE_NEG_1_5;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_1_0:    return H4_PROTUNE_EXPOSURE_NEG_1_0;
+    case GOPRO_PROTUNE_EXPOSURE_NEG_0_5:    return H4_PROTUNE_EXPOSURE_NEG_0_5;
+    case GOPRO_PROTUNE_EXPOSURE_ZERO:       return H4_PROTUNE_EXPOSURE_ZERO;
+    case GOPRO_PROTUNE_EXPOSURE_POS_0_5:    return H4_PROTUNE_EXPOSURE_POS_0_5;
+    case GOPRO_PROTUNE_EXPOSURE_POS_1_0:    return H4_PROTUNE_EXPOSURE_POS_1_0;
+    case GOPRO_PROTUNE_EXPOSURE_POS_1_5:    return H4_PROTUNE_EXPOSURE_POS_1_5;
+    case GOPRO_PROTUNE_EXPOSURE_POS_2_0:    return H4_PROTUNE_EXPOSURE_POS_2_0;
+    close_switch_return_default(H4_PROTUNE_EXPOSURE);
     }
 }

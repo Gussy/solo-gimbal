@@ -70,6 +70,25 @@ typedef enum {
     H4_FRAMERATE_12_5fps    = 0xc
 } H4_FRAMERATE;
 
+typedef enum {
+    H4_PHOTO_RES_12MP_WIDE      = 0x0,
+    H4_PHOTO_RES_7MP_WIDE       = 0x1,
+    H4_PHOTO_RES_7MP_MEDIUM     = 0x2,
+    H4_PHOTO_RES_5MP_MEDIUM     = 0x3
+} H4_PHOTO_RESOLUTION;
+
+typedef enum {
+    H4_PROTUNE_EXPOSURE_POS_2_0     = 0x0,
+    H4_PROTUNE_EXPOSURE_POS_1_5     = 0x1,
+    H4_PROTUNE_EXPOSURE_POS_1_0     = 0x2,
+    H4_PROTUNE_EXPOSURE_POS_0_5     = 0x3,
+    H4_PROTUNE_EXPOSURE_ZERO        = 0x4,
+    H4_PROTUNE_EXPOSURE_NEG_0_5     = 0x5,
+    H4_PROTUNE_EXPOSURE_NEG_1_0     = 0x6,
+    H4_PROTUNE_EXPOSURE_NEG_1_5     = 0x7,
+    H4_PROTUNE_EXPOSURE_NEG_2_0     = 0x8
+} H4_PROTUNE_EXPOSURE;
+
 enum H4_TV_MODE {
     H4_TV_NTSC      = 0x0,
     H4_TV_PAL       = 0x1
