@@ -330,6 +330,9 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
             if (ok) {
                 cmd_init(c, "PR");
                 cmd_add_byte(c, res);
+            } else {
+                gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
             }
         } break;
 
