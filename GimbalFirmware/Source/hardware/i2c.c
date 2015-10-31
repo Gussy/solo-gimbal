@@ -189,8 +189,13 @@ interrupt void i2c_int_a_isr(void)
         break;
 
     default:
-        // Call the callback with the value of the interrupt source register
-        (*int_a_callback)(int_src);
+        // Check the pointer value has been initialised, as this interrupt may
+        // be triggered after interrupts are enabled, but before i2c init has
+        // been called, which may be never if GoPro control is disabled.
+        if(int_a_callback != NULL) {
+            // Call the callback with the value of the interrupt source register
+            (*int_a_callback)(int_src);
+        }
         break;
     }
 
