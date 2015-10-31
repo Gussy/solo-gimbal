@@ -447,19 +447,21 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         h3p->sd_card_inserted = memcmp(&rsp->payload[SE_RSP_PHOTO_INFO_IDX], empty, sizeof empty) != 0;
     } break;
 
-    case GOPRO_COMMAND_TIME: {
-        struct tm ti;
+    case GOPRO_COMMAND_TIME:
+        if (gp_transaction_direction() == GP_REQUEST_GET) {
+            struct tm ti;
 
-        ti.tm_year = rsp->payload[0] + 2000 - 1900; // years since 2000
-        ti.tm_mon = rsp->payload[1] - 1;            // (Jan = 0x01)
-        ti.tm_mday = rsp->payload[2];
-        ti.tm_hour = rsp->payload[3];
-        ti.tm_min = rsp->payload[4];
-        ti.tm_sec = rsp->payload[5];
+            ti.tm_year = rsp->payload[0] + 2000 - 1900; // years since 2000
+            ti.tm_mon = rsp->payload[1] - 1;            // (Jan = 0x01)
+            ti.tm_mday = rsp->payload[2];
+            ti.tm_hour = rsp->payload[3];
+            ti.tm_min = rsp->payload[4];
+            ti.tm_sec = rsp->payload[5];
 
-        gp_time_to_mav(&mav_rsp, &ti);
-        mav_rsp_len = 4;
-    } break;
+            gp_time_to_mav(&mav_rsp, &ti);
+            mav_rsp_len = 4;
+        }
+        break;
 
     case GOPRO_COMMAND_VIDEO_SETTINGS:
         if (!gp_h3p_handle_video_settings_rsp(h3p, rsp)) {
