@@ -26,6 +26,7 @@ enum GP_H4_HANDSHAKE_STEPS {
     GP_H4_HANDSHAKE_NONE,
     GP_H4_HANDSHAKE_READY,              // have received `ZZ ready` cmd from camera
     GP_H4_HANDSHAKE_HB_PROTO_VERSION,   // have receive `ZZ HeroBus Protocol Version` from camera
+    GP_H4_HANDSHARE_CHAN_OPEN_ERR,      // gopro responded to 'open chan' cmd with error, currently unrecoverable
     GP_H4_HANDSHAKE_CHANNEL_OPEN        // have opened the comms channel with the camera
 };
 
