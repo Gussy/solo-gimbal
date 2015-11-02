@@ -296,7 +296,7 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
          * not aware of a workaround here other than power cycling the camera,
          * so mark it as an unrecoverable error.
          */
-        if (rsp->api_group == API_GRP_GEN_CMDS & rsp->api_id == API_ID_OPEN_CHAN) {
+        if (rsp->api_group == API_GRP_GEN_CMDS && rsp->api_id == API_ID_OPEN_CHAN) {
             if (err == GP_H4_ERR_YY_ERR_BYTE) {
                 h4->handshake_step = GP_H4_HANDSHARE_CHAN_OPEN_ERR;
             }
