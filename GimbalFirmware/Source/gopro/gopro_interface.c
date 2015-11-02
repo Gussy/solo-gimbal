@@ -328,6 +328,12 @@ GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status()
         return GOPRO_HEARTBEAT_STATUS_DISCONNECTED;
     }
 
+    // only unrecoverable error condition currently known
+    // is on hero 4, happens during handshake
+    if (gp.model == GP_MODEL_HERO4 && gp_h4_handshake_is_error(&gp.h4)) {
+        return GOPRO_HEARTBEAT_STATUS_ERROR;
+    }
+
     // A GoPro is connected, ready for action and had queried the gccb version
     if (gp_get_power_status() == GP_POWER_ON && gp_handshake_complete() && !init_timed_out()) {
         return GOPRO_HEARTBEAT_STATUS_CONNECTED;
@@ -705,7 +711,10 @@ bool handle_rx_data(uint8_t *buf, uint16_t len)
                 // if we get a error response during handshake, reset and start over
                 // otherwise, report the transaction failure via mavlink
                 if (!gp_h4_handshake_complete(&gp.h4)) {
-                    gp_reset();
+                    // if we've detected an unrecoverable error, don't bother trying to reset
+                    if (!gp_h4_handshake_is_error(&gp.h4)) {
+                        gp_reset();
+                    }
                 } else {
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                     gp.hb_txn_phase = HB_TXN_IDLE;
