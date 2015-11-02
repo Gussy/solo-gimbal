@@ -32,7 +32,10 @@ static bool gp_is_recording();
 static void gp_write_eeprom();
 
 // Data to write into EEPROM
-static const uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
+static const uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {
+    0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12,
+    0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12
+};
 
 // buffers for i2c transactions
 struct pktbuf {
@@ -328,19 +331,19 @@ GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status()
     // A GoPro is connected, ready for action and had queried the gccb version
     if (gp_get_power_status() == GP_POWER_ON && gp_handshake_complete() && !init_timed_out()) {
         return GOPRO_HEARTBEAT_STATUS_CONNECTED;
-	}
+    }
 
-	// A GoPro is not in a "connected" state, but we can see something is plugged in
-	if (gp_get_power_status() != GP_POWER_ON && gp_get_von_asserted_in() && init_timed_out()) {
+    // A GoPro is not in a "connected" state, but we can see something is plugged in
+    if (gp_get_power_status() != GP_POWER_ON && gp_get_von_asserted_in() && init_timed_out()) {
         return GOPRO_HEARTBEAT_STATUS_INCOMPATIBLE;
-	}
+    }
 
-	// A GoPro is connected, but it's not talking to us, or we're not talking to it
-	if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
+    // A GoPro is connected, but it's not talking to us, or we're not talking to it
+    if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
         return GOPRO_HEARTBEAT_STATUS_INCOMPATIBLE;
-	}
+    }
 
-	// Either a GoPro is no connected, or there is no electrical way of detecting it
+    // Either a GoPro is no connected, or there is no electrical way of detecting it
     return GOPRO_HEARTBEAT_STATUS_DISCONNECTED;
 }
 
