@@ -32,7 +32,10 @@ static bool gp_is_recording();
 static void gp_write_eeprom();
 
 // Data to write into EEPROM
-static const uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12};
+static const uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {
+    0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12,
+    0x0E, 0x03, 0x01, 0x12, 0x0E, 0x03, 0x01, 0x12
+};
 
 // buffers for i2c transactions
 struct pktbuf {
@@ -325,22 +328,28 @@ GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status()
         return GOPRO_HEARTBEAT_STATUS_DISCONNECTED;
     }
 
+    // only unrecoverable error condition currently known
+    // is on hero 4, happens during handshake
+    if (gp.model == GP_MODEL_HERO4 && gp_h4_handshake_is_error(&gp.h4)) {
+        return GOPRO_HEARTBEAT_STATUS_ERROR;
+    }
+
     // A GoPro is connected, ready for action and had queried the gccb version
     if (gp_get_power_status() == GP_POWER_ON && gp_handshake_complete() && !init_timed_out()) {
         return GOPRO_HEARTBEAT_STATUS_CONNECTED;
-	}
+    }
 
-	// A GoPro is not in a "connected" state, but we can see something is plugged in
-	if (gp_get_power_status() != GP_POWER_ON && gp_get_von_asserted_in() && init_timed_out()) {
+    // A GoPro is not in a "connected" state, but we can see something is plugged in
+    if (gp_get_power_status() != GP_POWER_ON && gp_get_von_asserted_in() && init_timed_out()) {
         return GOPRO_HEARTBEAT_STATUS_INCOMPATIBLE;
-	}
+    }
 
-	// A GoPro is connected, but it's not talking to us, or we're not talking to it
-	if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
+    // A GoPro is connected, but it's not talking to us, or we're not talking to it
+    if (gp_get_power_status() == GP_POWER_ON && !gp_handshake_complete() && init_timed_out()) {
         return GOPRO_HEARTBEAT_STATUS_INCOMPATIBLE;
-	}
+    }
 
-	// Either a GoPro is no connected, or there is no electrical way of detecting it
+    // Either a GoPro is no connected, or there is no electrical way of detecting it
     return GOPRO_HEARTBEAT_STATUS_DISCONNECTED;
 }
 
@@ -702,7 +711,10 @@ bool handle_rx_data(uint8_t *buf, uint16_t len)
                 // if we get a error response during handshake, reset and start over
                 // otherwise, report the transaction failure via mavlink
                 if (!gp_h4_handshake_complete(&gp.h4)) {
-                    gp_reset();
+                    // if we've detected an unrecoverable error, don't bother trying to reset
+                    if (!gp_h4_handshake_is_error(&gp.h4)) {
+                        gp_reset();
+                    }
                 } else {
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
                     gp.hb_txn_phase = HB_TXN_IDLE;

@@ -107,6 +107,7 @@ typedef enum {
 
 void gp_h4_init(gp_h4_t *h4);
 bool gp_h4_handshake_complete(const gp_h4_t *h4);
+bool gp_h4_handshake_is_error(const gp_h4_t *h4);
 bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p);
 bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p);
 bool gp_h4_recognize_packet(const uint8_t *buf, uint16_t len);

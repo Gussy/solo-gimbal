@@ -41,6 +41,11 @@ bool gp_h4_handshake_complete(const gp_h4_t *h4)
     return h4->handshake_step == GP_H4_HANDSHAKE_CHANNEL_OPEN;
 }
 
+bool gp_h4_handshake_is_error(const gp_h4_t *h4)
+{
+    return h4->handshake_step == GP_H4_HANDSHARE_CHAN_OPEN_ERR;
+}
+
 bool gp_h4_finish_handshake(gp_h4_t *h4, gp_h4_pkt_t *p)
 {
     /*
@@ -285,6 +290,18 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
 
     gp_h4_err_t err = gp_h4_get_rsp_err(rsp);
     if (err != GP_H4_ERR_OK) {
+        /*
+         * special case, gopro can get into a state where it never
+         * responds with success to our open channel commands. Currently,
+         * not aware of a workaround here other than power cycling the camera,
+         * so mark it as an unrecoverable error.
+         */
+        if (rsp->api_group == API_GRP_GEN_CMDS && rsp->api_id == API_ID_OPEN_CHAN) {
+            if (err == GP_H4_ERR_YY_ERR_BYTE) {
+                h4->handshake_step = GP_H4_HANDSHARE_CHAN_OPEN_ERR;
+            }
+        }
+
         gp_h4_set_transaction_result(h4, rsp->payload, len, GP_CMD_STATUS_FAILURE);
         return err;
     }
