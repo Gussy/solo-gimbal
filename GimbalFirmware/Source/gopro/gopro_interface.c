@@ -577,6 +577,12 @@ void gp_update()
 {
     GPPowerStatus new_power_status;
 
+    if (gp_get_pwron_asserted_out()) {
+        if (gp.gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+            gp_set_pwron_asserted_out(false);
+        }
+    }
+
     if(!gp.enabled) {
         return;
     }
@@ -586,12 +592,6 @@ void gp_update()
     if (gp.i2c_txn.in_progress) {
         if (gp.timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
             gp_timeout();
-        }
-    }
-
-    if (gp_get_pwron_asserted_out()) {
-        if (gp.gp_power_on_counter++ > (GP_PWRON_TIME_MS / GP_STATE_MACHINE_PERIOD_MS)) {
-            gp_set_pwron_asserted_out(false);
         }
     }
 
