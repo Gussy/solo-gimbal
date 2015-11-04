@@ -332,25 +332,15 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         }
     }
     // battery level
-    else if (rsp->api_group == API_GRP_CAM_SETTINGS && rsp->api_id == API_ID_GET_BATTERY_LVL) {
-        if (len == 1) {
-            mav_rsp.mav.value[0] = rsp->payload[0];
-            mav_rsp_len = 1;
+    else if (rsp->api_group == API_GRP_CAM_SETTINGS) {
+        switch (rsp->api_id) {
+        case API_ID_GET_BATTERY_LVL:
+            if (len == 1) {
+                mav_rsp.mav.value[0] = rsp->payload[0];
+                mav_rsp_len = 1;
+            }
+            break;
         }
-    }
-    // get camera time
-    else if (rsp->api_group == API_GRP_PLAYBACK_MODE && rsp->api_id == API_ID_GET_CAM_TIME) {
-
-        struct tm ti;
-        ti.tm_year = ((rsp->payload[0] << 8) | rsp->payload[1]) - 1900;
-        ti.tm_mon = rsp->payload[2] - 1;
-        ti.tm_mday = rsp->payload[3];
-        ti.tm_hour = rsp->payload[4];
-        ti.tm_min = rsp->payload[5];
-        ti.tm_sec = rsp->payload[6];
-
-        gp_time_to_mav(&mav_rsp, &ti);
-        mav_rsp_len = 4;
     }
     else if (rsp->api_group == API_GRP_MODE_VID) {
         switch (rsp->api_id) {
@@ -379,29 +369,12 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
                 mav_rsp_len = 1;
             }
         } break;
-        }
-    }
-    // tv mode
-    else if (rsp->api_group == API_GRP_PLAYBACK_MODE) {
-        // if this is being sent as part of a multi msg,
-        // ensure we don't complete the transaction until the final msg is completed.
-        if (rsp->api_id == API_ID_SET_NTSC_PAL) {
-            return err;
-        }
 
-        if (rsp->api_id == API_ID_GET_NTSC_PAL) {
-            if (rsp->payload[0] == H4_TV_PAL) {
-                h4->multi_msg_cmd.payload[3] |= GOPRO_VIDEO_SETTINGS_TV_MODE;
-            }
-            return err;
-        }
-    }
-    // vid settings
-    else if (rsp->api_group == API_GRP_MODE_VID) {
-        if (rsp->api_id == API_ID_SET_RES_FR_FOV) {
+        case API_ID_SET_RES_FR_FOV:
             h4->multi_msg_cmd.state  = H4_MULTIMSG_NONE;
+            break;
 
-        } else if (rsp->api_id == API_ID_GET_RES_FR_FOV) {
+        case API_ID_GET_RES_FR_FOV: {
             bool ok;
             mav_rsp.mav.value[0] = h4_to_mav_resolution(rsp->payload[0], &ok);
             mav_rsp.mav.value[1] = h4_to_mav_framerate(rsp->payload[1], &ok);
@@ -409,6 +382,35 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
             mav_rsp.mav.value[3] = h4->multi_msg_cmd.payload[3];
             mav_rsp_len = 4;
             h4->multi_msg_cmd.state  = H4_MULTIMSG_NONE;
+        } break;
+        }
+    }
+    // tv mode
+    else if (rsp->api_group == API_GRP_PLAYBACK_MODE) {
+        switch (rsp->api_id) {
+        // if this is being sent as part of a multi msg,
+        // ensure we don't complete the transaction until the final msg is completed.
+        case API_ID_SET_NTSC_PAL:
+            return err;
+
+        case API_ID_GET_NTSC_PAL:
+            if (rsp->payload[0] == H4_TV_PAL) {
+                h4->multi_msg_cmd.payload[3] |= GOPRO_VIDEO_SETTINGS_TV_MODE;
+            }
+            return err;
+
+        case API_ID_GET_CAM_TIME: {
+             struct tm ti;
+             ti.tm_year = ((rsp->payload[0] << 8) | rsp->payload[1]) - 1900;
+             ti.tm_mon = rsp->payload[2] - 1;
+             ti.tm_mday = rsp->payload[3];
+             ti.tm_hour = rsp->payload[4];
+             ti.tm_min = rsp->payload[5];
+             ti.tm_sec = rsp->payload[6];
+
+             gp_time_to_mav(&mav_rsp, &ti);
+             mav_rsp_len = 4;
+        } break;
         }
     }
     // photo
