@@ -332,10 +332,14 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         }
     }
     // battery level
-    else if (rsp->api_group == API_GRP_CAM_SETTINGS && rsp->api_id == API_ID_GET_BATTERY_LVL) {
-        if (len == 1) {
-            mav_rsp.mav.value[0] = rsp->payload[0];
-            mav_rsp_len = 1;
+    else if (rsp->api_group == API_GRP_CAM_SETTINGS) {
+        switch (rsp->api_id) {
+        case API_ID_GET_BATTERY_LVL:
+            if (len == 1) {
+                mav_rsp.mav.value[0] = rsp->payload[0];
+                mav_rsp_len = 1;
+            }
+            break;
         }
     }
     else if (rsp->api_group == API_GRP_MODE_VID) {
