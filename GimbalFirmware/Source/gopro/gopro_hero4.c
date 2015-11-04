@@ -295,9 +295,20 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
          * responds with success to our open channel commands. Currently,
          * not aware of a workaround here other than power cycling the camera,
          * so mark it as an unrecoverable error.
+         *
+         * to make this even more delicate, Hero 4 Silvers
+         * return a non-zero error code when we power up the vehicle
+         * with the camera (already powered on) in the gimbal. It returns
+         * a different error code from the condition described above, and
+         * can recover after we toggle backpack detect, so only check for the
+         * unrecoverable error code.
+         *
+         * would be ideal to know what these error codes are intended to mean,
+         * and if it's OK to rely on them.
          */
         if (rsp->api_group == API_GRP_GEN_CMDS && rsp->api_id == API_ID_OPEN_CHAN) {
-            if (err == GP_H4_ERR_YY_ERR_BYTE) {
+            static const uint8_t HERO_4_BLACK_RECONNECT_ERR = 0xff;
+            if (err == GP_H4_ERR_YY_ERR_BYTE && rsp->err_code == HERO_4_BLACK_RECONNECT_ERR) {
                 h4->handshake_step = GP_H4_HANDSHARE_CHAN_OPEN_ERR;
             }
         }
