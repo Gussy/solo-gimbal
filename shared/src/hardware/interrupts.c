@@ -69,8 +69,6 @@ void InitInterrupts()
         PieVectTable.SCITXINTA = &uart_tx_isr; // Uart TX ISR is driven from SCI-A transmit
 
         PieVectTable.XINT1 = &GyroIntISR; // Gyro ISR is driven from external interrupt 1
-        PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx fifo interrupts are handled by the same ISR
-        PieVectTable.I2CINT1A = &i2c_int_a_isr; // All non-fifo I2C interrupts are handled by the same ISR
         EDIS;
 
         // Enable PIE group 9 interrupt 1 for SCI-A receive
@@ -83,10 +81,6 @@ void InitInterrupts()
 
         // Enable PIE group 1 interrupt 4 for XINT1 (for gyro interrupt line)
         PieCtrlRegs.PIEIER1.bit.INTx4 = 1;
-        // Enable PIE group 8 interrupt 2 for I2C FIFO interrupts
-        PieCtrlRegs.PIEIER8.bit.INTx2 = 1;
-        // Enable PIE group 8 interrupt 1 for Regular I2C interrupts (the only one we're currently using is addressed as slave (AAS))
-        PieCtrlRegs.PIEIER8.bit.INTx1 = 1;
 
         // Configure and enable XINT1 (for gyro interrupt line)
         EALLOW;

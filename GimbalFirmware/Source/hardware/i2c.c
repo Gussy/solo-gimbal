@@ -17,9 +17,14 @@ typedef struct {
 } rx_transaction_t;
 
 static tx_transaction_t tx;
-static rx_transaction_t rx;
+static rx_transaction_t rx = {
+    .len = 0,
+    .maxlen = 0
+};
 
 I2CIntACallback int_a_callback = NULL;
+
+static void i2c_init_interrupts(void);
 
 void init_i2c(I2CIntACallback interrupt_a_callback)
 {
@@ -54,8 +59,26 @@ void init_i2c(I2CIntACallback interrupt_a_callback)
     // The GoPro expects the controller to be at address 0x60, so set that as our slave address
     I2caRegs.I2COAR = 0x0060;
 
+    i2c_init_interrupts();
+
     // Enable the I2C module
     I2caRegs.I2CMDR.bit.IRS = 1;
+}
+
+static void i2c_init_interrupts(void)
+{
+    EALLOW;
+    PieVectTable.I2CINT2A = &i2c_fifo_isr; // I2C Tx and Rx fifo interrupts are handled by the same ISR
+    PieVectTable.I2CINT1A = &i2c_int_a_isr; // All non-fifo I2C interrupts are handled by the same ISR
+    EDIS;
+
+    // Enable PIE group 8 interrupt 2 for I2C FIFO interrupts
+    PieCtrlRegs.PIEIER8.bit.INTx2 = 1;
+    // Enable PIE group 8 interrupt 1 for Regular I2C interrupts (the only one we're currently using is addressed as slave (AAS))
+    PieCtrlRegs.PIEIER8.bit.INTx1 = 1;
+
+    // Enable CPU INT3 which is connected to EPWMx INTs:
+    IER |= M_INT8;
 }
 
 Uint16 i2c_get_aas()
