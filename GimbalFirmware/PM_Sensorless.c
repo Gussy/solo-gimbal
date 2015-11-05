@@ -91,7 +91,7 @@ AxisParms axis_parms = {
     .all_init_params_recvd = FALSE,
     .other_axis_hb_recvd = {FALSE, FALSE, FALSE},
     .other_axis_init_params_recvd = {FALSE, FALSE, FALSE},
-    .other_axis_enable_retry_counter = 0
+    .other_axis_enable_retry_counter = OTHER_AXIS_INIT_RETRY_COUNT_MAX
 };
 
 ControlBoardParms control_board_parms = {
