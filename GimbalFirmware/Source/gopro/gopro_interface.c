@@ -202,7 +202,9 @@ bool gp_ready_for_cmd()
      * so ensure both previous mavlink cmd and any herobus transactions are complete.
      */
 
-    return (gp.txn.response.mav.status == GP_CMD_STATUS_IDLE && gp.hb_txn_phase == HB_TXN_IDLE);
+    return (gp_handshake_complete() &&
+            (gp.txn.response.mav.status == GP_CMD_STATUS_IDLE) &&
+            (gp.hb_txn_phase == HB_TXN_IDLE));
 }
 
 bool gp_begin_cmd_send(uint16_t len)
