@@ -195,7 +195,7 @@ void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 durati
 
         case LED_MODE_BREATHING:
             state_rgba = color;
-            breathing_x = 64; // Start at the high point, ready to fade out
+            breathing_x = 0; // Start at the low point, ready to fade out
             update_function = &update_compare_breathing;
             // Only enable 1 of the ePWM interrupts,
             // which we use to step to fade alpha up
