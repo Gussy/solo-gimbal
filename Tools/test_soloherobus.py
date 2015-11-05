@@ -63,6 +63,127 @@ def show_gopro(m):
         elif msg.get_type().startswith("GOPRO"):
             print(msg)
 
+def wait_at_least(interval, last):
+    # helper to delay a minimum interval since last
+    diff = time.time() - last
+    if diff < interval:
+        time.sleep(interval - diff)
+
+def vid_settings_test(link, m):
+    '''
+    set and readback all hero 4 black video settings
+    '''
+
+    # wait for heartbeat to ensure we're synced
+    sys.stdout.write("...syncing")
+    sys.stdout.flush()
+    hb = m.recv_match(type="GOPRO_HEARTBEAT", blocking=True, timeout=5)
+    if not hb:
+        print ". error: failed to sync, didn't receive heartbeat"
+        return
+
+    print ". ready, starting video settings tests."
+
+    failcount = 0
+    last_iter = time.time()
+    cmdid = mavlink.GOPRO_COMMAND_VIDEO_SETTINGS
+
+    Hero4BlackSettings = [
+        [0, 12, 0, 0],
+        [1, 4, 0, 0],
+        [1, 4, 1, 0],
+        [1, 4, 2, 0],
+        [1, 7, 0, 0],
+        [1, 7, 1, 0],
+        [1, 11, 0, 0],
+        [1, 11, 1, 0],
+        [1, 11, 2, 0],
+        [1, 12, 2, 0],
+        [2, 7, 0, 0],
+        [2, 11, 0, 0],
+        [3, 2, 0, 0],
+        [3, 2, 1, 0],
+        [3, 2, 2, 0],
+        [3, 4, 0, 0],
+        [3, 4, 1, 0],
+        [3, 4, 2, 0],
+        [3, 5, 0, 0],
+        [3, 5, 1, 0],
+        [3, 5, 2, 0],
+        [3, 7, 0, 0],
+        [3, 7, 1, 0],
+        [3, 7, 2, 0],
+        [3, 9, 0, 0],
+        [3, 9, 2, 0],
+        [3, 11, 0, 0],
+        [3, 11, 2, 0],
+        [4, 2, 0, 0],
+        [4, 4, 0, 0],
+        [4, 5, 0, 0],
+        [4, 7, 0, 0],
+        [4, 8, 0, 0],
+        [6, 2, 0, 0],
+        [6, 2, 1, 0],
+        [6, 5, 0, 0],
+        [6, 5, 1, 0],
+        [6, 7, 0, 0],
+        [6, 7, 1, 0],
+        [7, 4, 0, 0],
+        [8, 2, 0, 0],
+        [8, 4, 0, 0],
+        [10, 7, 0, 0],
+        [10, 11, 0, 0],
+        [11, 2, 0, 0],
+        [11, 4, 0, 0],
+        [11, 5, 0, 0],
+        [11, 7, 0, 0],
+        [11, 8, 0, 0],
+        [12, 4, 0, 0],
+        [13, 2, 0, 0]
+    ]
+
+    for i, s in enumerate(Hero4BlackSettings):
+
+        # camera can freeze if we send too frequently,
+        # adjust interval between iterations
+        wait_at_least(0.2, last_iter)
+        last_iter = time.time()
+
+        link.gopro_set_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, cmdid, s)
+        setrsp = m.recv_match(blocking=True, type="GOPRO_SET_RESPONSE", timeout=2)
+        if not setrsp:
+            print "!! case %d, no SET response" % (i)
+            failcount += 1
+            continue
+
+        if setrsp.status != mavlink.GOPRO_REQUEST_SUCCESS:
+            print "!! case %d, SET request failed" % (i)
+            failcount += 1
+            continue
+
+        link.gopro_get_request_send(MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, cmdid)
+        getrsp = m.recv_match(blocking=True, type="GOPRO_GET_RESPONSE", timeout=2)
+        if not getrsp:
+            print "!! case %d, no GET response" % (i)
+            failcount += 1
+            continue
+
+        if getrsp.status != mavlink.GOPRO_REQUEST_SUCCESS:
+            print "!! case %d, GET request failed" % (i)
+            failcount += 1
+            continue
+
+        if args.verbose:
+            print "  -- case %d" % (i)
+            print "  ", setrsp
+            print "  ", getrsp
+
+        if getrsp.value != s:
+            print " case %d mismatch. got %s, want %s" % (i, getrsp.value, s)
+            failcount += 1
+
+    print "done. %d of %d failed" % (failcount, len(Hero4BlackSettings))
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
 parser.add_argument("-b", "--baudrate", help="Serial port baudrate")
