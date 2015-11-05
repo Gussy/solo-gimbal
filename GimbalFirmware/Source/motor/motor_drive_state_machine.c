@@ -135,8 +135,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.param.Idem = 0;
 
             // Time out the calibration time.  After it has expired, transition to the next state
-            md_parms->current_cal_timer++;
-            if (md_parms->current_cal_timer > (((Uint32)COMMUTATION_FREQUENCY_HZ * (Uint32)CURRENT_CALIBRATION_TIME_MS)/1000)) {
+            if (md_parms->current_cal_timer++ > (((Uint32)COMMUTATION_FREQUENCY_HZ * (Uint32)CURRENT_CALIBRATION_TIME_MS)/1000)) {
                 if(GetBoardHWID() == AZ) {
                     md_parms->motor_drive_state = STATE_CHECK_AXIS_CALIBRATION;
                 } else {
@@ -363,15 +362,6 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
         }
     }
 
-//     if (flash_params.use_custom_gains == 1.0) {
-//         md_parms->pid_id.param.Kp = flash_params.torque_pid_kp;
-//         md_parms->pid_id.param.Ki = flash_params.torque_pid_ki;
-//         md_parms->pid_id.param.R = flash_params.torque_pid_kr;
-//
-//         md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp;
-//         md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki;
-//         md_parms->pid_iq.param.R = flash_params.torque_pid_kr;
-//     } else {
     md_parms->pid_id.param.Kp = DEFAULT_GMB_TRQ_P;
     md_parms->pid_id.param.Ki = DEFAULT_GMB_TRQ_I;
     md_parms->pid_id.param.R = DEFAULT_GMB_TRQ_R;
@@ -379,5 +369,4 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
     md_parms->pid_iq.param.Kp = DEFAULT_GMB_TRQ_P;
     md_parms->pid_iq.param.Ki = DEFAULT_GMB_TRQ_I;
     md_parms->pid_iq.param.R = DEFAULT_GMB_TRQ_R;
-//     }
 }
