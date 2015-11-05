@@ -6,7 +6,8 @@ Utility for reading the software version from a 3DR Gimbal.
 @author: Angus Peart (angus@3dr.com)
 """
 
-import sys, argparse, struct
+import sys, argparse, struct, time
+
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega as mavlink
 
@@ -56,15 +57,16 @@ def show_gopro(m):
         if msg.get_type() == "GOPRO_HEARTBEAT":
             print("%s: %s" % (msg.get_type(), mavlink.enums['GOPRO_HEARTBEAT_STATUS'][msg.status].name))
         elif msg.get_type() == "GOPRO_GET_RESPONSE":
-            print("%s: '%s' = %u" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.value))
+            print("%s: '%s' = %u (%u)" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.value, msg.status))
         elif msg.get_type() == "GOPRO_SET_RESPONSE":
-            print("%s: '%s' = %u" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.result))
+            print("%s: '%s' = %u" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.status))
         elif msg.get_type().startswith("GOPRO"):
             print(msg)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", help="Serial port or device used for MAVLink bootloading")
 parser.add_argument("-b", "--baudrate", help="Serial port baudrate")
+parser.add_argument("-v", "--verbose", help="more verbose output", action="store_true")
 args = parser.parse_args()
 
 # Accept a command line baudrate, fallback to the default
