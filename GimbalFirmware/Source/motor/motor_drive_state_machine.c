@@ -36,6 +36,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         LoadAxisParmsStateInfo* load_ap_state_info)
 {
     switch (md_parms->motor_drive_state) {
+        // AZ, ROLL, EL
         case STATE_INIT:
             md_parms->current_cal_timer = 0;
 
@@ -65,6 +66,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ
         case STATE_WAIT_FOR_AXIS_HEARTBEATS:
             // Wait to receive a heartbeat from all of the axes before continuing on with initialization.  If we haven't heard
             // from all of the axes after a certain amount of time, re-send the init to all axes
@@ -85,6 +87,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ
         case STATE_LOAD_OWN_INIT_PARAMS:
             // This state is only run on the AZ board to load torque loop PID gains
             // The rate loop PID gains are only needed on the EL board, so these are loaded over CAN
@@ -99,6 +102,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->motor_drive_state = STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED;
             break;
 
+        // ROLL, EL
         case STATE_REQUEST_AXIS_INIT_PARAMS:
             // Run the load init parms state machine to sequence through requesting the axis parms
             LoadAxisParmsStateMachine(load_ap_state_info);
@@ -113,6 +117,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ
         case STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED:
             // Wait for all of the axes to have received their init parameters.  These flags are updated in response to a bit set in the periodic BIT
             // messages that all axes send
@@ -122,6 +127,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ, ROLL, EL
         case STATE_CALIBRATING_CURRENT_MEASUREMENTS:
             //  LPF to average the calibration offsets.  Run this for a few seconds at boot to calibrate the phase current measurements
             md_parms->cal_offset_A = _IQ15mpy(md_parms->cal_filt_gain, _IQtoIQ15(md_parms->clarke_xform_parms.As)) + md_parms->cal_offset_A;
@@ -144,6 +150,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ
         case STATE_CHECK_AXIS_CALIBRATION:
             /* The commutation_slope values default to 0.0f on an uncalibrated gimbal.
              * Values which do not equal 0.0f implies a calibration exists
@@ -159,6 +166,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // ROLL, EL
         case STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND:
             /* Both the ROLL and EL boards will wait until a calibration command is sent
              * either by the AZ board after it's checked the values exist, or from the AZ
@@ -166,6 +174,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
              */
             break;
 
+        // AZ, ROLL, EL
         case STATE_TAKE_COMMUTATION_CALIBRATION_DATA:
         	if (((GetBoardHWID() == AZ)&&((cb_parms->axes_homed[ROLL]))&&((cb_parms->axes_homed[EL])))||
         		((GetBoardHWID() == ROLL)&&((cb_parms->axes_homed[EL])))||
@@ -174,6 +183,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         	}
             break;
 
+        // AZ, ROLL, EL
         case STATE_HOMING:
             // Load the runtime values from the stored calibration values
             encoder_parms->calibration_slope = flash_params.commutation_slope[GetBoardHWID()];
@@ -193,6 +203,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // EL
         case STATE_WAIT_FOR_AXES_HOME:
             // Set park transformation angle to 0
             md_parms->park_xform_parms.Angle = 0;
@@ -206,6 +217,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // EL
         case STATE_INITIALIZE_POSITION_LOOPS:
             if ((cb_parms->encoder_value_received[AZ] == TRUE) &&
                     (cb_parms->encoder_value_received[EL] == TRUE) &&
@@ -225,6 +237,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ, ROLL, EL
         case STATE_RUNNING:
             axis_parms->blink_state = BLINK_RUNNING;
             // If new current command from CAN bus get it.
@@ -240,6 +253,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.param.Idem = md_parms->Idem;
             break;
 
+        // AZ, ROLL, EL
         case STATE_DISABLED:
             axis_parms->blink_state = BLINK_RUNNING;
             // Set park transformation angle to currently measured rotor electrical angle
@@ -256,6 +270,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ, ROLL, EL
         case STATE_RECOVERABLE_FAULT:
             axis_parms->blink_state = BLINK_ERROR;
             // Set park transformation angle to currently measured rotor electrical angle
@@ -271,6 +286,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ, ROLL, EL
         case STATE_UNRECOVERABLE_FAULT:
             axis_parms->blink_state = BLINK_ERROR_UNRECOVERABLE;
             // Set park transformation angle to 0
