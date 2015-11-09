@@ -203,6 +203,11 @@ void main(void)
 	// Initialize CAN peripheral, and CAND backend
 	ECanInit();
 	if (cand_init() != CAND_SUCCESS) {
+	    // Show a solid blue error LED if CAN failed to initialise
+	    if(board_hw_id == EL) {
+	        led_set_mode(LED_MODE_SOLID, rgba_blue, 0);
+	    }
+
 	    // If the CAN module didn't initialize, we busy wait here forever and send an error message at roughly 1Hz
 	    while (1) {
 	        // Rough approximation of 1-second of busy waiting, doesn't need to be super accurate
