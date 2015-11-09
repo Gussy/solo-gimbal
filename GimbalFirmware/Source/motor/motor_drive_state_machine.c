@@ -13,8 +13,6 @@
 
 #include <string.h>
 
-static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
-
 static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms);
 
 void MotorDriveStateMachine(AxisParms* axis_parms,

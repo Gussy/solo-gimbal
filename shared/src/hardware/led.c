@@ -2,6 +2,10 @@
 #include "hardware/led.h"
 #include <math.h>
 
+const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
+const LED_RGBA rgba_green = {.red = 0, .green = 0xff, .blue = 0, .alpha = 0xff};
+const LED_RGBA rgba_blue = {.red = 0, .green = 0, .blue = 0xff, .alpha = 0xff};
+
 static void set_rgba(Uint8 red, Uint8 green, Uint8 blue, Uint8 alpha);
 static void enable_epwm_interrupts(void);
 static void disable_epwm_interrupts(void);

@@ -46,6 +46,10 @@ typedef struct {
 	Uint8 alpha;
 } LED_RGBA;
 
+extern const LED_RGBA rgba_red;
+extern const LED_RGBA rgba_green;
+extern const LED_RGBA rgba_blue;
+
 void init_led(void);
 
 void init_led_periph(void);
