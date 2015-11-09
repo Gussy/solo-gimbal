@@ -42,6 +42,6 @@ typedef struct {
     float calibration_data[COMMUTATION_ARRAY_SIZE];
 } CommutationCalibrationParms;
 
-void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* encoder_parms, AxisParms* axis_parms, CommutationCalibrationParms* cc_parms, ControlBoardParms* cb_parms);
+void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* encoder_parms, AxisParms* axis_parms, ControlBoardParms* cb_parms);
 
 #endif /* COMMUTATION_CALIBRATION_STATE_MACHINE_H_ */

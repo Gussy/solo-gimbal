@@ -17,18 +17,6 @@ static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0
 
 static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms);
 
-CommutationCalibrationParms cc_parms = {
-    .calibration_state = COMMUTATION_CALIBRATION_STATE_INIT,
-    .current_iteration = 0,
-    .current_elec_cycle = 0,
-    .current_elec_sub_cycle = 0,
-    .current_dir = 0,
-    .settling_timer = 0,
-    .ezero_step = 0,
-    .ramp_cntl = RMPCNTL_DEFAULTS,
-    .calibration_data = {0}
-};
-
 void MotorDriveStateMachine(AxisParms* axis_parms,
         ControlBoardParms* cb_parms,
         MotorDriveParms* md_parms,
@@ -41,7 +29,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->current_cal_timer = 0;
 
             // Clear axis home flags
-            memset(cb_parms->axes_homed, 0x00, AXIS_CNT * sizeof(Uint8));
+            memset(cb_parms->axes_homed, 0, sizeof(cb_parms->axes_homed));
 
             // Set park transformation angle to 0
             md_parms->park_xform_parms.Angle = 0;
@@ -182,7 +170,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         	if (((GetBoardHWID() == AZ)&&((cb_parms->axes_homed[ROLL]))&&((cb_parms->axes_homed[EL])))||
         		((GetBoardHWID() == ROLL)&&((cb_parms->axes_homed[EL])))||
         		((GetBoardHWID() == EL))) {
-        		    CommutationCalibrationStateMachine(md_parms, encoder_parms, axis_parms, &cc_parms, cb_parms);
+        		    CommutationCalibrationStateMachine(md_parms, encoder_parms, axis_parms, cb_parms);
         	}
             break;
 

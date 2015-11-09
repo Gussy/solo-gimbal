@@ -15,20 +15,32 @@ static const int AXIS_CALIBRATION_SETTLING_TIME_MS[AXIS_CNT] = {
     300     // ROLL
 };
 
+static CommutationCalibrationParms cc_parms = {
+    .calibration_state = COMMUTATION_CALIBRATION_STATE_INIT,
+    .current_iteration = 0,
+    .current_elec_cycle = 0,
+    .current_elec_sub_cycle = 0,
+    .current_dir = 0,
+    .settling_timer = 0,
+    .ezero_step = 0,
+    .ramp_cntl = RMPCNTL_DEFAULTS,
+    .calibration_data = {0}
+};
+
 static void send_calibration_progress(Uint8 progress, GIMBAL_AXIS_CALIBRATION_STATUS calibration_status);
 
-static void calc_slope_intercept(CommutationCalibrationParms* cc_parms, int start, int end, float *slope, float *intercept)
+static void calc_slope_intercept(int start, int end, float *slope, float *intercept)
 {
 	float average_slope = 0;
 	float average_intercept = 0;
 	float temp;
 	int i;
 	for (i = start; i < end; i++) {
-		average_slope += (cc_parms->calibration_data[i] - cc_parms->calibration_data[i-1])/(1.0f/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS);
+		average_slope += (cc_parms.calibration_data[i] - cc_parms.calibration_data[i-1])/(1.0f/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS);
 	}
 	average_slope /= (end - start);
 	for (i = start; i < end; i++) {
-		temp = (cc_parms->calibration_data[i] - (((float)(i-cc_parms->ezero_step))/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS)*average_slope);
+		temp = (cc_parms.calibration_data[i] - (((float)(i-cc_parms.ezero_step))/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS)*average_slope);
 		average_intercept += temp;
 	}
 	average_intercept /= (end - start);
@@ -40,13 +52,13 @@ _iq IdRefLockCommutationCalibration = _IQ(0.495/MAX_CURRENT); // = 0.495A
 
 Uint8 calibration_progress = 0;
 
-void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* encoder_parms, AxisParms* axis_parms, CommutationCalibrationParms* cc_parms, ControlBoardParms* cb_parms)
+void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms* encoder_parms, AxisParms* axis_parms, ControlBoardParms* cb_parms)
 {
 	static float last_position;
 	static float new_position = 0;
 	static Uint16 hardstop = 0;
 
-    switch (cc_parms->calibration_state) {
+    switch (cc_parms.calibration_state) {
         case COMMUTATION_CALIBRATION_STATE_INIT:
         {
             Uint16 dataIndex;
@@ -66,51 +78,51 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
         	axis_parms->blink_state = BLINK_CALIBRATING;
 
             // Set up the ramp control macro for locking to the first electrical 0
-            md_parms->park_xform_parms.Angle = 0;//cc_parms->ramp_cntl.TargetValue =
-            cc_parms->ramp_cntl.SetpointValue = 0;
-            cc_parms->ramp_cntl.TargetValue = IdRefLockCommutationCalibration;
-            cc_parms->ramp_cntl.RampDelayMax = COMMUTATION_CALIBRATION_SETTLE_RAMP_SPEED;
-            cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_RAMP_ID;
-            for (dataIndex = 0; dataIndex < COMMUTATION_ARRAY_SIZE; dataIndex++) cc_parms->calibration_data[dataIndex] = 0;
+            md_parms->park_xform_parms.Angle = 0;//cc_parms.ramp_cntl.TargetValue =
+            cc_parms.ramp_cntl.SetpointValue = 0;
+            cc_parms.ramp_cntl.TargetValue = IdRefLockCommutationCalibration;
+            cc_parms.ramp_cntl.RampDelayMax = COMMUTATION_CALIBRATION_SETTLE_RAMP_SPEED;
+            cc_parms.calibration_state = COMMUTATION_CALIBRATION_STATE_RAMP_ID;
+            for (dataIndex = 0; dataIndex < COMMUTATION_ARRAY_SIZE; dataIndex++) cc_parms.calibration_data[dataIndex] = 0;
         }
             break;
 
 
         case COMMUTATION_CALIBRATION_STATE_RAMP_ID:
-            RC_MACRO(cc_parms->ramp_cntl)
-            md_parms->pid_id.param.Idem = cc_parms->ramp_cntl.SetpointValue;
+            RC_MACRO(cc_parms.ramp_cntl)
+            md_parms->pid_id.param.Idem = cc_parms.ramp_cntl.SetpointValue;
             md_parms->pid_iq.param.Idem = 0;
-            md_parms->park_xform_parms.Angle = 0;//cc_parms->ramp_cntl.TargetValue =
+            md_parms->park_xform_parms.Angle = 0;//cc_parms.ramp_cntl.TargetValue =
 
             // Once we've ramped ID up to its commutation calibration level,
             // move on to finding the first hardstop
-            if (cc_parms->ramp_cntl.EqualFlag > 0) {
+            if (cc_parms.ramp_cntl.EqualFlag > 0) {
                 // Move faster during actual calibration
-                cc_parms->ramp_cntl.RampDelayMax = COMMUTATION_CALIBRATION_RAMP_SPEED;
-                cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_MOVE_TO_HARDSTOP;
+                cc_parms.ramp_cntl.RampDelayMax = COMMUTATION_CALIBRATION_RAMP_SPEED;
+                cc_parms.calibration_state = COMMUTATION_CALIBRATION_STATE_MOVE_TO_HARDSTOP;
                 last_position = encoder_parms->mech_theta + 0.003;
-                cc_parms->settling_timer = 0;
-                cc_parms->ramp_cntl.SetpointValue = cc_parms->ramp_cntl.TargetValue = 0;
+                cc_parms.settling_timer = 0;
+                cc_parms.ramp_cntl.SetpointValue = cc_parms.ramp_cntl.TargetValue = 0;
             }
             break;
 
         case COMMUTATION_CALIBRATION_STATE_MOVE_TO_HARDSTOP:
-            RC_MACRO(cc_parms->ramp_cntl)
+            RC_MACRO(cc_parms.ramp_cntl)
             md_parms->pid_id.param.Idem = IdRefLockCommutationCalibration;
             md_parms->pid_iq.param.Idem = 0;
 
-            md_parms->park_xform_parms.Angle = cc_parms->ramp_cntl.SetpointValue;
+            md_parms->park_xform_parms.Angle = cc_parms.ramp_cntl.SetpointValue;
 
             // If we haven't made it to the next ramp control setpoint yet,
             // skip the rest of this state
-            if (cc_parms->ramp_cntl.EqualFlag == 0) {
+            if (cc_parms.ramp_cntl.EqualFlag == 0) {
             	break;
             }
 
             // Wait at current setpoint for settling time
-            if (cc_parms->settling_timer++ > (((Uint32)COMMUTATION_FREQUENCY_HZ*(Uint32)COMMUTATION_CALIBRATION_HARDSTOP_SETTLING_TIME_MS)/1000)) {
+            if (cc_parms.settling_timer++ > (((Uint32)COMMUTATION_FREQUENCY_HZ*(Uint32)COMMUTATION_CALIBRATION_HARDSTOP_SETTLING_TIME_MS)/1000)) {
                 float new_mech_theta;
-                cc_parms->settling_timer = 0;
+                cc_parms.settling_timer = 0;
 
                 // Send updated calibration progress
                 calibration_progress += 1;
@@ -131,15 +143,15 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 if (((last_position - new_mech_theta) < HARDSTOP_ENCODER_DETECTION_THRESHOLD)) {
                 	hardstop++;
                 	if (hardstop > 1) {
-						cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_MOVE_UP_FROM_HARDSTOP;
+						cc_parms.calibration_state = COMMUTATION_CALIBRATION_STATE_MOVE_UP_FROM_HARDSTOP;
 						last_position = new_mech_theta;
-						cc_parms->settling_timer = 0;
-		                cc_parms->ramp_cntl.TargetValue += 4*(1.0f/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS);
+						cc_parms.settling_timer = 0;
+		                cc_parms.ramp_cntl.TargetValue += 4*(1.0f/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS);
 		                // Don't go past the current electrical cycle
-		                if (cc_parms->ramp_cntl.TargetValue > 1.0) {
-		                    cc_parms->ramp_cntl.TargetValue = 1.0;
+		                if (cc_parms.ramp_cntl.TargetValue > 1.0) {
+		                    cc_parms.ramp_cntl.TargetValue = 1.0;
 		                }
-		                cc_parms->current_iteration = 0;
+		                cc_parms.current_iteration = 0;
 						hardstop = 0;
 
 						calibration_progress = 45;
@@ -153,30 +165,30 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
                 last_position = new_mech_theta;
 
-                if (cc_parms->ramp_cntl.TargetValue == 0) {
-                    cc_parms->ramp_cntl.TargetValue = 1.0;
+                if (cc_parms.ramp_cntl.TargetValue == 0) {
+                    cc_parms.ramp_cntl.TargetValue = 1.0;
                 }
 
-                cc_parms->ramp_cntl.SetpointValue = cc_parms->ramp_cntl.TargetValue;
-                cc_parms->ramp_cntl.TargetValue -= (1.0f/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS);
-                cc_parms->ramp_cntl.EqualFlag = 0;
+                cc_parms.ramp_cntl.SetpointValue = cc_parms.ramp_cntl.TargetValue;
+                cc_parms.ramp_cntl.TargetValue -= (1.0f/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS);
+                cc_parms.ramp_cntl.EqualFlag = 0;
             }
         	break;
 
         case COMMUTATION_CALIBRATION_STATE_MOVE_UP_FROM_HARDSTOP:
-            RC_MACRO(cc_parms->ramp_cntl)
+            RC_MACRO(cc_parms.ramp_cntl)
             md_parms->pid_id.param.Idem = IdRefLockCommutationCalibration;
             md_parms->pid_iq.param.Idem = 0;
 
-            md_parms->park_xform_parms.Angle = cc_parms->ramp_cntl.SetpointValue;
+            md_parms->park_xform_parms.Angle = cc_parms.ramp_cntl.SetpointValue;
 
-            if (cc_parms->ramp_cntl.EqualFlag == 0) {
+            if (cc_parms.ramp_cntl.EqualFlag == 0) {
             	break;
             }
 
-            if (cc_parms->settling_timer++ > (((Uint32)COMMUTATION_FREQUENCY_HZ*(Uint32)AXIS_CALIBRATION_SETTLING_TIME_MS[GetBoardHWID()])/1000)) {
+            if (cc_parms.settling_timer++ > (((Uint32)COMMUTATION_FREQUENCY_HZ*(Uint32)AXIS_CALIBRATION_SETTLING_TIME_MS[GetBoardHWID()])/1000)) {
                 float new_mech_theta;
-                cc_parms->settling_timer = 0;
+                cc_parms.settling_timer = 0;
 
                 // Send updated calibration progress
                 calibration_progress += 1;
@@ -193,13 +205,13 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 }
 
                 new_mech_theta = encoder_parms->mech_theta;
-                cc_parms->calibration_data[cc_parms->current_iteration++] = encoder_parms->mech_theta;
-                if (((cc_parms->current_iteration > 2) && ((last_position - new_mech_theta) > -HARDSTOP_ENCODER_DETECTION_THRESHOLD)) || (cc_parms->current_iteration >= COMMUTATION_ARRAY_SIZE)) {
+                cc_parms.calibration_data[cc_parms.current_iteration++] = encoder_parms->mech_theta;
+                if (((cc_parms.current_iteration > 2) && ((last_position - new_mech_theta) > -HARDSTOP_ENCODER_DETECTION_THRESHOLD)) || (cc_parms.current_iteration >= COMMUTATION_ARRAY_SIZE)) {
                 	hardstop++;
-                	if ((hardstop > 1) || (cc_parms->current_iteration >= COMMUTATION_ARRAY_SIZE)) {
-                		if (cc_parms->current_iteration > 16) {
-                			calc_slope_intercept(cc_parms,2,cc_parms->current_iteration-3, &flash_params.commutation_slope[GetBoardHWID()], &flash_params.commutation_icept[GetBoardHWID()]);
-    						cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_TEST;
+                	if ((hardstop > 1) || (cc_parms.current_iteration >= COMMUTATION_ARRAY_SIZE)) {
+                		if (cc_parms.current_iteration > 16) {
+                			calc_slope_intercept(2, cc_parms.current_iteration-3, &flash_params.commutation_slope[GetBoardHWID()], &flash_params.commutation_icept[GetBoardHWID()]);
+    						cc_parms.calibration_state = COMMUTATION_CALIBRATION_STATE_TEST;
 
     						calibration_progress = 90;
     						send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_IN_PROGRESS);
@@ -207,9 +219,9 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 		    send_calibration_progress(calibration_progress, GIMBAL_AXIS_CALIBRATION_STATUS_FAILED);
                 			AxisFault(CAND_FAULT_CALIBRATING_POT, CAND_FAULT_TYPE_UNRECOVERABLE, cb_parms, md_parms);
                 		}
-		                cc_parms->current_iteration = 0;
+		                cc_parms.current_iteration = 0;
 						last_position = encoder_parms->mech_theta;
-						cc_parms->settling_timer = 0;
+						cc_parms.settling_timer = 0;
 						hardstop = 0;
 	                    break;
                 	}
@@ -218,38 +230,38 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
                 }
 
                 last_position = new_mech_theta;
-                if (cc_parms->ramp_cntl.TargetValue == 1.0) {
+                if (cc_parms.ramp_cntl.TargetValue == 1.0) {
                 	// this is zero
-                	cc_parms->ramp_cntl.TargetValue = 0.0;
-                	cc_parms->ezero_step = cc_parms->current_iteration%COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS;
+                	cc_parms.ramp_cntl.TargetValue = 0.0;
+                	cc_parms.ezero_step = cc_parms.current_iteration%COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS;
                 }
-                cc_parms->ramp_cntl.SetpointValue = cc_parms->ramp_cntl.TargetValue;
-                cc_parms->ramp_cntl.TargetValue += (1.0f/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS);
-                cc_parms->ramp_cntl.EqualFlag = 0;
+                cc_parms.ramp_cntl.SetpointValue = cc_parms.ramp_cntl.TargetValue;
+                cc_parms.ramp_cntl.TargetValue += (1.0f/COMMUTATION_CALIBRATION_ELECTRICAL_CYCLE_SUBDIVISIONS);
+                cc_parms.ramp_cntl.EqualFlag = 0;
             }
         	break;
 
         case COMMUTATION_CALIBRATION_STATE_TEST:
         	// go back three steps and verify the position
             // Wrap target angle back to 0 if we get to 1
-            if (cc_parms->ramp_cntl.TargetValue == 1.0) {
-                cc_parms->ramp_cntl.TargetValue = 0.0;
+            if (cc_parms.ramp_cntl.TargetValue == 1.0) {
+                cc_parms.ramp_cntl.TargetValue = 0.0;
             }
             // Set our starting position as our last target position
-            cc_parms->ramp_cntl.SetpointValue = cc_parms->ramp_cntl.TargetValue;
-            cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_COMPLETE;
+            cc_parms.ramp_cntl.SetpointValue = cc_parms.ramp_cntl.TargetValue;
+            cc_parms.calibration_state = COMMUTATION_CALIBRATION_STATE_COMPLETE;
         	break;
 
         case COMMUTATION_CALIBRATION_STATE_TEST_MOVE:
-            RC_MACRO(cc_parms->ramp_cntl)
+            RC_MACRO(cc_parms.ramp_cntl)
             md_parms->pid_id.param.Idem = IdRefLockCommutationCalibration;
             md_parms->pid_iq.param.Idem = 0;
 
-            md_parms->park_xform_parms.Angle = cc_parms->ramp_cntl.SetpointValue;
+            md_parms->park_xform_parms.Angle = cc_parms.ramp_cntl.SetpointValue;
 
-            if (cc_parms->ramp_cntl.EqualFlag > 0) {
+            if (cc_parms.ramp_cntl.EqualFlag > 0) {
                 // We've hit our next data point, so move to settle state
-                cc_parms->calibration_state = COMMUTATION_CALIBRATION_STATE_TEST_CHECK_POS;
+                cc_parms.calibration_state = COMMUTATION_CALIBRATION_STATE_TEST_CHECK_POS;
             }
         	break;
 
