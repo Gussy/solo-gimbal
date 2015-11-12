@@ -325,6 +325,11 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
             gp_enable_charging();
         }
 
+        // Program the EEPROM if the gimbal serial number is not set (ie. uncalibrated in the factory)
+        if(flash_params.ser_num_1 == 0.0f && flash_params.ser_num_2 == 0.0f && flash_params.ser_num_3 == 0.0f) {
+            gp_write_eeprom();
+        }
+
         // Enable or disable the gimbal interface
         if(flash_params.gopro_enabled == 1.0f && !gp_enabled()) {
             gp_init();
