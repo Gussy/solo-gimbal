@@ -55,6 +55,7 @@ The bootloaders must be installed via JTAG, usually using the XDS510 JTAG Emulat
 * Fades to bright green on initialisation
 * Breathes green when running
 * Blinks blue when CAN comms is lost
+* Solid blue when CAN failed to initialise
 * Breathes red when gimbal is uncalibrated
 * Solid red when an unrecoverable fault has occurred
 * Blinks red when a recoverable fault has occurred
