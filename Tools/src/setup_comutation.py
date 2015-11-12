@@ -31,7 +31,7 @@ def getAxisCalibrationParams(link):
     roll = setup_param.getAxisCalibrationParam(link, axis_enum[1])
     yaw = setup_param.getAxisCalibrationParam(link, axis_enum[2])
     if pitch == None or roll == None or yaw == None:
-        return None
+        return None, None, None
     else:
         return pitch, roll, yaw
 
