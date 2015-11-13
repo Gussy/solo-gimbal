@@ -17,14 +17,21 @@
 // number of bytes required for id in a gp_h3p_cmd_t
 #define CMD_ID_NUM_BYTES        2
 
-// track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
+/* track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
+ * explicitly set the enum values since the enum values set to H3_MULTIMSG_FINAL
+ * will reset the counter used for auto-assigning of enum values
+ */
 enum H3P_MULTIMSG_STATE {
-    H3_MULTIMSG_NONE,           // not performing a multi msg command
-    H3_MULTIMSG_TV_MODE,        // ntsc/pal sent
-    H3_MULTIMSG_RESOLUTION,     // resolution sent
-    H3_MULTIMSG_FRAME_RATE,     // frame rate sent
-    H3_MULTIMSG_FOV,            // field of view sent
-    H3_MULTIMSG_FINAL = H3_MULTIMSG_FOV // last msg in the sequence
+    H3_MULTIMSG_NONE = 0,                       // not performing a multi msg command
+    H3_MULTIMSG_FINAL = 1,                      // last msg in the sequence
+
+    H3_MULTIMSG_SHUTTER = 2,                    // shutter sent
+    H3_MULTIMSG_POWER = H3_MULTIMSG_FINAL,      // power sent
+
+    H3_MULTIMSG_TV_MODE = 3,                    // ntsc/pal sent
+    H3_MULTIMSG_RESOLUTION = 4,                 // resolution sent
+    H3_MULTIMSG_FRAME_RATE = 5,                 // frame rate sent
+    H3_MULTIMSG_FOV = H3_MULTIMSG_FINAL         // field of view sent
 };
 
 static void gp_h3p_set_transaction_result(gp_h3p_t *h3p, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
@@ -116,6 +123,13 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
     gp_h3p_cmd_t *c = &p->cmd;
 
     switch (h3p->multi_msg_cmd.state) {
+    case H3_MULTIMSG_SHUTTER:
+        // next step is power
+        cmd_init(c, "PW");
+        cmd_add_byte(c, 0x00);
+        h3p->multi_msg_cmd.state = H3_MULTIMSG_POWER;
+        break;
+
     case H3_MULTIMSG_TV_MODE:
         // next step is resolution
         if (gp_transaction_direction() == GP_REQUEST_GET) {
@@ -252,8 +266,20 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
     switch (request->mav.cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->mav.value[0] == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                cmd_init(c, "PW");
-                cmd_add_byte(c, 0x00);
+                if(gp_is_recording()) {
+                    // power off is a multi msg command, first msg is shutter
+                    h3p->multi_msg_cmd.state = H3_MULTIMSG_SHUTTER;
+                    cmd_init(c, "SH");
+                    cmd_add_byte(c, 0x00);
+
+                    // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
+                    if (gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
+                        h3p->pending_recording_state = false;
+                    }
+                } else {
+                    cmd_init(c, "PW");
+                    cmd_add_byte(c, 0x00);
+                }
             } else {
                 // gp_request_power_on() does not require a herobus transaction,
                 // so mark it complete immediately
@@ -469,6 +495,13 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
             gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
+
+    case GOPRO_COMMAND_POWER:
+        // The power command first sends a shutter command if it's part of a multi msg command
+        if(h3p->multi_msg_cmd.state != H3_MULTIMSG_SHUTTER) {
+            break;
+        }
+        // Fall through to next case statement otherwise
 
     case GOPRO_COMMAND_SHUTTER:
         /*
