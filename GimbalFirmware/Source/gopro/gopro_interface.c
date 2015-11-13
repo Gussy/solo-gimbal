@@ -28,7 +28,6 @@ static bool gp_poll_camera_state();
 static bool gp_handshake_complete();
 static GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status();
 static bool gp_is_valid_capture_mode(uint8_t mode);
-static bool gp_is_recording();
 
 // Data to write into EEPROM
 static const uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {

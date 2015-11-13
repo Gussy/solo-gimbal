@@ -61,6 +61,7 @@ void gp_get_heartbeat(gp_can_mav_heartbeat_t *hb);
 void gp_enable_charging();
 void gp_disable_charging();
 void gp_write_eeprom();
+bool gp_is_recording();
 
 // "private" functions, called from gopro_hero4/gopro_hero3/gopro_i2c
 // TODO detangle/remove from this header
