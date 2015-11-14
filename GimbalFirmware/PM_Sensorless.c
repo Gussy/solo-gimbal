@@ -49,13 +49,13 @@ static void send_can_heartbeat(void);
 static void send_gp_heartbeat(void);
 
 struct SchedTask scheduled_tasks[] = {
-    {.task_func=&check_rate_cmd_timeout,        .interval_ms=3,     .last_run_ms=1},
-    {.task_func=&gp_update,                     .interval_ms=GP_STATE_MACHINE_PERIOD_MS,     .last_run_ms=2},
-    {.task_func=&update_LEDs,                   .interval_ms=150,   .last_run_ms=0},
-    {.task_func=&read_temp_and_voltage,         .interval_ms=150,   .last_run_ms=2},
-    {.task_func=&send_can_heartbeat,            .interval_ms=1000,  .last_run_ms=0},
-    {.task_func=&send_mav_heartbeat,            .interval_ms=1000,  .last_run_ms=1},
-    {.task_func=&send_gp_heartbeat,             .interval_ms=1000,  .last_run_ms=2}
+    {.task_func=&check_rate_cmd_timeout,    .interval_ms=1,     .last_run_ms=0},
+    {.task_func=&gp_update,                 .interval_ms=1,     .last_run_ms=1},
+    {.task_func=&update_LEDs,               .interval_ms=150,   .last_run_ms=0},
+    {.task_func=&read_temp_and_voltage,     .interval_ms=150,   .last_run_ms=1},
+    {.task_func=&send_can_heartbeat,        .interval_ms=1000,  .last_run_ms=0},
+    {.task_func=&send_mav_heartbeat,        .interval_ms=1000,  .last_run_ms=1},
+    {.task_func=&send_gp_heartbeat,         .interval_ms=1000,  .last_run_ms=2}
 };
 
 // Used for running BackGround in flash, and ISR in RAM

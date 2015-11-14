@@ -9,7 +9,7 @@
 
 #include <stdbool.h>
 
-#define GP_STATE_MACHINE_PERIOD_MS 3
+#define GP_STATE_MACHINE_PERIOD_MS 2 // interval_ms * number of tasks at that interval (currently 1ms * 2 tasks = 2ms)
 #define GP_PWRON_TIME_MS 120 // Spec says 100ms, but I'm making it a little longer here just in case, and so it's an even multiple of our state machine poll period
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
 #define GP_PROTOCOL_VERSION 0x00
