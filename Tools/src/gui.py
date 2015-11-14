@@ -37,12 +37,6 @@ class ControlMainWindow(QtGui.QMainWindow):
         # Setup tests UI
         self.testsUI = gui_tests.testsUI(self)
 
-        # Add the git identity to the window name if possible
-        os_git_command = firmware_git_tools.osGitCommand()
-        git_identity = firmware_git_tools.gitIdentity(os_git_command)
-        if git_identity:
-            self.setWindowTitle("%s - %s" % (self.windowTitle(), git_identity.split('-')[0]))
-
     def resetUI(self, isCycling):
         self.validationUI.clearValidationResults()
         self.firmwareUI.resetDidBootload()

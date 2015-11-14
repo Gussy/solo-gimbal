@@ -76,7 +76,7 @@ class connectionUI(object):
         elif isinstance(softwareVersion, tuple) and len(softwareVersion) == 3:
             self.ui.lblSoftwareVersion.setText("v%i.%i.%i" % (softwareVersion[0], softwareVersion[1], softwareVersion[2]))
         elif softwareVersion != '':
-            self.ui.lblSoftwareVersion.setText("")
+            self.ui.lblSoftwareVersion.setText("Unknown")
 
         if serialNumber != None:
             if serialNumber == '':
@@ -84,7 +84,7 @@ class connectionUI(object):
             else:
                 self.ui.lblSerialNumber.setText(str(serialNumber))
         else:
-            self.ui.lblSerialNumber.setText("")
+            self.ui.lblSerialNumber.setText("Unknown")
 
         if assemblyTime != None:
             if assemblyTime == 0:
@@ -93,7 +93,7 @@ class connectionUI(object):
                 strTime = datetime.datetime.fromtimestamp(assemblyTime).strftime('%d/%m/%Y %H:%M:%S')
                 self.ui.lblAssemblyTime.setText(strTime)
         else:
-            self.ui.lblAssemblyTime.setText("")
+            self.ui.lblAssemblyTime.setText("Unknown")
 
     def setConnectionState(self, connected):
         if connected:
@@ -192,6 +192,8 @@ class connectionUI(object):
             self.setConnectionState(False)
             self.ui.tabWidget.setEnabled(False)
         else:
+            self.setConnectionStatusBanner('connected')
+
             # Check if we're connected to a gimbal in bootloader
             gimbalMsg = yield AsyncTask(self.getGimbalMessage)
             if gimbalMsg:
@@ -208,7 +210,6 @@ class connectionUI(object):
                     serialNumber, assemblyTime = yield AsyncTask(self.writeSerialNumber, text.upper())
 
             # Update the status display
-            self.setConnectionStatusBanner('connected')
             self.setStatusInfo(
                 softwareVersion=softwareVersion,
                 serialNumber=serialNumber,
