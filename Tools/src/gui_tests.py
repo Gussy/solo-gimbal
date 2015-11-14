@@ -75,7 +75,6 @@ class testsUI(object):
         self.testStop()
         self.run_Faults = self.faults
         self.run_time_delta = self.time_delta
-        self.logTest()
         
     @coroutine
     def runAsyncTestsWobble(self):
@@ -221,13 +220,15 @@ class testsUI(object):
             return None
         return timeout
 
+
+    # Save "align" test log to txt file
     def logTest(self):
         serial_number = setup_factory_pub.get_serial_number(self.connection.getLink())
         date_time = time.localtime(setup_factory_pub.get_assembly_time(self.connection.getLink()))
         assembly_date_time=str(date_time.tm_year)+"-"+str.format("%02d"%date_time.tm_mon)+"-"+str.format("%02d"%date_time.tm_mday)+"_"+str.format("%02d"%date_time.tm_hour)+"-"+str.format("%02d"%date_time.tm_min)+"-"+str.format("%02d"%date_time.tm_sec)
         filePath = os.path.join('logs', '%s_%s.json' % (serial_number,assembly_date_time))
 
-        if os.path.exists(filePath):  
+        if os.path.exists(filePath):
             with open(filePath, 'r') as f:
                 tmpStr = f.read()
 
@@ -235,6 +236,22 @@ class testsUI(object):
             logTestJson['run'] = {'runTime':self.run_time_delta,'runFaults':self.run_Faults}
             logTestJson['align'] = {'alignTime':self.align_time_delta,'alignFaults':self.align_Faults}
 
+            if((self.align_time_delta >= "0:00:10") and (self.align_Faults==0)):
+                logTestJson['validation']['align'] = 'pass'
+            else:
+                logTestJson['validation']['align'] = 'fail'
+
+            if((self.run_time_delta >= "0:00:10") and (self.run_Faults==0)):
+                logTestJson['validation']['run'] = 'pass'
+            else:
+                logTestJson['validation']['run'] = 'fail'
+
+            filePath = os.path.join('tars', '%s_%s.json' % (serial_number,assembly_date_time))
             logTestPrettyJson = json.dumps(logTestJson,indent=4,sort_keys=True)
             with open(filePath, 'w') as f:
-                json.dump(logTestJson, f)
+                f.write(logTestPrettyJson)
+                
+            filePath = os.path.join('logs', '%s_%s.json' % (serial_number,assembly_date_time))
+            logTestPrettyJson = json.dumps(logTestJson,indent=4,sort_keys=True)
+            with open(filePath, 'w') as f:
+                f.write(logTestPrettyJson)

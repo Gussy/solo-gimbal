@@ -310,6 +310,8 @@ class calibrationUI(object):
         # Save the params to a file
         if not os.path.isdir('logs'):
             os.makedirs('logs')
+        if not os.path.isdir('tars'):
+            os.makedirs('tars')
 
         if params['serial_number'] != None and params['serial_number'] != '':
             filePath = os.path.join('logs', '%s.json' % params['serial_number'])
@@ -322,13 +324,36 @@ class calibrationUI(object):
             logTestJson = json.loads(tmpStr)
             logTestJson['run'] = {'runTime':'0:00:00','runFaults':255}
             logTestJson['align'] = {'alignTime':'0:00:00','alignFaults':255}
+            logTestJson['validation']['align'] = 'fail'
+            logTestJson['validation']['run'] = 'fail'
 
             date_time = time.localtime(logTestJson['assembly_time'])            
             assembly_date_time=str(date_time.tm_year)+"-"+str.format("%02d"%date_time.tm_mon)+"-"+str.format("%02d"%date_time.tm_mday)+"_"+str.format("%02d"%date_time.tm_hour)+"-"+str.format("%02d"%date_time.tm_min)+"-"+str.format("%02d"%date_time.tm_sec)
 
-            filePath = os.path.join('logs', '%s_%s.json' % (params['serial_number'],assembly_date_time))
-            with open(filePath, 'w') as f:
-                json.dump(logTestJson, f)
+            fileLogsPath = os.path.join('logs', '%s_%s.json' % (params['serial_number'], assembly_date_time))
+            logTestPrettyJson = json.dumps(logTestJson,indent=4,sort_keys=True)
+            with open(fileLogsPath, 'w') as f:
+                #json.dump(logTestJson, f)
+                f.write(logTestPrettyJson)
+
+            # If test failed, save a log to tars folder 
+            if((params['validation']['accels'] != 'pass') or
+                (params['validation']['commutation']['pitch'] != 'pass') or 
+                (params['validation']['commutation']['roll'] != 'pass') or
+                (params['validation']['commutation']['yaw'] != 'pass') or
+                (params['validation']['date'] != 'pass') or
+                (params['validation']['gyros'] != 'pass') or
+                (params['validation']['joints'] != 'pass') or
+                (params['validation']['serial'] != 'pass') or
+                (params['validation']['version'] != 'pass')):
+                fileTarsPath = os.path.join('tars', '%s_%s.json' % (params['serial_number'],assembly_date_time))
+                with open(fileLogsPath, 'r') as f:
+                    tmpStr = f.read()
+                logTestJson = json.loads(tmpStr)
+                logTestPrettyJson = json.dumps(logTestJson,indent=4,sort_keys=True)
+                with open(fileTarsPath, 'w') as f:
+                    #json.dump(logTestJson, f)
+                    f.write(logTestPrettyJson)
        
     def isCalibrated(self, params):
         if 'icept' in params.keys():
