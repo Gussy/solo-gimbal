@@ -29,7 +29,6 @@ static bool gp_handshake_complete();
 static GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status();
 static bool gp_is_valid_capture_mode(uint8_t mode);
 static bool gp_is_recording();
-static void gp_write_eeprom();
 
 // Data to write into EEPROM
 static const uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {
@@ -118,7 +117,6 @@ void gp_init()
 {
     gp.enabled = true;
 
-    gp_write_eeprom();
     gp_reset();
     gp_set_pwron_asserted_out(false);
 
@@ -735,7 +733,7 @@ bool handle_rx_data(uint8_t *buf, uint16_t len)
     return false;
 }
 
-static void gp_write_eeprom()
+void gp_write_eeprom()
 {
     // This function writes to the 24LC00 EEPROM which the GoPro reads from
     // as specified in the hero bus datasheet

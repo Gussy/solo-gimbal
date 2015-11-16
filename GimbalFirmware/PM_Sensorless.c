@@ -91,7 +91,7 @@ AxisParms axis_parms = {
     .all_init_params_recvd = FALSE,
     .other_axis_hb_recvd = {FALSE, FALSE, FALSE},
     .other_axis_init_params_recvd = {FALSE, FALSE, FALSE},
-    .other_axis_enable_retry_counter = 0
+    .other_axis_enable_retry_counter = OTHER_AXIS_INIT_RETRY_COUNT_MAX
 };
 
 ControlBoardParms control_board_parms = {
@@ -203,6 +203,11 @@ void main(void)
 	// Initialize CAN peripheral, and CAND backend
 	ECanInit();
 	if (cand_init() != CAND_SUCCESS) {
+	    // Show a solid blue error LED if CAN failed to initialise
+	    if(board_hw_id == EL) {
+	        led_set_mode(LED_MODE_SOLID, rgba_blue, 0);
+	    }
+
 	    // If the CAN module didn't initialize, we busy wait here forever and send an error message at roughly 1Hz
 	    while (1) {
 	        // Rough approximation of 1-second of busy waiting, doesn't need to be super accurate
@@ -391,9 +396,6 @@ static void check_rate_cmd_timeout(void)
 static void update_LEDs(void)
 {
     static BlinkState last_blink_state = BLINK_INIT; // Initialise with BLINK_ERROR so the first cycle detects a changed state
-    static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
-    static const LED_RGBA rgba_green = {.red = 0, .green = 0xff, .blue = 0, .alpha = 0xff};
-    static const LED_RGBA rgba_blue = {.red = 0, .green = 0, .blue = 0xff, .alpha = 0xff};
 
     if(board_hw_id == EL) {
         if (axis_parms.blink_state == BLINK_INIT && millis() > 5000 && !(axis_parms.other_axis_hb_recvd[AZ] && axis_parms.other_axis_hb_recvd[ROLL])) {

@@ -2,6 +2,10 @@
 #include "hardware/led.h"
 #include <math.h>
 
+const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
+const LED_RGBA rgba_green = {.red = 0, .green = 0xff, .blue = 0, .alpha = 0xff};
+const LED_RGBA rgba_blue = {.red = 0, .green = 0, .blue = 0xff, .alpha = 0xff};
+
 static void set_rgba(Uint8 red, Uint8 green, Uint8 blue, Uint8 alpha);
 static void enable_epwm_interrupts(void);
 static void disable_epwm_interrupts(void);
@@ -195,7 +199,7 @@ void led_set_mode(const LED_MODE mode, const LED_RGBA color, const Uint16 durati
 
         case LED_MODE_BREATHING:
             state_rgba = color;
-            breathing_x = 64; // Start at the high point, ready to fade out
+            breathing_x = 0; // Start at the low point, ready to fade out
             update_function = &update_compare_breathing;
             // Only enable 1 of the ePWM interrupts,
             // which we use to step to fade alpha up

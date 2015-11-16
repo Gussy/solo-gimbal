@@ -13,21 +13,7 @@
 
 #include <string.h>
 
-static const LED_RGBA rgba_red = {.red = 0xff, .green = 0, .blue = 0, .alpha = 0xff};
-
 static void update_torque_cmd_send_encoders(ControlBoardParms* cb_parms, MotorDriveParms* md_parms, EncoderParms* encoder_parms);
-
-CommutationCalibrationParms cc_parms = {
-    .calibration_state = COMMUTATION_CALIBRATION_STATE_INIT,
-    .current_iteration = 0,
-    .current_elec_cycle = 0,
-    .current_elec_sub_cycle = 0,
-    .current_dir = 0,
-    .settling_timer = 0,
-    .ezero_step = 0,
-    .ramp_cntl = RMPCNTL_DEFAULTS,
-    .calibration_data = {0}
-};
 
 void MotorDriveStateMachine(AxisParms* axis_parms,
         ControlBoardParms* cb_parms,
@@ -36,11 +22,12 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
         LoadAxisParmsStateInfo* load_ap_state_info)
 {
     switch (md_parms->motor_drive_state) {
+        // AZ, ROLL, EL
         case STATE_INIT:
             md_parms->current_cal_timer = 0;
 
             // Clear axis home flags
-            memset(cb_parms->axes_homed, 0x00, AXIS_CNT * sizeof(Uint8));
+            memset(cb_parms->axes_homed, 0, sizeof(cb_parms->axes_homed));
 
             // Set park transformation angle to 0
             md_parms->park_xform_parms.Angle = 0;
@@ -65,6 +52,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ
         case STATE_WAIT_FOR_AXIS_HEARTBEATS:
             // Wait to receive a heartbeat from all of the axes before continuing on with initialization.  If we haven't heard
             // from all of the axes after a certain amount of time, re-send the init to all axes
@@ -85,6 +73,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ
         case STATE_LOAD_OWN_INIT_PARAMS:
             // This state is only run on the AZ board to load torque loop PID gains
             // The rate loop PID gains are only needed on the EL board, so these are loaded over CAN
@@ -99,6 +88,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->motor_drive_state = STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED;
             break;
 
+        // ROLL, EL
         case STATE_REQUEST_AXIS_INIT_PARAMS:
             // Run the load init parms state machine to sequence through requesting the axis parms
             LoadAxisParmsStateMachine(load_ap_state_info);
@@ -113,6 +103,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ
         case STATE_WAIT_FOR_OTHER_AXES_INIT_PARAMS_LOADED:
             // Wait for all of the axes to have received their init parameters.  These flags are updated in response to a bit set in the periodic BIT
             // messages that all axes send
@@ -122,6 +113,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ, ROLL, EL
         case STATE_CALIBRATING_CURRENT_MEASUREMENTS:
             //  LPF to average the calibration offsets.  Run this for a few seconds at boot to calibrate the phase current measurements
             md_parms->cal_offset_A = _IQ15mpy(md_parms->cal_filt_gain, _IQtoIQ15(md_parms->clarke_xform_parms.As)) + md_parms->cal_offset_A;
@@ -135,16 +127,20 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.param.Idem = 0;
 
             // Time out the calibration time.  After it has expired, transition to the next state
-            md_parms->current_cal_timer++;
-            if (md_parms->current_cal_timer > (((Uint32)COMMUTATION_FREQUENCY_HZ * (Uint32)CURRENT_CALIBRATION_TIME_MS)/1000)) {
+            if (md_parms->current_cal_timer++ > (((Uint32)COMMUTATION_FREQUENCY_HZ * (Uint32)CURRENT_CALIBRATION_TIME_MS)/1000)) {
                 if(GetBoardHWID() == AZ) {
                     md_parms->motor_drive_state = STATE_CHECK_AXIS_CALIBRATION;
                 } else {
-                    md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
+                    if(flash_params.commutation_slope[GetBoardHWID()] != 0.0f) {
+                        md_parms->motor_drive_state = STATE_HOMING;
+                    } else {
+                        md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
+                    }
                 }
             }
             break;
 
+        // AZ
         case STATE_CHECK_AXIS_CALIBRATION:
             /* The commutation_slope values default to 0.0f on an uncalibrated gimbal.
              * Values which do not equal 0.0f implies a calibration exists
@@ -155,11 +151,11 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
                 md_parms->motor_drive_state = STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND;
                 CANUpdateBeaconState(LED_MODE_BREATHING, rgba_red, 0);
             } else {
-                cand_tx_command(CAND_ID_ALL_AXES, CAND_CMD_CALIBRATE_AXES);
                 md_parms->motor_drive_state = STATE_TAKE_COMMUTATION_CALIBRATION_DATA;
             }
             break;
 
+        // ROLL, EL
         case STATE_WAIT_FOR_AXIS_CALIBRATION_COMMAND:
             /* Both the ROLL and EL boards will wait until a calibration command is sent
              * either by the AZ board after it's checked the values exist, or from the AZ
@@ -167,14 +163,16 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
              */
             break;
 
+        // AZ, ROLL, EL
         case STATE_TAKE_COMMUTATION_CALIBRATION_DATA:
         	if (((GetBoardHWID() == AZ)&&((cb_parms->axes_homed[ROLL]))&&((cb_parms->axes_homed[EL])))||
         		((GetBoardHWID() == ROLL)&&((cb_parms->axes_homed[EL])))||
         		((GetBoardHWID() == EL))) {
-        		    CommutationCalibrationStateMachine(md_parms, encoder_parms, axis_parms, &cc_parms, cb_parms);
+        		    CommutationCalibrationStateMachine(md_parms, encoder_parms, axis_parms, cb_parms);
         	}
             break;
 
+        // AZ, ROLL, EL
         case STATE_HOMING:
             // Load the runtime values from the stored calibration values
             encoder_parms->calibration_slope = flash_params.commutation_slope[GetBoardHWID()];
@@ -194,6 +192,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // EL
         case STATE_WAIT_FOR_AXES_HOME:
             // Set park transformation angle to 0
             md_parms->park_xform_parms.Angle = 0;
@@ -207,6 +206,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // EL
         case STATE_INITIALIZE_POSITION_LOOPS:
             if ((cb_parms->encoder_value_received[AZ] == TRUE) &&
                     (cb_parms->encoder_value_received[EL] == TRUE) &&
@@ -226,6 +226,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ, ROLL, EL
         case STATE_RUNNING:
             axis_parms->blink_state = BLINK_RUNNING;
             // If new current command from CAN bus get it.
@@ -241,6 +242,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             md_parms->pid_iq.param.Idem = md_parms->Idem;
             break;
 
+        // AZ, ROLL, EL
         case STATE_DISABLED:
             axis_parms->blink_state = BLINK_RUNNING;
             // Set park transformation angle to currently measured rotor electrical angle
@@ -257,6 +259,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ, ROLL, EL
         case STATE_RECOVERABLE_FAULT:
             axis_parms->blink_state = BLINK_ERROR;
             // Set park transformation angle to currently measured rotor electrical angle
@@ -272,6 +275,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
             }
             break;
 
+        // AZ, ROLL, EL
         case STATE_UNRECOVERABLE_FAULT:
             axis_parms->blink_state = BLINK_ERROR_UNRECOVERABLE;
             // Set park transformation angle to 0
@@ -321,6 +325,11 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
             gp_enable_charging();
         }
 
+        // Program the EEPROM if the gimbal serial number is not set (ie. uncalibrated in the factory)
+        if(flash_params.ser_num_1 == 0.0f && flash_params.ser_num_2 == 0.0f && flash_params.ser_num_3 == 0.0f) {
+            gp_write_eeprom();
+        }
+
         // Enable or disable the gimbal interface
         if(flash_params.gopro_enabled == 1.0f && !gp_enabled()) {
             gp_init();
@@ -363,15 +372,6 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
         }
     }
 
-//     if (flash_params.use_custom_gains == 1.0) {
-//         md_parms->pid_id.param.Kp = flash_params.torque_pid_kp;
-//         md_parms->pid_id.param.Ki = flash_params.torque_pid_ki;
-//         md_parms->pid_id.param.R = flash_params.torque_pid_kr;
-//
-//         md_parms->pid_iq.param.Kp = flash_params.torque_pid_kp;
-//         md_parms->pid_iq.param.Ki = flash_params.torque_pid_ki;
-//         md_parms->pid_iq.param.R = flash_params.torque_pid_kr;
-//     } else {
     md_parms->pid_id.param.Kp = DEFAULT_GMB_TRQ_P;
     md_parms->pid_id.param.Ki = DEFAULT_GMB_TRQ_I;
     md_parms->pid_id.param.R = DEFAULT_GMB_TRQ_R;
@@ -379,5 +379,4 @@ void update_local_params_from_flash(MotorDriveParms* md_parms)
     md_parms->pid_iq.param.Kp = DEFAULT_GMB_TRQ_P;
     md_parms->pid_iq.param.Ki = DEFAULT_GMB_TRQ_I;
     md_parms->pid_iq.param.R = DEFAULT_GMB_TRQ_R;
-//     }
 }
