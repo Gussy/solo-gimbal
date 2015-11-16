@@ -16,10 +16,11 @@ except ImportError:
     setup_factory_private = None
 
 def fetch_param(link, param, timeout=2):
-    for i in range(timeout):
+    start_time = time.time()
+    while (time.time() - start_time) < timeout:
         link.param_request_read_send(link.target_sysid, link.target_compid, param, -1)
         msg = link.file.recv_match(type="PARAM_VALUE", blocking=True, timeout=1)
-        if msg:
+        if msg and str(msg.param_id) == str(param):
             return msg
     return None
 
