@@ -17,21 +17,21 @@
 // number of bytes required for id in a gp_h3p_cmd_t
 #define CMD_ID_NUM_BYTES        2
 
-/* track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
- * explicitly set the enum values since the enum values set to H3_MULTIMSG_FINAL
- * will reset the counter used for auto-assigning of enum values
- */
+// track our state during multi msg commands
 enum H3P_MULTIMSG_STATE {
-    H3_MULTIMSG_NONE = 0,                       // not performing a multi msg command
-    H3_MULTIMSG_FINAL = 1,                      // last msg in the sequence
+    H3_MULTIMSG_NONE,                                   // not performing a multi msg command
 
-    H3_MULTIMSG_SHUTTER = 2,                    // shutter sent
-    H3_MULTIMSG_POWER = H3_MULTIMSG_FINAL,      // power sent
+    // Power off sequence (GOPRO_COMMAND_POWER)
+    H3_MULTIMSG_SHUTTER,                                // shutter sent
+    H3_MULTIMSG_POWER,                                  // power sent
+    H3_MULTIMSG_POWER_OFF_FINAL = H3_MULTIMSG_POWER,    // last msg in the sequence
 
-    H3_MULTIMSG_TV_MODE = 3,                    // ntsc/pal sent
-    H3_MULTIMSG_RESOLUTION = 4,                 // resolution sent
-    H3_MULTIMSG_FRAME_RATE = 5,                 // frame rate sent
-    H3_MULTIMSG_FOV = H3_MULTIMSG_FINAL         // field of view sent
+    // Video settings sequence (GOPRO_COMMAND_VIDEO_SETTINGS)
+    H3_MULTIMSG_TV_MODE,                                // ntsc/pal sent
+    H3_MULTIMSG_RESOLUTION,                             // resolution sent
+    H3_MULTIMSG_FRAME_RATE,                             // frame rate sent
+    H3_MULTIMSG_FOV,                                    // field of view sent
+    H3_MULTIMSG_VIDEO_SETTINGS_FINAL = H3_MULTIMSG_FOV  // last msg in the sequence
 };
 
 static void gp_h3p_set_transaction_result(gp_h3p_t *h3p, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
@@ -39,6 +39,7 @@ static void gp_h3p_handle_command(gp_h3p_t *h3p, const gp_h3p_cmd_t *cmd, gp_h3p
 static void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
 static bool gp_h3p_handle_video_settings_rsp(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp);
 static void gp_h3p_sanitize_buf_len(uint8_t *buf);
+static bool gp_h3p_multimsg_state_is_final(const gp_h3p_t *h3p);
 
 void gp_h3p_init(gp_h3p_t *h3p)
 {
@@ -649,10 +650,10 @@ bool gp_h3p_handle_video_settings_rsp(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
             h3p->multi_msg_cmd.state = H3_MULTIMSG_NONE;
             break;
         }
-    } else {
-        if (h3p->multi_msg_cmd.state == H3_MULTIMSG_FINAL) {
-            h3p->multi_msg_cmd.state = H3_MULTIMSG_NONE;
-        }
+    }
+
+    if (gp_h3p_multimsg_state_is_final(h3p)) {
+        h3p->multi_msg_cmd.state = H3_MULTIMSG_NONE;
     }
 
     return (h3p->multi_msg_cmd.state == H3_MULTIMSG_NONE);
@@ -688,4 +689,15 @@ bool gp_h3p_rx_data_is_valid(const uint8_t *buf, uint16_t len, bool *from_camera
 
 void gp_h3p_sanitize_buf_len(uint8_t *buf) { // TODO: inline?
     buf[0] &= 0x7f;     // remove most significant bit representing sender id (camera or BacPac)
+}
+
+static bool gp_h3p_multimsg_state_is_final(const gp_h3p_t *h3p)
+{
+    switch(h3p->multi_msg_cmd.state) {
+    case H3_MULTIMSG_POWER_OFF_FINAL:
+    case H3_MULTIMSG_VIDEO_SETTINGS_FINAL:
+        return true;
+    }
+
+    return false;
 }
