@@ -495,6 +495,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
             gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
+        break;
 
     case GOPRO_COMMAND_POWER:
         // The power command first sends a shutter command if it's part of a multi msg command
