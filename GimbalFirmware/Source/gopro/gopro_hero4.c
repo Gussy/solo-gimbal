@@ -8,19 +8,17 @@
 
 #include <string.h>
 
-/* track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
- * explicitly set the enum values since the enum values set to H4_MULTIMSG_FINAL
- * will reset the counter used for auto-assigning of enum values
- */
+// track our state during multi msg commands
 enum H4_MULTIMSG_STATE {
-    H4_MULTIMSG_NONE = 0,                           // not performing a multi msg command
-    H4_MULTIMSG_FINAL = 1,                          // last msg in the sequence
+    H4_MULTIMSG_NONE,                                           // not performing a multi msg command
 
-    H4_MULTIMSG_SHUTTER = 2,                        // shutter sent
-    H4_MULTIMSG_POWER = H4_MULTIMSG_FINAL,          // power sent
+    // GOPRO_COMMAND_POWER
+    H4_MULTIMSG_SHUTTER,                                        // shutter sent
+    H4_MULTIMSG_POWER,                                          // power sent
 
-    H4_MULTIMSG_TV_MODE = 3,                        // ntsc/pal sent
-    H4_MULTIMSG_VID_SETTINGS = H4_MULTIMSG_FINAL,   // resolution/frame rate/fov sent
+    // GOPRO_COMMAND_VIDEO_SETTINGS
+    H4_MULTIMSG_TV_MODE,                                        // ntsc/pal sent
+    H4_MULTIMSG_VID_SETTINGS                                    // resolution/frame rate/fov sent
 };
 
 static void gp_h4_set_transaction_result(gp_h4_t *h4, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
