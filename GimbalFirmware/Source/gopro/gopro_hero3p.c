@@ -499,11 +499,12 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         break;
 
     case GOPRO_COMMAND_POWER:
-        // The power command first sends a shutter command if it's part of a multi msg command
+        /* Break here if the GOPRO_COMMAND_POWER is not part of a multimsg command (only power off is multimsg)
+         * Otherwise, fall through to next case statement to handle a change in recording state.
+         */
         if(h3p->multi_msg_cmd.state != H3_MULTIMSG_SHUTTER) {
             break;
         }
-        // Fall through to next case statement otherwise
 
     case GOPRO_COMMAND_SHUTTER:
         /*
