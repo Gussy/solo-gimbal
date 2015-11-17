@@ -281,7 +281,7 @@ static void gp_send_mav_response()
     i2c_enable_scd_isr();  // end critical section
 }
 
-uint16_t gp_transaction_cmd()
+uint16_t gp_transaction_mav_cmd()
 {
     /*
      * Get the current transaction command,

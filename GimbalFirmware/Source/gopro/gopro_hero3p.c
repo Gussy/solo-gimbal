@@ -473,7 +473,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
     gp_can_mav_get_rsp_t mav_rsp;   // collect mavlink-translated payload vals
 
     // Special Handling of responses
-    switch (gp_transaction_cmd()) {
+    switch (gp_transaction_mav_cmd()) {
     case GOPRO_COMMAND_BATTERY:
         mav_rsp.mav.value[0] = rsp->payload[0];
         mav_rsp_len = 1;
