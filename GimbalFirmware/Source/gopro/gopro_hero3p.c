@@ -512,6 +512,11 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         if (gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
             gp_set_recording_state(h3p->pending_recording_state);
         }
+
+        // Early exit if a multimsg transaction is still pending
+        if(h3p->multi_msg_cmd.state == H3_MULTIMSG_SHUTTER) {
+            return;
+        }
         break;
 
     case GP_H3P_COMMAND_ENTIRE_CAM_STATUS: {
