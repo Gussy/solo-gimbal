@@ -48,7 +48,7 @@ static void calc_slope_intercept(int start, int end, float *slope, float *interc
 	*intercept = average_intercept;
 }
 
-_iq IdRefLockCommutationCalibration = _IQ(0.495/MAX_CURRENT); // = 0.495A
+_iq IdRefLockCommutationCalibration = _IQ(0.495); // = 0.495A
 
 Uint8 calibration_progress = 0;
 
@@ -90,7 +90,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
         case COMMUTATION_CALIBRATION_STATE_RAMP_ID:
             RC_MACRO(cc_parms.ramp_cntl)
-            md_parms->pid_id.param.Idem = cc_parms.ramp_cntl.SetpointValue;
+            md_parms->pid_id.param.Idem = _IQtoF(cc_parms.ramp_cntl.SetpointValue);
             md_parms->pid_iq.param.Idem = 0;
             md_parms->park_xform_parms.Angle = 0;//cc_parms.ramp_cntl.TargetValue =
 
@@ -108,7 +108,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
         case COMMUTATION_CALIBRATION_STATE_MOVE_TO_HARDSTOP:
             RC_MACRO(cc_parms.ramp_cntl)
-            md_parms->pid_id.param.Idem = IdRefLockCommutationCalibration;
+            md_parms->pid_id.param.Idem = _IQtoF(IdRefLockCommutationCalibration);
             md_parms->pid_iq.param.Idem = 0;
 
             md_parms->park_xform_parms.Angle = cc_parms.ramp_cntl.SetpointValue;
@@ -177,7 +177,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
         case COMMUTATION_CALIBRATION_STATE_MOVE_UP_FROM_HARDSTOP:
             RC_MACRO(cc_parms.ramp_cntl)
-            md_parms->pid_id.param.Idem = IdRefLockCommutationCalibration;
+            md_parms->pid_id.param.Idem = _IQtoF(IdRefLockCommutationCalibration);
             md_parms->pid_iq.param.Idem = 0;
 
             md_parms->park_xform_parms.Angle = cc_parms.ramp_cntl.SetpointValue;
@@ -254,7 +254,7 @@ void CommutationCalibrationStateMachine(MotorDriveParms* md_parms, EncoderParms*
 
         case COMMUTATION_CALIBRATION_STATE_TEST_MOVE:
             RC_MACRO(cc_parms.ramp_cntl)
-            md_parms->pid_id.param.Idem = IdRefLockCommutationCalibration;
+            md_parms->pid_id.param.Idem = _IQtoF(IdRefLockCommutationCalibration);
             md_parms->pid_iq.param.Idem = 0;
 
             md_parms->park_xform_parms.Angle = cc_parms.ramp_cntl.SetpointValue;
