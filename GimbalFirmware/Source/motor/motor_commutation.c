@@ -51,7 +51,7 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         //    Connect inputs of the id PID controller and call the PID controller macro
         // ------------------------------------------------------------------------------
         // Limit the requested current to prevent burning up the motor
-        md_parms->pid_id.param.I = md_parms->park_xform_parms.Ds;
+        md_parms->pid_id.param.I = _IQtoF(md_parms->park_xform_parms.Ds);
         if (axis_parms->enable_flag) {
             run_current_controller(&(md_parms->pid_id));
         } else {
@@ -62,7 +62,7 @@ void MotorCommutationLoop(ControlBoardParms* cb_parms,
         //    Connect inputs of the iq PID controller and call the PID controller macro
         // ------------------------------------------------------------------------------
         // Limit the requested current to prevent burning up the motor
-        md_parms->pid_iq.param.I = md_parms->park_xform_parms.Qs;
+        md_parms->pid_iq.param.I = _IQtoF(md_parms->park_xform_parms.Qs);
         if (axis_parms->enable_flag) {
             run_current_controller(&(md_parms->pid_iq));
         } else {

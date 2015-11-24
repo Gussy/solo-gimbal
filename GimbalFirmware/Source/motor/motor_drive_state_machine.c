@@ -239,7 +239,7 @@ void MotorDriveStateMachine(AxisParms* axis_parms,
 
             // Drive id to 0, iq to requested torque from rate loop (to commutate motor at requested torque)
             md_parms->pid_id.param.Idem = 0;
-            md_parms->pid_iq.param.Idem = md_parms->Idem;
+            md_parms->pid_iq.param.Idem = _IQtoF(md_parms->Idem);
             break;
 
         // AZ, ROLL, EL
