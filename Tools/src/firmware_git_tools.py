@@ -8,15 +8,24 @@ def osGitCommand():
 		os_git_command = "git"
 	elif sys.platform.startswith('win32'):
 		github_path = os.environ['LOCALAPPDATA'] + "\\GitHub\\"
+		
 		# First, check if git is installed in AppData\Local (this seems to happen with some git installs)
 		if os.path.exists(os.environ['LOCALAPPDATA'] + "\\Programs\\Git\\"):
 			os_git_command = "\"" + os.environ['LOCALAPPDATA'] + "\\Programs\\Git\\bin\\git.exe" + "\""
+		
 		# Check for git installed with GFW (https://windows.github.com/)
 		elif os.path.exists(github_path):
 			PortableGit = glob.glob(os.path.join(github_path, "PortableGit*"))
 			if PortableGit:
 				git_path = PortableGit[0]
-				os_git_command = "\"" + git_path + "\\bin\\git.exe" + "\""
+
+				# Look for the git binary in the old and new locations
+				git_binary_options = ["\\bin\\git.exe", "\\cmd\\git.exe"] 
+				for binary in git_binary_options:
+					git_binary = git_path + binary
+					if os.path.isfile(git_binary):
+						os_git_command = "\"" + git_binary + "\""
+						break
 		else:
 			# If not, git is either in Program Files or Program Files (x86)
 			if 'PROGRAMFILES(X86)' in os.environ:
@@ -30,7 +39,8 @@ def osGitCommand():
 
 	return os_git_command
 
-def gitIdentity(os_git_command):
+def gitIdentity():
+	os_git_command = osGitCommand()
 	git_identity = ''
 	try:
 		# Get the current git info
@@ -43,7 +53,8 @@ def gitIdentity(os_git_command):
 	finally:
 		return git_identity
 
-def gitBranch(os_git_command):
+def gitBranch():
+	os_git_command = osGitCommand()
 	cmd = " ".join([os_git_command, "branch", "--list"])
 	p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
 	re_branch = re.search(ur"\*\s(.*)\n", str(p.read()))

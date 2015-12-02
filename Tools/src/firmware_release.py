@@ -6,7 +6,7 @@ Utility for building a release firmware bundle
 """
 
 import argparse, base64, json, os, subprocess, time, zlib, re
-from firmware_git_tools import osGitCommand, gitIdentity, gitBranch
+from firmware_git_tools import gitIdentity, gitBranch
 
 firmware_prefix = "gimbal_firmware_"
 firmware_extension = "ax"
@@ -29,9 +29,8 @@ if args.release:
 	desc['release']	 = str(args.release)
 
 # Get the current git info
-os_git_command = osGitCommand()
-desc['git_identity'] = gitIdentity(os_git_command)
-git_branch = gitBranch(os_git_command)
+desc['git_identity'] = gitIdentity()
+git_branch = gitBranch()
 
 # Use the branch name if it's an off-master release
 if not args.release and git_branch not in ["master", "detached", "no branch"]:
