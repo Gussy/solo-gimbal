@@ -382,17 +382,14 @@ bool gp_poll_camera_state()
      * If a user manually changes the camera mode (or any other setting),
      * the camera does not notify us, so we periodically poll for that state.
      *
-     * On hero 3, we can grab all state in a single msg,
-     * on hero 4 we just get camera mode for now.
+     * On hero 3, we'd like to grab all state in a single msg,
+     * but the current theory is that the implied sd card access causes some
+     * general unresponsiveness, so we just get camera mode for now.
      */
 
     if (gp_ready_for_cmd() && !gp_is_recording()) {
         gp_can_mav_get_req_t req;
-        if (gp.model == GP_MODEL_HERO3P) {
-            req.mav.cmd_id = GP_H3P_COMMAND_ENTIRE_CAM_STATUS;
-        } else {
-            req.mav.cmd_id = GOPRO_COMMAND_CAPTURE_MODE;
-        }
+        req.mav.cmd_id = GOPRO_COMMAND_CAPTURE_MODE;
         gp_get_request(&req, true); // internal txn for our own consumption
         return true;
     }

@@ -273,10 +273,15 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
         } break;
 
         case GOPRO_COMMAND_SHUTTER:
+#if 0
+            // we don't currently fetch sd card state, since the working theory is
+            // that it causes some unresponsiveness in the gopro. leaving this
+            // here in case we want to re-enable in the future.
             if (!h3p->sd_card_inserted) {
                 gp_h3p_set_transaction_result(h3p, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }
+#endif
 
             cmd_init(c, "SH");
             cmd_add_byte(c, request->mav.value[0]);
