@@ -13,7 +13,7 @@
 #define GP_PWRON_TIME_MS 120 // Spec says 100ms, but I'm making it a little longer here just in case, and so it's an even multiple of our state machine poll period
 #define GP_TIMEOUT_MS 2000 // If at any point we're waiting in the state machine (except at idle) for longer than this timeout, return to idle.  This timeout is 2s per HeroBus spec
 #define GP_PROTOCOL_VERSION 0x00
-#define GP_CAPTURE_MODE_POLLING_INTERVAL 1000
+#define GP_CAPTURE_MODE_POLLING_INTERVAL 5000
 #define GP_I2C_EEPROM_NUMBYTES 16
 
 
