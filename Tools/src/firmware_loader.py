@@ -38,7 +38,7 @@ def start_bootloader(link):
 
     # Wait for the bootloader to send a handshake
     timeout_counter = 0
-    while timeout_counter < 5:
+    while timeout_counter < 10:
         msg = setup_mavlink.wait_handshake(link)
         if msg is None:
             setup_mavlink.reset_into_bootloader(link)
@@ -77,15 +77,17 @@ def upload_data(link, binary):
     if msg == None:
         return Results.NoResponse
 
-    # Print bootloader version
+    # Emit the bootloader version
     if bootloaderVersionHandler:
         blver = decode_bootloader_version(msg)
         bootloaderVersionHandler(blver[0], blver[1])
-    
+
     # Loop until we are finished
     end_idx = 0
     retries = 0
-    MAX_RETRIES = 10 # Seconds
+    # Note: MAX_RETRIES needs to be longer than the maximum possible flash
+    # erase time (2 seconds * 6 Sectors = 12 Seconds)
+    MAX_RETRIES = 15 # Seconds
     while end_idx < len(binary):
         msg = setup_mavlink.wait_handshake(link)
         if msg is None:
@@ -116,7 +118,7 @@ def finish_upload(link):
         if msg.width == DATA_TRANSMISSION_HANDSHAKE_EXITING_MAGIC_WIDTH:
             break
 
-    if setup_mavlink.wait_for_gimbal_message(link, timeout=5):
+    if setup_mavlink.wait_for_gimbal_message(link, timeout=10):
         return Results.Success
     else:
         return Results.Timeout
