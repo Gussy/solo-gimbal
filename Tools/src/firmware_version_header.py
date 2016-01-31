@@ -6,7 +6,7 @@ Utility for generating a version header file
 """
 
 import argparse, struct
-from firmware_git_tools import osGitCommand, gitIdentity, gitBranch
+from firmware_git_tools import gitIdentity, gitBranch
 
 def bytes4_to_float(b1, b2, b3, b4):
 	return struct.unpack('>f', struct.pack('4b', b1, b2, b3, b4))
@@ -16,8 +16,7 @@ parser = argparse.ArgumentParser(description="Utility for generating a version h
 parser.add_argument("output", help="image output file")
 args = parser.parse_args()
 
-os_git_command = osGitCommand()
-git_identity = gitIdentity(os_git_command)
+git_identity = gitIdentity()
 
 git_tag = git_identity.split('-')[0]
 git_semver = git_tag[1:].split('.')

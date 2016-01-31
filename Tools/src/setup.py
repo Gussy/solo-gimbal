@@ -445,9 +445,6 @@ def command_interface():
             return
 
     # Default command is to return the software version number
-    if firmware_git_tools:
-        os_git_command = firmware_git_tools.osGitCommand()
-        print("Tools version: %s"%(firmware_git_tools.gitIdentity(os_git_command)))
     ver = setup_factory_pub.read_software_version(link, timeout=4)
     if ver != None:
         major, minor, rev = ver[0], ver[1], ver[2]
