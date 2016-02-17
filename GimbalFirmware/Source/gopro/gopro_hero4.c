@@ -618,7 +618,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 }
                 break;
 
-            case GOPRO_CAPTURE_MODE_BURST:
+            case GOPRO_CAPTURE_MODE_MULTI_SHOT:
                 yy->api_group = API_GRP_MODE_MULTISHOT;
                 if (request->mav.value[0]) {
                     yy->api_id = API_ID_TRIGGER_MULTI_START;
