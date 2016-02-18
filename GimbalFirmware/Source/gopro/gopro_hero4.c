@@ -589,7 +589,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             if (ok) {
                 yy->payload[0] = mode;
                 payloadlen = 1;
-                gp_pend_capture_mode(mode);
+                gp_pend_capture_mode(request->mav.value[0]);
             }else {
                 gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
