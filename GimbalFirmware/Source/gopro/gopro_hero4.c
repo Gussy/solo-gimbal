@@ -353,6 +353,18 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
             break;
         }
     }
+    else if (rsp->api_group == API_GRP_MODE_MULTISHOT) {
+        switch (rsp->api_id) {
+        case API_ID_GET_BURST_SHUT_RATE: {
+            bool ok;
+            uint8_t exp = h4_to_mav_burst_rate(rsp->payload[0], &ok);
+            if (ok) {
+                mav_rsp.mav.value[0] = exp;
+                mav_rsp_len = 1;
+            }
+        } break;
+        }
+    }
     else if (rsp->api_group == API_GRP_MODE_VID) {
         switch (rsp->api_id) {
         // trigger shutter
@@ -544,6 +556,11 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
         yy->api_id = API_ID_GET_VID_EXPOSURE;
         break;
 
+    case GOPRO_COMMAND_PHOTO_BURST_RATE:
+        yy->api_group = API_GRP_MODE_MULTISHOT;
+        yy->api_id = API_ID_GET_BURST_SHUT_RATE;
+        break;
+
     default:
         // Unsupported Command ID
         gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
@@ -709,6 +726,20 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
             if (ok) {
                 yy->api_group = API_GRP_MODE_VID;
                 yy->api_id = API_ID_SET_VID_EXPOSURE;
+                yy->payload[0] = exp;
+                payloadlen = 1;
+            } else {
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
+            }
+        } break;
+
+        case GOPRO_COMMAND_PHOTO_BURST_RATE: {
+            bool ok;
+            uint8_t exp = mav_to_h4_burst_rate(request->mav.value[0], &ok);
+            if (ok) {
+                yy->api_group = API_GRP_MODE_MULTISHOT;
+                yy->api_id = API_ID_SET_BURST_SHUT_RATE;
                 yy->payload[0] = exp;
                 payloadlen = 1;
             } else {

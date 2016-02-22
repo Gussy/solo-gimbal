@@ -95,6 +95,18 @@ enum H4_TV_MODE {
     H4_TV_PAL       = 0x1
 };
 
+typedef enum {
+    H4_BURST_RATE_3_IN_1_SECOND     = 0x0,
+    H4_BURST_RATE_5_IN_1_SECOND     = 0x1,
+    H4_BURST_RATE_10_IN_1_SECOND    = 0x2,
+    H4_BURST_RATE_10_IN_2_SECOND    = 0x3,
+    H4_BURST_RATE_10_IN_3_SECOND    = 0x4,
+    H4_BURST_RATE_30_IN_1_SECOND    = 0x5,
+    H4_BURST_RATE_30_IN_2_SECOND    = 0x6,
+    H4_BURST_RATE_30_IN_3_SECOND    = 0x7,
+    H4_BURST_RATE_30_IN_6_SECOND    = 0x8
+} H4_BURST_RATE;
+
 enum GP_H4_API_GROUP {
     API_GRP_GEN_CMDS        = 0,
     API_GRP_MODE_CAM        = 1,

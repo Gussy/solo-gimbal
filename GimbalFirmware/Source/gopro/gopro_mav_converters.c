@@ -206,6 +206,38 @@ H3P_PROTUNE_EXPOSURE mav_to_h3p_exposure(uint8_t exp, bool *ok)
 }
 
 ////////////////////////////
+// hero 3 burst rate
+////////////////////////////
+
+GOPRO_BURST_RATE h3p_to_mav_burst_rate(uint8_t exp, bool *ok)
+{
+    default_true_open_switch(exp) {
+    case H3P_BURST_RATE_3_IN_1_SECOND:   return GOPRO_BURST_RATE_3_IN_1_SECOND;
+    case H3P_BURST_RATE_5_IN_1_SECOND:   return GOPRO_BURST_RATE_5_IN_1_SECOND;
+    case H3P_BURST_RATE_10_IN_1_SECOND:  return GOPRO_BURST_RATE_10_IN_1_SECOND;
+    case H3P_BURST_RATE_10_IN_2_SECOND:  return GOPRO_BURST_RATE_10_IN_2_SECOND;
+    case H3P_BURST_RATE_30_IN_1_SECOND:  return GOPRO_BURST_RATE_30_IN_1_SECOND;
+    case H3P_BURST_RATE_30_IN_2_SECOND:  return GOPRO_BURST_RATE_30_IN_2_SECOND;
+    case H3P_BURST_RATE_30_IN_3_SECOND:  return GOPRO_BURST_RATE_30_IN_3_SECOND;
+    close_switch_return_default(GOPRO_BURST_RATE);
+    }
+}
+
+H3P_BURST_RATE mav_to_h3p_burst_rate(uint8_t exp, bool *ok)
+{
+    default_true_open_switch(exp) {
+    case GOPRO_BURST_RATE_3_IN_1_SECOND:    return H3P_BURST_RATE_3_IN_1_SECOND;
+    case GOPRO_BURST_RATE_5_IN_1_SECOND:    return H3P_BURST_RATE_5_IN_1_SECOND;
+    case GOPRO_BURST_RATE_10_IN_1_SECOND:   return H3P_BURST_RATE_10_IN_1_SECOND;
+    case GOPRO_BURST_RATE_10_IN_2_SECOND:   return H3P_BURST_RATE_10_IN_2_SECOND;
+    case GOPRO_BURST_RATE_30_IN_1_SECOND:   return H3P_BURST_RATE_30_IN_1_SECOND;
+    case GOPRO_BURST_RATE_30_IN_2_SECOND:   return H3P_BURST_RATE_30_IN_2_SECOND;
+    case GOPRO_BURST_RATE_30_IN_3_SECOND:   return H3P_BURST_RATE_30_IN_3_SECOND;
+    close_switch_return_default(H3P_BURST_RATE);
+    }
+}
+
+////////////////////////////
 // hero 4 capture mode
 ////////////////////////////
 
@@ -382,5 +414,41 @@ H4_PROTUNE_EXPOSURE mav_to_h4_exposure(uint8_t exp, bool *ok)
     case GOPRO_PROTUNE_EXPOSURE_POS_1_5:    return H4_PROTUNE_EXPOSURE_POS_1_5;
     case GOPRO_PROTUNE_EXPOSURE_POS_2_0:    return H4_PROTUNE_EXPOSURE_POS_2_0;
     close_switch_return_default(H4_PROTUNE_EXPOSURE);
+    }
+}
+
+////////////////////////////
+// hero 4 multi-shot rate
+////////////////////////////
+
+GOPRO_BURST_RATE h4_to_mav_burst_rate(uint8_t exp, bool *ok)
+{
+    default_true_open_switch(exp) {
+    case H4_BURST_RATE_3_IN_1_SECOND:   return GOPRO_BURST_RATE_3_IN_1_SECOND;
+    case H4_BURST_RATE_5_IN_1_SECOND:   return GOPRO_BURST_RATE_5_IN_1_SECOND;
+    case H4_BURST_RATE_10_IN_1_SECOND:  return GOPRO_BURST_RATE_10_IN_1_SECOND;
+    case H4_BURST_RATE_10_IN_2_SECOND:  return GOPRO_BURST_RATE_10_IN_2_SECOND;
+    case H4_BURST_RATE_10_IN_3_SECOND:  return GOPRO_BURST_RATE_10_IN_3_SECOND;
+    case H4_BURST_RATE_30_IN_1_SECOND:  return GOPRO_BURST_RATE_30_IN_1_SECOND;
+    case H4_BURST_RATE_30_IN_2_SECOND:  return GOPRO_BURST_RATE_30_IN_2_SECOND;
+    case H4_BURST_RATE_30_IN_3_SECOND:  return GOPRO_BURST_RATE_30_IN_3_SECOND;
+    case H4_BURST_RATE_30_IN_6_SECOND:  return GOPRO_BURST_RATE_30_IN_6_SECOND;
+    close_switch_return_default(GOPRO_BURST_RATE);
+    }
+}
+
+H4_BURST_RATE mav_to_h4_burst_rate(uint8_t exp, bool *ok)
+{
+    default_true_open_switch(exp) {
+    case GOPRO_BURST_RATE_3_IN_1_SECOND:    return H4_BURST_RATE_3_IN_1_SECOND;
+    case GOPRO_BURST_RATE_5_IN_1_SECOND:    return H4_BURST_RATE_5_IN_1_SECOND;
+    case GOPRO_BURST_RATE_10_IN_1_SECOND:   return H4_BURST_RATE_10_IN_1_SECOND;
+    case GOPRO_BURST_RATE_10_IN_2_SECOND:   return H4_BURST_RATE_10_IN_2_SECOND;
+    case GOPRO_BURST_RATE_10_IN_3_SECOND:   return H4_BURST_RATE_10_IN_3_SECOND;
+    case GOPRO_BURST_RATE_30_IN_1_SECOND:   return H4_BURST_RATE_30_IN_1_SECOND;
+    case GOPRO_BURST_RATE_30_IN_2_SECOND:   return H4_BURST_RATE_30_IN_2_SECOND;
+    case GOPRO_BURST_RATE_30_IN_3_SECOND:   return H4_BURST_RATE_30_IN_3_SECOND;
+    case GOPRO_BURST_RATE_30_IN_6_SECOND:   return H4_BURST_RATE_30_IN_6_SECOND;
+    close_switch_return_default(H4_BURST_RATE);
     }
 }
