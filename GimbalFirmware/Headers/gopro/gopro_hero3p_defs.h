@@ -78,6 +78,16 @@ typedef enum {
     H3P_PROTUNE_EXPOSURE_POS_5_0    = 0x14,
 } H3P_PROTUNE_EXPOSURE;
 
+typedef enum {
+    H3P_BURST_RATE_3_IN_1_SECOND     = 0x0,
+    H3P_BURST_RATE_5_IN_1_SECOND     = 0x1,
+    H3P_BURST_RATE_10_IN_1_SECOND    = 0x2,
+    H3P_BURST_RATE_10_IN_2_SECOND    = 0x3,
+    H3P_BURST_RATE_30_IN_1_SECOND    = 0x4,
+    H3P_BURST_RATE_30_IN_2_SECOND    = 0x5,
+    H3P_BURST_RATE_30_IN_3_SECOND    = 0x6,
+} H3P_BURST_RATE;
+
 // for now, mavlink defs for Field of View match hero bus, no need to convert
 
 #endif // GOPRO_HERO3P_DEFS_H
