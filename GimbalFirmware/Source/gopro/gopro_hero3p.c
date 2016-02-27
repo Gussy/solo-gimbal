@@ -17,14 +17,20 @@
 // number of bytes required for id in a gp_h3p_cmd_t
 #define CMD_ID_NUM_BYTES        2
 
-// track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
+// track our state during multi msg commands
 enum H3P_MULTIMSG_STATE {
-    H3_MULTIMSG_NONE,           // not performing a multi msg command
-    H3_MULTIMSG_TV_MODE,        // ntsc/pal sent
-    H3_MULTIMSG_RESOLUTION,     // resolution sent
-    H3_MULTIMSG_FRAME_RATE,     // frame rate sent
-    H3_MULTIMSG_FOV,            // field of view sent
-    H3_MULTIMSG_FINAL = H3_MULTIMSG_FOV // last msg in the sequence
+    H3_MULTIMSG_NONE,                                   // not performing a multi msg command
+
+    // Power off sequence (GOPRO_COMMAND_POWER)
+    H3_MULTIMSG_SHUTTER,                                // shutter sent
+    H3_MULTIMSG_POWEROFF_DELAY,                         // delay elapsed
+    H3_MULTIMSG_POWER,                                  // power sent
+
+    // Video settings sequence (GOPRO_COMMAND_VIDEO_SETTINGS)
+    H3_MULTIMSG_TV_MODE,                                // ntsc/pal sent
+    H3_MULTIMSG_RESOLUTION,                             // resolution sent
+    H3_MULTIMSG_FRAME_RATE,                             // frame rate sent
+    H3_MULTIMSG_FOV,                                    // field of view sent
 };
 
 static void gp_h3p_set_transaction_result(gp_h3p_t *h3p, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
@@ -43,6 +49,8 @@ void gp_h3p_init(gp_h3p_t *h3p)
     h3p->gccb_version_queried = false;
     h3p->pending_recording_state = false;
     h3p->sd_card_inserted = false;
+
+    h3p->delay_counter_ms = 0;
 }
 
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
@@ -116,6 +124,12 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
     gp_h3p_cmd_t *c = &p->cmd;
 
     switch (h3p->multi_msg_cmd.state) {
+    case H3_MULTIMSG_SHUTTER:
+        // next step is the delay
+        h3p->multi_msg_cmd.state = H3_MULTIMSG_POWEROFF_DELAY;
+        h3p->delay_counter_ms = 0;
+        return false;
+
     case H3_MULTIMSG_TV_MODE:
         // next step is resolution
         if (gp_transaction_direction() == GP_REQUEST_GET) {
@@ -252,8 +266,20 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t* reque
     switch (request->mav.cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->mav.value[0] == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                cmd_init(c, "PW");
-                cmd_add_byte(c, 0x00);
+                if(gp_is_recording()) {
+                    // power off is a multi msg command, first msg is shutter
+                    h3p->multi_msg_cmd.state = H3_MULTIMSG_SHUTTER;
+                    cmd_init(c, "SH");
+                    cmd_add_byte(c, 0x00);
+
+                    // don't change recording state for non-video capture modes since we don't have a way to find out when recording is finished by GoPro
+                    if (gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
+                        h3p->pending_recording_state = false;
+                    }
+                } else {
+                    cmd_init(c, "PW");
+                    cmd_add_byte(c, 0x00);
+                }
             } else {
                 // gp_request_power_on() does not require a herobus transaction,
                 // so mark it complete immediately
@@ -449,7 +475,7 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
     gp_can_mav_get_rsp_t mav_rsp;   // collect mavlink-translated payload vals
 
     // Special Handling of responses
-    switch (gp_transaction_cmd()) {
+    switch (gp_transaction_mav_cmd()) {
     case GOPRO_COMMAND_BATTERY:
         mav_rsp.mav.value[0] = rsp->payload[0];
         mav_rsp_len = 1;
@@ -469,6 +495,15 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
         } else if (gp_transaction_direction() == GP_REQUEST_SET) {
             gp_latch_pending_capture_mode();        // Set request acknowledged, update capture mode state with pending capture mode received via MAVLink/CAN
         }
+        break;
+
+    case GOPRO_COMMAND_POWER:
+        /* Break here if the GOPRO_COMMAND_POWER is not part of a multimsg command (only power off is multimsg)
+         * Otherwise, fall through to next case statement to handle a change in recording state.
+         */
+        if(h3p->multi_msg_cmd.state != H3_MULTIMSG_SHUTTER) {
+            break;
+        }
 
     case GOPRO_COMMAND_SHUTTER:
         /*
@@ -478,6 +513,11 @@ void gp_h3p_handle_response(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
          */
         if (gp_capture_mode() == GOPRO_CAPTURE_MODE_VIDEO) {
             gp_set_recording_state(h3p->pending_recording_state);
+        }
+
+        // Early exit if a multimsg transaction is still pending
+        if(h3p->multi_msg_cmd.state == H3_MULTIMSG_SHUTTER) {
+            return;
         }
         break;
 
@@ -614,9 +654,8 @@ bool gp_h3p_handle_video_settings_rsp(gp_h3p_t *h3p, const gp_h3p_rsp_t *rsp)
 
             h3p->multi_msg_cmd.state = H3_MULTIMSG_NONE;
             break;
-        }
-    } else {
-        if (h3p->multi_msg_cmd.state == H3_MULTIMSG_FINAL) {
+
+        default:
             h3p->multi_msg_cmd.state = H3_MULTIMSG_NONE;
         }
     }
@@ -654,4 +693,18 @@ bool gp_h3p_rx_data_is_valid(const uint8_t *buf, uint16_t len, bool *from_camera
 
 void gp_h3p_sanitize_buf_len(uint8_t *buf) { // TODO: inline?
     buf[0] &= 0x7f;     // remove most significant bit representing sender id (camera or BacPac)
+}
+
+bool gp_h3p_delayed_cmd_ready(gp_h3p_t *h3p, gp_h3p_cmd_t *c) {
+    h3p->delay_counter_ms += GP_STATE_MACHINE_PERIOD_MS;
+
+    if(h3p->multi_msg_cmd.state == H3_MULTIMSG_POWEROFF_DELAY && h3p->delay_counter_ms >= GP_H3P_DELAYED_CMD_MS) {
+        // next step is power
+        cmd_init(c, "PW");
+        cmd_add_byte(c, 0x00);
+        h3p->multi_msg_cmd.state = H3_MULTIMSG_POWER;
+        return true;
+    }
+
+    return false;
 }

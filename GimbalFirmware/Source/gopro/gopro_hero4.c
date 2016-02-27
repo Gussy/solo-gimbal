@@ -8,12 +8,17 @@
 
 #include <string.h>
 
-// track our state during multi msg commands (like GOPRO_COMMAND_VIDEO_SETTINGS)
+// track our state during multi msg commands
 enum H4_MULTIMSG_STATE {
-    H4_MULTIMSG_NONE,           // not performing a multi msg command
-    H4_MULTIMSG_TV_MODE,        // ntsc/pal sent
-    H4_MULTIMSG_VID_SETTINGS,   // resolution/frame rate/fov sent
-    H4_MULTIMSG_FINAL = H4_MULTIMSG_VID_SETTINGS // last msg in the sequence
+    H4_MULTIMSG_NONE,                                           // not performing a multi msg command
+
+    // GOPRO_COMMAND_POWER
+    H4_MULTIMSG_SHUTTER,                                        // shutter sent
+    H4_MULTIMSG_POWER,                                          // power sent
+
+    // GOPRO_COMMAND_VIDEO_SETTINGS
+    H4_MULTIMSG_TV_MODE,                                        // ntsc/pal sent
+    H4_MULTIMSG_VID_SETTINGS                                    // resolution/frame rate/fov sent
 };
 
 static void gp_h4_set_transaction_result(gp_h4_t *h4, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
@@ -115,7 +120,17 @@ bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
         return gp_h4_finish_handshake(h4, p);
     }
 
+    gp_h4_yy_cmd_t *yy = &p->yy_cmd;
+
     switch (h4->multi_msg_cmd.state) {
+    case H4_MULTIMSG_SHUTTER:
+        yy->api_group = API_GRP_CAM_SETTINGS;
+        yy->api_id = API_ID_POWER_OFF;
+        yy->payload[0] = 0x00;
+        gp_h4_finalize_yy_cmd(h4, 1, yy);
+        h4->multi_msg_cmd.state = H4_MULTIMSG_POWER;
+        return true;
+
     case H4_MULTIMSG_TV_MODE:
         // vid settings is next
         if (gp_transaction_direction() == GP_REQUEST_SET) {
@@ -125,7 +140,6 @@ bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
             }
             gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
         } else {
-            gp_h4_yy_cmd_t *yy = &p->yy_cmd;
             yy->api_group = API_GRP_MODE_VID;
             yy->api_id = API_ID_GET_RES_FR_FOV;
             gp_h4_finalize_yy_cmd(h4, 0, yy);
@@ -345,6 +359,9 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
     // battery level
     else if (rsp->api_group == API_GRP_CAM_SETTINGS) {
         switch (rsp->api_id) {
+        case API_ID_POWER_OFF:
+            h4->multi_msg_cmd.state = H4_MULTIMSG_NONE;
+            break;
         case API_ID_GET_BATTERY_LVL:
             if (len == 1) {
                 mav_rsp.mav.value[0] = rsp->payload[0];
@@ -371,6 +388,12 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
         case API_ID_TRIGGER_VID_START:
         case API_ID_TRIGGER_VID_STOP:
             gp_set_recording_state(h4->pending_recording_state);
+
+            // if this is being sent as part of a multi msg,
+            // ensure we don't complete the transaction until the final msg is completed.
+            if(rsp->api_id == API_ID_TRIGGER_VID_STOP && h4->multi_msg_cmd.state != H4_MULTIMSG_NONE) {
+                return err;
+            }
             break;
 
         // low light
@@ -585,10 +608,17 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
     switch (request->mav.cmd_id) {
         case GOPRO_COMMAND_POWER:
             if(request->mav.value[0] == 0x00 && gp_get_power_status() == GP_POWER_ON) {
-                yy->api_group = API_GRP_CAM_SETTINGS;
-                yy->api_id = API_ID_POWER_OFF;
-                yy->payload[0] = request->mav.value[0];
-                payloadlen = 1;
+                if(gp_is_recording()) {
+                    yy->api_group = API_GRP_MODE_VID;
+                    yy->api_id = API_ID_TRIGGER_VID_STOP;
+                    h4->pending_recording_state = false;
+                    h4->multi_msg_cmd.state = H4_MULTIMSG_SHUTTER;
+                } else {
+                    yy->api_group = API_GRP_CAM_SETTINGS;
+                    yy->api_id = API_ID_POWER_OFF;
+                    yy->payload[0] = request->mav.value[0];
+                    payloadlen = 1;
+                }
             } else {
                 // no supported command to power on.
                 // have tried gp_request_power_on(), which is implemented based on hero3 docs,
@@ -607,7 +637,7 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 yy->payload[0] = mode;
                 payloadlen = 1;
                 gp_pend_capture_mode(request->mav.value[0]);
-            }else {
+            } else {
                 gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
             }

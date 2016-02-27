@@ -61,13 +61,14 @@ void gp_get_heartbeat(gp_can_mav_heartbeat_t *hb);
 void gp_enable_charging();
 void gp_disable_charging();
 void gp_write_eeprom();
+bool gp_is_recording();
 
 // "private" functions, called from gopro_hero4/gopro_hero3/gopro_i2c
 // TODO detangle/remove from this header
 bool gp_request_power_on();
 void gp_on_i2c_stop_condition();
 void gp_on_slave_address(bool addressed_as_tx);
-uint16_t gp_transaction_cmd();
+uint16_t gp_transaction_mav_cmd();
 GPRequestType gp_transaction_direction();
 void gp_set_transaction_result(const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
 GOPRO_CAPTURE_MODE gp_capture_mode();
