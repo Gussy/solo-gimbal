@@ -12,6 +12,8 @@
 #define GP_H3P_MAX_PACKET        256
 #define GP_H3P_MAX_PAYLOAD       (GP_H3P_MAX_PACKET - 5)
 
+#define GP_H3P_DELAYED_CMD_MS    200
+
 // a bit unclean, but use a free mavlink cmd id
 // to represent the Entire Camera Status command,
 // since we want to use this command internally,
@@ -28,6 +30,8 @@ typedef struct {
         uint8_t state;
         uint8_t payload[GP_CAN_MAV_MAX_PAYLOAD_BYTES];
     } multi_msg_cmd;
+
+    uint16_t delay_counter_ms;
 } gp_h3p_t;
 
 // Hero 3+ packet formats
@@ -67,5 +71,7 @@ bool gp_h3p_produce_set_request(gp_h3p_t *h3p, const gp_can_mav_set_req_t *reque
 bool gp_h3p_handle_rx(gp_h3p_t *h3p, gp_h3p_pkt_t *p, bool from_camera, gp_h3p_rsp_t *rsp);
 
 bool gp_h3p_rx_data_is_valid(const uint8_t *buf, uint16_t len, bool *from_camera);
+
+bool gp_h3p_delayed_cmd_ready(gp_h3p_t *h3p, gp_h3p_cmd_t *c);
 
 #endif // _GOPRO_HERO3P_H

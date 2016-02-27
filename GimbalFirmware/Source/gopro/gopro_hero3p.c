@@ -23,6 +23,7 @@ enum H3P_MULTIMSG_STATE {
 
     // Power off sequence (GOPRO_COMMAND_POWER)
     H3_MULTIMSG_SHUTTER,                                // shutter sent
+    H3_MULTIMSG_POWEROFF_DELAY,                         // delay elapsed
     H3_MULTIMSG_POWER,                                  // power sent
 
     // Video settings sequence (GOPRO_COMMAND_VIDEO_SETTINGS)
@@ -48,6 +49,8 @@ void gp_h3p_init(gp_h3p_t *h3p)
     h3p->gccb_version_queried = false;
     h3p->pending_recording_state = false;
     h3p->sd_card_inserted = false;
+
+    h3p->delay_counter_ms = 0;
 }
 
 bool gp_h3p_handshake_complete(const gp_h3p_t *h3p)
@@ -122,11 +125,10 @@ bool gp_h3p_on_transaction_complete(gp_h3p_t *h3p, gp_h3p_pkt_t *p)
 
     switch (h3p->multi_msg_cmd.state) {
     case H3_MULTIMSG_SHUTTER:
-        // next step is power
-        cmd_init(c, "PW");
-        cmd_add_byte(c, 0x00);
-        h3p->multi_msg_cmd.state = H3_MULTIMSG_POWER;
-        break;
+        // next step is the delay
+        h3p->multi_msg_cmd.state = H3_MULTIMSG_POWEROFF_DELAY;
+        h3p->delay_counter_ms = 0;
+        return false;
 
     case H3_MULTIMSG_TV_MODE:
         // next step is resolution
@@ -691,4 +693,18 @@ bool gp_h3p_rx_data_is_valid(const uint8_t *buf, uint16_t len, bool *from_camera
 
 void gp_h3p_sanitize_buf_len(uint8_t *buf) { // TODO: inline?
     buf[0] &= 0x7f;     // remove most significant bit representing sender id (camera or BacPac)
+}
+
+bool gp_h3p_delayed_cmd_ready(gp_h3p_t *h3p, gp_h3p_cmd_t *c) {
+    h3p->delay_counter_ms += GP_STATE_MACHINE_PERIOD_MS;
+
+    if(h3p->multi_msg_cmd.state == H3_MULTIMSG_POWEROFF_DELAY && h3p->delay_counter_ms >= GP_H3P_DELAYED_CMD_MS) {
+        // next step is power
+        cmd_init(c, "PW");
+        cmd_add_byte(c, 0x00);
+        h3p->multi_msg_cmd.state = H3_MULTIMSG_POWER;
+        return true;
+    }
+
+    return false;
 }

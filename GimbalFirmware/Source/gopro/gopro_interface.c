@@ -28,6 +28,7 @@ static bool gp_poll_camera_state();
 static bool gp_handshake_complete();
 static GOPRO_HEARTBEAT_STATUS gp_get_heartbeat_status();
 static bool gp_is_valid_capture_mode(uint8_t mode);
+static void gp_delayed_cmd_tick(void);
 
 // Data to write into EEPROM
 static const uint8_t EEPROMData[GP_I2C_EEPROM_NUMBYTES] = {
@@ -585,6 +586,8 @@ void gp_update()
 
     gp_check_intr_timeout();
 
+    gp_delayed_cmd_tick();
+
     if (gp.i2c_txn.in_progress) {
         if (gp.timeout_counter++ > (GP_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
             gp_timeout();
@@ -1001,3 +1004,11 @@ bool gp_is_recording()
     return gp.recording;
 }
 
+static void gp_delayed_cmd_tick(void) {
+    switch (gp.model) {
+        case GP_MODEL_HERO3P:
+            if(gp_h3p_delayed_cmd_ready(&gp.h3p, &txbuf.h3p.cmd)) {
+                gp_begin_cmd_send(txbuf.h3p.cmd.len + 1);
+            }
+    }
+}
