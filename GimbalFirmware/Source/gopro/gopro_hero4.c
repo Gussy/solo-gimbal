@@ -18,7 +18,11 @@ enum H4_MULTIMSG_STATE {
 
     // GOPRO_COMMAND_VIDEO_SETTINGS
     H4_MULTIMSG_TV_MODE,                                        // ntsc/pal sent
-    H4_MULTIMSG_VID_SETTINGS                                    // resolution/frame rate/fov sent
+    H4_MULTIMSG_VID_SETTINGS,                                   // resolution/frame rate/fov sent
+
+    // GOPRO_COMMAND_CAPTURE_MODE (when mode == multi-shot)
+    H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT,                        // multi-shot capture mode sent
+    H4_MULTIMSG_MULTI_SHOT_SUB_MODE                             // multi-shot sub-mode sent
 };
 
 static void gp_h4_set_transaction_result(gp_h4_t *h4, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
@@ -146,6 +150,19 @@ bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
             h4->multi_msg_cmd.state = H4_MULTIMSG_VID_SETTINGS;
             return true;
         }
+        break;
+
+    case H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT:
+        // burst capture sub-mode is next
+        if (gp_transaction_direction() == GP_REQUEST_SET) {
+            yy->api_group = API_GRP_MODE_CAM;
+            yy->api_id = API_ID_SET_SUBMODE;
+            yy->payload[0] = H4_MULTI_SHOT_SUB_MODE_BURST;
+            gp_h4_finalize_yy_cmd(h4, 1, yy);
+            h4->multi_msg_cmd.state = H4_MULTIMSG_MULTI_SHOT_SUB_MODE;
+            return true;
+        }
+        break;
     }
 
     return false;
@@ -637,6 +654,10 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 yy->payload[0] = mode;
                 payloadlen = 1;
                 gp_pend_capture_mode(request->mav.value[0]);
+
+                if(mode == H4_CAPTURE_MODE_MULTI_SHOT) {
+                    h4->multi_msg_cmd.state = H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT;
+                }
             } else {
                 gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
                 return false;
