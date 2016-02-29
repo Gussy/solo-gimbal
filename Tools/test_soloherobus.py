@@ -57,7 +57,7 @@ def show_gopro(m):
         if msg.get_type() == "GOPRO_HEARTBEAT":
             print("%s: %s" % (msg.get_type(), mavlink.enums['GOPRO_HEARTBEAT_STATUS'][msg.status].name))
         elif msg.get_type() == "GOPRO_GET_RESPONSE":
-            print("%s: '%s' = %u (%u)" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.value, msg.status))
+            print("%s: '%s' = %s (%u)" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.value, msg.status))
         elif msg.get_type() == "GOPRO_SET_RESPONSE":
             print("%s: '%s' = %u" % (msg.get_type(), mavlink.enums['GOPRO_COMMAND'][msg.cmd_id].name, msg.status))
         elif msg.get_type().startswith("GOPRO"):
