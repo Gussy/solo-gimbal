@@ -39,6 +39,12 @@ typedef enum {
 } GP_H4_CAPTURE_MODE;
 
 typedef enum {
+    H4_MULTI_SHOT_SUB_MODE_BURST        = 0,
+    H4_MULTI_SHOT_SUB_MODE_TIME_LAPSE   = 1,
+    H4_MULTI_SHOT_SUB_MODE_NIGHT_LAPSE  = 2
+} GP_H4_MULTI_SHOT_SUB_MODE;
+
+typedef enum {
     H4_RESOLUTION_4k_17_9           = 0x0,
     H4_RESOLUTION_4k                = 0x1,
     H4_RESOLUTION_4k_SUPERVIEW      = 0x2,
