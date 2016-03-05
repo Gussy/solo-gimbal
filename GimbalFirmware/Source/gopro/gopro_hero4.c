@@ -471,6 +471,10 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
                 mav_rsp_len = 1;
             }
         } break;
+        case API_ID_GET_PHOTO_PROTUNE: {
+        	mav_rsp.mav.value[0] = rsp->payload[0] ? 1 : 0;
+            mav_rsp_len = 1;
+        } break;
         }
     }
 
@@ -570,9 +574,22 @@ bool gp_h4_produce_get_request(gp_h4_t *h4, uint8_t cmd_id, gp_h4_pkt_t *p)
         break;
 
     case GOPRO_COMMAND_PROTUNE:
-        yy->api_group = API_GRP_MODE_VID;
-        yy->api_id = API_ID_GET_VID_PROTUNE;
-        break;
+    	switch (gp_capture_mode()) {
+    	case GOPRO_CAPTURE_MODE_VIDEO: {
+            yy->api_group = API_GRP_MODE_VID;
+            yy->api_id = API_ID_GET_VID_PROTUNE;
+    	} break;
+    	case GOPRO_CAPTURE_MODE_PHOTO: {
+            yy->api_group = API_GRP_MODE_PHOTO;
+            yy->api_id = API_ID_GET_PHOTO_PROTUNE;
+    	} break;
+
+    	default:
+    		// Not supporting any other capture mode protunes for now
+            gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
+            return false;
+
+    	} break;
 
     case GOPRO_COMMAND_PROTUNE_EXPOSURE:
         yy->api_group = API_GRP_MODE_VID;
@@ -744,8 +761,20 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
         } break;
 
         case GOPRO_COMMAND_PROTUNE:
-            yy->api_group = API_GRP_MODE_VID;
-            yy->api_id = API_ID_SET_VID_PROTUNE;
+        	switch (gp_capture_mode()) {
+        	case GOPRO_CAPTURE_MODE_VIDEO: {
+                yy->api_group = API_GRP_MODE_VID;
+                yy->api_id = API_ID_SET_VID_PROTUNE;
+        	} break;
+        	case GOPRO_CAPTURE_MODE_PHOTO: {
+                yy->api_group = API_GRP_MODE_PHOTO;
+                yy->api_id = API_ID_SET_PHOTO_PROTUNE;
+        	} break;
+        	default: {
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
+                return false;
+        	}
+        	}
             yy->payload[0] = request->mav.value[0] ? 1 : 0;
             payloadlen = 1;
             break;
