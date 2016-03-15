@@ -702,10 +702,8 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                     payloadlen = 1;
                 }
             } else {
-                // no supported command to power on.
-                // have tried gp_request_power_on(), which is implemented based on hero3 docs,
-                // but does not appear to power up the camera.
-                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
+                gp_request_power_on();
+                gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_SUCCESS);
                 return false;
             }
             break;
