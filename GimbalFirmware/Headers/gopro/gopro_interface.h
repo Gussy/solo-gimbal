@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 
+#define GP_BP_DETECT_REASSERT_MS 100
 #define GP_STATE_MACHINE_PERIOD_MS 3
 #define GP_PWRON_TIME_MS 120 // Spec says 100ms, but I'm making it a little longer here just in case, and so it's an even multiple of our state machine poll period
 #define GP_PWRON_TIMEOUT_MS 5000

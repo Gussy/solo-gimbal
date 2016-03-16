@@ -70,6 +70,7 @@ typedef struct {
     GPPowerStatus power_status;
 
     uint16_t handshake_timeout_count;
+    bool handshake_timeout;
     uint16_t intr_timeout_count;        // how long has INTR been asserted without seeing a START
     bool intr_retry_pulse_in_progress;  // if our INTR request was ignored, are we in the middle of a retry pulse?
     bool intr_pending;                  // is an intr assertion pending?
@@ -79,6 +80,9 @@ typedef struct {
     GOPRO_CAPTURE_MODE pending_capture_mode;
     uint16_t camera_poll_counter;       // periodically poll the camera for state changes, it doesn't send events
     bool recording;
+
+    bool in_bp_detect_reassert_delay;
+    uint16_t bp_detect_reassert_counter;
 
     bool attempting_power_on;
     uint32_t gp_power_on_counter;
@@ -97,6 +101,7 @@ static gopro_t gp = {
     // txn is not initialized
 
     .handshake_timeout_count = 0,
+    .handshake_timeout = false,
     .intr_timeout_count = 0,
     .intr_retry_pulse_in_progress = false,
     .i2c_stop_timestamp_us = 0,
@@ -107,6 +112,8 @@ static gopro_t gp = {
     .pending_capture_mode = GOPRO_CAPTURE_MODE_UNKNOWN,
     .camera_poll_counter = GP_CAPTURE_MODE_POLLING_INTERVAL,     // has to be >= (GP_CAPTURE_MODE_POLLING_INTERVAL / GP_STATE_MACHINE_PERIOD_MS) to trigger immediate request for camera mode
     .recording = false,
+    .in_bp_detect_reassert_delay = false,
+    .bp_detect_reassert_counter = 0,
 
     .attempting_power_on = false,
     .gp_power_on_counter = 0,
@@ -143,6 +150,7 @@ bool gp_enabled()
 static void gp_reset_interface_state(void) {
     gp.i2c_txn.in_progress = false;
     gp.handshake_timeout_count = 0;
+    gp.handshake_timeout = false;
     gp.intr_timeout_count = 0;
     gp.intr_retry_pulse_in_progress = false;
     gp.i2c_stop_timestamp_us = 0;
@@ -154,6 +162,8 @@ static void gp_reset_interface_state(void) {
     gp.recording = false;
     gp.txn.response.mav.status = GP_CMD_STATUS_IDLE;
     gp.hb_txn_phase = HB_TXN_IDLE;
+    gp.in_bp_detect_reassert_delay = false;
+    gp.bp_detect_reassert_counter = 0;
 
     gp_h3p_init(&gp.h3p);
     gp_h4_init(&gp.h4);
@@ -201,7 +211,7 @@ static bool init_timed_out()
      * camera connection before we declare it either `connected` or `incompatible`.
      */
 
-    return gp.handshake_timeout_count >= (GP_INIT_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS);
+    return gp.handshake_timeout;
 }
 
 bool gp_ready_for_cmd()
@@ -378,7 +388,7 @@ bool gp_request_power_on()
      * This does not appear to power on hero4 devices. TBD.
      */
 
-    if (!gp_get_von_asserted_in() && gp.power_status != GP_POWER_ON && !gp.attempting_power_on) {
+    if (gp.power_status != GP_POWER_ON && !gp.attempting_power_on) {
         gp.attempting_power_on = true;
         gp.gp_power_on_counter = 0;
         return true;
@@ -589,8 +599,10 @@ void gp_update()
         new_power_status = GP_POWER_OFF;
     }
 
-    if (gp.power_status != new_power_status && new_power_status == GP_POWER_ON) {
+    if (gp.power_status == GP_POWER_OFF && new_power_status == GP_POWER_ON) {
         gp_reset_interface_state();
+        gp.power_status = new_power_status;
+        return;
     }
 
     gp.power_status = new_power_status;
@@ -617,6 +629,17 @@ void gp_update()
         }
         gp.gp_power_on_counter++;
     } else {
+
+        if (gp.in_bp_detect_reassert_delay && gp.bp_detect_reassert_counter++ > (GP_BP_DETECT_REASSERT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+            gp.in_bp_detect_reassert_delay = false;
+        }
+
+        if (gp.power_status == GP_POWER_ON && !gp.handshake_timeout && !gp.in_bp_detect_reassert_delay) {
+            gp_set_bp_detect_asserted_out(true);
+        } else {
+            gp_set_bp_detect_asserted_out(false);
+        }
+
         gp_check_intr_timeout();
 
         gp_delayed_cmd_tick();
@@ -628,16 +651,12 @@ void gp_update()
         }
 
         if (gp_get_power_status() == GP_POWER_ON) {
-            // Set 'init_timed_out' to true after GP_INIT_TIMEOUT_MS to avoid glitching
-            // the heartbeat with an incompatible state while it's gccb version is being queried
-            if(!gp_handshake_complete() && !init_timed_out()) {
-                gp.handshake_timeout_count++;
-
-                if (init_timed_out()) {
-                    // camera is incompatible,
-                    // try to avoid freezing it by disabling bacpac detect
-                    gp_set_bp_detect_asserted_out(false);
+            // update handshake timeout
+            if(!gp_handshake_complete() && !gp.handshake_timeout) {
+                if (gp.handshake_timeout_count >= (GP_INIT_TIMEOUT_MS / GP_STATE_MACHINE_PERIOD_MS)) {
+                    gp.handshake_timeout = true;
                 }
+                gp.handshake_timeout_count++;
             }
 
             // request an update on GoPro's current capture mode, infrequently to avoid freezing the GoPro
@@ -733,9 +752,9 @@ bool handle_rx_data(uint8_t *buf, uint16_t len)
                 // otherwise, report the transaction failure via mavlink
                 if (!gp_h4_handshake_complete(&gp.h4)) {
                     // if we've detected an unrecoverable error, don't bother trying to reset
-                    // expect handshake to fail during power on
                     if (!gp_h4_handshake_is_error(&gp.h4) && !gp.attempting_power_on) {
                         gp_reset();
+                        gp.in_bp_detect_reassert_delay = true;
                     }
                 } else {
                     gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
