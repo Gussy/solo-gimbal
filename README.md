@@ -1,7 +1,7 @@
 # Solo Gimbal - AES
 AES gimbal software for C2000 uC
 
-[![Build Status](https://magnum.travis-ci.com/3drobotics/solo-gimbal.svg?token=DrXtEFw3btp4K1aMV8zU&branch=master)](https://magnum.travis-ci.com/3drobotics/solo-gimbal)
+[![Build Status](https://api.travis-ci.com/3drobotics/solo-gimbal.svg?token=qKcQEnRv4dXpDtnspqLx&branch=master)](https://travis-ci.com/3drobotics/solo-gimbal)
 
 ## Development
 
