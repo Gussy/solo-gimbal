@@ -22,7 +22,11 @@ enum H4_MULTIMSG_STATE {
 
     // GOPRO_COMMAND_CAPTURE_MODE (when mode == multi-shot)
     H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT,                        // multi-shot capture mode sent
-    H4_MULTIMSG_MULTI_SHOT_SUB_MODE                             // multi-shot sub-mode sent
+    H4_MULTIMSG_MULTI_SHOT_SUB_MODE,                            // multi-shot sub-mode sent
+
+    // GOPRO_COMMAND_CAPTURE_MODE (when mode == GOPRO_CAPTURE_MODE_PHOTO)
+    H4_MULTIMSG_CAPTURE_MODE_PHOTO,                             // photo capture mode sent
+    H4_MULTIMSG_PHOTO_SUB_MODE                                  // photo sub-mode sent
 };
 
 static void gp_h4_set_transaction_result(gp_h4_t *h4, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);
@@ -164,6 +168,19 @@ bool gp_h4_on_txn_complete(gp_h4_t *h4, gp_h4_pkt_t *p)
             gp_h4_finalize_yy_cmd(h4, 0, yy);
         }
         h4->multi_msg_cmd.state = H4_MULTIMSG_MULTI_SHOT_SUB_MODE;
+        return true;
+
+    case H4_MULTIMSG_CAPTURE_MODE_PHOTO:
+        yy->api_group = API_GRP_MODE_CAM;
+        if (gp_transaction_direction() == GP_REQUEST_SET) {
+            yy->api_id = API_ID_SET_SUBMODE;
+            yy->payload[0] = H4_PHOTO_SUB_MODE_SINGLE;
+            gp_h4_finalize_yy_cmd(h4, 1, yy);
+        } else {
+            yy->api_id = API_ID_GET_SUBMODE;
+            gp_h4_finalize_yy_cmd(h4, 0, yy);
+        }
+        h4->multi_msg_cmd.state = H4_MULTIMSG_PHOTO_SUB_MODE;
         return true;
     }
 
@@ -367,10 +384,14 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
             uint8_t mode = h4_to_mav_cap_mode(rsp->payload[0], &ok);
             if (!ok) { mode = GOPRO_CAPTURE_MODE_UNKNOWN; }
 
-            // Additionally get the sub-mode if the capture mode is "multi-shot"
-            if (mode == GOPRO_CAPTURE_MODE_MULTI_SHOT) {
-                h4->multi_msg_cmd.state = H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT;
-                return err;
+            // Additionally get the sub-mode if the capture mode is "photo" or "multi-shot"
+            switch (mode) {
+            case GOPRO_CAPTURE_MODE_MULTI_SHOT:
+            	h4->multi_msg_cmd.state = H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT;
+            	return err;
+            case GOPRO_CAPTURE_MODE_PHOTO:
+            	h4->multi_msg_cmd.state = H4_MULTIMSG_CAPTURE_MODE_PHOTO;
+            	return err;
             }
 
             gp_set_capture_mode(mode);
@@ -379,9 +400,11 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
             mav_rsp_len = 1;
         } else if (rsp->api_id == API_ID_SET_CAM_MAIN_MODE) {
             // We need to also get the sub-mode if we're in a multi-msg state
-            if (h4->multi_msg_cmd.state == H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT) {
+        	switch (h4->multi_msg_cmd.state) {
+        	case H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT:
+        	case H4_MULTIMSG_CAPTURE_MODE_PHOTO:
                 return err;
-            }
+        	}
 
             gp_latch_pending_capture_mode();
         } else if (rsp->api_id == API_ID_GET_SUBMODE) {
@@ -718,8 +741,11 @@ bool gp_h4_produce_set_request(gp_h4_t *h4, const gp_can_mav_set_req_t* request,
                 payloadlen = 1;
                 gp_pend_capture_mode(request->mav.value[0]);
 
-                if(mode == H4_CAPTURE_MODE_MULTI_SHOT) {
+                switch (mode) {
+                case H4_CAPTURE_MODE_MULTI_SHOT:
                     h4->multi_msg_cmd.state = H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT;
+                case H4_CAPTURE_MODE_PHOTO:
+                    h4->multi_msg_cmd.state = H4_MULTIMSG_CAPTURE_MODE_PHOTO;
                 }
             } else {
                 gp_h4_set_transaction_result(h4, NULL, 0, GP_CMD_STATUS_FAILURE);
