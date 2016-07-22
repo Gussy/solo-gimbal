@@ -24,8 +24,9 @@ enum H4_MULTIMSG_STATE {
     H4_MULTIMSG_CAPTURE_MODE_MULTI_SHOT,                        // multi-shot capture mode sent
     H4_MULTIMSG_MULTI_SHOT_SUB_MODE,                            // multi-shot sub-mode sent
 
-	H4_MULTIMSG_CAPTURE_MODE_PHOTO,
-	H4_MULTIMSG_PHOTO_SUB_MODE
+    // GOPRO_COMMAND_CAPTURE_MODE (when mode == GOPRO_CAPTURE_MODE_PHOTO)
+    H4_MULTIMSG_CAPTURE_MODE_PHOTO,                             // photo capture mode sent
+    H4_MULTIMSG_PHOTO_SUB_MODE                                  // photo sub-mode sent
 };
 
 static void gp_h4_set_transaction_result(gp_h4_t *h4, const uint8_t *resp_bytes, uint16_t len, GPCmdStatus status);

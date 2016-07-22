@@ -45,9 +45,9 @@ typedef enum {
 } GP_H4_MULTI_SHOT_SUB_MODE;
 
 typedef enum {
-	H4_PHOTO_SUB_MODE_SINGLE		= 0,
-	H4_PHOTO_SUB_MODE_CONTINUOUS	= 1,
-	H4_PHOTO_SUB_MODE_NIGHT  		= 2
+    H4_PHOTO_SUB_MODE_SINGLE        = 0,
+    H4_PHOTO_SUB_MODE_CONTINUOUS    = 1,
+    H4_PHOTO_SUB_MODE_NIGHT         = 2
 } GP_H4_PHOTO_SUB_MODE;
 
 typedef enum {
