@@ -14,7 +14,23 @@ MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 TARGET_SYSTEM_ID = 1
 TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
+MAVLINK_R10C_COMPONENT_ID = 156
+
 DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC = 0x42AA5542
+
+GIMBAL_BAUDRATE = 230400
+
+class GimbalTypes:
+    R10C, GoPro = 'R10C', 'GoPro'
+
+def set_type(gimbal):
+    global MAVLINK_COMPONENT_ID, TARGET_COMPONENT_ID
+    if gimbal == GimbalTypes.R10C:
+        MAVLINK_COMPONENT_ID = MAVLINK_R10C_COMPONENT_ID
+        TARGET_COMPONENT_ID = MAVLINK_R10C_COMPONENT_ID
+    elif gimbal == GimbalTypes.GoPro:
+        # Defaults are correct for the GoPro gimbal
+        pass
 
 def getSerialPorts(preferred_list=['*USB Serial*','*FTDI*']):
     if os.name == 'nt':
@@ -28,7 +44,7 @@ def getSerialPorts(preferred_list=['*USB Serial*','*FTDI*']):
         return ret
     return mavutil.auto_detect_serial(preferred_list=preferred_list)
 
-def open_comm(port=None, baudrate=230400):
+def open_comm(port=None):
     link = None
     try:
         if not port:
@@ -37,7 +53,7 @@ def open_comm(port=None, baudrate=230400):
                 port = serial_list[0].device
             else:
                 port = '0.0.0.0:14550'
-        mavserial = mavutil.mavlink_connection(device=port, baud=baudrate)
+        mavserial = mavutil.mavlink_connection(device=port, baud=GIMBAL_BAUDRATE)
         link = mavlink.MAVLink(mavserial, MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID)
         link.target_sysid = TARGET_SYSTEM_ID
         link.target_compid = TARGET_COMPONENT_ID
@@ -50,8 +66,8 @@ def wait_handshake(link, timeout=1, retries=1):
     '''wait for a handshake so we know the target system IDs'''
     for retries in range(retries):
         msg = link.file.recv_match(type='DATA_TRANSMISSION_HANDSHAKE', blocking=True, timeout=timeout)
-        if msg and msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
-                return msg
+        if msg and (msg.get_srcComponent() == MAVLINK_COMPONENT_ID):
+            return msg
     return None
 
 def get_current_joint_angles(link):
@@ -61,7 +77,7 @@ def get_current_joint_angles(link):
             return None
         else:
             return Vector3([msg_gimbal.joint_roll, msg_gimbal.joint_el, msg_gimbal.joint_az])
-        
+
 def get_current_delta_angles(link):
     while(True):
         msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=2)
@@ -73,7 +89,7 @@ def get_current_delta_angles(link):
 def get_current_delta_velocity(link, timeout=1):
     if not isinstance(link.file, mavserial):
         print "accelerometer calibration requires a serial connection"
-        sys.exit(1)    
+        sys.exit(1)
     link.file.port.flushInput() # clear any messages in the buffer, so we get a current one
     while(True):
         msg_gimbal = link.file.recv_match(type="GIMBAL_REPORT", blocking=True, timeout=timeout)
@@ -88,7 +104,7 @@ def get_gimbal_report(link, timeout=2):
 
 def send_gimbal_control(link, rate):
     link.gimbal_control_send(link.target_sysid, link.target_compid,rate.x,rate.y,rate.z)
-       
+
 def reset_gimbal(link):
     link.file.mav.command_long_send(link.target_sysid, link.target_compid, 42501, 0, 0, 0, 0, 0, 0, 0, 0)
     result = link.file.recv_match(type="COMMAND_ACK", blocking=True, timeout=3)
@@ -98,7 +114,7 @@ def reset_gimbal(link):
         # Wait for the gimbal to reset and begin comms again
         return setup_mavlink.get_any_gimbal_message(link, timeout=5)
     else:
-        return False 
+        return False
 
 def reset_into_bootloader(link):
     return link.data_transmission_handshake_send(mavlink.MAVLINK_TYPE_UINT16_T, DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC, 0, 0, 0, 0, 0)
@@ -120,7 +136,7 @@ def getCalibrationProgress(link):
     axis = setup_comutation.axis_enum[int(msg_progress.param1) - 1]
     progress = int(msg_progress.param2)
     status = setup_comutation.status_enum[int(msg_progress.param3)]
-    
+
     return [axis, progress, status]
 
 def receive_home_offset_result(link):
@@ -132,7 +148,7 @@ def requestCalibration(link):
 def get_all(link, timeout=1):
     msg = link.file.recv_match(blocking=True, timeout=timeout)
     if msg != None:
-        if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
+        if msg.get_srcComponent() == MAVLINK_COMPONENT_ID:
             return msg
     return None
 
@@ -144,7 +160,11 @@ def get_gimbal_message(link, timeout=2):
     while (time.time() - start_time) < timeout:
         msg = link.file.recv_match(blocking=True, timeout=1)
         if msg:
-            if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
+            # Handle R10C Gimbal
+            if (MAVLINK_COMPONENT_ID == MAVLINK_R10C_COMPONENT_ID) and (msg.get_srcComponent() == MAVLINK_COMPONENT_ID):
+                return True
+            # Handle GoPro Gimbal
+            if msg.get_srcComponent() == MAVLINK_COMPONENT_ID:
                 # Ignore the two types of bootloader messages
                 if msg.get_msgId() == mavlink.MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
                     return False
@@ -166,7 +186,12 @@ def get_any_gimbal_message(link, timeout=2):
     while (time.time() - start_time) < timeout:
         msg = link.file.recv_match(blocking=True, timeout=1)
         if msg:
-            if (msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL
+            # Handle R10C Gimbal
+            if (MAVLINK_COMPONENT_ID == MAVLINK_R10C_COMPONENT_ID
+                and msg.get_srcComponent() == MAVLINK_COMPONENT_ID):
+                return msg
+            # Handle GoPro Gimbal
+            if (msg.get_srcComponent() == MAVLINK_COMPONENT_ID
                 and msg.get_msgId() != mavlink.MAVLINK_MSG_ID_HEARTBEAT):
                 return msg
     return None
@@ -179,7 +204,7 @@ def wait_for_any_gimbal_message(link, timeout=5):
     return None
 
 def is_bootloader_message(msg):
-    if (msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL and
+    if (msg.get_srcComponent() == MAVLINK_COMPONENT_ID and
         msg.get_msgId() == mavlink.MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE):
         return True
     return False
