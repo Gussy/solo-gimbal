@@ -33,8 +33,8 @@ def handle_file(args, link):
             params = json.load(f)
             setup_param.restore_params(link, params)
             print("Gimbal parameters restored.")
-    elif fileExtension == 'ax':
-        # Prepare the binary to load from the compressed .ax file
+    elif fileExtension == 'ax' or fileExtension == 'qb':
+        # Prepare the binary to load from the compressed .ax or .qb file
         print('Application firmware_file: %s' % args.file)
         firmware = load_firmware(args.file)
         binary, checksum = append_checksum(firmware['binary'])
