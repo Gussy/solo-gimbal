@@ -32,7 +32,7 @@ def start_bootloader(link):
     msg = setup_mavlink.get_any_gimbal_message(link)
     if msg and setup_mavlink.is_bootloader_message(msg):
         return Results.InBoot
-    
+
     # Signal the target to reset into bootloader mode
     setup_mavlink.reset_into_bootloader(link)
 
@@ -64,7 +64,7 @@ def send_block(link, binary, msg):
 
     # Pad the data to fit the mavlink message
     if len(data) < MAVLINK_ENCAPSULATED_DATA_LENGTH:
-        data.extend([0] * (MAVLINK_ENCAPSULATED_DATA_LENGTH - len(data)))
+        data.extend([0xff] * (MAVLINK_ENCAPSULATED_DATA_LENGTH - len(data)))
 
     # Send the data with the corrosponding sequence number
     setup_mavlink.send_bootloader_data(link, sequence_number, data)
@@ -72,7 +72,6 @@ def send_block(link, binary, msg):
 
 def upload_data(link, binary):
     global progressHandler, bootloaderVersionHandler
-
     msg = setup_mavlink.wait_handshake(link)
     if msg == None:
         return Results.NoResponse
@@ -99,7 +98,7 @@ def upload_data(link, binary):
         retries = 0
 
         end_idx = send_block(link, binary, msg)
-        
+
         uploaded_kb = round(end_idx / 1024.0, 2)
         total_kb = round(len(binary) / 1024.0, 2)
         percentage = int((100.0 * end_idx) / len(binary))
@@ -107,9 +106,9 @@ def upload_data(link, binary):
             progressHandler(uploaded_kb, total_kb, percentage)
 
     return Results.Success
-            
+
 def finish_upload(link):
-    """Send an "end of transmission" signal to the target, to cause a target reset""" 
+    """Send an "end of transmission" signal to the target, to cause a target reset"""
     while True:
         setup_mavlink.exit_bootloader(link)
         msg = setup_mavlink.wait_handshake(link)
@@ -137,4 +136,3 @@ def load_binary(binary, link,  bootloaderVersionCallback=None, progressCallback=
         return result
 
     return finish_upload(link)
-    

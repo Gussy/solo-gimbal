@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Command-line utility to handle comms to gimbal 
+Command-line utility to handle comms to gimbal
 '''
 import time, os, sys, argparse, time, json
 import setup_mavlink, setup_factory_pub
@@ -29,12 +29,12 @@ def handle_file(args, link):
     if fileExtension == 'param':
         setup_param.load_param_file(args.file, link)
     elif fileExtension == 'json':
-        with open(args.file) as f:    
+        with open(args.file) as f:
             params = json.load(f)
             setup_param.restore_params(link, params)
             print("Gimbal parameters restored.")
-    elif fileExtension == 'ax':
-        # Prepare the binary to load from the compressed .ax file
+    elif fileExtension == 'ax' or fileExtension == 'qb':
+        # Prepare the binary to load from the compressed .ax or .qb file
         print('Application firmware_file: %s' % args.file)
         firmware = load_firmware(args.file)
         binary, checksum = append_checksum(firmware['binary'])
@@ -222,6 +222,7 @@ def command_interface():
     parser.add_argument("-e", "--erase", help="Erase calibration values", action='store_true')
     parser.add_argument("--customgains", help="Enable the use of custom gains (0 to disable, 1 to enable)", type=int)
     parser.add_argument("--charging", help="Set camera charging (0 to disable, 1 to enable)", type=int)
+    parser.add_argument("-t", "--type", help="Gimbal type ('R10C' or 'GOPRO')", type=str)
 
     # Optional commands (not included with sololink tools)
     if setup_run:
@@ -248,6 +249,13 @@ def command_interface():
         parser.add_argument("--fullreset", help="Clear all gimbal parameters and program memory", action='store_true')
 
     args = parser.parse_args()
+
+    # Handle multople types of gimbals
+    if args.type is not None:
+        if str(args.type).lower() == "r10c":
+            setup_mavlink.set_type(setup_mavlink.GimbalTypes.R10C)
+        if str(args.type).lower() == "gopro":
+            setup_mavlink.set_type(setup_mavlink.GimbalTypes.GoPro)
 
     # Open the serial port
     port, link = setup_mavlink.open_comm(args.port)
@@ -295,7 +303,7 @@ def command_interface():
     if args.calibrate:
         runCalibration(link)
         return
-    
+
     if args.forcecal:
         eraseCalibration(link)
         # TODO: Check if this timeout is necessary
@@ -327,22 +335,22 @@ def command_interface():
         else:
             print("Error fetching parameters from gimbal")
         return
-    
+
     if args.validate:
         print("Validating gimbal parameters...")
         printValidation(link)
         return
-    
+
     if args.defaults:
         setup_validate.restore_defaults(link)
         print('Parameters restored to default values')
         return
-        
+
     if args.reboot:
         if not setup_mavlink.reset_gimbal(link):
             print('Failed to reboot')
         return
-    
+
     if args.erase:
         eraseCalibration(link)
         return
@@ -359,7 +367,7 @@ def command_interface():
         if args.run:
             setup_run.runTest(link, 'run')
             return
-        
+
         if args.align:
             setup_run.runTest(link, 'align')
             return
@@ -409,7 +417,7 @@ def command_interface():
                 print('Failed to calibrate home position')
             if not args.staticcal:
                 return
-        
+
         if args.gyrocalibration or args.staticcal:
             print('Calibrating gyro offsets')
             offsets = setup_home.calibrate_gyro(link)
@@ -418,7 +426,7 @@ def command_interface():
             else:
                 print('Failed to calibrate gyro offsets')
             return
-        
+
         if args.accelcalibration:
             setup_home.calibrate_accel(link)
             return
