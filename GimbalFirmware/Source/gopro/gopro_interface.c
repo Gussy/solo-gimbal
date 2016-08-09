@@ -434,14 +434,18 @@ int gp_get_request(const gp_can_mav_get_req_t *req, bool txn_is_internal)
      *
      */
 
+    GPRequestType tmp_reqtype = gp.txn.reqtype;
+
+    if ((gp_get_power_status() != GP_POWER_ON) || !gp_ready_for_cmd()) {
+        gp.txn.reqtype = GP_REQUEST_GET;
+        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
+        gp.txn.reqtype = tmp_reqtype;
+        return -1;
+    }
+
     gp.txn.reqtype = GP_REQUEST_GET;
     gp.txn.response.mav.cmd_id = req->mav.cmd_id;
     gp.txn.is_internal = txn_is_internal;
-
-    if ((gp_get_power_status() != GP_POWER_ON) || !gp_ready_for_cmd()) {
-        gp_set_transaction_result(NULL, 0, GP_CMD_STATUS_FAILURE);
-        return -1;
-    }
 
     switch (gp.model) {
     case GP_MODEL_HERO3P:
