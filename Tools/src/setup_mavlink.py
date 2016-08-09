@@ -14,6 +14,7 @@ MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 TARGET_SYSTEM_ID = 1
 TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
 
+# Defined in the ardupilot-solo mavlink definitions
 MAVLINK_R10C_COMPONENT_ID = 156
 
 DATA_TRANSMISSION_HANDSHAKE_SIZE_MAGIC = 0x42AA5542
@@ -29,7 +30,8 @@ def set_type(gimbal):
         MAVLINK_COMPONENT_ID = MAVLINK_R10C_COMPONENT_ID
         TARGET_COMPONENT_ID = MAVLINK_R10C_COMPONENT_ID
     elif gimbal == GimbalTypes.GoPro:
-        # Defaults are correct for the GoPro gimbal
+        MAVLINK_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
+        TARGET_COMPONENT_ID = mavlink.MAV_COMP_ID_GIMBAL
         pass
 
 def getSerialPorts(preferred_list=['*USB Serial*','*FTDI*']):
