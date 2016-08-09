@@ -419,6 +419,17 @@ gp_h4_err_t gp_h4_handle_rsp(gp_h4_t *h4, const gp_h4_pkt_t* p)
 
                 mav_rsp.mav.value[0] = mode;
                 mav_rsp_len = 1;
+            } else if (h4->multi_msg_cmd.state == H4_MULTIMSG_PHOTO_SUB_MODE) {
+                // Only "multi-shot: burst" is considered a valid mode, other multi-shot modes are invalid/unknown
+                uint8_t mode = GOPRO_CAPTURE_MODE_UNKNOWN;
+                if (rsp->payload[0] == H4_PHOTO_SUB_MODE_SINGLE) {
+                    mode = GOPRO_CAPTURE_MODE_PHOTO;
+                }
+
+                gp_set_capture_mode(mode);
+
+                mav_rsp.mav.value[0] = mode;
+                mav_rsp_len = 1;
             }
         }
     }
