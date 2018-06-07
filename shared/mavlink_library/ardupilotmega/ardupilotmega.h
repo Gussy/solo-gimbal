@@ -550,7 +550,7 @@ typedef enum GOPRO_BURST_RATE
 	GOPRO_BURST_RATE_30_IN_1_SECOND=5, /* 30 Shots / 1 Second | */
 	GOPRO_BURST_RATE_30_IN_2_SECOND=6, /* 30 Shots / 2 Second | */
 	GOPRO_BURST_RATE_30_IN_3_SECOND=7, /* 30 Shots / 3 Second | */
-	GOPRO_BURST_RATE_30_IN_6_SECOND=8, /* 30 Shots / 6 Second | */
+	GOPRO_BURST_RATE_30_IN_6_SECOND=8, /* 30 Shots / 6 Second (Hero 4 Only) | */
 	GOPRO_BURST_RATE_ENUM_END=9, /*  | */
 } GOPRO_BURST_RATE;
 #endif

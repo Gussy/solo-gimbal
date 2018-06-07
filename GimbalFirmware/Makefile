@@ -112,9 +112,10 @@ $(VERSION_HEADER):
 .PHONY: all clean flash
 
 clean:
-	rm -f $(PROJ).* $(VERSION_HEADER)
-	rm -f $(OBJS)
-	rm -f $(OBJS:.o=.pp)
-	rm -f $(PROJ)_linkinfo.xml
+	C:\TI\ccsv6\utils\cygwin\rm -f $(PROJ).*
+	C:\TI\ccsv6\utils\cygwin\rm -f $(VERSION_HEADER)
+	C:\TI\ccsv6\utils\cygwin\rm -f $(OBJS)
+	C:\TI\ccsv6\utils\cygwin\rm -f $(OBJS:.o=.pp)
+	C:\TI\ccsv6\utils\cygwin\rm -f $(PROJ)_linkinfo.xml
 
 -include $(OBJS:.o=.pp)
